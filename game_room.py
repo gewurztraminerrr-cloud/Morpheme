@@ -231,6 +231,27 @@ def verify_board_words_consistency(board, words, paths=None):
 
     return True
 
+
+def sync_board_checkerboard_and_resolve(bg, board, fmt_val, min_len, dictionary, use_added_words, bonus_cell):
+    """Ensure board strictly complies with checkerboard (or non-checkerboard) and re-solves words/paths if mutated."""
+    if not board:
+        return False, None, None
+    repaired = False
+    if 'checkerboard' in str(fmt_val).lower():
+        if not bg._is_checkerboard_layout(board):
+            repaired = bool(bg._verify_checkerboard_safeguard(board))
+    else:
+        if bg._is_checkerboard_layout(board):
+            repaired = bool(bg._break_accidental_checkerboard(board))
+    if repaired:
+        resolved = bg._solve_board(
+            board, dictionary, (0, 99999), min_len, max_depth=15, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words
+        )
+        words = sorted([w for w in resolved if len(w) >= min_len])
+        paths = {w: p for w, p in resolved.items() if len(w) >= min_len}
+        return True, words, paths
+    return False, None, None
+
 @dataclass
 class GameRoom:
     room_id: str
@@ -1907,10 +1928,9 @@ class GameRoom:
         if fallback:
             fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
             _bg = _room_manager_instance.board_generator if (_room_manager_instance and hasattr(_room_manager_instance, 'board_generator')) else BoardGenerator()
-            if 'checkerboard' in str(fmt_val).lower():
-                _bg._verify_checkerboard_safeguard(fb)
-            else:
-                _bg._break_accidental_checkerboard(fb)
+            _rep, _rw, _rp = sync_board_checkerboard_and_resolve(_bg, fb, fmt_val, f_min_l, _dict, _use_aw, fc)
+            if _rep and _rw:
+                fw, fp = _rw, _rp
             print(f"[GameRoom] ensure_next_board_ready: Popped fallback cached board for {self.room_id}")
             self.next_round_board = fb
             self.next_round_words = fw
@@ -3217,10 +3237,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                                 'difficulty': cdiff,
                                 'bonus_word_len': len(cbonus_word) if cbonus_word else 6
                             }
-                            if 'checkerboard' in str(cfmt).lower():
-                                bg._verify_checkerboard_safeguard(cboard)
-                            else:
-                                bg._break_accidental_checkerboard(cboard)
+                            _rep, _rw, _rp = sync_board_checkerboard_and_resolve(bg, cboard, cfmt, final_min, cdict_resolved, caw_resolved, cbonus_cell)
+                            if _rep and _rw:
+                                cwords_filtered, cpaths_filtered = _rw, _rp
                             return cboard, cwords_filtered, cbonus_cell, cfmt_ret, cpaths_filtered, cratio, cbonus_word, ctr_resolved, eparams_dict
                 except Exception:
                     continue
@@ -3336,10 +3355,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     'difficulty': difficulty or "Medium",
                     'bonus_word_len': len(l_bw)
                 }
-                if 'checkerboard' in str(l_f).lower():
-                    bg._verify_checkerboard_safeguard(l_b)
-                else:
-                    bg._break_accidental_checkerboard(l_b)
+                _rep, _rw, _rp = sync_board_checkerboard_and_resolve(bg, l_b, l_f, min_word_length, dictionary, use_added_words, l_c)
+                if _rep and _rw:
+                    l_w_filt, l_p_filt = _rw, _rp
                 print(f"[get_emergency_fallback_board] Fast live generator succeeded: {len(l_w_filt)} words (range: {target_range_resolved})")
                 return l_b, l_w_filt, l_c, l_f, l_p_filt, l_r, l_bw, target_range_resolved, eparams
     except Exception as live_err:
@@ -3349,6 +3367,11 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     print(f"[get_emergency_fallback_board] Delivering instant pre-built emergency board for {dimensions}...")
     parts = dimensions.split("x")
     is_3d = len(parts) == 3
+    is_bl_fmt = ('bonus letter' in str(fmt).lower() or str(fmt).lower().strip() == 'bonus')
+    is_eo_fmt = ('either' in str(fmt).lower())
+    is_chk_fmt = ('checkerboard' in str(fmt).lower())
+    is_mania_fmt = ('mania' in str(fmt).lower())
+
     if is_3d:
         board = [
             [['S', 'T', 'A'], ['R', 'E', 'D'], ['L', 'I', 'N']],
@@ -3358,7 +3381,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             [['S', 'O', 'U'], ['N', 'D', 'S'], ['F', 'A', 'R']],
             [['W', 'O', 'R'], ['D', 'S', 'E'], ['T', 'S', 'S']]
         ]
-        bonus_cell = (0, 0, 0)
+        bonus_cell = (0, 0, 0) if is_bl_fmt else None
     else:
         try:
             rows, cols = map(int, parts[:2])
@@ -3370,46 +3393,52 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         shuffled = std_letters[offset:] + std_letters[:offset]
         random.shuffle(shuffled)
         board = [[shuffled[(r*cols + c) % len(shuffled)] for c in range(cols)] for r in range(rows)]
-        bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1))
+        bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1)) if is_bl_fmt else None
 
-    # Solve emergency board instantly
-    emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=15, store_paths=True, timeout=1.0, use_added_words=use_added_words)
+    if is_eo_fmt:
+        bonus_cell = None
+        if not is_3d and rows > 0 and cols > 0:
+            board[0][0] = f"{board[0][0]}/E" if '/' not in str(board[0][0]) else board[0][0]
+    elif is_chk_fmt:
+        bg._verify_checkerboard_safeguard(board)
+    elif is_mania_fmt:
+        parts_m = str(fmt).strip().upper().split()
+        m_l = parts_m[0] if (len(parts_m) >= 2 and len(parts_m[0]) == 1) else 'E'
+        bg._apply_mania_to_board(board, m_l, set(), is_checkerboard=False)
+    else:
+        if bg._is_checkerboard_layout(board):
+            bg._break_accidental_checkerboard(board)
+
+    # Solve emergency board with 5s timeout
+    emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=15, store_paths=True, timeout=5.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
     words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
     paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
 
     # CRITICAL SAFEGUARD: If min_word_length on random grid yields fewer than 15 words, solve with 3L floor
     if len(words_filtered) < 15:
-        emergency_solve_relaxed = bg._solve_board(board, dictionary, (0, 99999), 3, max_depth=15, store_paths=True, timeout=1.0, use_added_words=use_added_words)
+        emergency_solve_relaxed = bg._solve_board(board, dictionary, (0, 99999), 3, max_depth=15, store_paths=True, timeout=5.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
         words_filtered = [w for w in emergency_solve_relaxed if len(w) >= 3]
         paths_filtered = {w: p for w, p in emergency_solve_relaxed.items() if len(w) >= 3}
         min_word_length = 3
-    # MANDATE: Bonus Word MUST be between 6 and 10 letters!
-    bw_candidates = [w for w in words_filtered if 6 <= len(w) <= 10]
+    # MANDATE: Bonus Word MUST match declared bonus_word_length if specified, or in [6..10]
+    target_bw_len = sequence_length if sequence_length else None
+    bw_candidates = [w for w in words_filtered if (len(w) == target_bw_len if target_bw_len else (6 <= len(w) <= 10))]
+    if not bw_candidates:
+        bw_candidates = [w for w in words_filtered if 6 <= len(w) <= 10]
     if bw_candidates:
         bonus_word = bw_candidates[0]
     else:
         if _room_manager_instance and hasattr(_room_manager_instance, '_get_bonus_word'):
-            bonus_word = _room_manager_instance._get_bonus_word(length=6, dictionary=dictionary)
+            bonus_word = _room_manager_instance._get_bonus_word(length=target_bw_len or 6, dictionary=dictionary)
         else:
             bonus_word = 'PLANETS'
         if bonus_word and bonus_word not in words_filtered:
             words_filtered.append(bonus_word)
-            paths_filtered[bonus_word] = [bonus_cell]
+            paths_filtered[bonus_word] = [bonus_cell or (0, 0)]
 
-    if False and max_accept < 99999 and len(words_filtered) > max_accept:  # never truncate valid words
-        sampled_set = proportionally_sample_words(words_filtered, max_accept)
-        if bonus_word and bonus_word in words_filtered and bonus_word not in sampled_set:
-            sampled_set.add(bonus_word)
-        words_filtered = [w for w in words_filtered if w in sampled_set]
-        paths_filtered = {w: p for w, p in paths_filtered.items() if w in sampled_set}
-    
-    if is_aw and len(words_filtered) < 300:
-        use_added_words = False
-        dictionary = str(dictionary).replace('+ AW', '').replace('+AW', '').replace('AW', '').strip() or 'NWL'
-        if len(words_filtered) < 100: target_range_resolved = '50-100'
-        elif len(words_filtered) < 200: target_range_resolved = '100-200'
-        elif len(words_filtered) < 300: target_range_resolved = '200-300'
-        else: target_range_resolved = '300-400'
+    from spinner_set import SpinnerSet
+    actual_cnt = len(words_filtered)
+    target_range_resolved = SpinnerSet.get_factchecked_wc_range(actual_cnt, use_added_words=use_added_words, dictionary=dictionary)
 
     eparams = {
         'min_word_length': min_word_length,
@@ -3418,7 +3447,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         'dictionary': dictionary,
         'use_added_words': use_added_words,
         'difficulty': difficulty or "Medium",
-        'bonus_word_len': len(bonus_word)
+        'bonus_word_len': len(bonus_word),
+        '_exact_wc_calculated': True,
+        '_lock_word_count_range': True
     }
 
     # Trigger background refill to populate SQLite cache for next rounds
@@ -5022,10 +5053,9 @@ class RoomManager:
                             print(f"[RoomManager] Solo cached board format {sfmt} mismatch with {target_fmt}. Discarding pop...")
                             solo_pop = None
                         else:
-                            if 'checkerboard' in str(target_fmt).lower():
-                                self.board_generator._verify_checkerboard_safeguard(sboard)
-                            else:
-                                self.board_generator._break_accidental_checkerboard(sboard)
+                            _rep, _rw, _rp = sync_board_checkerboard_and_resolve(self.board_generator, sboard, target_fmt, m_len, room.spinner_params.get('dictionary', 'NWL'), use_aw_flag, sbonus_cell)
+                            if _rep and _rw:
+                                swords, spaths = _rw, _rp
 
                         swords_filtered = [w for w in swords if len(w) >= m_len]
                         spaths_filtered = {w: p for w, p in (spaths or {}).items() if len(w) >= m_len}
@@ -5178,6 +5208,10 @@ class RoomManager:
                         _bad.append("unexpected Either/Or tile")
                     if 'bonus letter' in _decl_low and not bonus_cell:
                         _bad.append("missing bonus cell")
+                    if 'bonus letter' not in _decl_low and bonus_cell:
+                        bonus_cell = None
+                    if 'either' in _decl_low and bonus_cell:
+                        bonus_cell = None
                     if 'mania' in _decl_low and 'mania' not in str(updated_format).lower():
                         _bad.append("missing Mania")
                     if _decl_low in ('checkerboard', 'equality freq') and str(updated_format).lower().strip() != _decl_low:
@@ -7230,10 +7264,9 @@ class RoomManager:
                         _fp_filtered = {w: p for w, p in (_fp or {}).items() if w in _fw_filtered}
                         
                         # SAFEGUARD: If Checkerboard format, enforce strict C/V alternation
-                        if 'checkerboard' in str(fmt_val).lower():
-                            self.board_generator._verify_checkerboard_safeguard(_fb)
-                        else:
-                            self.board_generator._break_accidental_checkerboard(_fb)
+                        _rep, _rw, _rp = sync_board_checkerboard_and_resolve(self.board_generator, _fb, fmt_val, m_len, dict_val, use_aw_val, _fc)
+                        if _rep and _rw:
+                            _fw_filtered, _fp_filtered = _rw, _rp
 
                         print(f"[start_next_round] Instant 1-ms cache pop for {room_id}: {len(_fw_filtered)} words")
                         room.next_round_board = _fb
@@ -7607,6 +7640,8 @@ class RoomManager:
                     room.previous_bonus_word = (ghost_bonus or '')
                     room.previous_bonus_cell = getattr(room, 'bonus_cell', None)
                     room.previous_board_format = ghost_board_format
+                    room.previous_dictionary = getattr(room, 'current_dictionary', 'NWL')
+                    room.previous_use_added_words = getattr(room, 'use_added_words', False)
                     # NOTE: `copy` is imported at module level. Do NOT re-import it here: a local
                     # `import copy` makes it a function-local name for ALL of start_next_round and
                     # breaks 24h rooms (which skip this branch) with UnboundLocalError.

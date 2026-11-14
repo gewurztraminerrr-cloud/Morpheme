@@ -7552,10 +7552,10 @@ def get_room_state(room_id):
                                         room.solving_complete = True
                                     else:
                                         room.next_round_board = None
-                                    room.next_round_words = None
-                                    room.next_round_word_paths = None
-                                    room.next_round_bonus = None
-                                    room.next_round_format = None
+                                        room.next_round_words = None
+                                        room.next_round_word_paths = None
+                                        room.next_round_bonus = None
+                                        room.next_round_format = None
                                 room.next_round_word_scores = None
                                 room.next_round_total_words_count = len(room.next_round_words) if room.next_round_words else 0
                                 room.next_round_counts_by_len = {}

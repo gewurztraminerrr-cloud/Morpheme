@@ -10138,9 +10138,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             }
                         }
                     }
-                } else if (!isEO) {
-                    // PREFACE #20: the board word list is complete (never truncated), so an unlisted word is
-                    // invalid. Flash red at the same instant (0ms) and duration as the blue flash.
+                } else {
+                    // PREFACE: the board word list is complete (never truncated), so an unlisted word is
+                    // invalid. Flash red at the exact same instant (0ms) and duration as the blue flash.
                     const invMsg = isPenaltyMode
                         ? `${word.toUpperCase()} INVALID (-3 PTS)`
                         : `${word.toUpperCase()} INVALID`;

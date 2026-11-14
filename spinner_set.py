@@ -231,7 +231,10 @@ class SpinnerSet:
 
         wc_range = p.get('word_count_range')
 
-        if is_24h:
+        if p.get('_exact_wc_calculated') or p.get('_lock_word_count_range'):
+            # Pre-calculated from an actual solved board; do not randomly reroll
+            pass
+        elif is_24h:
             p['board_format'] = 'Valued Letters'
             wc_range = '300-400'
             p['use_added_words'] = False
@@ -327,7 +330,7 @@ class SpinnerSet:
                     min_word_length = allowed_mins[0]
 
             # 5. Board Format
-            board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions)
+            board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions, previous_params=previous_params)
 
             # 6. Bonus Word Length (always >= min_word_length)
             valid_bw = [l for l in [6, 7, 8, 9, 10] if l >= min_word_length] or [max(min_word_length, 6)]
@@ -406,29 +409,39 @@ class SpinnerSet:
         return _rng.choices(choices, weights=weights)[0]
 
     @staticmethod
-    def _spin_board_format(is_24h=False, dimensions='4x4'):
-        """Original board format weights"""
+    def _spin_board_format(is_24h=False, dimensions='4x4', previous_params=None):
+        """Original board format weights with repetition safeguard for rare modifiers."""
         if is_24h:
             return 'Valued Letters'
 
         if '3x3x3' in str(dimensions):
             return 'Normal'
 
-        result = _rng.choices(
-            ['Normal', 'Checkerboard', 'Equality Freq', 'Bounce', 'Density', 'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
-            weights=[66, 12, 4, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
-        )[0]
+        prev_fmt = None
+        if isinstance(previous_params, dict):
+            prev_fmt = str(previous_params.get('board_format', '')).strip()
 
-        if result == 'Bounce':
-            result = _rng.choices(['Bounce 1x', 'Bounce 2x', 'Bounce 3x'], weights=[33, 33, 34])[0]
+        for _ in range(5):
+            result = _rng.choices(
+                ['Normal', 'Checkerboard', 'Equality Freq', 'Bounce', 'Density', 'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
+                weights=[66, 12, 4, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
+            )[0]
 
-        if result == 'Mania':
-            # 33% vowels (A, E, I, O, U), 67% consonants
-            if _rng.random() < 0.33:
-                mania_letter = _rng.choice(['A', 'E', 'I', 'O', 'U'])
-            else:
-                mania_letter = _rng.choice(['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'])
-            return f'{mania_letter} Mania'
+            if result == 'Bounce':
+                result = _rng.choices(['Bounce 1x', 'Bounce 2x', 'Bounce 3x'], weights=[33, 33, 34])[0]
+
+            if result == 'Mania':
+                # 33% vowels (A, E, I, O, U), 67% consonants
+                if _rng.random() < 0.33:
+                    mania_letter = _rng.choice(['A', 'E', 'I', 'O', 'U'])
+                else:
+                    mania_letter = _rng.choice(['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'])
+                result = f'{mania_letter} Mania'
+
+            # Safeguard: do not repeat rare non-Normal formats back-to-back
+            if prev_fmt and prev_fmt != 'Normal' and result == prev_fmt:
+                continue
+            break
         return result
 
     @staticmethod

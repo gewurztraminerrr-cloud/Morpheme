@@ -91,8 +91,10 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
     used_bonus = False
     
     # 3. Board Pathfinding (Check if word uses the bonus tile or Either/Or tile)
-    is_spec_bonus_fmt = ('bonus' in fmt_lower or 'either' in fmt_lower or bonus_cell is not None)
-    should_skip_pathfinding = (not path and not is_spec_bonus_fmt and not bonus_cell)
+    is_bonus_letter_fmt = ('bonus letter' in fmt_lower or fmt_lower.strip() == 'bonus')
+    is_either_or_fmt = ('either' in fmt_lower)
+    is_spec_bonus_fmt = (is_bonus_letter_fmt or is_either_or_fmt)
+    should_skip_pathfinding = (not path and not is_spec_bonus_fmt)
 
     used_bonus_letter = False
     used_either_or = False
@@ -251,13 +253,12 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
 
     bonus_letter_points = 0
     either_or_points = 0
-    if 'checkerboard' not in fmt_lower:
-        if used_bonus_letter:
-            bonus_letter_points = 3
-            score += 3
-        if used_either_or:
-            either_or_points = 3
-            score += 3
+    if is_bonus_letter_fmt and used_bonus_letter:
+        bonus_letter_points = 3
+        score += 3
+    if is_either_or_fmt and used_either_or:
+        either_or_points = 3
+        score += 3
             
     if return_details:
         return {

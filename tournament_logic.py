@@ -280,6 +280,13 @@ class TournamentManager:
         # Use tournament parameters
         # User Request: Bonus words should appear in ALL rooms, including tournaments
         target_format = params.get('board_format', 'Normal')
+        if target_format.strip() == 'Mania':
+            import random
+            if random.random() < 0.33:
+                mania_letter = random.choice('AEIOU')
+            else:
+                mania_letter = random.choice('BCDFGHJKLMNPQRSTVWXYZ')
+            target_format = f"{mania_letter} Mania"
         dict_name = params.get('dictionary', 'NWL')
         use_aw_flag = bool(params.get('use_added_words', False))
         if '+ AW' in str(dict_name) or '+AW' in str(dict_name):

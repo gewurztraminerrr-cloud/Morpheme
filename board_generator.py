@@ -164,7 +164,7 @@ ACTIVE_REFILLS_LOCK = threading.Lock()
 # Bump this version whenever the solver logic changes in a way that affects
 # board word lists (e.g. AW inclusion, trie changes). This automatically
 # invalidates all pre-generated cached boards so stale ones are never served.
-BOARD_CACHE_VERSION = 13
+BOARD_CACHE_VERSION = 14
 
 
 def _normalize_difficulty_base(difficulty):
@@ -186,23 +186,44 @@ def _is_bonus_letter_format(board_format):
 def _sanitize_special_tiles_for_format(board, board_format, bonus_cell):
     """Ensure bonus_cell ONLY exists on Bonus Letter format and '/' ONLY exists on Either/Or format."""
     fmt_low = str(board_format or 'Normal').strip().lower()
-    if not _is_bonus_letter_format(fmt_low):
+    is_bl = _is_bonus_letter_format(fmt_low)
+    is_eo = ('either' in fmt_low)
+
+    # Mutual exclusivity: Bonus Letter cannot have Either/Or tiles; Either/Or cannot have bonus_cell
+    if not is_bl:
         bonus_cell = None
-    if 'either' not in fmt_low and isinstance(board, list) and len(board) > 0:
-        is_3d = isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list)
-        if is_3d:
-            for f in range(len(board)):
-                for r in range(len(board[f])):
-                    for c in range(len(board[f][r])):
-                        val = str(board[f][r][c])
+
+    if is_eo:
+        bonus_cell = None
+        # Ensure at least one dual tile exists
+        if isinstance(board, list) and len(board) > 0:
+            is_3d = isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list)
+            has_dual = False
+            if is_3d:
+                has_dual = any('/' in str(board[f][r][c]) for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])))
+                if not has_dual and len(board) > 0 and len(board[0]) > 0 and len(board[0][0]) > 0:
+                    board[0][0][0] = f"{board[0][0][0]}/E" if '/' not in str(board[0][0][0]) else board[0][0][0]
+            else:
+                has_dual = any('/' in str(board[r][c]) for r in range(len(board)) for c in range(len(board[r])))
+                if not has_dual and len(board) > 0 and len(board[0]) > 0:
+                    board[0][0] = f"{board[0][0]}/E" if '/' not in str(board[0][0]) else board[0][0]
+    else:
+        # Non-Either/Or formats MUST NEVER contain '/'
+        if isinstance(board, list) and len(board) > 0:
+            is_3d = isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list)
+            if is_3d:
+                for f in range(len(board)):
+                    for r in range(len(board[f])):
+                        for c in range(len(board[f][r])):
+                            val = str(board[f][r][c])
+                            if '/' in val:
+                                board[f][r][c] = val.split('/')[0] or 'E'
+            else:
+                for r in range(len(board)):
+                    for c in range(len(board[r])):
+                        val = str(board[r][c])
                         if '/' in val:
-                            board[f][r][c] = val.split('/')[0] or 'E'
-        else:
-            for r in range(len(board)):
-                for c in range(len(board[r])):
-                    val = str(board[r][c])
-                    if '/' in val:
-                        board[r][c] = val.split('/')[0] or 'E'
+                            board[r][c] = val.split('/')[0] or 'E'
     return bonus_cell
 
 
@@ -997,18 +1018,25 @@ class BoardGenerator:
         else:
             return "Hard"
 
-    def _sanitize_rare_letters(self, board, depth=1, protected_positions=None, is_checkerboard=False, difficulty="Medium"):
+    def _sanitize_rare_letters(self, board, depth=1, protected_positions=None, is_checkerboard=False, difficulty="Medium", board_format=None, mania_letter=None):
         """
         USER MANDATE: Ironclad enforcement of rare letter distribution.
         1. Max 1 of each super-rare (Q, Z, J, X, K) (0 if Easy difficulty).
         2. Max 3 TOTAL super-rare letters per board (0 if Easy difficulty) (New Hardening).
+        3. EXCEPTION: If round format is Mania (e.g. 'X Mania'), the mania letter is NEVER capped!
         """
-        active_mania = getattr(self, 'active_mania_letter', None)
+        active_mania = mania_letter or getattr(self, 'active_mania_letter', None)
+        if not active_mania and board_format:
+            bf_str = str(board_format).strip().upper()
+            if "MANIA" in bf_str:
+                parts = bf_str.split()
+                if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
+                    active_mania = parts[0]
         rare_letters = {'Q', 'Z', 'J', 'X', 'K'}
         found_counts = {rl: 0 for rl in rare_letters}
         total_rares_found = 0
         
-        # If Easy difficulty, forbid any rare letters unless they are part of the protected bonus word
+        # If Easy difficulty, forbid any rare letters unless they are part of the protected bonus word or active mania
         max_per_rare = 0 if difficulty == "Easy" else 1
         max_total_rares = 0 if difficulty == "Easy" else 3
         
@@ -1931,9 +1959,53 @@ class BoardGenerator:
                 )
                 
         # Mandatory Checkerboard safeguard audit right before returning
+        needs_final_resolve = False
         if "checkerboard" in str(board_format).lower():
             from board_generator import LETTER_WEIGHTS
-            self._verify_checkerboard_safeguard(board, LETTER_WEIGHTS, set())
+            if not self._is_checkerboard_layout(board):
+                repaired = self._verify_checkerboard_safeguard(board, LETTER_WEIGHTS, set())
+                if repaired:
+                    needs_final_resolve = True
+        else:
+            if self._is_checkerboard_layout(board):
+                if self._break_accidental_checkerboard(board):
+                    needs_final_resolve = True
+
+        # Mandatory Mania abundance verification
+        bf_upper = str(board_format).strip().upper()
+        if "MANIA" in bf_upper:
+            parts = bf_upper.split()
+            if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
+                m_letter = parts[0]
+                is_3d_m = isinstance(board, list) and len(board) > 0 and isinstance(board[0], list) and isinstance(board[0][0], list)
+                if is_3d_m:
+                    m_cnt = sum(1 for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])) if board[f][r][c] == m_letter)
+                else:
+                    m_cnt = sum(1 for r in range(len(board)) for c in range(len(board[r])) if board[r][c] == m_letter)
+                import math
+                total_cells_m = (len(board)*len(board[0])*len(board[0][0])) if is_3d_m else (len(board)*len(board[0]))
+                rare_m = {'Q', 'Z', 'J', 'X', 'K'}
+                target_ratio_m = (1.0 / 5.0) if m_letter in rare_m else (1.0 / 3.0)
+                target_m_cnt = max(3, math.ceil(total_cells_m * target_ratio_m))
+                if m_cnt < target_m_cnt:
+                    self._apply_mania_to_board(board, m_letter, set(), is_checkerboard=False)
+                    needs_final_resolve = True
+
+        if needs_final_resolve:
+            display_min = min_word_length
+            final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
+            all_words_dict = self._solve_board(
+                board, dictionary, (0, 99999), display_min, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+            )
+            all_words = sorted(list(all_words_dict.keys()))
+            ratio = self.get_uniqueness_ratio(
+                board, 
+                all_words, 
+                len(board[0]) if is_3d else len(board), 
+                len(board[0][0]) if is_3d else len(board[0]), 
+                dictionary, 
+                depth
+            )
 
         # Trigger background refill to populate the cache up to 3
         refill_board_cache_bg(self, param_key_str, target_count=10)
@@ -3254,9 +3326,9 @@ class BoardGenerator:
                 return (board, sorted(list(final_solve.keys())), bonus_cell, board_format, final_solve, ratio, final_bonus)
             else:
                 print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {_attempt} FAILED: {count} words is not in {min_words}-{max_words}")
-    def _final_rare_letter_polish(self, board, depth, protected_positions=None, difficulty=None):
+    def _final_rare_letter_polish(self, board, depth, protected_positions=None, difficulty=None, board_format=None, mania_letter=None):
         """Final audit to clean rare letters and forbidden sequences."""
-        self._sanitize_rare_letters(board, depth, protected_positions=protected_positions)
+        self._sanitize_rare_letters(board, depth, protected_positions=protected_positions, difficulty=difficulty, board_format=board_format, mania_letter=mania_letter)
         if _normalize_difficulty_base(difficulty) in ["Medium", "Hard"]:
             self._sanitize_forbidden_sequences(board, depth, protected_positions=protected_positions)
 
@@ -5514,9 +5586,7 @@ class BoardGenerator:
             for fi in range(depth_val):
                 for ri in range(rows):
                     for ci in range(cols):
-                        # Yield GIL to keep Flask responsive
-                        time.sleep(0.001)
-                        if time.time() - solver_start_time > solver_timeout:
+                        if solver_timeout and (time.time() - solver_start_time > solver_timeout):
                             break
                         if not store_paths:
                             dfs_no_path(fi, ri, ci, 1, "", trie_root, False, False)
@@ -5587,8 +5657,6 @@ class BoardGenerator:
 
         for r in range(rows):
             for c in range(cols):
-                # Yield GIL to keep Flask responsive
-                time.sleep(0.001)
                 cell_val = str(board[r][c])
                 letters = cell_val.split("/") if "/" in cell_val else [cell_val]
                 for char in letters:
@@ -5859,7 +5927,9 @@ class BoardGenerator:
     def _verify_checkerboard_safeguard(self, board, weights=None, bonus_cells_set=None):
         """Final check to ensure the board strictly alternates C/V in checkerboard mode."""
         if not board:
-            return
+            return 0
+        if self._is_checkerboard_layout(board):
+            return 0
         if weights is None:
             weights = getattr(self, 'weights', [1] * 26)
         v_indices = [self.letters.index(v) for v in VOWELS]
@@ -5904,6 +5974,7 @@ class BoardGenerator:
 
         if repaired > 0:
             print(f"[BoardGen] Checkerboard Safeguard: Forced {repaired} letters to maintain alternation pattern.")
+        return repaired
 
     def _is_checkerboard_layout(self, board, depth=1):
         """Check if board strictly follows a C/V or V/C alternating pattern."""
@@ -5936,8 +6007,19 @@ class BoardGenerator:
     def _break_accidental_checkerboard(self, board, depth=1, protected_positions=None):
         """If a non-checkerboard board accidentally has strict alternating C/V, break the alternation."""
         if not self._is_checkerboard_layout(board, depth=depth):
-            return
+            return False
         rows = len(board)
+        cols = len(board[0])
+        protected = set(protected_positions) if protected_positions else set()
+        for r in range(rows):
+            for c in range(cols):
+                if (r, c) not in protected and "/" not in str(board[r][c]):
+                    curr = board[r][c]
+                    if not self._is_vowel(curr):
+                        board[r][c] = 'E'
+                        print(f"[BoardGen] Broke accidental checkerboard pattern at ({r}, {c}) for non-checkerboard board.")
+                        return True
+        return False
         cols = len(board[0])
         protected = set(protected_positions) if protected_positions else set()
         for r in range(rows):
