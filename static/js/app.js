@@ -4,11 +4,12 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33210';
+const CURRENT_APP_BUILD = '33211';
 (function() {
     try {
         localStorage.setItem('morpheme_build_version', CURRENT_APP_BUILD);
         sessionStorage.removeItem('morpheme_reload_done');
+        sessionStorage.removeItem('morpheme_gateway_passed');
     } catch(e) {}
 })();
 
@@ -731,7 +732,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         gatewayTransitioning = true;
         window._gatewayTransitioning = true;
         window._gatewayPassed = true;
-        try { sessionStorage.setItem('morpheme_gateway_passed', 'true'); } catch (err) {}
+        try { sessionStorage.removeItem('morpheme_gateway_passed'); } catch (err) {}
 
         // Immediately trigger mobile fullscreen synchronously on user gesture so notice appears on ENTER LOBBY
         if (typeof window.triggerMobileFullscreen === 'function') {
@@ -1147,18 +1148,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.currentUser = null;
     }
 
+    const activePageEl = document.querySelector('.page.active');
+    const activePageId = activePageEl ? activePageEl.id : '';
+
     const gatewayAlreadyPassed = (!isLoggedOutExplicitly) && (
         window._gatewayPassed ||
-        sessionStorage.getItem('morpheme_gateway_passed') === 'true' ||
-        window._gatewayTransitioning ||
-        window.currentPageId === 'page-lobby' ||
-        activePageId === 'page-lobby'
+        window._gatewayTransitioning
     );
 
     if (gatewayAlreadyPassed) {
         console.log('[app.js] Gateway already passed by user; retaining active view.');
         window._gatewayPassed = true;
-        try { sessionStorage.setItem('morpheme_gateway_passed', 'true'); } catch(e) {}
         const curPage = (window.currentPageId && window.currentPageId !== 'page-loading') ? window.currentPageId : 'page-lobby';
         showPage(curPage);
         const targetNav = curPage.replace('page-', '');
@@ -2437,7 +2437,7 @@ window.showPage = showPage;
     }
     if (pageId === 'page-loading') {
         const isLoggedOut = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
-        const gatewayPassed = (!isLoggedOut) && (window._gatewayPassed || sessionStorage.getItem('morpheme_gateway_passed') === 'true');
+        const gatewayPassed = (!isLoggedOut) && window._gatewayPassed;
         if (gatewayPassed) {
             console.warn('[Navigation] Gateway already passed. Preventing return to page-loading.');
             pageId = (window.currentPageId && window.currentPageId !== 'page-loading') ? window.currentPageId : 'page-lobby';
@@ -2464,7 +2464,7 @@ window.showPage = showPage;
     if (pageId && pageId !== 'page-loading' && pageId !== 'page-login') {
         sessionStorage.setItem('morpheme_active_page', pageId);
         window._gatewayPassed = true;
-        try { sessionStorage.setItem('morpheme_gateway_passed', 'true'); } catch(e) {}
+        try { sessionStorage.removeItem('morpheme_gateway_passed'); } catch(e) {}
         const isLoggedOut = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
         const activeUser = isLoggedOut ? null : (currentUser || window.currentUser || localStorage.getItem('morpheme_username'));
         if (activeUser) {

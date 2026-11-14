@@ -3,8 +3,8 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_14
-Commit ID: 694ed662
-Short ID:  694ed662
+Commit ID: 04391387
+Short ID:  04391387
 ```
 *(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_14`, `STABLE_STATE_TODAY`, `stable-2026-11-14`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
@@ -13,15 +13,22 @@ Short ID:  694ed662
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `694ed662` & tagged with `START_OVER_POINT_NOVEMBER_14` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `694ed662`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
-| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33210`) |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `04391387` & tagged with `START_OVER_POINT_NOVEMBER_14` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `04391387`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
+| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33211`) |
 
 ---
 
 ## Session Features & Fixes (November 14, 2026)
 
-### 1. Reverse Dictionary Tool ("Key Word in Definition" / Find Words by Meaning)
+### 1. Consistent Gateway Presentation ("ENTER LOBBY" Screen on Every Visit)
+- **Elimination of Tab Session Bypass (`templates/index.html`, `static/js/app.js`):**
+  - Removed `sessionStorage.getItem('morpheme_gateway_passed')` bypass checks that previously skipped the gateway screen on reloads or re-visits in the same tab.
+  - The **ENTER LOBBY** screen now reliably and consistently appears whenever the site is opened, refreshed, or visited from an external URL (such as navigating to `google.ca` and then returning to `morpheme.games`).
+  - Single-page in-app navigation across top tabs (Lobby, Play, Tools, Mods, Leaderboard, Settings, Profile, Forum) continues smoothly without re-prompting the gateway.
+  - Active game sessions (`#page-play`) remain protected so ongoing matches resume seamlessly on refresh.
+
+### 2. Reverse Dictionary Tool ("Key Word in Definition" / Find Words by Meaning)
 - **Tool Architecture & Interface (`templates/index.html`, `static/js/tools.js`, `static/css/play.css`):**
   - Integrated under the Random Word tab in the Tools menu (`#tool-reverse-dictionary`).
   - Search input with clear button (`✕`), search button (`Search`), and keyboard `Enter` trigger.
@@ -89,4 +96,4 @@ Short ID:  694ed662
   - Force-updated tags `START_OVER_POINT_NOVEMBER_14`, `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_14`, `STABLE_STATE_TODAY`, `stable-2026-11-14`, `start-over`, `latest-stable-state`, and `current-stable-state`.
   - Pulled to `132.148.72.249`, PM2 restarted, live HTTP 200 OK verified on `https://morpheme.games/`.
   - Local server running cleanly on `http://localhost:5001/`.
-  - Build version bumped to `33210` (cache-buster `1794156000`).
+  - Build version bumped to `33211` (cache-buster `1794157000`).

@@ -187,7 +187,7 @@
     <link rel="preload" href="/css/lobby.css?v=1794100000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1794141000">
     <link rel="stylesheet" href="/css/lobby.css?v=1794100000">
-    <link rel="stylesheet" href="/css/play.css?v=1794156000">
+    <link rel="stylesheet" href="/css/play.css?v=1794157000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -2021,14 +2021,7 @@
                     if (!activeUser && !isLoggedOutExplicitly) {
                         activeUser = localStorage.getItem('morpheme_username');
                     }
-                    var isGatewayPassed = (sessionStorage.getItem('morpheme_gateway_passed') === 'true') && !isLoggedOutExplicitly;
-                    if (isGatewayPassed) {
-                        window._gatewayPassed = true;
-                        var pLoad = document.getElementById('page-loading');
-                        var pLobby = document.getElementById('page-lobby');
-                        if (pLoad) { pLoad.classList.remove('active'); pLoad.style.display = 'none'; }
-                        if (pLobby) { pLobby.classList.add('active'); pLobby.style.display = 'flex'; }
-                    }
+                    try { sessionStorage.removeItem('morpheme_gateway_passed'); } catch(e) {}
                     var gb = document.getElementById('btn-enter-lobby-gateway');
                     var lb = document.getElementById('btn-login-gateway');
                     if (gb && lb) {
@@ -2086,7 +2079,7 @@
                 // Lock transition immediately so synthetic double clicks / pointerup events cannot race
                 window._gatewayTransitioning = true;
                 window._gatewayPassed = true;
-                try { sessionStorage.setItem('morpheme_gateway_passed', 'true'); } catch(e) {}
+                try { sessionStorage.removeItem('morpheme_gateway_passed'); } catch(e) {}
 
                 // Immediately trigger mobile fullscreen synchronously on direct user gesture
                 if (typeof window.triggerMobileFullscreen === 'function') {
@@ -2385,15 +2378,7 @@
                         if (loginGwBtn) loginGwBtn.style.display = 'none';
                     }
 
-                    // If gateway already passed in this session (and not logged out), retain active lobby directly
-                    const isGatewayPassed = (window._gatewayPassed || sessionStorage.getItem('morpheme_gateway_passed') === 'true') && !loggedOut;
-                    if (isGatewayPassed) {
-                        window._gatewayPassed = true;
-                        const pLoad = document.getElementById('page-loading');
-                        const pLobby = document.getElementById('page-lobby');
-                        if (pLoad) { pLoad.classList.remove('active'); pLoad.style.display = 'none'; }
-                        if (pLobby) { pLobby.classList.add('active'); pLobby.style.display = 'flex'; }
-                    } else if (window.location.hash && window.location.hash !== '#page-play') {
+                    if (window.location.hash && window.location.hash !== '#page-play') {
                         // Keep the Gateway Screen (ENTER LOBBY) active so users never see a jarring login flash!
                         // Clean up any stale hash so the app cleanly displays the Gateway screen.
                         try {
@@ -10287,13 +10272,13 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1794143000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794156000"></script>
+    <script src="/js/app.js?v=1794157000"></script>
     <script src="/js/lobby.js?v=1794133000"></script>
     <script src="/js/play.js?v=1794147000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1794156000"></script>
+    <script src="/js/tools.js?v=1794157000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1794138000"></script>
