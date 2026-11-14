@@ -3,8 +3,8 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_13
-Commit ID: c2e3b854
-Short ID:  c2e3b854
+Commit ID: 5cc840b4
+Short ID:  5cc840b4
 ```
 *(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
@@ -13,9 +13,9 @@ Short ID:  c2e3b854
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `c2e3b854` & tagged with `START_OVER_POINT_NOVEMBER_13` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `c2e3b854`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
-| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33205`) |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `5cc840b4` & tagged with `START_OVER_POINT_NOVEMBER_13` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `5cc840b4`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
+| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33206`) |
 
 ---
 
@@ -195,6 +195,15 @@ Short ID:  c2e3b854
   - Composite concepts engine (`COMPOSITE_CONCEPTS`) for multi-word concept definitions.
   - Ranking score prioritizing exact phrase matches, then full token matches, followed by shorter word length and alphabetical order.
   - Returns matched keywords in `matched_terms` for frontend highlighting.
+- **Recursive Taxonomic Hyponym Expansion & Concept Linking (`app.py`):**
+  - Added recursive noun hyponym closure up to depth 6 (`closure(lambda ss: ss.hyponyms(), depth=6)`) so broad categories like `bird` or `fowl` expand to families, sub-species, and compound terms (`peacock`, `seabird`, `waterfowl`, `shorebird`, `songbird`, `chionidid`, etc.).
+  - Linked top synsets across related lemma sister trees (e.g. `bird` $\leftrightarrow$ `fowl`).
+  - Added plural and inflection expansion for all generated terms.
+  - Resolved specific queries: searching `bird` or `fowl` in Similar to mode now surfaces `PAJOCK` (Shakespeare conjecture for peacock) and `SHEATHBILL` (Antarctic seabirds).
+- **Removal of Table Limits (`app.py`, `static/js/tools.js`):**
+  - Removed arbitrary limit caps (`limit = 500 / 1000`) on backend search and frontend rendering. All matching definitions are returned and displayed in the results table without pagination caps (e.g. 9,151 matches for `bird`, including `CHIONIDID` at rank #1,216).
+- **High-Performance Set Intersection Optimization (`app.py`):**
+  - Implemented fast token set intersection (`d_tokens & stem_set`) via string translation whenever `stem_set > 30`, allowing 4,000+ expanded terms to scan across 827,000+ cached definitions in ~1.1s with zero persistent memory overhead.
 - **Results Table & Visual Layout:**
   - Strict layout constraint: zero outer page scrolling (`no-outer-scroll`); content fits 100% within the screen viewport across desktop and mobile devices.
   - Dedicated internal custom scroller with `.custom-scrollbar-track` and `.custom-scrollbar-thumb`.
@@ -214,9 +223,10 @@ Short ID:  c2e3b854
   - Sort comparator logic & tie-break contracts: verified across all test cases.
   - Daily login tracking & activity stats contracts: verified on both local and production.
   - Reverse Dictionary queries (`snake`, `fishes`, `mean old woman`, `derogatory`): 200 OK across both Exact and Similar modes.
+  - Recursive hyponym queries (`bird`, `fowl`): verified `PAJOCK`, `SHEATHBILL`, and `CHIONIDID` present in full 9,151 results with no table truncation.
 - Production deployment:
-  - Commit `351a83e5` pushed to GitHub `origin/main`.
+  - Commit `5cc840b4` pushed to GitHub `origin/main`.
   - Force-updated tags `START_OVER_POINT_NOVEMBER_13`, `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`.
   - Pulled to `132.148.72.249`, PM2 restarted, live HTTP 200 OK verified on `https://morpheme.games/`.
   - Local server running cleanly on `http://localhost:5001/`.
-  - Build version bumped to `33205` (cache-buster `1794151000`).
+  - Build version bumped to `33206` (cache-buster `1794152000`).
