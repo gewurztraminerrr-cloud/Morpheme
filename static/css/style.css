@@ -2485,8 +2485,6 @@ body.theme-white .header {
     box-sizing: border-box;
 }
 
-.profile-quote-minimal p,
-.profile-quote-minimal div,
 #profile-quote-val,
 #profile-description-val {
     font-size: 1.05rem;
@@ -2504,6 +2502,19 @@ body.theme-white .header {
     box-sizing: border-box;
     padding: 10px 14px;
     -webkit-overflow-scrolling: touch;
+}
+
+#profile-quote-val *,
+#profile-description-val * {
+    min-height: 0 !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    line-height: 1.6 !important;
 }
 
 #profile-quote-val {
@@ -9266,8 +9277,6 @@ select option,
         padding: 14px 16px !important;
         border-radius: 16px !important;
     }
-    .profile-quote-box .profile-quote-minimal p,
-    .profile-quote-box .profile-quote-minimal div,
     #profile-quote-val,
     #profile-description-val {
         min-height: 110px !important;
@@ -9277,6 +9286,19 @@ select option,
         border-radius: 12px !important;
         width: 100% !important;
         box-sizing: border-box !important;
+    }
+
+    #profile-quote-val *,
+    #profile-description-val * {
+        min-height: 0 !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        line-height: 1.6 !important;
     }
     .profile-quote-box .meta-label {
         text-align: left !important;

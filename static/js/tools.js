@@ -5553,9 +5553,32 @@ function setupProfileEditing(isOwner) {
             });
 
             newEl.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && field.key !== 'description') {
+                if (e.key === 'Enter') {
+                    if (field.key !== 'description') {
+                        e.preventDefault();
+                        newEl.blur();
+                        return;
+                    }
                     e.preventDefault();
-                    newEl.blur();
+                    if (document.queryCommandSupported && document.queryCommandSupported('insertLineBreak')) {
+                        document.execCommand('insertLineBreak');
+                    } else if (document.queryCommandSupported && document.queryCommandSupported('insertText')) {
+                        document.execCommand('insertText', false, '\n');
+                    } else {
+                        const sel = window.getSelection();
+                        if (sel && sel.rangeCount > 0) {
+                            const range = sel.getRangeAt(0);
+                            range.deleteContents();
+                            const br = document.createElement('br');
+                            range.insertNode(br);
+                            range.setStartAfter(br);
+                            range.setEndAfter(br);
+                            sel.removeAllRanges();
+                            sel.addRange(range);
+                        }
+                    }
+                    updateProfileFieldCounter(field.key, newEl.innerText);
+                    checkEmptyState();
                     return;
                 }
                 const isNavOrControl = e.ctrlKey || e.metaKey || ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'Tab'].includes(e.key);
