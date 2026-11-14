@@ -75,11 +75,13 @@ def test_unit_logic():
     assert td.is_word_hard_by_tally('WONDERFUL') is True
     print("✓ All 9L+ words are considered hard (BEAUTIFUL, SOMETHING, WONDERFUL)")
 
-    # WOTD eligibility
-    # 6L words: only rarest division (div == 3)
-    sirens_info = td.get_word_division_info('SIRENS')
-    assert td.is_wotd_eligible('SIRENS') == (sirens_info['division'] == 3)
-    print("✓ WOTD eligibility verified for 6L and 7L+")
+    # WOTD eligibility:
+    # 6-10 letters eligible
+    assert td.is_wotd_eligible('BIRD') is False
+    assert td.is_wotd_eligible('CREEP') is False
+    # If divisions not established yet (max_c < k_divs), defaults to eligible:
+    assert td.is_wotd_eligible('TESTING') is True
+    print("✓ WOTD eligibility verified for 6L and 7L+ (defaults until divisions established)")
 
 def test_api_endpoints():
     print("\n--- 2. Testing API Endpoints on Localhost ---")

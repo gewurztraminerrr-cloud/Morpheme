@@ -444,13 +444,13 @@ def is_wotd_eligible(word: str) -> bool:
         return False
 
     max_c = get_max_count_by_length(length)
-    if max_c <= 0:
-        # Divisions have not been made yet: default to anything
+    k_divs = get_num_divisions(length)
+    if max_c < k_divs:
+        # Divisions have not been made/established yet for this letter length: default to anything
         return True
 
     div_info = get_word_division_info(raw_word)
     div = div_info['division']
-    k_divs = div_info['max_divisions']
 
     if length == 6:
         # "as well as the rarest division for 6-letter words for candidates of the Word of the Day"
