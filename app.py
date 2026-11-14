@@ -12239,16 +12239,25 @@ def tools_reverse_dictionary():
         query = data.get('query', '')
         mode = data.get('mode', 'similar')
         dict_name = data.get('dictionary', 'all')
+        length_filter = data.get('length') or data.get('len')
     else:
         query = request.args.get('query', '') or request.args.get('q', '')
         mode = request.args.get('mode', 'similar')
         dict_name = request.args.get('dictionary', 'all') or request.args.get('dict', 'all')
+        length_filter = request.args.get('length') or request.args.get('len')
 
     query = (query or '').strip()
     if not query:
         return jsonify({'error': 'No query provided', 'results': [], 'count': 0}), 400
 
     dict_filter = (dict_name or 'all').upper().strip()
+
+    target_length = None
+    if length_filter and str(length_filter).strip().lower() != 'all':
+        try:
+            target_length = int(length_filter)
+        except (ValueError, TypeError):
+            pass
 
     search_list = get_reverse_dict_search_list()
     words = re.findall(r'[a-zA-Z0-9]+', query.lower())
@@ -12306,6 +12315,8 @@ def tools_reverse_dictionary():
 
     matches = []
     for word, defn, d_low in search_list:
+        if target_length and len(word) != target_length:
+            continue
         matched = True
         matched_in_entry = set()
         
@@ -12398,6 +12409,7 @@ def tools_reverse_dictionary():
         'query': query,
         'mode': mode,
         'dictionary': dict_name,
+        'length': length_filter or 'all',
         'count': len(matches),
         'results': matches,
         'matched_terms': matched_terms

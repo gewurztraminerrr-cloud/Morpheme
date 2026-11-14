@@ -22810,6 +22810,18 @@ body[class*="theme-light-"] .preview-hitbox-tile,
     color: #94a3b8;
     margin-left: 6px;
     vertical-align: middle;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+    user-select: none;
+}
+
+.reverse-dict-length-badge:hover {
+    background: rgba(56, 189, 248, 0.22) !important;
+    color: #38bdf8 !important;
+}
+
+.reverse-dict-length-badge:active {
+    transform: scale(0.92);
 }
 
 .reverse-dict-highlight {
@@ -22946,8 +22958,8 @@ body[class*="theme-light-"] .preview-hitbox-tile,
     .reverse-dict-select {
         flex: 1 1 0 !important;
         min-width: 0 !important;
-        font-size: 0.78rem !important;
-        padding: 0 6px !important;
+        font-size: 0.74rem !important;
+        padding: 0 4px !important;
         height: 34px !important;
         border-radius: 6px !important;
     }
@@ -23163,6 +23175,13 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-length-badge,
 [class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-length-badge {
     background: #e2e8f0 !important;
     color: #475569 !important;
+}
+
+body.theme-white #tool-reverse-dictionary .reverse-dict-length-badge:hover,
+[class*="theme-white"] #tool-reverse-dictionary .reverse-dict-length-badge:hover,
+[class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-length-badge:hover {
+    background: #0284c7 !important;
+    color: #ffffff !important;
 }
 
 body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,

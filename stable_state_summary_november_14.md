@@ -3,8 +3,8 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_14
-Commit ID: b3fe5368
-Short ID:  b3fe5368
+Commit ID: 67117585
+Short ID:  67117585
 ```
 *(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_14`, `STABLE_STATE_TODAY`, `stable-2026-11-14`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
@@ -13,9 +13,9 @@ Short ID:  b3fe5368
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `b3fe5368` & tagged with `START_OVER_POINT_NOVEMBER_14` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `b3fe5368`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
-| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33211`) |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `67117585` & tagged with `START_OVER_POINT_NOVEMBER_14` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `67117585`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
+| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33213`) |
 
 ---
 
@@ -38,7 +38,16 @@ Short ID:  b3fe5368
   - Dropdown options:
     - **Search Mode**: `Similar to` (default) or `Exact` (inflections).
     - **Dictionaries**: `All Dictionaries` (default), `NWL`, `CSW`, `Added Words (AW)`.
+    - **Letter Length**: `All Lengths` (default), or specific letter length from 2 to 28 letters with dynamic word counts.
   - Dedicated custom scrollbar (`.reverse-dict-table-scroll`) strictly containing all table rows with **zero outer page scrolling** (`no-outer-scroll`), fitting 100% within the viewport across desktop and mobile screens.
+
+- **Output Table Selection by Letter Length (`templates/index.html`, `static/js/tools.js`, `app.py`, `static/css/play.css`):**
+  - **Letter Length Dropdown Selector (`#reverse-dict-length`)**: Added directly in the controls actions row alongside Match Mode and Dictionary selectors. Allows users to filter table output by exact letter length or view all lengths.
+  - **Dynamic Length Aggregation with Counts**: Upon search completion, the dropdown dynamically populates with the available letter lengths and their exact word counts (e.g. `All Lengths (9,151)`, `3 Letters (38)`, `4 Letters (213)`, `5 Letters (545)`).
+  - **Instantaneous Zero-Latency Filtering**: Selecting any letter length from the dropdown instantly filters the results table in 0ms directly from client memory without requiring a server re-query.
+  - **Interactive Length Badges in Table**: Word length badges in the table are clickable with interactive hover effects; clicking a length badge (e.g. `5`) automatically selects that length in the dropdown and filters the table. Clicking again toggles back to All Lengths.
+  - **Dynamic Status Counter & Numbering**: Updates the status text (e.g. `Found 545 words (5 letters) for "bird" (9,151 total)`) and recalculates sequential row numbers (1, 2, 3...) for the filtered view.
+  - **Backend API Support**: Enhanced `/api/tools/reverse-dictionary` to accept `length` / `len` parameter, skipping non-matching lengths early before computing token sets.
 
 - **High-Performance Semantic & Taxonomic Engine (`app.py`):**
   - Pre-warmed cache over 827,000+ definitions in `DEFINITIONS_CACHE`.
