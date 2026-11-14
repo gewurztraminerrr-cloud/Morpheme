@@ -10063,7 +10063,8 @@ _NOUN_DEF_REGEX = re.compile(
     r'\b(?:plural|agent noun|diminutive)\s+(?:of|for)\b|'
     r'\b(?:plural\s+form|noun)\b|'
     r'\b(?:someone|anyone|a\s+person|one|those|people)\s+who\b|'
-    r'\b(?:a|an|the)\s+(?:member|native|inhabitant|follower|supporter|advocate|practitioner)\s+of\b|'
+    r'\b(?:citizen|inhabitant|native|member|resident|ruler|leader|official|follower|supporter|advocate|practitioner)\s+of\b|'
+    r'\b(?:an?\s+(?:[a-z\-]+\s+)*(?:enzyme|protein|hormone|chemical|substance|compound|mineral|metal|alloy|element|acid|alkaloid|polymer|lipid|sugar|vitamin|organism|plant|animal|tree|shrub|flower|bird|fish|insect|reptile|mammal|device|instrument|tool|apparatus|machine|vessel|vehicle|garment|clothing|fabric|structure|building|settlement|town|city|region))\b|'
     r'\b(?:the\s+)?(?:act|action|process|practice|state|condition|quality|property|study|science|art|doctrine|theory|belief|system)\s+of\b'
     r')',
     re.IGNORECASE
@@ -10079,6 +10080,11 @@ _EXPLICIT_NON_NOUN_REGEX = re.compile(
 
 _NOUN_SUFFIX_REGEX = re.compile(
     r'(?:tion|sion|ment|ness|ity|ism|ship|hood|ist|ance|ence)s?$',
+    re.IGNORECASE
+)
+
+_CROSS_REF_POINTER_REGEX = re.compile(
+    r'\b(?:alternative\s+(?:form|spelling)\s+of|variant\s+of|also|same\s+as)\s+([A-Za-z\-]+)',
     re.IGNORECASE
 )
 
@@ -10098,6 +10104,13 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
     raw_def = DEFINITIONS_CACHE.get(w_upper, '') if isinstance(DEFINITIONS_CACHE, dict) else ''
     combined_text = f"{d} {raw_def}".strip()
 
+    ref_target = None
+    m_ptr = _CROSS_REF_POINTER_REGEX.search(combined_text)
+    if m_ptr:
+        candidate_ref = m_ptr.group(1).lower()
+        if candidate_ref != w_lower and len(candidate_ref) > 2:
+            ref_target = candidate_ref
+
     is_noun = False
     if _NOUN_DEF_REGEX.search(combined_text):
         is_noun = True
@@ -10110,6 +10123,8 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
             else:
                 m = wn.morphy(w_lower, wn.NOUN)
                 if m and wn.synsets(m, pos=wn.NOUN):
+                    is_noun = True
+                elif ref_target and wn.synsets(ref_target, pos=wn.NOUN):
                     is_noun = True
                 elif not _EXPLICIT_NON_NOUN_REGEX.search(combined_text) and _NOUN_SUFFIX_REGEX.search(w_lower):
                     is_noun = True
@@ -10132,6 +10147,14 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
         m_plural = re.search(r'\b(?:plural|diminutive)\s+(?:of|for)\s+([A-Za-z\-]+)', combined_text, re.IGNORECASE)
         if m_plural:
             lemma = m_plural.group(1).lower()
+
+    if not lemma and ref_target:
+        try:
+            from nltk.corpus import wordnet as wn
+            if wn.synsets(ref_target, pos=wn.NOUN):
+                lemma = ref_target
+        except Exception:
+            pass
 
     if not lemma:
         try:
