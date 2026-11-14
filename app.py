@@ -4441,6 +4441,11 @@ def init_db():
 
 init_db()
 init_db_indexes()
+try:
+    import tally_divisions as td
+    td.sync_word_stats_from_db(DB_PATH)
+except Exception as e:
+    print(f"[init_db] Tally divisions sync error: {e}")
 reload_banned_ips()
 reload_ip_timeouts()
 
@@ -12986,7 +12991,6 @@ def tools_find_count():
 
     try:
         finds = _get_word_finds(word)
-        total_count = len(finds)
         recent_finds = finds[:10]
         
         # Check if the word is valid in dictionaries (NWL, CSW, supplementary 16+, or added words)
@@ -12995,10 +12999,16 @@ def tools_find_count():
         # Tally division information
         import tally_divisions as td
         div_info = td.get_word_division_info(word)
+        tally_count = div_info.get('count', 0)
+        
+        # Synchronized total count: global tally count from word_stats.json (which also captures guest/unregistered matches)
+        total_count = max(tally_count, len(finds))
         
         return jsonify({
             'word': word,
             'count': total_count,
+            'tally_count': tally_count,
+            'registered_count': len(finds),
             'recent': recent_finds,
             'is_valid': is_valid,
             'length': len(word),

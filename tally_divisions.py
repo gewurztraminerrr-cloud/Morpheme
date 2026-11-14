@@ -108,6 +108,80 @@ def get_max_count_by_length(length: int) -> int:
     get_word_stats()
     return _STATS_MAX_BY_LEN.get(length, 0)
 
+def sync_word_stats_from_db(db_path: str = None) -> int:
+    """
+    Ensure word_stats.json accurately reflects all finds in round_history.
+    Any word found in registered round_history is guaranteed to have at least that count in word_stats.json.
+    Returns the number of words updated.
+    """
+    import sqlite3
+    global _STATS_CACHE, _STATS_MTIME, _STATS_MAX_BY_LEN
+    if not db_path:
+        db_path = os.path.join(BASE_DIR, 'morpheme.db')
+    if not os.path.exists(db_path) or not os.path.exists(STATS_PATH):
+        return 0
+
+    try:
+        conn = sqlite3.connect(db_path, timeout=30)
+        c = conn.cursor()
+        c.execute("SELECT words_json FROM round_history WHERE words_json IS NOT NULL AND words_json != ''")
+        db_counts = {}
+        for r in c.fetchall():
+            try:
+                w_list = json.loads(r[0])
+                if isinstance(w_list, list):
+                    found_set = set()
+                    for w in w_list:
+                        if isinstance(w, str) and w:
+                            found_set.add(w.upper())
+                        elif isinstance(w, dict) and w.get('word'):
+                            found_set.add(w['word'].upper())
+                    for word in found_set:
+                        db_counts[word] = db_counts.get(word, 0) + 1
+            except Exception:
+                pass
+        conn.close()
+
+        if not db_counts:
+            return 0
+
+        # Read current stats with file lock
+        with open(STATS_PATH, 'r+') as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                stats = json.load(f)
+            except Exception:
+                stats = {}
+
+            updated = 0
+            for w, cnt in db_counts.items():
+                if cnt > stats.get(w, 0):
+                    stats[w] = cnt
+                    updated += 1
+
+            if updated > 0:
+                f.seek(0)
+                f.truncate()
+                json.dump(stats, f)
+                f.flush()
+                os.fsync(f.fileno())
+                _STATS_CACHE = stats
+                _STATS_MTIME = os.path.getmtime(STATS_PATH)
+                # Recompute max counts
+                max_counts = {}
+                for w, c in stats.items():
+                    if isinstance(c, (int, float)) and c > 0:
+                        l = len(w)
+                        if c > max_counts.get(l, 0):
+                            max_counts[l] = int(c)
+                _STATS_MAX_BY_LEN = max_counts
+                print(f"[TallyDivisions] Synchronized {updated} words from round_history into word_stats.json.")
+            fcntl.flock(f, fcntl.LOCK_UN)
+            return updated
+    except Exception as e:
+        print(f"[TallyDivisions] Error syncing word stats from DB: {e}")
+        return 0
+
 # Configuration storage & retrieval
 _CONFIG_CACHE = None
 _CONFIG_MTIME = 0

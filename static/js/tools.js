@@ -10705,6 +10705,14 @@ async function runFindCountSearch() {
                     row.style.background = 'transparent';
                 });
             });
+        } else if (data.count > 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="2" style="padding: 20px; text-align: center; color: var(--muted-text);">
+                        All ${data.count} ${data.count === 1 ? 'find' : 'finds'} occurred in guest or unrecorded public rounds.
+                    </td>
+                </tr>
+            `;
         } else {
             tableBody.innerHTML = `
                 <tr>
