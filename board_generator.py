@@ -958,7 +958,8 @@ class BoardGenerator:
 
     def get_uniqueness_ratio(self, board, all_words, rows=4, cols=4, dictionary="NWL", depth=1):
         """Calculate the uniqueness ratio for a given board and word list.
-        User Requirement: Ratio of unique words (in the unique file) to all scorable words.
+        User Requirement: Ratio of unique/hard words to all scorable words.
+        Supports both traditional unique files (uniqueNWL.txt) and tally file divisions.
         """
         if not all_words:
             return 0.0
@@ -970,9 +971,13 @@ class BoardGenerator:
         if core_type in ["AW", "ADDED_WORDS", "ALL"]:
             core_type = "NWL"
 
-        unique_set = self._get_difficulty_set(core_type)
-        if not unique_set:
-            return 0.0
+        from tally_divisions import is_tally_divisions_enabled, is_word_hard_by_tally
+        use_tally = is_tally_divisions_enabled()
+
+        if not use_tally:
+            unique_set = self._get_difficulty_set(core_type)
+            if not unique_set:
+                return 0.0
 
         # USER REQUEST: For 4x4 and 4x6 boards, only pay attention to words 5 letters or longer
         if depth == 1 and ((rows == 4 and cols == 4) or (rows == 4 and cols == 6) or (rows == 6 and cols == 4)):
@@ -990,9 +995,15 @@ class BoardGenerator:
         base_words = [w for w in base_solve.keys() if len(w) >= filter_len]
         
         count_relevant = len(base_words)
-        count_unique = sum(1 for w in base_words if w.upper() in unique_set)
+        if count_relevant == 0:
+            return 0.0
 
-        return count_unique / count_relevant if count_relevant > 0 else 0.0
+        if use_tally:
+            count_hard = sum(1 for w in base_words if is_word_hard_by_tally(w))
+            return count_hard / count_relevant
+        else:
+            count_unique = sum(1 for w in base_words if w.upper() in unique_set)
+            return count_unique / count_relevant
 
     def get_difficulty_label(self, ratio, rows=4, cols=4, dictionary="NWL", depth=1, board=None, target_difficulty=None, min_word_length=3):
         """Derive difficulty label strictly from the uniqueness ratio achieved to ensure absolute parity."""
@@ -3805,14 +3816,34 @@ class BoardGenerator:
                 import os
                 
                 if difficulty in ["Medium", "Hard"]:
-                    # Load unique set for Medium/Hard (e.g. uniqueNWL.txt)
-                    loaded_dict = self._get_difficulty_set(clean_dict_name)
-                    if loaded_dict:
-                        dictionary = list(loaded_dict)
-                        print(f"[BoardGen] Using UNIQUE dictionary (unique{clean_dict_name}.txt) for {difficulty} Word Soup.")
+                    from tally_divisions import is_tally_divisions_enabled, is_word_hard_by_tally
+                    if is_tally_divisions_enabled():
+                        base_dir = os.path.dirname(os.path.abspath(__file__))
+                        dict_file = 'added_words' if clean_dict_name == 'AW' else clean_dict_name
+                        path = os.path.join(base_dir, 'dictionaries', f"{dict_file}.txt")
+                        try:
+                            with open(path, "r") as f:
+                                full_words = [line.strip().upper() for line in f if line.strip()]
+                            hard_words = [w for w in full_words if is_word_hard_by_tally(w)]
+                            if hard_words:
+                                dictionary = hard_words
+                                print(f"[BoardGen] Using TALLY DIVISIONS HARD dictionary ({len(dictionary)} words) for {difficulty} Word Soup.")
+                            else:
+                                loaded_dict = self._get_difficulty_set(clean_dict_name)
+                                dictionary = list(loaded_dict) if loaded_dict else ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
+                        except Exception as e:
+                            print(f"[BoardGen] Error loading tally hard words: {e}")
+                            loaded_dict = self._get_difficulty_set(clean_dict_name)
+                            dictionary = list(loaded_dict) if loaded_dict else ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                     else:
-                        print(f"[BoardGen] ⚠️ Failed to load unique set for {clean_dict_name}. Using fallback words.")
-                        dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
+                        # Load unique set for Medium/Hard (e.g. uniqueNWL.txt)
+                        loaded_dict = self._get_difficulty_set(clean_dict_name)
+                        if loaded_dict:
+                            dictionary = list(loaded_dict)
+                            print(f"[BoardGen] Using UNIQUE dictionary (unique{clean_dict_name}.txt) for {difficulty} Word Soup.")
+                        else:
+                            print(f"[BoardGen] ⚠️ Failed to load unique set for {clean_dict_name}. Using fallback words.")
+                            dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                 else:
                     # Load full dictionary for Easy (e.g. NWL.txt)
                     base_dir = os.path.dirname(os.path.abspath(__file__))

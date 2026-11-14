@@ -10641,12 +10641,21 @@ async function runFindCountSearch() {
             const safeJsWord = rawWord.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
             const wordLink = `<span class="clickable-word-link find-count-word-link" onclick="if(window.lookupWord){window.lookupWord('${safeJsWord}',event);}else if(window.showWordDefinitionPopup){window.showWordDefinitionPopup('${safeJsWord}',event);}else if(window.fetchDefinition){window.fetchDefinition('${safeJsWord}');}" title="Click to view definition for ${escapedWord}" style="color: #38bdf8; font-weight: 700; text-decoration: underline; cursor: pointer;">${escapedWord}</span>`;
 
+            let divisionBadgeHtml = '';
+            if (data.has_divisions || (data.length && data.length >= 5)) {
+                const divStr = data.division_str || `Division ${data.division || 1} of ${data.max_divisions || 1} (${data.points || data.base_points || 0} of ${data.max_points || 0} pts)`;
+                divisionBadgeHtml = ` <span class="find-count-division-badge" style="display: inline-block; margin-left: 8px; padding: 3px 10px; font-size: 0.85rem; font-weight: 700; border-radius: 6px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; vertical-align: middle;">${divStr}</span>`;
+            }
+
             if (data.is_valid) {
-                summaryEl.innerHTML = `The word "${wordLink}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began in 2026.`;
+                summaryEl.innerHTML = `The word "${wordLink}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began in 2026.${divisionBadgeHtml}`;
             } else {
                 let html = `<span style="color: #ff6b6b; font-weight: 700;">⚠️ "${wordLink}" is not a valid word in Morpheme's dictionaries.</span>`;
                 if (data.count > 0) {
                     html += `<br><span style="font-size: 0.95rem; opacity: 0.95;">However, it has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} in custom rounds or historical matches.</span>`;
+                }
+                if (divisionBadgeHtml) {
+                    html += `<br>${divisionBadgeHtml}`;
                 }
                 summaryEl.innerHTML = html;
             }

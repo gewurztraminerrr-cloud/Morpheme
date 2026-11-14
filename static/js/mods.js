@@ -1394,6 +1394,9 @@ window.showModTab = function(tabId) {
         loadRatingConfigs();
         loadRatingAdjHistory();
         checkRatingAdjAuth();
+    } else if (tabId === 'tally-divisions') {
+        loadTallyDivisionsStatus();
+        loadTallyDivisionsExamples();
     }
 
     // Trigger scroll to content area on mobile with smooth sliding animation
@@ -1635,6 +1638,7 @@ function setupModsNavigation() {
     }
 
     setupRatingAdjHandlers();
+    setupTallyDivisionsHandlers();
 }
 
 async function loadModDonations() {
@@ -2201,6 +2205,274 @@ function setupRatingAdjHandlers() {
         refreshHistoryBtn.onclick = loadRatingAdjHistory;
     }
 }
+
+// ---------------------------------------------------------------------------
+// TALLY DIVISIONS BOARD HARDNESS CONTROLLER
+// ---------------------------------------------------------------------------
+window._tallyDivisionsState = false;
+window._tallyDivisionsIsJeffb = false;
+
+async function loadTallyDivisionsStatus() {
+    try {
+        const u = localStorage.getItem('morpheme_username') || '';
+        const headers = u ? { 'X-Username': u } : {};
+        const res = await fetch('/api/mods/tally-divisions/status', { headers });
+        if (!res.ok) return;
+        const data = await res.json();
+        window._tallyDivisionsState = !!data.use_tally_divisions;
+        window._tallyDivisionsIsJeffb = !!data.is_jeffb;
+
+        const badge = document.getElementById('tally-divisions-status-badge');
+        const btn = document.getElementById('tally-divisions-toggle-btn');
+
+        if (badge) {
+            if (window._tallyDivisionsState) {
+                badge.textContent = 'ACTIVE (Live Tally Divisions)';
+                badge.style.background = '#10b981';
+                badge.style.color = '#fff';
+            } else {
+                badge.textContent = 'INACTIVE (uniqueNWL)';
+                badge.style.background = '#64748b';
+                badge.style.color = '#fff';
+            }
+        }
+
+        if (btn) {
+            if (window._tallyDivisionsState) {
+                btn.textContent = 'Revert to uniqueNWL';
+                btn.style.background = '#ef4444';
+                btn.style.borderColor = '#dc2626';
+                btn.style.color = '#fff';
+            } else {
+                btn.textContent = 'Enable Tally Mode';
+                btn.style.background = '#0284c7';
+                btn.style.borderColor = '#0369a1';
+                btn.style.color = '#fff';
+            }
+            if (!window._tallyDivisionsIsJeffb) {
+                btn.title = 'Only jeffb can toggle this switch';
+                btn.style.opacity = '0.6';
+            } else {
+                btn.title = 'Click to toggle';
+                btn.style.opacity = '1';
+            }
+        }
+
+        // Populate threshold selectors
+        if (data.hard_thresholds) {
+            ['5', '6', '7', '8'].forEach(len => {
+                const sel = document.getElementById(`tally-thresh-${len}`);
+                if (sel && data.hard_thresholds[len] !== undefined) {
+                    sel.value = String(data.hard_thresholds[len]);
+                }
+            });
+        }
+    } catch (e) {
+        console.error('[TallyDivisions] Error loading status:', e);
+    }
+}
+
+async function toggleTallyDivisions() {
+    if (!window._tallyDivisionsIsJeffb) {
+        showTallyStatus('⚠️ Unauthorized: Only jeffb can toggle the Tally Divisions switch.', '#ef4444');
+        return;
+    }
+
+    const btn = document.getElementById('tally-divisions-toggle-btn');
+    if (btn) btn.disabled = true;
+
+    try {
+        const nextState = !window._tallyDivisionsState;
+        const u = localStorage.getItem('morpheme_username') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (u) headers['X-Username'] = u;
+        const res = await fetch('/api/mods/tally-divisions/toggle', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ enabled: nextState })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showTallyStatus(`✓ Board hardness now using ${nextState ? 'Live Tally Divisions' : 'uniqueNWL.txt'}.`, '#10b981');
+            await loadTallyDivisionsStatus();
+        } else {
+            showTallyStatus(`⚠️ Error: ${data.error || 'Failed to toggle'}`, '#ef4444');
+        }
+    } catch (e) {
+        showTallyStatus(`⚠️ Network error: ${e.message}`, '#ef4444');
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+async function saveTallyThresholds() {
+    if (!window._tallyDivisionsIsJeffb) {
+        showTallyStatus('⚠️ Unauthorized: Only jeffb can modify thresholds.', '#ef4444');
+        return;
+    }
+
+    const saveBtn = document.getElementById('tally-save-thresholds-btn');
+    if (saveBtn) saveBtn.disabled = true;
+
+    const thresholds = {};
+    ['5', '6', '7', '8'].forEach(len => {
+        const sel = document.getElementById(`tally-thresh-${len}`);
+        if (sel) thresholds[len] = parseInt(sel.value, 10);
+    });
+
+    try {
+        const u = localStorage.getItem('morpheme_username') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (u) headers['X-Username'] = u;
+        const res = await fetch('/api/mods/tally-divisions/thresholds', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ hard_thresholds: thresholds })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showTallyStatus('✓ Division thresholds saved successfully.', '#10b981');
+        } else {
+            showTallyStatus(`⚠️ Error: ${data.error || 'Failed to save'}`, '#ef4444');
+        }
+    } catch (e) {
+        showTallyStatus(`⚠️ Network error: ${e.message}`, '#ef4444');
+    } finally {
+        if (saveBtn) saveBtn.disabled = false;
+    }
+}
+
+async function loadTallyDivisionsExamples(isRepopulate = false) {
+    const container = document.getElementById('tally-examples-container');
+    const btn = document.getElementById('tally-repopulate-examples-btn');
+    if (!container) return;
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Sampling...';
+    }
+
+    try {
+        const u = localStorage.getItem('morpheme_username') || '';
+        const headers = u ? { 'X-Username': u } : {};
+        const res = await fetch('/api/mods/tally-divisions/examples', { headers });
+        const data = await res.json();
+        if (!data.success || !data.examples) {
+            container.innerHTML = '<div style="color: #ef4444; padding: 12px;">Failed to load division examples.</div>';
+            return;
+        }
+
+        const examples = data.examples;
+        let html = '';
+
+        ['5', '6', '7', '8'].forEach(lenStr => {
+            const lData = examples[lenStr];
+            if (!lData) return;
+
+            const len = lData.length;
+            const maxDivs = lData.max_divisions;
+            const basePts = lData.base_points;
+            const maxFinds = lData.max_count;
+            const thresh = lData.threshold;
+
+            html += `
+            <div style="background: var(--bg-card); border: 1px solid var(--input-border); border-radius: 8px; padding: 14px; margin-bottom: 4px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px;">
+                    <div>
+                        <span style="font-weight: 800; font-size: 1.05rem; color: #38bdf8;">${len}-Letter Words</span>
+                        <span style="font-size: 0.82rem; opacity: 0.75; margin-left: 8px;">(${maxDivs} Divisions | Base: ${basePts} pts | Top Find Count: ${maxFinds})</span>
+                    </div>
+                    <span style="font-size: 0.78rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.35);">
+                        Hard Threshold: ≥ Div ${thresh}
+                    </span>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px;">
+            `;
+
+            for (let d = 1; d <= maxDivs; d++) {
+                const dData = lData.divisions[String(d)] || { points: basePts + (d - 1), range_str: '', words: [] };
+                const isHard = d >= thresh;
+                const badgeColor = isHard ? '#ef4444' : '#10b981';
+                const cardBorder = isHard ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.25)';
+
+                html += `
+                    <div style="background: var(--bg-surface); border: 1px solid ${cardBorder}; border-radius: 6px; padding: 10px; box-sizing: border-box;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-weight: 700; font-size: 0.85rem; color: ${badgeColor};">
+                                Div ${d} (${dData.points} pts) ${isHard ? '🔥 Hard' : ''}
+                            </span>
+                            <span style="font-size: 0.74rem; opacity: 0.7;">${dData.range_str}</span>
+                        </div>
+                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                `;
+
+                if (dData.words && dData.words.length > 0) {
+                    dData.words.forEach(item => {
+                        const wSafe = item.word.replace(/'/g, "\\'");
+                        html += `
+                            <span class="clickable-word-link" onclick="if(window.lookupWord){window.lookupWord('${wSafe}',event);}else if(window.fetchDefinition){window.fetchDefinition('${wSafe}');}" 
+                                  title="Click to view definition for ${item.word}" 
+                                  style="display: inline-block; padding: 3px 7px; font-size: 0.78rem; font-weight: 700; border-radius: 4px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); cursor: pointer;">
+                                ${item.word} <span style="font-size: 0.68rem; opacity: 0.75;">(${item.count})</span>
+                            </span>
+                        `;
+                    });
+                } else {
+                    html += `<span style="font-size: 0.75rem; opacity: 0.5; font-style: italic;">No words in this count range yet</span>`;
+                }
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                </div>
+            </div>
+            `;
+        });
+
+        container.innerHTML = html;
+        if (isRepopulate) {
+            showTallyStatus('✓ Division examples repopulated.', '#38bdf8');
+        }
+    } catch (e) {
+        container.innerHTML = `<div style="color: #ef4444; padding: 12px;">Error: ${e.message}</div>`;
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '🔄 Repopulate Examples';
+        }
+    }
+}
+
+function showTallyStatus(msg, color) {
+    const area = document.getElementById('tally-div-status-area');
+    if (area) {
+        area.innerHTML = `<span style="color: ${color};">${msg}</span>`;
+        setTimeout(() => {
+            if (area.innerHTML.includes(msg)) area.innerHTML = '';
+        }, 5000);
+    }
+}
+
+function setupTallyDivisionsHandlers() {
+    const toggleBtn = document.getElementById('tally-divisions-toggle-btn');
+    if (toggleBtn) toggleBtn.onclick = toggleTallyDivisions;
+
+    const saveBtn = document.getElementById('tally-save-thresholds-btn');
+    if (saveBtn) saveBtn.onclick = saveTallyThresholds;
+
+    const repopBtn = document.getElementById('tally-repopulate-examples-btn');
+    if (repopBtn) repopBtn.onclick = () => loadTallyDivisionsExamples(true);
+}
+
+window.loadTallyDivisionsStatus = loadTallyDivisionsStatus;
+window.toggleTallyDivisions = toggleTallyDivisions;
+window.saveTallyThresholds = saveTallyThresholds;
+window.loadTallyDivisionsExamples = loadTallyDivisionsExamples;
+window.setupTallyDivisionsHandlers = setupTallyDivisionsHandlers;
 
 window.loadRatingConfigs = loadRatingConfigs;
 window.updateRatingSelectionSummary = updateRatingSelectionSummary;

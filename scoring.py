@@ -80,6 +80,15 @@ def calculate_word_score(word, bonus_word=None, board_format='Normal', path=None
         elif length == 14: score = 33
         elif length >= 15: score = 37
 
+        if kwargs.get('apply_divisions'):
+            try:
+                from tally_divisions import get_word_division_info
+                div_info = get_word_division_info(word)
+                if div_info and div_info.get('has_divisions'):
+                    score = div_info['points']
+            except Exception:
+                pass
+
     base_score = score 
 
     # Hidden Bonus Word (+Length points)

@@ -5643,6 +5643,10 @@
                         <div class="tool-btn-title">Constant Parameter Rating Adjustment</div>
                         <div class="tool-btn-desc">Adjust user ratings by game configuration</div>
                     </button>
+                    <button class="tool-nav-btn" data-mod-tab="tally-divisions" onclick="window.showModTab('tally-divisions')">
+                        <div class="tool-btn-title">Tally Divisions Difficulty</div>
+                        <div class="tool-btn-desc">Board hardness & rarity divisions from live tallies</div>
+                    </button>
                 </div>
 
                 <!-- Content Column (2/3) -->
@@ -6131,6 +6135,118 @@
                             </div>
                             <div id="rating-adj-history-container" style="max-height: 240px; overflow-y: auto; font-size: 0.85rem;">
                                 <div style="padding: 12px; text-align: center; opacity: 0.6;">No adjustments recorded yet.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Moderator Control: Tally Divisions Board Hardness -->
+                    <div id="mod-tab-tally-divisions" class="tool-pane">
+                        <div class="tool-header">
+                            <h2>Tally Divisions Board Hardness</h2>
+                            <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 12px;">
+                                Toggle board difficulty evaluation from static unique files (uniqueNWL.txt / uniqueCSW.txt) to dynamic find-count divisions accumulated in the tally file.
+                            </p>
+                        </div>
+                        <div id="tally-div-status-area" style="min-height: 25px; margin-bottom: 12px; font-weight: 600; font-size: 0.9rem;"></div>
+
+                        <!-- Master Toggle Switch Card -->
+                        <div class="mod-action-card" style="margin-bottom: 20px; border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 8px; background: rgba(14, 165, 233, 0.05); padding: 16px; width: 100%; box-sizing: border-box;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
+                                <div>
+                                    <div style="font-weight: 700; color: #0284c7; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                                        <span>📊 Tally Divisions Difficulty Mode</span>
+                                        <span id="tally-divisions-status-badge" style="padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: #64748b; color: #fff;">INACTIVE (uniqueNWL)</span>
+                                    </div>
+                                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px; margin-bottom: 0;">
+                                        When active, board uniqueness and difficulty are determined by live player find rarity in the tally file instead of static unique word files. <span style="color: #f59e0b; font-weight: 600;">(Only jeffb can toggle this switch)</span>
+                                    </p>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <button type="button" id="tally-divisions-toggle-btn" class="mod-full-btn" style="min-width: 150px; font-weight: 700; padding: 10px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">
+                                        Enable Tally Mode
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Division Hardness Thresholds Card -->
+                        <div class="mod-action-card" style="margin-bottom: 20px; border: 1px solid rgba(168, 85, 247, 0.25); border-radius: 8px; background: rgba(168, 85, 247, 0.05); padding: 16px; width: 100%; box-sizing: border-box;">
+                            <div style="font-weight: 700; color: #a855f7; margin-bottom: 6px; font-size: 1rem; display: flex; align-items: center; gap: 6px;">
+                                ⚙️ "Hard" Word Division Thresholds
+                            </div>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px;">
+                                Set the minimum division for each letter length to be classified as "hard" on the board (words in that division or rarer count toward hardness).
+                            </p>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 14px;">
+                                <!-- 5L -->
+                                <div style="background: var(--bg-surface); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--input-border);">
+                                    <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">5-Letter Words (2 Divs)</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px;">Base: 2 pts | Max: 3 pts</div>
+                                    <select id="tally-thresh-5" class="tally-threshold-select" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                                        <option value="1">≥ Div 1 (All 5L words)</option>
+                                        <option value="2" selected>≥ Div 2 (Rare Division: 3 pts)</option>
+                                    </select>
+                                </div>
+                                <!-- 6L -->
+                                <div style="background: var(--bg-surface); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--input-border);">
+                                    <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">6-Letter Words (3 Divs)</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px;">Base: 3 pts | Max: 5 pts</div>
+                                    <select id="tally-thresh-6" class="tally-threshold-select" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                                        <option value="1">≥ Div 1 (All 6L words)</option>
+                                        <option value="2">≥ Div 2 (Semi-Rare & Rarest)</option>
+                                        <option value="3" selected>≥ Div 3 (Rarest Division: 5 pts)</option>
+                                    </select>
+                                </div>
+                                <!-- 7L -->
+                                <div style="background: var(--bg-surface); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--input-border);">
+                                    <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">7-Letter Words (5 Divs)</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px;">Base: 5 pts | Max: 9 pts</div>
+                                    <select id="tally-thresh-7" class="tally-threshold-select" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                                        <option value="1">≥ Div 1 (All 7L words)</option>
+                                        <option value="2">≥ Div 2 (Divs 2, 3, 4, 5)</option>
+                                        <option value="3" selected>≥ Div 3 (Rarest 3 Divs: 7-9 pts)</option>
+                                        <option value="4">≥ Div 4 (Rarest 2 Divs: 8-9 pts)</option>
+                                        <option value="5">≥ Div 5 (Rarest Div: 9 pts)</option>
+                                    </select>
+                                </div>
+                                <!-- 8L -->
+                                <div style="background: var(--bg-surface); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--input-border);">
+                                    <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">8-Letter Words (5 Divs)</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px;">Base: 9 pts | Max: 13 pts</div>
+                                    <select id="tally-thresh-8" class="tally-threshold-select" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                                        <option value="1">≥ Div 1 (All 8L words)</option>
+                                        <option value="2">≥ Div 2 (Divs 2, 3, 4, 5)</option>
+                                        <option value="3" selected>≥ Div 3 (Rarest 3 Divs: 11-13 pts)</option>
+                                        <option value="4">≥ Div 4 (Rarest 2 Divs: 12-13 pts)</option>
+                                        <option value="5">≥ Div 5 (Rarest Div: 13 pts)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div style="font-size: 0.8rem; color: #a855f7; background: rgba(168, 85, 247, 0.1); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px;">
+                                ℹ️ <strong>9+ Letter Rule:</strong> At 9 letters long and greater, all non-ING sequences are automatically considered hard. Words receive point values based on their tally division.
+                            </div>
+                            <button type="button" id="tally-save-thresholds-btn" class="mod-full-btn" style="background: #9333ea; border-color: #7e22ce; color: #fff; font-weight: 700; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                                💾 Save Thresholds
+                            </button>
+                        </div>
+
+                        <!-- Division Examples Section -->
+                        <div class="mod-action-card" style="border: 1px solid var(--input-border); border-radius: 8px; background: var(--bg-surface); padding: 16px; width: 100%; box-sizing: border-box;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">
+                                        📚 Division Examples (5, 6, 7, and 8 Letter Words)
+                                    </div>
+                                    <div style="font-size: 0.82rem; color: var(--text-secondary);">
+                                        Five example words from each division showing find count ranges and points.
+                                    </div>
+                                </div>
+                                <button type="button" id="tally-repopulate-examples-btn" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 6px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #3b82f6; cursor: pointer; transition: all 0.2s ease;">
+                                    🔄 Repopulate Examples
+                                </button>
+                            </div>
+                            <div id="tally-examples-container" style="display: flex; flex-direction: column; gap: 14px;">
+                                <div style="text-align: center; padding: 20px; color: var(--text-secondary);">Loading division examples...</div>
                             </div>
                         </div>
                     </div>
@@ -10302,16 +10418,16 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1794143000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794160000"></script>
+    <script src="/js/app.js?v=1794165000"></script>
     <script src="/js/lobby.js?v=1794158000"></script>
     <script src="/js/play.js?v=1794147000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1794160000"></script>
+    <script src="/js/tools.js?v=1794165000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1794138000"></script>
+    <script src="/js/mods.js?v=1794165000"></script>
     <script src="/js/private_matches.js?v=1793520000"></script>
     <script src="/js/donate.js?v=33806"></script>
     
