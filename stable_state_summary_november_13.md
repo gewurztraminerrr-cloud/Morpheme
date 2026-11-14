@@ -3,8 +3,8 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_13
-Commit ID: dcc4e208
-Short ID:  dcc4e208
+Commit ID: 0f15e8b0
+Short ID:  0f15e8b0
 ```
 *(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
@@ -13,8 +13,8 @@ Short ID:  dcc4e208
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `dcc4e208` & tagged with `START_OVER_POINT_NOVEMBER_13` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `dcc4e208`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `0f15e8b0` & tagged with `START_OVER_POINT_NOVEMBER_13` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `0f15e8b0`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
 | **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33207`) |
 
 ---
@@ -218,6 +218,11 @@ Short ID:  dcc4e208
   - **Auto-Focus Mobile Protection**: Gated `inp.focus()` on tab switch strictly to non-mobile devices (`!isMobile`), preventing the mobile virtual keyboard from opening unprompted and scrolling the header description out of view.
   - **Reduced Spacing Above & Below Textbox**: Resolved `flex: 1 1 280px` wrapper expansion in column layout, compacting the search input and action controls from 330px down to 88px with reduced top/bottom padding and margins.
   - **Expanded Vertical Table Length**: Set `.reverse-dict-table-card` and `.list-scroll-area-wrapper` to `flex: 1 1 0px` on mobile, increasing the vertical length of the "Find Words by Meaning" table from ~217px to ~457px+ (more than doubling visible rows).
+- **Comprehensive Definition Highlighting & Mobile Dictionary Stacking (`app.py`, `static/js/tools.js`, `static/css/play.css`, `templates/index.html`):**
+  - **Uncapped Term Highlighting**: Eliminated artificial `[:250]` slice on `matched_terms`. In `app.py`, tracked all matching definition tokens (`used_highlight_terms`) and merged with direct morphological variants and taxonomic closure. Words like `birds` (in `RHABDORNIS`) and `ovenbird` / `ovenbirds` (in `RAYADITO`) now correctly highlight yellow in the UI alongside `passerine`.
+  - **Single-Pass Regex Pre-Compilation**: Updated `window.buildReverseDictHighlightRegex` in `tools.js` to compile the highlight pattern once before iterating results, reducing multi-thousand row render times from seconds to milliseconds.
+  - **Vertical Dictionary Badges on Mobile**: Configured `.reverse-dict-badges-wrapper` with `flex-direction: column` on mobile screens so `NWL` renders directly above `CSW`, narrowing the dictionaries column from 72px down to 38px (`Dict`).
+  - **Expanded Word Column Room**: Redirected the saved horizontal space into `.col-word`, expanding its mobile width from 96px to 124px, ensuring words up to 12 letters and their length pills fit without truncation.
 
 ---
 
@@ -229,9 +234,10 @@ Short ID:  dcc4e208
   - Daily login tracking & activity stats contracts: verified on both local and production.
   - Reverse Dictionary queries (`snake`, `fishes`, `mean old woman`, `derogatory`): 200 OK across both Exact and Similar modes.
   - Recursive hyponym queries (`bird`, `fowl`): verified `PAJOCK`, `SHEATHBILL`, and `CHIONIDID` present in full 9,151 results with no table truncation.
+  - Highlight accuracy: verified `birds` and `passerine` highlighted in `RHABDORNIS`, and `ovenbirds` highlighted in `RAYADITO`.
 - Production deployment:
-  - Commit `dcc4e208` pushed to GitHub `origin/main`.
+  - Pushed to GitHub `origin/main`.
   - Force-updated tags `START_OVER_POINT_NOVEMBER_13`, `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`.
   - Pulled to `132.148.72.249`, PM2 restarted, live HTTP 200 OK verified on `https://morpheme.games/`.
   - Local server running cleanly on `http://localhost:5001/`.
-  - Build version bumped to `33207` (cache-buster `1794153000`).
+  - Build version bumped to `33208` (cache-buster `1794154000`).

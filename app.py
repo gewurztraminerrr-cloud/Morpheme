@@ -12300,22 +12300,32 @@ def tools_reverse_dictionary():
     use_token_set_match = any(len(s) > 30 for s in token_stem_sets)
     trans_table = str.maketrans({c: ' ' for c in string.punctuation}) if use_token_set_match else None
 
+    used_highlight_terms = set(words)
+    for w in words:
+        used_highlight_terms.update(expand_morphological_variants(w))
+
     matches = []
     for word, defn, d_low in search_list:
         matched = True
+        matched_in_entry = set()
         
         # Check standard token matching
         if use_token_set_match:
             d_tokens = set(d_low.translate(trans_table).split())
             for stem_set in token_stem_sets:
-                if not (d_tokens & stem_set):
+                inter = d_tokens & stem_set
+                if not inter:
                     matched = False
                     break
+                matched_in_entry.update(inter)
         else:
             for stem_set, pattern in zip(token_stem_sets, token_patterns):
                 if not any(s in d_low for s in stem_set) or not pattern.search(d_low):
                     matched = False
                     break
+                for s in stem_set:
+                    if s in d_low:
+                        matched_in_entry.add(s)
         
         # Multi-word composite fallback (e.g. 'virago' covers 'mean' + 'woman' for 'mean old woman')
         if not matched and relevant_comp_patterns:
@@ -12327,6 +12337,7 @@ def tools_reverse_dictionary():
                 for comp, cov, pat in relevant_comp_patterns:
                     if comp in d_low and pat.search(d_low):
                         satisfied.update(cov)
+                        matched_in_entry.add(comp)
                 if req_concepts.issubset(satisfied):
                     matched = True
 
@@ -12344,6 +12355,9 @@ def tools_reverse_dictionary():
             continue
         if dict_filter in ('AW', 'ADDED_WORDS') and not in_aw:
             continue
+
+        if matched_in_entry:
+            used_highlight_terms.update(matched_in_entry)
 
         lists = []
         if in_nwl: lists.append('NWL')
@@ -12375,7 +12389,10 @@ def tools_reverse_dictionary():
         terms_set.update(s)
     if is_multi_word and mode == 'similar':
         terms_set.update(COMPOSITE_CONCEPTS.keys())
-    matched_terms = [t for t in sorted(terms_set, key=lambda x: -len(x)) if len(t) >= 2]
+    
+    final_highlight_terms = set(used_highlight_terms)
+    final_highlight_terms.update(terms_set)
+    matched_terms = [t for t in sorted(final_highlight_terms, key=lambda x: -len(x)) if len(t) >= 2]
 
     return jsonify({
         'query': query,
@@ -12383,7 +12400,7 @@ def tools_reverse_dictionary():
         'dictionary': dict_name,
         'count': len(matches),
         'results': matches,
-        'matched_terms': matched_terms[:250]
+        'matched_terms': matched_terms
     })
 
 # --- Private Messaging Routes ---

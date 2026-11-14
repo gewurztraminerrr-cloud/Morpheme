@@ -22782,6 +22782,14 @@ body[class*="theme-light-"] .preview-hitbox-tile,
     flex-shrink: 0;
 }
 
+.reverse-dict-header-full {
+    display: inline;
+}
+
+.reverse-dict-header-short {
+    display: none;
+}
+
 .reverse-dict-badges-wrapper {
     display: flex;
     gap: 5px;
@@ -23031,46 +23039,77 @@ body[class*="theme-light-"] .preview-hitbox-tile,
         max-width: 100% !important;
     }
 
+    .reverse-dict-table-header {
+        padding: 0 4px 0 0 !important;
+    }
     .reverse-dict-table-header .col-num,
     .reverse-dict-row .col-num {
-        width: 32px;
-        min-width: 32px;
-        max-width: 32px;
-        font-size: 0.72rem;
-        padding: 6px 2px;
+        width: 26px !important;
+        min-width: 24px !important;
+        max-width: 28px !important;
+        font-size: 0.72rem !important;
+        padding: 4px 1px !important;
     }
     .reverse-dict-table-header .col-word,
     .reverse-dict-row .col-word {
-        width: 96px;
-        min-width: 88px;
-        max-width: 105px;
-        font-size: 0.85rem;
-        padding: 6px 3px;
+        width: 124px !important;
+        min-width: 112px !important;
+        max-width: 136px !important;
+        font-size: 0.83rem !important;
+        padding: 4px 2px !important;
+        white-space: normal !important;
+        word-break: break-all !important;
+        flex-shrink: 0 !important;
+    }
+    .reverse-dict-row .col-word {
+        display: flex !important;
+        align-items: baseline !important;
+        gap: 3px !important;
+        flex-wrap: wrap !important;
     }
     .reverse-dict-length-badge {
-        margin-left: 3px;
-        padding: 0 4px;
-        font-size: 0.65rem;
+        margin-left: 1px !important;
+        padding: 0 3px !important;
+        font-size: 0.62rem !important;
+        line-height: 1.2 !important;
     }
     .reverse-dict-table-header .col-definition,
     .reverse-dict-row .col-definition {
-        font-size: 0.8rem;
-        padding: 6px 4px;
-        line-height: 1.35;
+        font-size: 0.8rem !important;
+        padding: 4px 6px !important;
+        line-height: 1.35 !important;
     }
     .reverse-dict-table-header .col-dicts,
     .reverse-dict-row .col-dicts {
-        width: 72px;
-        min-width: 68px;
-        max-width: 78px;
-        padding: 6px 4px 6px 0;
+        width: 38px !important;
+        min-width: 34px !important;
+        max-width: 42px !important;
+        padding: 4px 2px !important;
+        text-align: center !important;
+        flex-shrink: 0 !important;
     }
     .reverse-dict-badges-wrapper {
-        gap: 3px;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 2px !important;
+        align-items: center !important;
+        justify-content: center !important;
+        white-space: nowrap !important;
     }
     .reverse-dict-badges-wrapper .work-on-badge {
-        font-size: 0.62rem;
-        padding: 1px 3px;
+        font-size: 0.58rem !important;
+        padding: 1px 2px !important;
+        min-width: 28px !important;
+        text-align: center !important;
+        line-height: 1.15 !important;
+        border-radius: 3px !important;
+        box-sizing: border-box !important;
+    }
+    .reverse-dict-header-full {
+        display: none !important;
+    }
+    .reverse-dict-header-short {
+        display: inline !important;
     }
 }
 

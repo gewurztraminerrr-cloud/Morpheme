@@ -12229,16 +12229,7 @@ window.clearReverseDictInput = function() {
     }
 };
 
-window.highlightKeywordsInDefinition = function(defn, query, mode, matchedTerms) {
-    if (!defn) return '';
-
-    // Escape HTML first
-    let escaped = defn
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-    // Collect all terms to highlight
+window.buildReverseDictHighlightRegex = function(query, matchedTerms) {
     const termSet = new Set();
     if (Array.isArray(matchedTerms)) {
         matchedTerms.forEach(t => {
@@ -12250,19 +12241,44 @@ window.highlightKeywordsInDefinition = function(defn, query, mode, matchedTerms)
     if (query) {
         const qWords = query.toLowerCase().match(/[a-z0-9]+/g) || [];
         qWords.forEach(w => {
-            if (w.length >= 2) termSet.add(w);
+            if (w.length >= 2) {
+                termSet.add(w);
+                termSet.add(w + 's');
+                termSet.add(w + 'es');
+                if (w.endsWith('s')) termSet.add(w.slice(0, -1));
+                if (w.endsWith('es')) termSet.add(w.slice(0, -2));
+            }
         });
     }
 
-    if (termSet.size === 0) return escaped;
+    if (termSet.size === 0) return null;
 
-    // Sort terms descending by length so longer multi-word phrases match before substrings
+    // Sort terms descending by length so longer phrases match before substrings
     const sortedTerms = Array.from(termSet).sort((a, b) => b.length - a.length);
     const regexPattern = sortedTerms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
-    if (!regexPattern) return escaped;
+    if (!regexPattern) return null;
 
     try {
-        const regex = new RegExp(`(\\b(?:${regexPattern})\\b)`, 'gi');
+        return new RegExp(`(\\b(?:${regexPattern})\\b)`, 'gi');
+    } catch (e) {
+        return null;
+    }
+};
+
+window.highlightKeywordsInDefinition = function(defn, query, mode, matchedTerms, precompiledRegex) {
+    if (!defn) return '';
+
+    // Escape HTML first
+    let escaped = defn
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    const regex = precompiledRegex !== undefined ? precompiledRegex : window.buildReverseDictHighlightRegex(query, matchedTerms);
+    if (!regex) return escaped;
+
+    try {
+        regex.lastIndex = 0;
         return escaped.replace(regex, '<mark class="reverse-dict-highlight">$1</mark>');
     } catch (e) {
         return escaped;
@@ -12361,6 +12377,9 @@ window.performReverseDictSearch = async function() {
             countText.innerHTML = `Found <strong style="color: #38bdf8;">${count.toLocaleString()}</strong> word${count === 1 ? '' : 's'} for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>`;
         }
 
+        // Pre-compile highlight regex once for all results
+        const highlightRegex = window.buildReverseDictHighlightRegex(query, matchedTerms);
+
         let rowsHtml = '';
         for (let i = 0; i < results.length; i++) {
             const item = results[i];
@@ -12368,7 +12387,7 @@ window.performReverseDictSearch = async function() {
             const safeJsWord = escapeHtml(word).replace(/'/g, "\\'");
             const escapedWord = escapeHtml(word);
             const wordLen = item.len || word.length;
-            const highlightedDefn = window.highlightKeywordsInDefinition(item.definition || '', query, mode, matchedTerms);
+            const highlightedDefn = window.highlightKeywordsInDefinition(item.definition || '', query, mode, matchedTerms, highlightRegex);
 
             // Dictionaries badges
             const lists = item.lists || [];
