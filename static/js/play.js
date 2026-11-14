@@ -14401,17 +14401,6 @@ window.showNotepadPopup = function(username) {
         return (wordB.length - wordA.length) || wordA.localeCompare(wordB);
     });
 
-    // Determine dictionaries active in this round
-    const cswOnlyList = (state.state === 'intermission'
-        ? ((state.previous_csw_only_words && state.previous_csw_only_words.length > 0) ? state.previous_csw_only_words : state.csw_only_words)
-        : state.csw_only_words) || [];
-    const cswOnlySet = new Set(cswOnlyList.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase()));
-
-    const addedList = (state.state === 'intermission'
-        ? ((state.previous_added_words && state.previous_added_words.length > 0) ? state.previous_added_words : state.added_words)
-        : state.added_words) || [];
-    const addedSet = new Set(addedList.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase()));
-
     const scores = (state.state === 'intermission' ? state.previous_all_word_scores : state.all_word_scores) || state.previous_all_word_scores || state.all_word_scores;
 
     // Create notepad modal overlay if it doesn't already exist
@@ -14455,33 +14444,11 @@ window.showNotepadPopup = function(username) {
                             }
                         }
 
-                        // Determine dictionary memberships for this word
-                        const dicts = [];
-                        const isAW = addedSet.has(wordUpper) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wordUpper));
-                        const isCSWOnly = cswOnlySet.has(wordUpper);
-
-                        if (isAW) {
-                            dicts.push('AW');
-                        } else if (isCSWOnly) {
-                            dicts.push('CSW');
-                        } else {
-                            // Standard English word belongs to both NWL and CSW
-                            dicts.push('NWL');
-                            dicts.push('CSW');
-                        }
-
-                        const dictStackHtml = `
-                            <span class="notepad-dict-stack">
-                                ${dicts.map(d => `<span class="notepad-dict-tag notepad-dict-tag-${d.toLowerCase()}">${d}</span>`).join('')}
-                            </span>
-                        `;
-
                         return `
                             <div class="notepad-word-line clickable-word-link" data-word="${wordUpper}" style="cursor: pointer;" title="Click to view definition">
                                 <span class="notepad-word"><span class="notepad-word-num">${idx + 1}.</span>${wordText}</span>
                                 <div class="notepad-word-right">
                                     <span class="notepad-word-points">${pts} pts</span>
-                                    ${dictStackHtml}
                                 </div>
                             </div>
                         `;
