@@ -1091,6 +1091,42 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     letter-spacing: 0.2px;
 }
 
+.definition-word-row .tool-def-lists-container {
+    margin-left: 2px;
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.definition-word-row .work-on-badge {
+    font-size: 0.70rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1.15;
+}
+
+.tool-word-badges-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    margin-bottom: 2px;
+}
+
+.tool-word-badges-row .tool-def-len-badge {
+    font-size: 0.84rem;
+    padding: 3px 9px;
+    border-radius: 5px;
+}
+
+.tool-word-badges-row .work-on-badge {
+    font-size: 0.80rem;
+    padding: 3px 8px;
+    border-radius: 5px;
+}
+
 .definition-wiki-row {
     margin-top: 12px;
     margin-bottom: 4px;

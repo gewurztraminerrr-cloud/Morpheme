@@ -8405,6 +8405,8 @@ async function generateRandomWord() {
     genBtn.disabled = true;
     displayEl.innerHTML = ''; // Clear while loading
     if (actionsEl) actionsEl.style.display = 'none';
+    const badgesEl = document.getElementById('random-word-badges');
+    if (badgesEl) badgesEl.style.display = 'none';
     const defEl = document.getElementById('random-word-definition');
     if (defEl) defEl.innerHTML = '';
 
@@ -8429,6 +8431,24 @@ async function generateRandomWord() {
 
         displayEl.innerText = word;
         window.applyDynamicSequenceStyle(displayEl, word);
+
+        const badgesEl = document.getElementById('random-word-badges');
+        const lenBadgeEl = document.getElementById('random-word-len-badge');
+        const listsEl = document.getElementById('random-word-lists-container');
+        if (badgesEl && lenBadgeEl && listsEl) {
+            lenBadgeEl.textContent = `${word.length}L`;
+            listsEl.innerHTML = '';
+            const lists = Array.isArray(data && data.lists) ? data.lists : [];
+            ['NWL', 'CSW', 'AW'].forEach(dictName => {
+                if (lists.includes(dictName)) {
+                    const badge = document.createElement('span');
+                    badge.className = `work-on-badge work-on-badge-${dictName.toLowerCase()}`;
+                    badge.textContent = dictName;
+                    listsEl.appendChild(badge);
+                }
+            });
+            badgesEl.style.display = 'flex';
+        }
 
         if (defEl) {
             defEl.style.opacity = '0';
@@ -9286,6 +9306,8 @@ async function runValidationCheck() {
     if (!word) return;
 
     displayEl.innerText = '';
+    const badgesEl = document.getElementById('valid-word-badges');
+    if (badgesEl) badgesEl.style.display = 'none';
     const defEl = document.getElementById('valid-definition-display');
     if (defEl) defEl.style.opacity = '0';
     if (actionsEl) actionsEl.style.display = 'none';
@@ -9326,6 +9348,24 @@ async function runValidationCheck() {
         displayEl.classList.remove('random-word-large');
         void displayEl.offsetWidth;
         displayEl.classList.add('random-word-large');
+
+        const badgesEl = document.getElementById('valid-word-badges');
+        const lenBadgeEl = document.getElementById('valid-word-len-badge');
+        const listsEl = document.getElementById('valid-word-lists-container');
+        if (badgesEl && lenBadgeEl && listsEl) {
+            lenBadgeEl.textContent = `${data.word.length}L`;
+            listsEl.innerHTML = '';
+            const lists = Array.isArray(data && data.lists) ? data.lists : [];
+            ['NWL', 'CSW', 'AW'].forEach(dictName => {
+                if (lists.includes(dictName)) {
+                    const badge = document.createElement('span');
+                    badge.className = `work-on-badge work-on-badge-${dictName.toLowerCase()}`;
+                    badge.textContent = dictName;
+                    listsEl.appendChild(badge);
+                }
+            });
+            badgesEl.style.display = 'flex';
+        }
 
         // Handle definition and pronunciation
         if (defEl) {

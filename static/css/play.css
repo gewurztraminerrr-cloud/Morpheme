@@ -993,6 +993,95 @@ body[class*="theme-light-"] .intermission-winner-card .winner-bonus-word {
     letter-spacing: 0.2px;
 }
 
+.definition-word-row .tool-def-lists-container {
+    margin-left: 2px;
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.definition-word-row .work-on-badge {
+    font-size: 0.70rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1.15;
+}
+
+.tool-word-badges-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    margin-bottom: 2px;
+}
+
+.tool-word-badges-row .tool-def-len-badge {
+    font-size: 0.84rem;
+    padding: 3px 9px;
+    border-radius: 5px;
+}
+
+.tool-word-badges-row .work-on-badge {
+    font-size: 0.80rem;
+    padding: 3px 8px;
+    border-radius: 5px;
+}
+
+/* Membership Badges */
+.work-on-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    display: inline-block;
+    letter-spacing: 0.3px;
+}
+
+.work-on-badge-nwl {
+    background: rgba(64, 156, 255, 0.22);
+    color: #93c5fd;
+    border: 1px solid #409cff;
+}
+
+.work-on-badge-csw {
+    background: rgba(255, 215, 0, 0.22);
+    color: #ffd700;
+    border: 1px solid #ffd700;
+}
+
+.work-on-badge-aw {
+    background: rgba(147, 51, 234, 0.25);
+    color: #d8b4fe;
+    border: 1px solid #9333ea;
+}
+
+/* Light / White Theme Overrides for Membership Badges */
+body.theme-white .work-on-badge-nwl,
+[class*="theme-white"] .work-on-badge-nwl,
+[class*="theme-light-"] .work-on-badge-nwl {
+    background: #dbeafe !important;
+    color: #1e40af !important;
+    border: 1px solid #3b82f6 !important;
+}
+
+body.theme-white .work-on-badge-csw,
+[class*="theme-white"] .work-on-badge-csw,
+[class*="theme-light-"] .work-on-badge-csw {
+    background: rgba(255, 215, 0, 0.35) !important;
+    color: #713f12 !important;
+    border: 1px solid #eab308 !important;
+}
+
+body.theme-white .work-on-badge-aw,
+[class*="theme-white"] .work-on-badge-aw,
+[class*="theme-light-"] .work-on-badge-aw {
+    background: #f3e8ff !important;
+    color: #3b0764 !important;
+    border: 1px solid #9333ea !important;
+}
+
 .definition-wiki-row {
     margin-top: 12px;
     margin-bottom: 4px;

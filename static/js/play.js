@@ -11706,6 +11706,21 @@ function renderDefinitionData(data, word, defContent, defPron) {
         defDivBadge.style.setProperty('display', 'none', 'important');
     }
 
+    const defListsContainer = document.getElementById('definition-lists-container');
+    if (defListsContainer) {
+        defListsContainer.innerHTML = '';
+        const lists = Array.isArray(data && data.lists) ? data.lists : [];
+        ['NWL', 'CSW', 'AW'].forEach(dictName => {
+            if (lists.includes(dictName)) {
+                const badge = document.createElement('span');
+                badge.className = `work-on-badge work-on-badge-${dictName.toLowerCase()}`;
+                badge.textContent = dictName;
+                defListsContainer.appendChild(badge);
+            }
+        });
+        defListsContainer.style.setProperty('display', lists.length ? 'inline-flex' : 'none', 'important');
+    }
+
     if (data && (data.definition || data.pronunciation || data.image_url)) {
         if (data.pronunciation && defPron) {
             defPron.textContent = data.pronunciation;
@@ -11836,6 +11851,11 @@ async function fetchDefinition(word) {
     if (defLenBadge) {
         defLenBadge.textContent = `${cleanWord.length}L`;
         defLenBadge.style.setProperty('display', 'inline-flex', 'important');
+    }
+    const defListsContainer = document.getElementById('definition-lists-container');
+    if (defListsContainer) {
+        defListsContainer.innerHTML = '';
+        defListsContainer.style.setProperty('display', 'none', 'important');
     }
     const defDivBadge = document.getElementById('definition-division-badge');
     if (defDivBadge) {

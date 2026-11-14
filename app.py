@@ -10235,6 +10235,26 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
     wiki_url = f"https://en.wikipedia.org/wiki/{encoded}"
     return True, wiki_url, title
 
+def get_word_dictionaries(word: str) -> list:
+    """Returns the list of dictionaries the word belongs to: NWL, CSW, AW."""
+    if not word:
+        return []
+    w_upper = word.strip().upper()
+    word_validator.ensure_csw_loaded()
+    nwl_dict = load_tools_dictionary('NWL')
+    csw_dict = load_tools_dictionary('CSW')
+    in_nwl = w_upper in getattr(word_validator, 'nwl_words', set()) or w_upper in getattr(word_validator, 'long_words', set()) or (nwl_dict and w_upper in nwl_dict.get('set', set()))
+    in_csw = w_upper in getattr(word_validator, 'csw_words', set()) or w_upper in getattr(word_validator, 'long_words', set()) or (csw_dict and w_upper in csw_dict.get('set', set()))
+    in_aw = w_upper in getattr(word_validator, 'added_words', set())
+    res = []
+    if in_nwl:
+        res.append('NWL')
+    if in_csw:
+        res.append('CSW')
+    if in_aw:
+        res.append('AW')
+    return res
+
 @app.route('/api/definition', methods=['GET'])
 def get_definition():
     word = request.args.get('word', '').upper()
@@ -10246,6 +10266,7 @@ def get_definition():
     import tally_divisions as td
     div_info = td.get_word_division_info(word)
     is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(word, definition)
+    lists = get_word_dictionaries(word)
 
     if definition or pronunciation or image_url:
         resp = jsonify({
@@ -10256,7 +10277,8 @@ def get_definition():
             'division_info': div_info,
             'is_noun': is_noun,
             'wiki_url': wiki_url,
-            'wiki_title': wiki_title
+            'wiki_title': wiki_title,
+            'lists': lists
         })
         resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         return resp
@@ -12927,6 +12949,7 @@ def tools_random_word():
     is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(random_word, definition)
     import tally_divisions as td
     div_info = td.get_word_division_info(random_word)
+    lists = get_word_dictionaries(random_word)
     
     resp = jsonify({
         'word': random_word,
@@ -12936,7 +12959,8 @@ def tools_random_word():
         'division_info': div_info,
         'is_noun': is_noun,
         'wiki_url': wiki_url,
-        'wiki_title': wiki_title
+        'wiki_title': wiki_title,
+        'lists': lists
     })
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return resp
@@ -12988,6 +13012,7 @@ def tools_wotd():
     is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(wotd, definition)
     import tally_divisions as td
     div_info = td.get_word_division_info(wotd)
+    lists = get_word_dictionaries(wotd)
     
     payload = {
         'word': wotd,
@@ -12998,7 +13023,8 @@ def tools_wotd():
         'division_info': div_info,
         'is_noun': is_noun,
         'wiki_url': wiki_url,
-        'wiki_title': wiki_title
+        'wiki_title': wiki_title,
+        'lists': lists
     }
     _WOTD_CACHE['date'] = today_str
     _WOTD_CACHE['payload'] = payload
