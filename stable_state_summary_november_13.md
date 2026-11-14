@@ -3,19 +3,19 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_13
-Commit ID: 841f4d3cd251296fe7d47225c567844aa1d25c60
-Short ID:  841f4d3c
+Commit ID: c2e3b854
+Short ID:  c2e3b854
 ```
-*(Also tagged as `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
+*(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
 ## Synchronization Status
 
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `841f4d3c` & tagged with `START_OVER_POINT_NOVEMBER_13` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `841f4d3c`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
-| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33204`) |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `c2e3b854` & tagged with `START_OVER_POINT_NOVEMBER_13` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `c2e3b854`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
+| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33205`) |
 
 ---
 
@@ -176,14 +176,47 @@ Short ID:  841f4d3c
 
 ---
 
+### 10. Reverse Dictionary Tool ("Key Word in Definition") (`app.py`, `templates/index.html`, `static/js/tools.js`, `static/js/app.js`, `static/css/play.css`)
+- **Placement & Nomenclature:**
+  - Added new sidebar navigation item under the "Random Word" tab in Tools.
+  - Tab Title: **Reverse Dictionary** (`data-tool="reverse-dictionary"`), Subtitle: `Search words by definition or concept`.
+  - Pane Header: `Find words by searching definitions for exact keywords, morphological inflections, or related concepts and synonyms`.
+- **Search Capabilities & Matching Modes:**
+  - Case-insensitive search on input (triggers on Enter key or clicking Search button), with interactive clear (`✕`) button.
+  - **Match Mode Dropdown:**
+    - **Similar to (Synonyms & Concepts)** *(Default)*: Uses WordNet synset lemmas, hyponyms, and composite semantic concepts (e.g. searching `snake` groups definitions mentioning `snake`, `snakes`, `serpents`, and `ophidians`; searching `mean old woman` matches definitions containing `virago`, `crone`, or `domineering, usually older woman`).
+    - **Exact (Word & Inflections)**: Strict matching on the query word and its morphological variants / grammatical inflections (e.g. `snake` <-> `snakes`; `fishes` <-> `fish`, `fished`, `fishing`; `derogatory` matching bracketed `[derogatory]` or unbracketed `derogatory`).
+  - **Dictionary Filter Dropdown:**
+    - `All Dictionaries`, `NWL`, `CSW`, `Added Words (AW)`.
+- **High-Performance Backend Pipeline (`app.py`):**
+  - Instant pre-filter and token boundary regex over 827,000+ cached definitions in `DEFINITIONS_CACHE`.
+  - Morphological variant expander (`expand_morphological_variants`) with LRU caching.
+  - Synonyms & concept extractor (`get_concept_synonyms`) with LRU caching.
+  - Composite concepts engine (`COMPOSITE_CONCEPTS`) for multi-word concept definitions.
+  - Ranking score prioritizing exact phrase matches, then full token matches, followed by shorter word length and alphabetical order.
+  - Returns matched keywords in `matched_terms` for frontend highlighting.
+- **Results Table & Visual Layout:**
+  - Strict layout constraint: zero outer page scrolling (`no-outer-scroll`); content fits 100% within the screen viewport across desktop and mobile devices.
+  - Dedicated internal custom scroller with `.custom-scrollbar-track` and `.custom-scrollbar-thumb`.
+  - Table Columns:
+    1. `#`: Position row number.
+    2. `Word`: Uppercase word, clickable to open word definition popover (`window.showWordDefinitionPopup`), with length badge pill.
+    3. `Definition`: Full definition text with matched keywords highlighted via `<mark class="reverse-dict-highlight">`.
+    4. `Dictionaries`: High-contrast badges (`NWL`, `CSW`, `AW`).
+  - Theme compatibility across all Dark, White, and Light themes.
+
+---
+
 ## Verification & Integrity Check
 - Automated test suite passed:
   - Rating placement contracts (`scratch/test_unrated_placement.py`): 3/3 tests OK.
   - Scoring exclusivity & board generator contracts: verified.
   - Sort comparator logic & tie-break contracts: verified across all test cases.
   - Daily login tracking & activity stats contracts: verified on both local and production.
+  - Reverse Dictionary queries (`snake`, `fishes`, `mean old woman`, `derogatory`): 200 OK across both Exact and Similar modes.
 - Production deployment:
-  - Commit `841f4d3c` pushed to GitHub `origin/main`.
-  - Pulled to `132.148.72.249`, PM2 restarted, live HTTP 200 OK on `https://morpheme.games/`.
-  - Local server verified HTTP 200 OK on `http://localhost:5001/`.
-  - Build version bumped to `33204` (cache-buster `1794150000`).
+  - Commit `351a83e5` pushed to GitHub `origin/main`.
+  - Force-updated tags `START_OVER_POINT_NOVEMBER_13`, `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`.
+  - Pulled to `132.148.72.249`, PM2 restarted, live HTTP 200 OK verified on `https://morpheme.games/`.
+  - Local server running cleanly on `http://localhost:5001/`.
+  - Build version bumped to `33205` (cache-buster `1794151000`).
