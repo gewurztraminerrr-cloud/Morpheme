@@ -480,6 +480,9 @@ function debounce(func, wait) {
             if (typeof window.updateIntermissionBellSource === 'function') {
                 window.updateIntermissionBellSource();
             }
+            if (typeof BoardAudio !== 'undefined' && typeof BoardAudio.preloadBell === 'function') {
+                BoardAudio.preloadBell(type);
+            }
         }
 
         // Synesthesia: Letter Colors
@@ -1009,6 +1012,9 @@ function debounce(func, wait) {
             
             if (typeof window.updateIntermissionBellSource === 'function') {
                 window.updateIntermissionBellSource();
+            }
+            if (typeof BoardAudio !== 'undefined' && typeof BoardAudio.preloadBell === 'function') {
+                BoardAudio.preloadBell(bell);
             }
             
             playPreviewBell(bell);

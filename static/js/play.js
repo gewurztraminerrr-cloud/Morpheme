@@ -421,6 +421,27 @@ const unlockAudio = () => {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
     if (activePage === 'page-loading' && !window._gatewayPassed) return;
     window.updateIntermissionBellSource();
+    if (window.intermissionBellAudio) {
+        try {
+            const p = window.intermissionBellAudio.play();
+            if (p !== undefined) {
+                p.then(() => {
+                    window.intermissionBellAudio.pause();
+                    window.intermissionBellAudio.currentTime = 0;
+                }).catch(() => {});
+            }
+        } catch (_) {}
+    }
+    if (typeof BoardAudio !== 'undefined') {
+        BoardAudio.init();
+        if (BoardAudio.ctx && BoardAudio.ctx.state === 'suspended') {
+            BoardAudio.ctx.resume().catch(() => {});
+        }
+        const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
+        if (typeof BoardAudio.preloadBell === 'function') {
+            BoardAudio.preloadBell(bellType);
+        }
+    }
     const tripleMusic = document.getElementById('triple-music');
     if (tripleMusic) {
         try {
@@ -448,6 +469,56 @@ const BoardAudio = {
     tileBuffers: [],
     successBuffer: null,
     failureBuffer: null,
+    bellBuffers: {},
+
+    preloadBell(bellType) {
+        if (!this.ctx) this.init();
+        if (!this.ctx) return;
+        bellType = bellType || (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
+        if (this.bellBuffers[bellType]) return;
+        const url = `/static/audio/${bellType}.wav?v=1794143000`;
+        fetch(url)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.arrayBuffer();
+            })
+            .then(arrayBuffer => {
+                if (!this.ctx) return null;
+                return this.ctx.decodeAudioData(arrayBuffer);
+            })
+            .then(audioBuffer => {
+                if (audioBuffer) {
+                    this.bellBuffers[bellType] = audioBuffer;
+                }
+            })
+            .catch(err => {
+                console.warn('[BoardAudio] Failed to preload bell:', bellType, err);
+            });
+    },
+
+    playBellBuffer(bellType) {
+        if (!this.ctx) this.init();
+        if (!this.ctx) return false;
+        if (this.ctx.state === 'suspended') {
+            try { this.ctx.resume(); } catch (_) {}
+        }
+        bellType = bellType || (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
+        const buffer = this.bellBuffers[bellType];
+        if (buffer) {
+            try {
+                const source = this.ctx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(this.masterGain || this.ctx.destination);
+                source.start(0);
+                return true;
+            } catch (e) {
+                console.warn('[BoardAudio] playBellBuffer source error:', e);
+            }
+        } else {
+            this.preloadBell(bellType);
+        }
+        return false;
+    },
     
     init() {
         if (this.ctx) return;
@@ -724,6 +795,10 @@ const initAudioOnUserInteraction = () => {
         BoardAudio.ctx.resume();
     }
     BoardAudio.startKeepAlive();
+    const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
+    if (typeof BoardAudio.preloadBell === 'function') {
+        BoardAudio.preloadBell(bellType);
+    }
     const tripleMusic = document.getElementById('triple-music');
     if (tripleMusic && (!tripleMusic.src || !tripleMusic.src.includes('/music/triple.mp3'))) {
         tripleMusic.src = tripleMusic.getAttribute('data-src') || '/music/triple.mp3';
@@ -1467,6 +1542,8 @@ function startPolling() {
     console.log('[play.js] Starting Game Polling - Resetting Join Counter');
     joinAttemptCount = 0; // Reset counter for new room entry
     window._wasEverInRoster = false; // Reset roster flag to prevent instantaneous eviction on re-entry
+    hasPlayedIntermissionBell = false;
+    hasPlayedIntermissionVibration = false;
     resetIdleTimer();
     
     if (pollInterval) {
@@ -6698,6 +6775,8 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
         } else if (state.state === 'intermission') {
             const limit = (state.time_limit >= 7200) ? 5 : 60;
             if (rem > limit) rem = limit;
+            // Check alerts on server sync to protect against timer interval throttling on mobile
+            checkAndTriggerIntermissionAlerts(rem);
         }
 
         const secs = Math.ceil(rem);
@@ -6746,6 +6825,129 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
     } else if ((localEndTime <= (Date.now() / 1000) || document.hidden) && timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
+    }
+}
+
+function triggerIntermissionVibration() {
+    // 1. Web Vibration API (Android Chrome, Firefox, Samsung Internet, Edge, etc.)
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+        try {
+            let vibrated = false;
+            try { vibrated = navigator.vibrate([400, 150, 400]); } catch (_) {}
+            if (!vibrated) {
+                try { vibrated = navigator.vibrate(500); } catch (_) {}
+            }
+            if (!vibrated) {
+                try { navigator.vibrate(300); } catch (_) {}
+            }
+        } catch (err) {
+            console.warn('[play.js] navigator.vibrate error:', err);
+        }
+    }
+
+    // 2. Mobile App Bridge (Flutter WebView / Native Wrappers)
+    if (typeof MorphemeAudioBridge !== 'undefined') {
+        try {
+            MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 500 }));
+            MorphemeAudioBridge.postMessage(JSON.stringify({ type: 'vibrate', duration: 500 }));
+        } catch (e) {
+            console.error("MorphemeAudioBridge vibration error:", e);
+        }
+    }
+}
+
+function playIntermissionBell(bellType) {
+    bellType = bellType || (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
+
+    // 1. Mobile App Bridge (Flutter WebView / Native Wrappers)
+    if (typeof MorphemeAudioBridge !== 'undefined') {
+        try {
+            MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'bell', type: bellType }));
+            MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'bell', type: bellType }));
+        } catch (e) {
+            console.error("MorphemeAudioBridge bell error:", e);
+        }
+    }
+
+    // 2. Web Audio API via BoardAudio (Pre-unlocked AudioContext - immune to browser autoplay blocking)
+    let playedViaWebAudio = false;
+    try {
+        if (typeof BoardAudio !== 'undefined') {
+            BoardAudio.init();
+            if (BoardAudio.ctx) {
+                if (BoardAudio.ctx.state === 'suspended') {
+                    BoardAudio.ctx.resume().catch(() => {});
+                }
+                if (typeof BoardAudio.playBellBuffer === 'function') {
+                    playedViaWebAudio = BoardAudio.playBellBuffer(bellType);
+                }
+            }
+        }
+    } catch (e) {
+        console.warn('[play.js] WebAudio playBellBuffer error:', e);
+    }
+
+    // 3. HTML5 Audio Element fallback (window.intermissionBellAudio)
+    try {
+        const audio = window.intermissionBellAudio;
+        if (audio) {
+            const expectedSrc = `/static/audio/${bellType}.wav`;
+            if (!audio.src || !audio.src.includes(bellType)) {
+                audio.src = expectedSrc;
+                try { audio.load(); } catch (_) {}
+            }
+            audio.currentTime = 0;
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(err => {
+                    console.warn('[play.js] HTMLAudioElement play() error:', err);
+                    if (!playedViaWebAudio) {
+                        try {
+                            const fallback = new Audio(expectedSrc);
+                            fallback.play().catch(() => {});
+                        } catch (_) {}
+                    }
+                });
+            }
+        }
+    } catch (e) {
+        console.warn('[play.js] HTML5 audio error:', e);
+    }
+}
+
+function checkAndTriggerIntermissionAlerts(remaining) {
+    if (!window.lastGameState || window.lastGameState.state !== 'intermission') {
+        hasPlayedIntermissionVibration = false;
+        hasPlayedIntermissionBell = false;
+        return;
+    }
+
+    // Reset flags whenever countdown is in early/mid intermission (> 10.5s)
+    // Guarantees upcoming 0:10 threshold will always fire cleanly without stale state!
+    if (remaining > 10.5) {
+        hasPlayedIntermissionVibration = false;
+        hasPlayedIntermissionBell = false;
+        return;
+    }
+
+    // Trigger window: between 10.0 and 0.5 seconds remaining
+    if ((remaining <= 10.0 || Math.ceil(remaining) <= 10) && remaining > 0.5) {
+        // 1. Mobile Vibration Alert at 0:10
+        const vibrationEnabled = !window.userSettings || window.userSettings.vibration_alert === true || window.userSettings.vibration_alert === 'true';
+        if (vibrationEnabled && !hasPlayedIntermissionVibration) {
+            console.log('[play.js] 10s Intermission Warning: Triggering mobile vibration alert');
+            hasPlayedIntermissionVibration = true;
+            triggerIntermissionVibration();
+        }
+
+        // 2. Next Round Bell Alert at 0:10
+        const isBellEnabled = !window.userSettings || window.userSettings.next_round_bell_enabled === true || window.userSettings.next_round_bell_enabled === 'true';
+        const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
+        if (isBellEnabled && !hasPlayedIntermissionBell) {
+            console.log(`[play.js] Playing intermission bell at 0:10: ${bellType}`);
+            hasPlayedIntermissionBell = true;
+            playIntermissionBell(bellType);
+        }
     }
 }
 
@@ -7011,81 +7213,8 @@ function updateLocalTimer() {
     // -- Update Triple Format Music State --
     updateTripleMusicState(remaining);
 
-    // -- Intermission Vibration Alert (Mobile Devices & Apps at 0:10) --
-    if (window.lastGameState && window.lastGameState.state === 'intermission') {
-        const vibrationEnabled = !window.userSettings || window.userSettings.vibration_alert === true || window.userSettings.vibration_alert === 'true';
-        if (vibrationEnabled && (remaining <= 10.0 || Math.ceil(remaining) <= 10) && remaining > 0.5 && !hasPlayedIntermissionVibration) {
-            console.log('[play.js] 10s Intermission Warning: Triggering mobile vibration alert');
-            hasPlayedIntermissionVibration = true;
-
-            // 1. Web Vibration API (Android Chrome, Firefox, Samsung Internet, Edge, etc.)
-            if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-                try {
-                    const vibrated = navigator.vibrate([400, 150, 400]);
-                    if (!vibrated) {
-                        navigator.vibrate(500);
-                    }
-                } catch (err) {
-                    try { navigator.vibrate(500); } catch (_) {}
-                    console.warn('[play.js] navigator.vibrate error:', err);
-                }
-            }
-
-            // 2. Mobile App Bridge (Flutter WebView / Native Wrappers)
-            if (typeof MorphemeAudioBridge !== 'undefined') {
-                try {
-                    MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 500 }));
-                } catch (e) {
-                    console.error("MorphemeAudioBridge vibration error:", e);
-                }
-            }
-        }
-    } else {
-        hasPlayedIntermissionVibration = false;
-    }
-
-    // -- Next Round Bell Logic --
-    if (window.lastGameState && window.lastGameState.state === 'intermission') {
-        const isEnabled = window.userSettings && (window.userSettings.next_round_bell_enabled === true || window.userSettings.next_round_bell_enabled === 'true');
-        const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
-
-        if (isEnabled && (remaining <= 10.0 || Math.ceil(remaining) <= 10) && remaining > 0.5 && !hasPlayedIntermissionBell) {
-            console.log(`[play.js] Playing intermission bell: ${bellType}`);
-            hasPlayedIntermissionBell = true;
-
-            if (typeof MorphemeAudioBridge !== 'undefined') {
-                try {
-                    // Send bell chime natively for mobile app wrappers (bypasses webview audio block)
-                    MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'bell', type: bellType }));
-                } catch (e) {
-                    console.error("MorphemeAudioBridge bell error:", e);
-                }
-            } else {
-                const audio = window.intermissionBellAudio;
-                if (audio) {
-                    if (!audio.src || !audio.src.includes(bellType)) {
-                        audio.src = `/static/audio/${bellType}.wav`;
-                        try {
-                            audio.load();
-                        } catch (e) {
-                            console.warn('[play.js] Failed to load audio src on trigger:', e);
-                        }
-                    }
-                    audio.play().catch(e => {
-                        console.warn('[play.js] Intermission audio failed, playing fallback:', e);
-                        const fallbackAudio = new Audio(`/static/audio/${bellType}.wav`);
-                        fallbackAudio.play().catch(fe => console.warn('Fallback audio failed:', fe));
-                    });
-                } else {
-                    const fallbackAudio = new Audio(`/static/audio/${bellType}.wav`);
-                    fallbackAudio.play().catch(e => console.warn('Fallback audio failed:', e));
-                }
-            }
-        }
-    } else {
-        // Reset flag when not in intermission
-        hasPlayedIntermissionBell = false;
-    }
+    // -- Intermission Vibration Alert (Mobile Devices & Apps at 0:10) & Next Round Bell Logic --
+    checkAndTriggerIntermissionAlerts(remaining);
 }
 
 function isTripleFormat(fmt) {
@@ -10873,6 +11002,8 @@ async function leaveCurrentRoom() {
 
     // 1. Clear local state and stop polling immediately (synchronous)
     stopPolling();
+    hasPlayedIntermissionBell = false;
+    hasPlayedIntermissionVibration = false;
     window.currentRoomId = null;
     timerFormatIs24h = false;
     window._wasEverInRoster = false;
