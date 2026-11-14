@@ -11701,6 +11701,22 @@ window._gameDefCache = window._gameDefCache || new Map();
 
 function renderDefinitionData(data, word, defContent, defPron) {
     if (window._currentDefWord !== word) return;
+    const defDivBadge = document.getElementById('definition-division-badge');
+    if (defDivBadge) {
+        const dInfo = data && data.division_info;
+        if (dInfo && dInfo.has_divisions) {
+            defDivBadge.textContent = `Div ${dInfo.division} of ${dInfo.max_divisions} (${dInfo.points} of ${dInfo.max_points} pts)`;
+            defDivBadge.title = `Current Point Value: ${dInfo.points} pts (Division ${dInfo.division} of ${dInfo.max_divisions}, Max: ${dInfo.max_points} pts)`;
+            defDivBadge.style.setProperty('display', 'inline-flex', 'important');
+        } else if (dInfo) {
+            defDivBadge.textContent = `${dInfo.points} pt${dInfo.points === 1 ? '' : 's'}`;
+            defDivBadge.title = `Point Value: ${dInfo.points} pt${dInfo.points === 1 ? '' : 's'}`;
+            defDivBadge.style.setProperty('display', 'inline-flex', 'important');
+        } else {
+            defDivBadge.style.setProperty('display', 'none', 'important');
+        }
+    }
+
     if (data && (data.definition || data.pronunciation || data.image_url)) {
         if (data.pronunciation && defPron) {
             defPron.textContent = data.pronunciation;
@@ -11812,6 +11828,10 @@ async function fetchDefinition(word) {
     if (defLenBadge) {
         defLenBadge.textContent = `${cleanWord.length}L`;
         defLenBadge.style.setProperty('display', 'inline-flex', 'important');
+    }
+    const defDivBadge = document.getElementById('definition-division-badge');
+    if (defDivBadge) {
+        defDivBadge.style.setProperty('display', 'none', 'important');
     }
     if (defPron) {
         defPron.textContent = '';
@@ -11964,7 +11984,7 @@ async function fetchDefinition(word) {
     }
 
     // Check instant client-side cache
-    if (window._gameDefCache && window._gameDefCache.has(cleanWord)) {
+    if (window._gameDefCache && window._gameDefCache.has(cleanWord) && window._gameDefCache.get(cleanWord).division_info) {
         renderDefinitionData(window._gameDefCache.get(cleanWord), cleanWord, defContent, defPron);
         return;
     }

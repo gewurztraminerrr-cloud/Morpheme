@@ -11460,9 +11460,10 @@ window.showWordDefinitionPopup = async function (word, event) {
         popover.innerHTML = `
             <div class="tool-def-popover-header">
                 <div class="tool-def-header-left" style="display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; gap: 2px;">
-                    <div class="tool-def-word-title">
+                    <div class="tool-def-word-title" style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
                         <span id="tool-def-word-text"></span>
                         <span id="tool-def-len-badge" class="tool-def-len-badge"></span>
+                        <span id="tool-def-division-badge" class="tool-def-division-badge" style="display: none;"></span>
                         <span id="tool-def-lists-container" class="tool-def-lists-container" style="display: inline-flex; gap: 4px; align-items: center; vertical-align: middle;"></span>
                     </div>
                     <div id="tool-def-pronunciation" class="tool-def-pronunciation" style="display: none; margin-bottom: 0;"></div>
@@ -11681,6 +11682,31 @@ window.showWordDefinitionPopup = async function (word, event) {
     popover.classList.add('active');
 
     function renderDefData(data) {
+        let divBadgeEl = document.getElementById('tool-def-division-badge');
+        if (!divBadgeEl) {
+            const lenBadge = document.getElementById('tool-def-len-badge');
+            if (lenBadge && lenBadge.parentNode) {
+                divBadgeEl = document.createElement('span');
+                divBadgeEl.id = 'tool-def-division-badge';
+                divBadgeEl.className = 'tool-def-division-badge';
+                lenBadge.insertAdjacentElement('afterend', divBadgeEl);
+            }
+        }
+        if (divBadgeEl) {
+            const dInfo = data && data.division_info;
+            if (dInfo && dInfo.has_divisions) {
+                divBadgeEl.textContent = `Div ${dInfo.division} of ${dInfo.max_divisions} (${dInfo.points} of ${dInfo.max_points} pts)`;
+                divBadgeEl.title = `Current Point Value: ${dInfo.points} pts (Division ${dInfo.division} of ${dInfo.max_divisions}, Max: ${dInfo.max_points} pts)`;
+                divBadgeEl.style.display = 'inline-flex';
+            } else if (dInfo) {
+                divBadgeEl.textContent = `${dInfo.points} pt${dInfo.points === 1 ? '' : 's'}`;
+                divBadgeEl.title = `Point Value: ${dInfo.points} pt${dInfo.points === 1 ? '' : 's'}`;
+                divBadgeEl.style.display = 'inline-flex';
+            } else {
+                divBadgeEl.style.display = 'none';
+            }
+        }
+
         if (listsContainerEl) {
             listsContainerEl.innerHTML = '';
             const lists = Array.isArray(data && data.lists) ? data.lists : [];
@@ -11719,7 +11745,7 @@ window.showWordDefinitionPopup = async function (word, event) {
 
     if (window._wordDefCache.has(cleanWord)) {
         const cached = window._wordDefCache.get(cleanWord);
-        if (cached && Array.isArray(cached.lists)) {
+        if (cached && Array.isArray(cached.lists) && cached.division_info) {
             renderDefData(cached);
             return;
         }

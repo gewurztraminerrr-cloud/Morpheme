@@ -10064,13 +10064,16 @@ def get_definition():
 
     definition, pronunciation = lookup_word_definition_and_pronunciation(word)
     image_url = lookup_definition_image(word)
+    import tally_divisions as td
+    div_info = td.get_word_division_info(word)
 
     if definition or pronunciation or image_url:
         return jsonify({
             'word': word, 
             'definition': definition or "No definition available for this word.",
             'pronunciation': pronunciation,
-            'image_url': image_url
+            'image_url': image_url,
+            'division_info': div_info
         })
     else:
         return jsonify({'error': 'Word not found'}), 404
@@ -12096,13 +12099,17 @@ def tools_validate_word():
     if all_new_dict and word in all_new_dict.get('set', set()):
         lists.append('all_new')
 
+    import tally_divisions as td
+    div_info = td.get_word_division_info(word)
+
     return jsonify({
         'word': word,
         'is_valid': is_valid,
         'definition': definition,
         'pronunciation': pronunciation,
         'image_url': image_url,
-        'lists': lists
+        'lists': lists,
+        'division_info': div_info
     })
 
 @app.route('/api/tools/unscramble/random', methods=['GET'])

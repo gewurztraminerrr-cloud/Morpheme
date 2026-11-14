@@ -119,6 +119,25 @@ def run_test(is_mobile=False):
         assert "Division" not in summary_text4
         print("✓ Concept of divisions correctly NOT applied to 4-letter words!")
 
+        # 3. TEST DEFINITION POPUP DIVISION BADGE
+        print("\nTesting Definition Popup Division Badge for TESTING...")
+        driver.execute_script("window.showWordDefinitionPopup('TESTING');")
+        time.sleep(1.5)
+
+        div_badge = driver.find_element(By.ID, 'tool-def-division-badge')
+        badge_text = div_badge.text
+        print(f"Definition popup division badge for TESTING: '{badge_text}'")
+        assert "Div 1 of 5 (5 of 9 pts)" in badge_text
+        print("✓ Definition popup shows correct dynamic division and points for TESTING!")
+
+        # Test definition popup for 4L word BIRD
+        driver.execute_script("window.showWordDefinitionPopup('BIRD');")
+        time.sleep(1.5)
+        badge_text_bird = driver.find_element(By.ID, 'tool-def-division-badge').text
+        print(f"Definition popup division badge for BIRD: '{badge_text_bird}'")
+        assert "1 pt" in badge_text_bird
+        print("✓ Definition popup shows correct points (1 pt) for 4L word BIRD!")
+
         # Check JS errors relating to our features or uncaught exceptions
         logs = driver.get_log('browser')
         severe = [l for l in logs if l['level'] == 'SEVERE' and ('tally' in l['message'].lower() or 'find-count' in l['message'].lower() or 'syntaxerror' in l['message'].lower() or 'referenceerror' in l['message'].lower())]
