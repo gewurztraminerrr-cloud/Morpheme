@@ -474,6 +474,28 @@
     margin-bottom: 0;
 }
 
+.faq-copy-email-btn {
+    background: rgba(var(--text-primary-rgb), 0.08);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.22);
+    color: var(--text-primary);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.faq-copy-email-btn:hover {
+    background: rgba(var(--text-primary-rgb), 0.16);
+    border-color: rgba(var(--text-primary-rgb), 0.4);
+}
+
+.faq-copy-email-btn:active {
+    transform: scale(0.96);
+}
+
 .faq-answer ul {
     margin-top: 12px;
     padding-left: 25px;

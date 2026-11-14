@@ -2626,7 +2626,6 @@ window.showPage = showPage;
     if (pageId === 'page-play') {
         renderGameColorBar(); // Render the rating color bar
         if (window.startGamePolling) {
-            console.log('app.js fully loaded - version with UI optimizations');
             window.startGamePolling();
         }
 
@@ -4776,6 +4775,48 @@ if (typeof MutationObserver !== 'undefined') {
     try {
         _inputLimitObserver.observe(document.body || document.documentElement, { childList: true, subtree: true });
     } catch(e) {}
+}
+
+// FAQ Copy Email Utility
+window.copyFAQEmail = function(btn) {
+    const email = 'jeffbabiak@outlook.com';
+    const originalText = btn.textContent;
+    const onSuccess = () => {
+        btn.textContent = 'Copied!';
+        btn.style.borderColor = '#10b981';
+        btn.style.color = '#10b981';
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.borderColor = '';
+            btn.style.color = '';
+        }, 2000);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(onSuccess).catch(() => {
+            fallbackCopy(email, onSuccess);
+        });
+    } else {
+        fallbackCopy(email, onSuccess);
+    }
+};
+
+function fallbackCopy(text, cb) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    ta.style.top = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+        document.execCommand('copy');
+        if (cb) cb();
+    } catch (e) {
+        console.error('Fallback copy failed:', e);
+    }
+    document.body.removeChild(ta);
 }
 
 console.log('app.js fully loaded - version with UI optimizations');
