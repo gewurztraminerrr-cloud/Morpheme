@@ -17058,8 +17058,8 @@ body.is-mobile #page-settings .theme-selector-grid {
 .tool-def-popover {
     position: fixed;
     z-index: 2147483647 !important;
-    width: 330px;
-    max-width: calc(100vw - 20px);
+    width: 360px;
+    max-width: calc(100vw - 16px);
     max-height: calc(100vh - 24px);
     background: rgba(18, 16, 30, 0.98) !important;
     backdrop-filter: blur(14px);
@@ -17136,18 +17136,19 @@ body.is-mobile #page-settings .theme-selector-grid {
 }
 
 .tool-def-division-badge {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 700;
     background: rgba(168, 85, 247, 0.18);
     border: 1px solid rgba(168, 85, 247, 0.45);
     color: #c084fc;
-    padding: 1px 6px;
+    padding: 2px 7px;
     border-radius: 4px;
     flex-shrink: 0;
     align-self: center;
     line-height: 1.2;
     display: inline-flex;
     align-items: center;
+    white-space: nowrap;
 }
 
 .tool-def-close-btn {
@@ -17285,7 +17286,7 @@ body.is-mobile #page-settings .theme-selector-grid {
 
 @media (max-width: 900px), (pointer: coarse) {
     .tool-def-popover {
-        width: min(340px, calc(100vw - 16px));
+        width: min(360px, calc(100vw - 16px));
         max-width: calc(100vw - 16px);
         max-height: calc(100vh - 20px);
         padding: 12px 14px;

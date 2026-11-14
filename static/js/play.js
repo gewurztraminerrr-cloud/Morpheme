@@ -11704,13 +11704,13 @@ function renderDefinitionData(data, word, defContent, defPron) {
     const defDivBadge = document.getElementById('definition-division-badge');
     if (defDivBadge) {
         const dInfo = data && data.division_info;
-        if (dInfo && dInfo.has_divisions) {
-            defDivBadge.textContent = `Div ${dInfo.division} of ${dInfo.max_divisions} (${dInfo.points} of ${dInfo.max_points} pts)`;
-            defDivBadge.title = `Current Point Value: ${dInfo.points} pts (Division ${dInfo.division} of ${dInfo.max_divisions}, Max: ${dInfo.max_points} pts)`;
+        if (dInfo && (dInfo.has_divisions || (dInfo.length && dInfo.length >= 5))) {
+            defDivBadge.textContent = `Div ${dInfo.division || 1} of ${dInfo.max_divisions || 1} (${dInfo.points || dInfo.base_points || 0} of ${dInfo.max_points || 0} pts)`;
+            defDivBadge.title = `Current Point Value: ${dInfo.points || dInfo.base_points || 0} pts (Division ${dInfo.division || 1} of ${dInfo.max_divisions || 1}, Max: ${dInfo.max_points || 0} pts)`;
             defDivBadge.style.setProperty('display', 'inline-flex', 'important');
         } else if (dInfo) {
-            defDivBadge.textContent = `${dInfo.points} pt${dInfo.points === 1 ? '' : 's'}`;
-            defDivBadge.title = `Point Value: ${dInfo.points} pt${dInfo.points === 1 ? '' : 's'}`;
+            defDivBadge.textContent = `${dInfo.points || dInfo.base_points || 1} pt${(dInfo.points || dInfo.base_points || 1) === 1 ? '' : 's'}`;
+            defDivBadge.title = `Point Value: ${dInfo.points || dInfo.base_points || 1} pt${(dInfo.points || dInfo.base_points || 1) === 1 ? '' : 's'}`;
             defDivBadge.style.setProperty('display', 'inline-flex', 'important');
         } else {
             defDivBadge.style.setProperty('display', 'none', 'important');
@@ -11822,6 +11822,13 @@ async function fetchDefinition(word) {
     // Show word and length badge immediately in dedicated header
     if (defWord && defHeader) {
         defWord.textContent = cleanWord;
+        if (cleanWord.length > 18) {
+            defWord.style.fontSize = '0.98rem';
+        } else if (cleanWord.length > 14) {
+            defWord.style.fontSize = '1.08rem';
+        } else {
+            defWord.style.fontSize = '';
+        }
         defHeader.classList.remove('hidden');
         defHeader.style.setProperty('display', 'block', 'important');
     }

@@ -130,6 +130,21 @@ def run_test(is_mobile=False):
         assert "Div 1 of 5 (5 of 9 pts)" in badge_text
         print("✓ Definition popup shows correct dynamic division and points for TESTING!")
 
+        # Test definition popup for larger words (15L and 20L)
+        driver.execute_script("window.showWordDefinitionPopup('SUBCOMPARTMENTS');")
+        time.sleep(1.2)
+        badge_text_15L = driver.find_element(By.ID, 'tool-def-division-badge').text
+        print(f"Definition popup division badge for SUBCOMPARTMENTS (15L): '{badge_text_15L}'")
+        assert "Div 1 of 5 (37 of 41 pts)" in badge_text_15L
+        print("✓ Definition popup shows correct 5 divisions for 15L word SUBCOMPARTMENTS!")
+
+        driver.execute_script("window.showWordDefinitionPopup('ILIOTROCHANTERICUSES');")
+        time.sleep(1.2)
+        badge_text_20L = driver.find_element(By.ID, 'tool-def-division-badge').text
+        print(f"Definition popup division badge for ILIOTROCHANTERICUSES (20L): '{badge_text_20L}'")
+        assert "Div 1 of 5 (57 of 61 pts)" in badge_text_20L
+        print("✓ Definition popup shows correct 5 divisions for 20L word ILIOTROCHANTERICUSES!")
+
         # Test definition popup for 4L word BIRD
         driver.execute_script("window.showWordDefinitionPopup('BIRD');")
         time.sleep(1.5)

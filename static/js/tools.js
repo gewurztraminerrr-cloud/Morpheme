@@ -11627,7 +11627,7 @@ window.showWordDefinitionPopup = async function (word, event) {
 
     if (target && typeof target.getBoundingClientRect === 'function') {
         const rect = target.getBoundingClientRect();
-        const popWidth = Math.min(340, window.innerWidth - 16);
+        const popWidth = Math.min(360, window.innerWidth - 16);
         const popHeight = popover.offsetHeight || 220;
         let left, top;
 
@@ -11694,13 +11694,13 @@ window.showWordDefinitionPopup = async function (word, event) {
         }
         if (divBadgeEl) {
             const dInfo = data && data.division_info;
-            if (dInfo && dInfo.has_divisions) {
-                divBadgeEl.textContent = `Div ${dInfo.division} of ${dInfo.max_divisions} (${dInfo.points} of ${dInfo.max_points} pts)`;
-                divBadgeEl.title = `Current Point Value: ${dInfo.points} pts (Division ${dInfo.division} of ${dInfo.max_divisions}, Max: ${dInfo.max_points} pts)`;
+            if (dInfo && (dInfo.has_divisions || (dInfo.length && dInfo.length >= 5))) {
+                divBadgeEl.textContent = `Div ${dInfo.division || 1} of ${dInfo.max_divisions || 1} (${dInfo.points || dInfo.base_points || 0} of ${dInfo.max_points || 0} pts)`;
+                divBadgeEl.title = `Current Point Value: ${dInfo.points || dInfo.base_points || 0} pts (Division ${dInfo.division || 1} of ${dInfo.max_divisions || 1}, Max: ${dInfo.max_points || 0} pts)`;
                 divBadgeEl.style.display = 'inline-flex';
             } else if (dInfo) {
-                divBadgeEl.textContent = `${dInfo.points} pt${dInfo.points === 1 ? '' : 's'}`;
-                divBadgeEl.title = `Point Value: ${dInfo.points} pt${dInfo.points === 1 ? '' : 's'}`;
+                divBadgeEl.textContent = `${dInfo.points || dInfo.base_points || 1} pt${(dInfo.points || dInfo.base_points || 1) === 1 ? '' : 's'}`;
+                divBadgeEl.title = `Point Value: ${dInfo.points || dInfo.base_points || 1} pt${(dInfo.points || dInfo.base_points || 1) === 1 ? '' : 's'}`;
                 divBadgeEl.style.display = 'inline-flex';
             } else {
                 divBadgeEl.style.display = 'none';

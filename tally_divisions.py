@@ -49,7 +49,8 @@ def get_base_points(length: int) -> int:
         return 0
     if length in BASE_POINTS:
         return BASE_POINTS[length]
-    return 37
+    # For words longer than 15 letters: 4 points per additional letter
+    return 37 + (length - 15) * 4
 
 def get_num_divisions(length: int) -> int:
     """
@@ -58,16 +59,15 @@ def get_num_divisions(length: int) -> int:
     - 3L and 4L: Divisions concept does not apply (returns 1).
     - 5L: (3 - 2) + 1 = 2 divisions
     - 6L: (5 - 3) + 1 = 3 divisions
-    - 7L: (9 - 5) + 1 = 5 divisions
-    - 8L: (13 - 9) + 1 = 5 divisions
-    - 9L+: (17 - 13) + 1 = 5 divisions
+    - 7L+: (next_base - cur_base) + 1 = 5 divisions (including 8L, 9L, 10L, 15L, 20L+)
     """
     if length <= 4:
         return 1
-    next_base = get_base_points(length + 1)
-    cur_base = get_base_points(length)
-    diff = next_base - cur_base
-    return max(1, diff + 1)
+    if length == 5:
+        return 2
+    if length == 6:
+        return 3
+    return 5
 
 def get_max_points(length: int) -> int:
     """Return maximum points a word of given length can receive in the rarest division."""
@@ -248,7 +248,7 @@ def get_word_division_info(word: str) -> dict:
             'length': length,
             'count': find_count,
             'max_count': 0,
-            'has_divisions': False,
+            'has_divisions': True,
             'division': 1,
             'max_divisions': k_divisions,
             'base_points': base_pts,
