@@ -3412,6 +3412,10 @@ body.theme-white .header {
     min-width: 0;
 }
 
+#mini-meta-proof {
+    grid-column: span 2;
+}
+
 .mini-meta-icon {
     font-size: 1rem;
     width: 20px;
@@ -3529,10 +3533,9 @@ body.theme-white .header {
     }
     #mini-meta-demographics { order: 1 !important; }
     #mini-meta-country { order: 2 !important; }
-    #mini-profile-timezone-container { order: 3 !important; }
-    #mini-meta-joined { order: 4 !important; }
-    #mini-meta-last-visited { order: 5 !important; }
-    #mini-meta-proof { order: 6 !important; }
+    #mini-meta-joined { order: 3 !important; }
+    #mini-meta-last-visited { order: 4 !important; }
+    #mini-meta-proof { order: 5 !important; }
     .mini-profile-description {
         max-height: 65px !important;
     }
@@ -8640,11 +8643,10 @@ select option,
     }
     #mini-meta-demographics { order: 1 !important; }
     #mini-meta-country { order: 2 !important; }
-    #mini-profile-timezone-container { order: 3 !important; }
-    #mini-meta-joined { order: 4 !important; }
-    #mini-meta-last-visited { order: 5 !important; }
-    #mini-meta-forum-posts { order: 6 !important; }
-    #mini-meta-proof { order: 7 !important; }
+    #mini-meta-joined { order: 3 !important; }
+    #mini-meta-last-visited { order: 4 !important; }
+    #mini-meta-forum-posts { order: 5 !important; }
+    #mini-meta-proof { order: 6 !important; }
 
     .profile-meta-line {
         display: contents !important;

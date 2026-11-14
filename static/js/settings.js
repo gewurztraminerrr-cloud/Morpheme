@@ -928,14 +928,6 @@ function debounce(func, wait) {
             if (window.renderTournament && window.currentTournamentState) {
                 window.renderTournament(window.currentTournamentState);
             }
-            const profileTzSelect = document.getElementById('profile-timezone-select');
-            if (profileTzSelect) profileTzSelect.value = newTz;
-            const profileTzVal = document.getElementById('profile-timezone-val');
-            const tzLabel = (window.TIMEZONE_LABELS && window.TIMEZONE_LABELS[newTz]) || newTz;
-            const timeStr = window.getUserCurrentTime ? window.getUserCurrentTime(newTz) : '';
-            if (profileTzVal) profileTzVal.innerText = timeStr ? `${tzLabel} (${timeStr})` : tzLabel;
-            const ownerTimeEl = document.getElementById('profile-timezone-owner-time');
-            if (ownerTimeEl) ownerTimeEl.innerText = timeStr ? `(${timeStr})` : '';
             fetch('/api/profile/update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

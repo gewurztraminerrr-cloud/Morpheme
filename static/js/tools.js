@@ -2140,34 +2140,10 @@ window.getUserCurrentTime = function(tz) {
     }
 };
 
-window.updateDisplayedProfileTimes = function() {
-    if (window._activeProfileUserTz !== undefined) {
-        const userTz = window._activeProfileUserTz;
-        const timeStr = window.getUserCurrentTime(userTz);
-        const tzLabel = (window.TIMEZONE_LABELS && window.TIMEZONE_LABELS[userTz]) || userTz;
-        const tzValEl = document.getElementById('profile-timezone-val');
-        if (tzValEl && tzValEl.style.display !== 'none') {
-            tzValEl.innerText = timeStr ? `${tzLabel} (${timeStr})` : tzLabel;
-        }
-        const ownerTimeEl = document.getElementById('profile-timezone-owner-time');
-        if (ownerTimeEl && !ownerTimeEl.classList.contains('hidden')) {
-            ownerTimeEl.innerText = timeStr ? `(${timeStr})` : '';
-        }
-    }
-    if (window._activeMiniProfileUserTz !== undefined) {
-        const tzEl = document.getElementById('mini-profile-timezone');
-        const miniModal = document.getElementById('mini-profile-modal');
-        if (tzEl && miniModal && !miniModal.classList.contains('hidden')) {
-            const userTz = window._activeMiniProfileUserTz;
-            const tzLabel = (window.TIMEZONE_LABELS && window.TIMEZONE_LABELS[userTz]) || userTz;
-            const timeStr = window.getUserCurrentTime(userTz);
-            tzEl.innerText = `Timezone: ${tzLabel}${timeStr ? ` (${timeStr})` : ''}`;
-        }
-    }
-};
-
-if (!window._profileTimeIntervalId) {
-    window._profileTimeIntervalId = setInterval(window.updateDisplayedProfileTimes, 30000);
+window.updateDisplayedProfileTimes = function() {};
+if (window._profileTimeIntervalId) {
+    try { clearInterval(window._profileTimeIntervalId); } catch (_) {}
+    window._profileTimeIntervalId = null;
 }
 
 window.showMiniProfile = async function (username) {
@@ -2271,17 +2247,6 @@ window.showMiniProfile = async function (username) {
             const lvStr = formatLastVisited(data.last_visited, isOnline);
             lastVisitedEl.innerText = `Last Visited: ${lvStr}`;
             lastVisitedEl.title = lastVisitedEl.innerText;
-        }
-
-        // Render Timezone and Current Time
-        window._activeMiniProfileUserTz = data.timezone || 'auto';
-        const tzEl = document.getElementById('mini-profile-timezone');
-        if (tzEl) {
-            const userTz = window._activeMiniProfileUserTz;
-            const tzLabel = (window.TIMEZONE_LABELS && window.TIMEZONE_LABELS[userTz]) || userTz;
-            const timeStr = window.getUserCurrentTime ? window.getUserCurrentTime(userTz) : '';
-            tzEl.innerText = `Timezone: ${tzLabel}${timeStr ? ` (${timeStr})` : ''}`;
-            tzEl.title = tzEl.innerText;
         }
 
         // Flag and Meta
@@ -3264,64 +3229,6 @@ async function renderProfile(user) {
     if (genderEl) genderEl.innerText = cleanProfileText(user.gender);
     // Location text comes from the selected flag (profile-flag-name); no separate value field.
     if (quoteEl) quoteEl.innerText = user.quote || 'Enter a personal quote';
-
-    // Timezone Handling
-    const tzValEl = document.getElementById('profile-timezone-val');
-    const tzSelectEl = document.getElementById('profile-timezone-select');
-    const ownerTimeEl = document.getElementById('profile-timezone-owner-time');
-    const userTz = user.timezone || 'auto';
-    window._activeProfileUserTz = userTz;
-
-    const tzLabels = window.TIMEZONE_LABELS || {};
-    const tzLabel = tzLabels[userTz] || userTz;
-    const timeStr = window.getUserCurrentTime ? window.getUserCurrentTime(userTz) : '';
-
-    if (tzValEl) {
-        tzValEl.innerText = timeStr ? `${tzLabel} (${timeStr})` : tzLabel;
-    }
-    if (tzSelectEl) {
-        tzSelectEl.value = userTz;
-        if (isOwner) {
-            tzValEl.style.display = 'none';
-            tzSelectEl.classList.remove('hidden');
-            if (ownerTimeEl) {
-                ownerTimeEl.innerText = timeStr ? `(${timeStr})` : '';
-                ownerTimeEl.classList.remove('hidden');
-            }
-            tzSelectEl.onchange = async () => {
-                const newTz = tzSelectEl.value;
-                window._activeProfileUserTz = newTz;
-                window.currentUserTimezone = newTz;
-                localStorage.setItem('morpheme_timezone', newTz);
-                const newTimeStr = window.getUserCurrentTime ? window.getUserCurrentTime(newTz) : '';
-                if (tzValEl) tzValEl.innerText = newTimeStr ? `${tzLabels[newTz] || newTz} (${newTimeStr})` : (tzLabels[newTz] || newTz);
-                if (ownerTimeEl) ownerTimeEl.innerText = newTimeStr ? `(${newTimeStr})` : '';
-                await saveProfileField('timezone', newTz);
-                const settingSelect = document.getElementById('setting-timezone-select');
-                if (settingSelect) settingSelect.value = newTz;
-                if (window.renderTournament && window.currentTournamentState) {
-                    window.renderTournament(window.currentTournamentState);
-                }
-                if (user.recent_rounds) {
-                    const listContainer = document.getElementById('profile-history-list');
-                    if (listContainer && typeof window.renderRoundItem === 'function') {
-                        listContainer.innerHTML = user.recent_rounds.map(r => window.renderRoundItem(r)).join('');
-                    }
-                }
-                if (typeof window.refreshCurrentToolDates === 'function') {
-                    window.refreshCurrentToolDates();
-                }
-                if (typeof window.refreshLobbyChatDates === 'function') {
-                    window.refreshLobbyChatDates();
-                }
-            };
-        } else {
-            tzValEl.style.display = 'inline-block';
-            tzSelectEl.classList.add('hidden');
-            if (ownerTimeEl) ownerTimeEl.classList.add('hidden');
-            tzSelectEl.onchange = null;
-        }
-    }
 
     if (descriptionEl) {
         descriptionEl.innerText = user.description || 'Add a detailed description about yourself...';

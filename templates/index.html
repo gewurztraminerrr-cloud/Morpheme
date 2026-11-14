@@ -183,9 +183,9 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1793462000" as="style">
+    <link rel="preload" href="/css/style.css?v=1794134000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794100000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1793550000">
+    <link rel="stylesheet" href="/css/style.css?v=1794134000">
     <link rel="stylesheet" href="/css/lobby.css?v=1794100000">
     <link rel="stylesheet" href="/css/play.css?v=1794090100">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
@@ -1499,46 +1499,6 @@
                                                         <span id="profile-flag-name" class="flag-name-label"></span>
                                                         <span class="meta-label">Location</span>
                                                     </div>
-                                                    <div class="meta-item" id="profile-timezone-container" title="Time Zone">
-                                                        <span class="meta-icon">🌐</span>
-                                                        <span class="meta-label">Timezone</span>
-                                                        <span id="profile-timezone-val" class="meta-text" style="cursor: pointer;">Auto (Device)</span>
-                                                        <select id="profile-timezone-select" class="timezone-edit-select hidden" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--input-border); border-radius: 6px; padding: 2px 6px; font-size: 0.82rem; max-width: 170px;">
-                                                            <option value="auto">Auto (Device Local)</option>
-                                                            <option value="UTC">UTC (Universal Time)</option>
-                                                            <option value="America/New_York">US Eastern Time (ET)</option>
-                                                            <option value="America/Chicago">US Central Time (CT)</option>
-                                                            <option value="America/Denver">US Mountain Time (MT)</option>
-                                                            <option value="America/Phoenix">US Arizona (MST, no DST)</option>
-                                                            <option value="America/Los_Angeles">US Pacific Time (PT)</option>
-                                                            <option value="America/Anchorage">US Alaska Time (AKT)</option>
-                                                            <option value="Pacific/Honolulu">US Hawaii Time (HST)</option>
-                                                            <option value="America/Toronto">Canada Eastern (Toronto - ET)</option>
-                                                            <option value="America/Winnipeg">Canada Central (Winnipeg - CT)</option>
-                                                            <option value="America/Vancouver">Canada Pacific (Vancouver - PT)</option>
-                                                            <option value="America/Sao_Paulo">Brazil (São Paulo - BRT)</option>
-                                                            <option value="Europe/London">UK / Ireland (London - GMT/BST)</option>
-                                                            <option value="Europe/Paris">Central Europe (Paris, Berlin - CET/CEST)</option>
-                                                            <option value="Europe/Athens">Eastern Europe (Athens, Cairo - EET/EEST)</option>
-                                                            <option value="Europe/Moscow">Russia (Moscow - MSK)</option>
-                                                            <option value="Asia/Dubai">Gulf Standard Time (Dubai - GST)</option>
-                                                            <option value="Asia/Kolkata">India Standard Time (IST)</option>
-                                                            <option value="Asia/Bangkok">Indochina Time (Bangkok, Jakarta - ICT)</option>
-                                                            <option value="Asia/Singapore">Singapore / Malaysia (SGT)</option>
-                                                            <option value="Asia/Hong_Kong">Hong Kong (HKT)</option>
-                                                            <option value="Asia/Shanghai">China Standard Time (Beijing - CST)</option>
-                                                            <option value="Asia/Tokyo">Japan Standard Time (Tokyo - JST)</option>
-                                                            <option value="Asia/Seoul">Korea Standard Time (Seoul - KST)</option>
-                                                            <option value="Australia/Perth">Australia Western (Perth - AWST)</option>
-                                                            <option value="Australia/Adelaide">Australia Central (Adelaide - ACST)</option>
-                                                            <option value="Australia/Sydney">Australia Eastern (Sydney - AEST/AEDT)</option>
-                                                            <option value="Pacific/Auckland">New Zealand (Auckland - NZST/NZDT)</option>
-                                                        </select>
-                                                        <span id="profile-timezone-owner-time" class="meta-text hidden" style="font-weight: 500; font-size: 0.85rem; margin-left: 4px; opacity: 0.85;"></span>
-                                                    </div>
-                                                </div>
-
-                                                <div class="profile-meta-line">
                                                     <div class="meta-item" id="profile-joined-container"
                                                         title="Registered Morpheme">
                                                         <span class="meta-icon">🗓️</span>
@@ -1549,6 +1509,9 @@
                                                         <span class="meta-icon">🕒</span>
                                                         <span id="profile-last-visited-val" class="meta-text">Last Visited: -</span>
                                                     </div>
+                                                </div>
+
+                                                <div class="profile-meta-line">
                                                     <div class="meta-item" id="profile-forum-posts-container"
                                                         title="Forum Posts" role="button" tabindex="0">
                                                         <span class="meta-icon">💬</span>
@@ -8898,10 +8861,6 @@
                         <span class="mini-meta-icon">🕒</span>
                         <span id="mini-profile-last-visited" class="mini-meta-text">Last Visited: -</span>
                     </div>
-                    <div class="mini-meta-item" id="mini-profile-timezone-container">
-                        <span class="mini-meta-icon">🌐</span>
-                        <span id="mini-profile-timezone" class="mini-meta-text">Timezone: -</span>
-                    </div>
                     <div class="mini-meta-item" id="mini-meta-forum-posts" title="Forum Posts" role="button" tabindex="0">
                         <span class="mini-meta-icon">💬</span>
                         <span id="mini-profile-forum-posts" class="mini-meta-text">Forum Posts: -</span>
@@ -10195,15 +10154,15 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1794133000"></script>
+    <script src="/js/settings.js?v=1794134000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794133000"></script>
+    <script src="/js/app.js?v=1794134000"></script>
     <script src="/js/lobby.js?v=1794133000"></script>
     <script src="/js/play.js?v=1794130000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1794133000"></script>
+    <script src="/js/tools.js?v=1794134000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1794131000"></script>
