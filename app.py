@@ -6668,7 +6668,11 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
             avg_l = round(total_l / num_words, 1)
         twa = row[9] if len(row) > 9 else 0
         pct_found = round(num_words / twa * 100, 1) if twa > 0 else 0
-        obscure_count = sum(1 for w in words if isinstance(w, dict) and w.get('word', '').upper() in unique_csw) if words else 0
+        import tally_divisions as td
+        if td.is_tally_divisions_enabled():
+            obscure_count = sum(1 for w in words if isinstance(w, dict) and td.is_word_hard_by_tally(w.get('word', ''))) if words else 0
+        else:
+            obscure_count = sum(1 for w in words if isinstance(w, dict) and w.get('word', '').upper() in unique_csw) if words else 0
         processed = {
             'game_id': g_id, 'room_id': r_id, 'round_number': r_num, 'timestamp': format_chicago_to_utc(ts),
             'total_score': my_score, 'num_words': len(words), 'is_win': is_win,
@@ -14331,13 +14335,18 @@ def get_leaderboard_data():
         """, params).fetchall()
 
         word_validator.ensure_csw_loaded()
+        import tally_divisions as td
+        use_tally = td.is_tally_divisions_enabled()
         user_obscure = {}
         for r in cursor_obscure:
             d = dict(r)
             try:
                 raw_words = json.loads(d.get('words_json', '[]'))
                 words_list = [w for w in raw_words if not (isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) <= 0))]
-                d['obscure_count'] = sum(1 for w in words_list if w.get('word', '').upper() in word_validator.unique_csw_words)
+                if use_tally:
+                    d['obscure_count'] = sum(1 for w in words_list if td.is_word_hard_by_tally(w.get('word', '')))
+                else:
+                    d['obscure_count'] = sum(1 for w in words_list if w.get('word', '').upper() in word_validator.unique_csw_words)
             except:
                 d['obscure_count'] = 0
             user = d['username']

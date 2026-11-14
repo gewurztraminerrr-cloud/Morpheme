@@ -30,16 +30,16 @@ DEFAULT_CONFIG = {
     "use_tally_divisions": False,
     "hard_thresholds": {
         "5": 2,  # Rare division of 2
-        "6": 3,  # Rarest division of 3
-        "7": 3,  # Rarest 3 divisions (3, 4, 5)
-        "8": 3,  # Rarest 3 divisions (3, 4, 5)
-        "9": 3,  # Non-ING sequences or division >= 3
-        "10": 3,
-        "11": 3,
-        "12": 3,
-        "13": 3,
-        "14": 3,
-        "15": 3
+        "6": 2,  # 2nd and 3rd divisions (Divs 2, 3 of 3)
+        "7": 3,  # Rarest 3 divisions (Divs 3, 4, 5 of 5)
+        "8": 3,  # Rarest 3 divisions (Divs 3, 4, 5 of 5)
+        "9": 1,  # All 9L+ are considered hard
+        "10": 1,
+        "11": 1,
+        "12": 1,
+        "13": 1,
+        "14": 1,
+        "15": 1
     }
 }
 
@@ -190,9 +190,9 @@ def get_hard_threshold(length: int) -> int:
             pass
     # Defaults:
     if length == 5:
-        return 2  # Rare division of 2
+        return 2  # Rare division of 2 (2nd division)
     if length == 6:
-        return 3  # Rarest division of 3
+        return 2  # 2nd and 3rd divisions of 3
     return 3      # Rarest 3 divisions (3, 4, 5) for 7L+
 
 def get_word_division_info(word: str) -> dict:
@@ -293,9 +293,8 @@ def is_word_hard_by_tally(word: str) -> bool:
     Determine whether a word is considered 'hard' based on its division in the tally file.
     Rule:
     - 3L and 4L: False (never counted as hard).
-    - 9L+: "At 9 letters long, all non-ING sequences can be considered hard."
-      If ends in ING, checks if division >= hard_threshold.
-    - 5L to 8L: division >= hard_threshold (e.g. >= 2 for 5L, >= 3 for 6L/7L/8L).
+    - 9L+: All 9-letter words and greater are considered hard.
+    - 5L to 8L: division >= hard_threshold (e.g. >= 2 for 5L, >= 2 for 6L, >= 3 for 7L/8L).
     """
     raw_word = str(word or '').strip().upper()
     length = len(raw_word)
@@ -303,12 +302,8 @@ def is_word_hard_by_tally(word: str) -> bool:
         return False
 
     if length >= 9:
-        if not raw_word.endswith('ING'):
-            return True
-        # If it ends with ING, check its division against threshold
-        div_info = get_word_division_info(raw_word)
-        thresh = get_hard_threshold(length)
-        return div_info['division'] >= thresh
+        # User requirement: "Also, at the 9 letter words and greater, include all as part of the HIGHEST NUMBER OF HARD WORDS FOUND"
+        return True
 
     div_info = get_word_division_info(raw_word)
     thresh = get_hard_threshold(length)

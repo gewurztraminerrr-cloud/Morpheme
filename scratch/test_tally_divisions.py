@@ -69,11 +69,11 @@ def test_unit_logic():
     assert testing_info['points'] == 5
     print(f"✓ TESTING division info: {testing_info['division_str']}")
 
-    # 9L rule: all non-ING sequences are considered hard
+    # 9L+ rule: all 9-letter words and greater are considered hard
     assert td.is_word_hard_by_tally('BEAUTIFUL') is True
-    # 9L ING sequences evaluated by division (Div 1 is not hard)
-    assert td.is_word_hard_by_tally('SOMETHING') is False
-    print("✓ 9L non-ING is considered hard (BEAUTIFUL) and ING follows division (SOMETHING)")
+    assert td.is_word_hard_by_tally('SOMETHING') is True
+    assert td.is_word_hard_by_tally('WONDERFUL') is True
+    print("✓ All 9L+ words are considered hard (BEAUTIFUL, SOMETHING, WONDERFUL)")
 
     # WOTD eligibility
     # 6L words: only rarest division (div == 3)
