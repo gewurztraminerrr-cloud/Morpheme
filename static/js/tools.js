@@ -11979,8 +11979,6 @@ window.loadNewUsersTool = async function(forceRefresh = false) {
     const onlineCountEl = document.getElementById('player-stats-online-count');
     const todayUsersEl = document.getElementById('player-stats-today-users');
     const todayGuestsEl = document.getElementById('player-stats-today-guests');
-    const todayUsersTextEl = document.getElementById('player-stats-today-users-text');
-    const todayGuestsTextEl = document.getElementById('player-stats-today-guests-text');
 
     if (!tableBody && !onlineCountEl && !regCountEl) return;
 
@@ -12003,8 +12001,6 @@ window.loadNewUsersTool = async function(forceRefresh = false) {
         if (totalCountEl) totalCountEl.textContent = regCount.toLocaleString();
         if (todayUsersEl) todayUsersEl.textContent = usersToday.toLocaleString();
         if (todayGuestsEl) todayGuestsEl.textContent = guestsToday.toLocaleString();
-        if (todayUsersTextEl) todayUsersTextEl.textContent = usersToday.toLocaleString();
-        if (todayGuestsTextEl) todayGuestsTextEl.textContent = guestsToday.toLocaleString();
         if (weekCountEl) weekCountEl.textContent = weekCount.toLocaleString();
         if (weekCountBadgeEl) weekCountBadgeEl.textContent = weekCount.toLocaleString();
 

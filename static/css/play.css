@@ -13491,24 +13491,6 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-.daily-login-statement-card {
-    padding: 16px 20px;
-    border-radius: 8px;
-    background: rgba(var(--text-primary-rgb), 0.04);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.12);
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-}
-
-@media (max-width: 600px) {
-    .daily-login-statement-card {
-        padding: 12px 14px;
-        gap: 10px;
-    }
-}
-
 .new-users-stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
