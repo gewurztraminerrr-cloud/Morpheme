@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33201';
+const CURRENT_APP_BUILD = '33202';
 (function() {
     try {
         localStorage.setItem('morpheme_build_version', CURRENT_APP_BUILD);
@@ -4537,18 +4537,7 @@ window.hideLoadingOverlay = function() {
 };
 
 window.loadFAQUserCounts = async function() {
-    try {
-        const response = await fetch('/api/stats/user_count');
-        if (response.ok) {
-            const data = await response.json();
-            const regCountEl = document.getElementById('faq-reg-count');
-            const onlineCountEl = document.getElementById('faq-online-count');
-            if (regCountEl) regCountEl.textContent = data.count || 0;
-            if (onlineCountEl) onlineCountEl.textContent = data.online_count || 0;
-        }
-    } catch (e) {
-        console.error('[loadFAQUserCounts] Error fetching user counts:', e);
-    }
+    // User counts moved from FAQ to Tools -> Player Activity & Stats
 };
 
 window.loadFAQDictionaryStats = async function() {

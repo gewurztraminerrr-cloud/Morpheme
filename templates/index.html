@@ -187,7 +187,7 @@
     <link rel="preload" href="/css/lobby.css?v=1794100000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1794141000">
     <link rel="stylesheet" href="/css/lobby.css?v=1794100000">
-    <link rel="stylesheet" href="/css/play.css?v=1794144000">
+    <link rel="stylesheet" href="/css/play.css?v=1794148000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -4226,8 +4226,8 @@
                         <div class="tool-btn-desc">Set a session alert timer</div>
                     </button>
                     <button class="tool-nav-btn" data-tool="new-users" onclick="window.showTool('new-users')">
-                        <div class="tool-btn-title">New Users</div>
-                        <div class="tool-btn-desc">Recently registered players</div>
+                        <div class="tool-btn-title">Player Activity & Stats</div>
+                        <div class="tool-btn-desc">Live counts, daily logins & new members</div>
                     </button>
                     <button class="tool-nav-btn" data-tool="change-account" onclick="window.showTool('change-account')">
                         <div class="tool-btn-title">Change Password/Email</div>
@@ -4354,44 +4354,104 @@
                                 id="timer-countdown-display">00:00:00</h3>
                         </div>
                     </div>
-                    <!-- New Users Interface -->
+                    <!-- Player Activity & Stats Interface -->
                     <div id="tool-new-users" class="tool-pane">
                         <div class="tool-header">
-                            <h2>New Users</h2>
-                            <p>Browse recently registered members and community registration statistics.</p>
+                            <h2>Player Activity & Stats</h2>
+                            <p>Live platform counts, daily user activity, and recently registered members.</p>
                         </div>
 
-                        <!-- Stats Cards -->
-                        <div class="new-users-stats-grid" id="new-users-stats-grid">
-                            <div class="stat-box">
-                                <span class="stat-num" id="new-users-week-count" style="color: #60a5fa;">-</span>
-                                <span class="stat-desc">REGISTRATIONS THIS WEEK</span>
+                        <!-- Inner Sub-Tabs Navigation -->
+                        <div class="player-stats-subtabs">
+                            <button type="button" class="player-stats-subtab-btn active" id="subtab-btn-activity" onclick="window.switchPlayerStatsSubtab('activity')">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+                                    Activity & Stats
+                                </span>
+                            </button>
+                            <button type="button" class="player-stats-subtab-btn" id="subtab-btn-new-users" onclick="window.switchPlayerStatsSubtab('new-users')">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                    New Users
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- Subtab Pane 1: Activity & Stats -->
+                        <div id="subtab-pane-activity" class="player-stats-subtab-pane" style="display: block;">
+                            <!-- Daily Logins Statement Card -->
+                            <div class="daily-login-statement-card">
+                                <div style="font-size: 1.8rem; line-height: 1; flex-shrink: 0;">👥</div>
+                                <div style="display: flex; flex-direction: column; gap: 3px;">
+                                    <div style="font-size: 1.08rem; font-weight: 600; color: var(--text-primary); line-height: 1.4;" id="daily-login-statement">
+                                        <span id="player-stats-today-users-text" style="color: #a78bfa; font-weight: 700;">-</span> unique users logged on today, and <span id="player-stats-today-guests-text" style="color: #fbbf24; font-weight: 700;">-</span> unique guests
+                                    </div>
+                                    <div style="font-size: 0.78rem; color: var(--muted-text); opacity: 0.85;">
+                                        Platform calendar activity resets daily at 12:00 AM Central Time (Chicago)
+                                    </div>
+                                </div>
                             </div>
-                            <div class="stat-box">
-                                <span class="stat-num" id="new-users-total-count" style="color: #34d399;">-</span>
-                                <span class="stat-desc">TOTAL USERS</span>
+
+                            <!-- Platform Stats Cards Grid -->
+                            <div class="new-users-stats-grid" id="new-users-stats-grid">
+                                <div class="stat-box" style="position: relative;">
+                                    <span class="stat-num" id="player-stats-online-count" style="color: #22c55e;">-</span>
+                                    <span class="stat-desc" style="display: flex; align-items: center; justify-content: center; gap: 5px;">
+                                        <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 8px rgba(34, 197, 94, 0.8);"></span>
+                                        ONLINE NOW
+                                    </span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-num" id="player-stats-reg-count" style="color: #38bdf8;">-</span>
+                                    <span class="stat-desc">REGISTERED USERS</span>
+                                    <span id="new-users-total-count" style="display: none;">-</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-num" id="player-stats-today-users" style="color: #a78bfa;">-</span>
+                                    <span class="stat-desc">USERS TODAY</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-num" id="player-stats-today-guests" style="color: #fbbf24;">-</span>
+                                    <span class="stat-desc">GUESTS TODAY</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-num" id="new-users-week-count" style="color: #34d399;">-</span>
+                                    <span class="stat-desc">REGISTRATIONS THIS WEEK</span>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- New Users Table -->
-                        <div class="new-users-table-container list-scroll-area-wrapper" id="new-users-table-container">
-                            <div class="history-table-wrapper" id="new-users-table-scroll">
-                                <table class="history-table" id="new-users-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Member</th>
-                                            <th>Date of Registration</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="new-users-table-body">
-                                        <tr>
-                                            <td colspan="2" style="padding: 20px; text-align: center; opacity: 0.6;">Loading new users...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                        <!-- Subtab Pane 2: New Users (Table View) -->
+                        <div id="subtab-pane-new-users" class="player-stats-subtab-pane" style="display: none; flex-direction: column; flex: 1 1 auto; min-height: 0;">
+                            <div class="new-users-table-header-info" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                                <div style="font-size: 0.85rem; color: var(--muted-text);">
+                                    Showing recently registered members (ordered newest first)
+                                </div>
+                                <div style="font-size: 0.82rem; font-weight: 600; color: #34d399; background: rgba(52, 211, 153, 0.12); padding: 4px 10px; border-radius: 12px; border: 1px solid rgba(52, 211, 153, 0.25);">
+                                    <span id="new-users-week-count-badge">-</span> this week
+                                </div>
                             </div>
-                            <div class="custom-scrollbar-track" id="new-users-scrollbar-track">
-                                <div class="custom-scrollbar-thumb" id="new-users-scrollbar-thumb"></div>
+
+                            <!-- New Users Table -->
+                            <div class="new-users-table-container list-scroll-area-wrapper" id="new-users-table-container">
+                                <div class="history-table-wrapper" id="new-users-table-scroll">
+                                    <table class="history-table" id="new-users-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Member</th>
+                                                <th>Date of Registration</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="new-users-table-body">
+                                            <tr>
+                                                <td colspan="2" style="padding: 20px; text-align: center; opacity: 0.6;">Loading new users...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="custom-scrollbar-track" id="new-users-scrollbar-track">
+                                    <div class="custom-scrollbar-thumb" id="new-users-scrollbar-thumb"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -6979,7 +7039,6 @@
                     <h3 class="faq-selector-title">Quick Navigate FAQ</h3>
                     <div class="faq-questions-grid">
                         <button class="faq-nav-link" data-target="faq-business-inquiries">We have business inquiries and offers. What is your email to contact you?</button>
-                        <button class="faq-nav-link" data-target="faq-registered-online">How many players are currently registered and online?</button>
                         <button class="faq-nav-link" data-target="faq-dictionaries">What are the different dictionaries used?</button>
                         <button class="faq-nav-link" data-target="faq-difficulty-differences">What are the differences between Easy, Medium, and Hard, and why are they set up this way?</button>
                         <button class="faq-nav-link" data-target="faq-year-launched">In what year was Morpheme launched?</button>
@@ -7031,13 +7090,6 @@
                             </div>
                             <p style="margin-top: 10px;">Also, my username here is</p>
                             <p style="margin-top: 6px;"><strong>jeffb</strong></p>
-                        </div>
-                    </div>
-                    <!-- Q_counts -->
-                    <div class="faq-item" id="faq-registered-online">
-                        <div class="faq-question">How many players are currently registered and online?</div>
-                        <div class="faq-answer">
-                            <p>There are <strong id="faq-reg-count">[number]</strong> registered users, and <strong id="faq-online-count">[number]</strong> online users.</p>
                         </div>
                     </div>
                     <!-- Q_dict_stats -->
@@ -10180,13 +10232,13 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1794143000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794147000"></script>
+    <script src="/js/app.js?v=1794148000"></script>
     <script src="/js/lobby.js?v=1794133000"></script>
     <script src="/js/play.js?v=1794147000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1794144000"></script>
+    <script src="/js/tools.js?v=1794148000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1794138000"></script>

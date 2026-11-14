@@ -3562,7 +3562,16 @@ def init_db():
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_by TEXT
         );
+        CREATE TABLE IF NOT EXISTS daily_user_logins (
+            date_str TEXT NOT NULL,
+            user_id INTEGER NOT NULL,
+            is_guest INTEGER NOT NULL DEFAULT 0,
+            username TEXT,
+            last_seen REAL,
+            PRIMARY KEY (date_str, user_id)
+        );
     ''')
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_daily_logins_date ON daily_user_logins(date_str)")
     conn.commit()
 
     # MIGRATION: Ensure user_ratings columns exist for unrated placement
@@ -4475,17 +4484,16 @@ def get_settings():
 def get_user_count():
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
-        # Count all users who are NOT guests (guests have usernames starting with Guest_)
-        # AND check against guests created in guest_login if needed, but existing guest filter by name is good enough strictly speaking
-        # Actually safer to check if password_hash is not the dummy one? 
-        # But for 'signed up', we usually mean registered.
-        # Guest users are in the users table but we can identify them by 'Guest_' prefix if we stick to that convention
         cursor = conn.execute("SELECT COUNT(*) FROM users WHERE username NOT LIKE 'Guest_%'") 
         count = cursor.fetchone()[0]
         online_count = room_manager.get_online_count() if 'room_manager' in globals() else 0
+        unique_users_today, unique_guests_today = get_daily_login_counts()
         return jsonify({
             'count': count,
-            'online_count': online_count
+            'registered_users': count,
+            'online_count': online_count,
+            'unique_users_today': unique_users_today,
+            'unique_guests_today': unique_guests_today
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -5199,6 +5207,7 @@ def register():
         session.pop('is_guest', None)
         session['_morpheme_login_time'] = time.time()
         session.permanent = True
+        track_daily_login(user[0], username=username, is_guest=0)
         
         return jsonify({'success': True, 'username': username, 'email': email, 'rating': user[1], 'auth_token': auth_token})
     except sqlite3.IntegrityError:
@@ -5338,6 +5347,7 @@ def login():
         session.pop('is_guest', None) # Clear guest flag if present
         session['_morpheme_login_time'] = time.time()
         session.permanent = True
+        track_daily_login(user[0], username=canonical_username, is_guest=0)
         
         return jsonify({
             'success': True, 
@@ -5382,6 +5392,7 @@ def auto_login():
         session.pop('is_guest', None)
         session['_morpheme_login_time'] = time.time()
         session.permanent = True
+        track_daily_login(user[0], username=user[1], is_guest=0)
         
         return jsonify({
             'success': True,
@@ -5634,6 +5645,7 @@ def guest_login():
             session['is_guest'] = True
             session['_morpheme_login_time'] = time.time()
             session.permanent = True
+            track_daily_login(new_user_id, username=guest_username, is_guest=1)
             
             return jsonify({'success': True, 'username': guest_username})
         except Exception as e:
@@ -5648,6 +5660,7 @@ def get_session():
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
         touch_user_last_visited(session['user_id'])
+        track_daily_login(session['user_id'], username=session.get('username'), is_guest=session.get('is_guest'))
         
         # Fetch fresh rating from DB
         try:
@@ -5777,12 +5790,149 @@ def update_profile():
         print(f"Profile update error: {e}")
         return jsonify({'error': 'Update failed'}), 500
         
+# Daily User & Guest Logins Tracker
+_DAILY_LOGINS_LOCK = threading.Lock()
+_DAILY_LOGINS_CACHE = {
+    'date': None,
+    'registered_uids': set(),
+    'guest_uids': set()
+}
+
+def init_daily_logins_db(conn):
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS daily_user_logins (
+                date_str TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                is_guest INTEGER NOT NULL DEFAULT 0,
+                username TEXT,
+                last_seen REAL,
+                PRIMARY KEY (date_str, user_id)
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_daily_logins_date ON daily_user_logins(date_str)")
+        conn.commit()
+    except Exception as e:
+        print(f"[init_daily_logins_db] Error: {e}")
+
+def track_daily_login(user_id, username=None, is_guest=None):
+    if not user_id:
+        return
+    try:
+        uid = int(user_id)
+        if uid <= 0:
+            return
+    except (ValueError, TypeError):
+        return
+
+    chicago_now = datetime.datetime.now(DAILY_TZ)
+    today_str = chicago_now.strftime('%Y-%m-%d')
+    now_ts = time.time()
+
+    with _DAILY_LOGINS_LOCK:
+        if _DAILY_LOGINS_CACHE['date'] != today_str:
+            _DAILY_LOGINS_CACHE['date'] = today_str
+            _DAILY_LOGINS_CACHE['registered_uids'] = set()
+            _DAILY_LOGINS_CACHE['guest_uids'] = set()
+            try:
+                conn = sqlite3.connect(DB_PATH, timeout=10)
+                init_daily_logins_db(conn)
+                cur = conn.execute("SELECT user_id, is_guest FROM daily_user_logins WHERE date_str = ?", (today_str,))
+                for r_uid, r_is_guest in cur.fetchall():
+                    if r_is_guest:
+                        _DAILY_LOGINS_CACHE['guest_uids'].add(r_uid)
+                    else:
+                        _DAILY_LOGINS_CACHE['registered_uids'].add(r_uid)
+                conn.close()
+            except Exception as e:
+                print(f"[track_daily_login] Cache load error: {e}")
+
+        if uid in _DAILY_LOGINS_CACHE['registered_uids'] or uid in _DAILY_LOGINS_CACHE['guest_uids']:
+            return
+
+        if is_guest is None:
+            if username and str(username).startswith('Guest_'):
+                is_guest = 1
+            else:
+                try:
+                    conn = sqlite3.connect(DB_PATH, timeout=5)
+                    cur = conn.execute("SELECT username FROM users WHERE id = ?", (uid,))
+                    row = cur.fetchone()
+                    conn.close()
+                    if row and row[0] and str(row[0]).startswith('Guest_'):
+                        is_guest = 1
+                    else:
+                        is_guest = 0
+                    if row and not username:
+                        username = row[0]
+                except Exception:
+                    is_guest = 0
+        else:
+            is_guest = 1 if is_guest else 0
+
+        if is_guest:
+            _DAILY_LOGINS_CACHE['guest_uids'].add(uid)
+        else:
+            _DAILY_LOGINS_CACHE['registered_uids'].add(uid)
+
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=10)
+            conn.execute("""
+                INSERT OR IGNORE INTO daily_user_logins (date_str, user_id, is_guest, username, last_seen)
+                VALUES (?, ?, ?, ?, ?)
+            """, (today_str, uid, is_guest, username or '', now_ts))
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"[track_daily_login] Insert error: {e}")
+
+def get_daily_login_counts():
+    chicago_now = datetime.datetime.now(DAILY_TZ)
+    today_str = chicago_now.strftime('%Y-%m-%d')
+
+    if 'room_manager' in globals() and hasattr(room_manager, 'user_presence'):
+        try:
+            with room_manager.lock:
+                now = time.time()
+                active_uids = [uid for uid, ts in room_manager.user_presence.items() if (now - ts) < 180]
+            for uid_str in active_uids:
+                try:
+                    track_daily_login(int(uid_str))
+                except Exception:
+                    pass
+        except Exception as e:
+            print(f"[get_daily_login_counts] room_manager sync error: {e}")
+
+    with _DAILY_LOGINS_LOCK:
+        if _DAILY_LOGINS_CACHE['date'] != today_str:
+            _DAILY_LOGINS_CACHE['date'] = today_str
+            _DAILY_LOGINS_CACHE['registered_uids'] = set()
+            _DAILY_LOGINS_CACHE['guest_uids'] = set()
+            try:
+                conn = sqlite3.connect(DB_PATH, timeout=10)
+                init_daily_logins_db(conn)
+                cur = conn.execute("SELECT user_id, is_guest FROM daily_user_logins WHERE date_str = ?", (today_str,))
+                for r_uid, r_is_guest in cur.fetchall():
+                    if r_is_guest:
+                        _DAILY_LOGINS_CACHE['guest_uids'].add(r_uid)
+                    else:
+                        _DAILY_LOGINS_CACHE['registered_uids'].add(r_uid)
+                conn.close()
+            except Exception as e:
+                print(f"[get_daily_login_counts] Cache load error: {e}")
+
+        reg_count = len(_DAILY_LOGINS_CACHE['registered_uids'])
+        guest_count = len(_DAILY_LOGINS_CACHE['guest_uids'])
+
+    return reg_count, guest_count
+
 _last_visited_touch_cache = {}
 
 def touch_user_last_visited(user_id):
     if not user_id:
         return
     now = time.time()
+    track_daily_login(user_id)
     last_touch = _last_visited_touch_cache.get(str(user_id), 0)
     if now - last_touch > 30: # Throttled to at most once per 30s per user
         _last_visited_touch_cache[str(user_id)] = now
@@ -5822,6 +5972,7 @@ def get_public_profile(username):
     if 'user_id' in session:
         room_manager.update_presence(session['user_id'])
         touch_user_last_visited(session['user_id'])
+        track_daily_login(session['user_id'], username=session.get('username'), is_guest=session.get('is_guest'))
     conn = sqlite3.connect(DB_PATH, timeout=30)
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
@@ -12256,6 +12407,7 @@ def tools_find_count():
 
 
 @app.route('/api/tools/new-users', methods=['GET'])
+@app.route('/api/tools/player-stats', methods=['GET'])
 def tools_new_users():
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
@@ -12286,9 +12438,16 @@ def tools_new_users():
                 'country_flag': r['country_flag'] or '',
                 'created_at': r['created_at'] or ''
             })
-            
+
+        online_count = room_manager.get_online_count() if 'room_manager' in globals() else 0
+        unique_users_today, unique_guests_today = get_daily_login_counts()
+
         return jsonify({
             'total_users': total_users,
+            'registered_users': total_users,
+            'online_count': online_count,
+            'unique_users_today': unique_users_today,
+            'unique_guests_today': unique_guests_today,
             'registrations_this_week': registrations_this_week,
             'users': users
         })

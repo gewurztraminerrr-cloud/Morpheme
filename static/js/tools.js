@@ -236,6 +236,7 @@ window.applyDynamicValidationStyle = function(el, wordOrText) {
 
 // NEW: Global Tool Switcher Helper
 window.showTool = function(toolId) {
+    if (toolId === 'player-stats') toolId = 'new-users';
     if (window._toolsSlideTimeout) {
         clearTimeout(window._toolsSlideTimeout);
         window._toolsSlideTimeout = null;
@@ -11967,11 +11968,21 @@ if (document.readyState === 'loading') {
 // ==========================================
 // NEW USERS TOOL
 // ==========================================
+// PLAYER ACTIVITY & STATS / NEW USERS TOOL
+// ==========================================
 window.loadNewUsersTool = async function(forceRefresh = false) {
     const tableBody = document.getElementById('new-users-table-body');
     const weekCountEl = document.getElementById('new-users-week-count');
+    const weekCountBadgeEl = document.getElementById('new-users-week-count-badge');
     const totalCountEl = document.getElementById('new-users-total-count');
-    if (!tableBody) return;
+    const regCountEl = document.getElementById('player-stats-reg-count');
+    const onlineCountEl = document.getElementById('player-stats-online-count');
+    const todayUsersEl = document.getElementById('player-stats-today-users');
+    const todayGuestsEl = document.getElementById('player-stats-today-guests');
+    const todayUsersTextEl = document.getElementById('player-stats-today-users-text');
+    const todayGuestsTextEl = document.getElementById('player-stats-today-guests-text');
+
+    if (!tableBody && !onlineCountEl && !regCountEl) return;
 
     try {
         if (typeof initCustomScrollbarForElement === 'function') {
@@ -11981,61 +11992,74 @@ window.loadNewUsersTool = async function(forceRefresh = false) {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
 
-        if (weekCountEl) {
-            weekCountEl.textContent = (data.registrations_this_week || 0).toLocaleString();
-        }
-        if (totalCountEl) {
-            totalCountEl.textContent = (data.total_users || 0).toLocaleString();
-        }
+        const onlineCount = data.online_count || 0;
+        const regCount = data.registered_users !== undefined ? data.registered_users : (data.total_users || 0);
+        const usersToday = data.unique_users_today || 0;
+        const guestsToday = data.unique_guests_today || 0;
+        const weekCount = data.registrations_this_week || 0;
 
-        if (data.users && data.users.length > 0) {
-            tableBody.innerHTML = data.users.map(user => {
-                const formattedDate = user.created_at
-                    ? (typeof window.formatAppDate === 'function' ? window.formatAppDate(user.created_at, true) : user.created_at)
-                    : '-';
-                const flagHtml = window.getFlagHtml ? window.getFlagHtml(user.country_flag) : (user.country_flag || '');
+        if (onlineCountEl) onlineCountEl.textContent = onlineCount.toLocaleString();
+        if (regCountEl) regCountEl.textContent = regCount.toLocaleString();
+        if (totalCountEl) totalCountEl.textContent = regCount.toLocaleString();
+        if (todayUsersEl) todayUsersEl.textContent = usersToday.toLocaleString();
+        if (todayGuestsEl) todayGuestsEl.textContent = guestsToday.toLocaleString();
+        if (todayUsersTextEl) todayUsersTextEl.textContent = usersToday.toLocaleString();
+        if (todayGuestsTextEl) todayGuestsTextEl.textContent = guestsToday.toLocaleString();
+        if (weekCountEl) weekCountEl.textContent = weekCount.toLocaleString();
+        if (weekCountBadgeEl) weekCountBadgeEl.textContent = weekCount.toLocaleString();
 
-                return `
-                    <tr class="finder-row" data-username="${user.username}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
-                        <td style="padding: 12px 16px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
-                            <div style="display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">
-                                ${flagHtml} <span style="white-space: nowrap; font-weight: 600; color: var(--text-primary);">${user.username}</span>
-                            </div>
-                        </td>
-                        <td style="padding: 12px 16px; color: var(--muted-text); white-space: nowrap;">${formattedDate}</td>
+        if (tableBody) {
+            if (data.users && data.users.length > 0) {
+                tableBody.innerHTML = data.users.map(user => {
+                    const formattedDate = user.created_at
+                        ? (typeof window.formatAppDate === 'function' ? window.formatAppDate(user.created_at, true) : user.created_at)
+                        : '-';
+                    const flagHtml = window.getFlagHtml ? window.getFlagHtml(user.country_flag) : (user.country_flag || '');
+
+                    return `
+                        <tr class="finder-row" data-username="${user.username}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
+                            <td style="padding: 12px 16px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
+                                <div style="display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">
+                                    ${flagHtml} <span style="white-space: nowrap; font-weight: 600; color: var(--text-primary);">${user.username}</span>
+                                </div>
+                            </td>
+                            <td style="padding: 12px 16px; color: var(--muted-text); white-space: nowrap;">${formattedDate}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Click listener to open mini-profile
+                tableBody.querySelectorAll('.finder-row').forEach(row => {
+                    row.addEventListener('click', () => {
+                        const username = row.dataset.username;
+                        if (username && typeof window.showMiniProfile === 'function') {
+                            window.showMiniProfile(username);
+                        }
+                    });
+                    row.addEventListener('mouseenter', () => {
+                        row.style.background = 'rgba(var(--text-primary-rgb), 0.05)';
+                    });
+                    row.addEventListener('mouseleave', () => {
+                        row.style.background = 'transparent';
+                    });
+                });
+            } else {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="2" style="padding: 20px; text-align: center; opacity: 0.6;">No registered users found.</td>
                     </tr>
                 `;
-            }).join('');
-
-            // Click listener to open mini-profile
-            tableBody.querySelectorAll('.finder-row').forEach(row => {
-                row.addEventListener('click', () => {
-                    const username = row.dataset.username;
-                    if (username && typeof window.showMiniProfile === 'function') {
-                        window.showMiniProfile(username);
-                    }
-                });
-                row.addEventListener('mouseenter', () => {
-                    row.style.background = 'rgba(var(--text-primary-rgb), 0.05)';
-                });
-                row.addEventListener('mouseleave', () => {
-                    row.style.background = 'transparent';
-                });
-            });
-        } else {
+            }
+        }
+    } catch (err) {
+        console.error('[Player Stats / New Users] Failed to load data:', err);
+        if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="2" style="padding: 20px; text-align: center; opacity: 0.6;">No registered users found.</td>
+                    <td colspan="2" style="padding: 20px; text-align: center; color: #f87171;">Failed to load player stats. Please try again.</td>
                 </tr>
             `;
         }
-    } catch (err) {
-        console.error('[New Users] Failed to load new users:', err);
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="2" style="padding: 20px; text-align: center; color: #f87171;">Failed to load new users. Please try again.</td>
-            </tr>
-        `;
     } finally {
         const scrollArea = document.getElementById('new-users-table-scroll');
         if (scrollArea && typeof scrollArea._updateCustomScrollbar === 'function') {
@@ -12045,6 +12069,36 @@ window.loadNewUsersTool = async function(forceRefresh = false) {
         }
     }
 };
+
+window.switchPlayerStatsSubtab = function(subtab) {
+    const actBtn = document.getElementById('subtab-btn-activity');
+    const newBtn = document.getElementById('subtab-btn-new-users');
+    const actPane = document.getElementById('subtab-pane-activity');
+    const newPane = document.getElementById('subtab-pane-new-users');
+
+    if (subtab === 'activity') {
+        if (actBtn) actBtn.classList.add('active');
+        if (newBtn) newBtn.classList.remove('active');
+        if (actPane) actPane.style.display = 'block';
+        if (newPane) newPane.style.display = 'none';
+    } else {
+        if (newBtn) newBtn.classList.add('active');
+        if (actBtn) actBtn.classList.remove('active');
+        if (newPane) {
+            newPane.style.display = 'flex';
+        }
+        if (actPane) actPane.style.display = 'none';
+
+        const scrollArea = document.getElementById('new-users-table-scroll');
+        if (scrollArea && typeof scrollArea._updateCustomScrollbar === 'function') {
+            scrollArea._updateCustomScrollbar();
+        } else if (typeof initCustomScrollbarForElement === 'function') {
+            initCustomScrollbarForElement('new-users-table-scroll', 'new-users-scrollbar-track', 'new-users-scrollbar-thumb');
+        }
+    }
+};
+
+window.loadPlayerStatsTool = window.loadNewUsersTool;
 
 window.refreshCurrentToolDates = function() {
     try {
