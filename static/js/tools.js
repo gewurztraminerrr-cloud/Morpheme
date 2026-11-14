@@ -12309,9 +12309,9 @@ window.performReverseDictSearch = async function() {
     // Show searching state
     if (searchBtn) searchBtn.disabled = true;
     if (countText) {
-        countText.innerHTML = `Searching definitions for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>...`;
+        countText.innerHTML = `<span class="reverse-dict-searching-spinner" style="display:inline-block; vertical-align:middle; margin-right:6px;"></span> Searching definitions for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>...`;
     }
-    if (metaBadges) metaBadges.innerHTML = '<span class="reverse-dict-searching-spinner"></span>';
+    if (metaBadges) metaBadges.innerHTML = '';
     if (placeholder) {
         placeholder.style.display = 'flex';
         placeholder.innerHTML = `
@@ -12335,19 +12335,7 @@ window.performReverseDictSearch = async function() {
         const results = data.results || [];
         const matchedTerms = data.matched_terms || [];
 
-        // Meta badges
-        const modeLabel = mode === 'exact' ? 'Exact Inflections' : 'Similar Concepts & Synonyms';
-        let dictLabel = 'All Dictionaries';
-        if (dictFilter === 'NWL') dictLabel = 'NWL Only';
-        else if (dictFilter === 'CSW') dictLabel = 'CSW Only';
-        else if (dictFilter === 'AW') dictLabel = 'Added Words Only';
-
-        if (metaBadges) {
-            metaBadges.innerHTML = `
-                <span class="reverse-dict-mode-badge">${modeLabel}</span>
-                <span class="reverse-dict-filter-badge">${dictLabel}</span>
-            `;
-        }
+        if (metaBadges) metaBadges.innerHTML = '';
 
         if (count === 0 || results.length === 0) {
             if (countText) {

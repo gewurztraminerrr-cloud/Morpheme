@@ -3,8 +3,8 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_13
-Commit ID: 0f15e8b0
-Short ID:  0f15e8b0
+Commit ID: ac1fab9f
+Short ID:  ac1fab9f
 ```
 *(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
@@ -13,8 +13,8 @@ Short ID:  0f15e8b0
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `0f15e8b0` & tagged with `START_OVER_POINT_NOVEMBER_13` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `0f15e8b0`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `ac1fab9f` & tagged with `START_OVER_POINT_NOVEMBER_13` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `ac1fab9f`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
 | **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33207`) |
 
 ---
@@ -223,6 +223,8 @@ Short ID:  0f15e8b0
   - **Single-Pass Regex Pre-Compilation**: Updated `window.buildReverseDictHighlightRegex` in `tools.js` to compile the highlight pattern once before iterating results, reducing multi-thousand row render times from seconds to milliseconds.
   - **Vertical Dictionary Badges on Mobile**: Configured `.reverse-dict-badges-wrapper` with `flex-direction: column` on mobile screens so `NWL` renders directly above `CSW`, narrowing the dictionaries column from 72px down to 38px (`Dict`).
   - **Expanded Word Column Room**: Redirected the saved horizontal space into `.col-word`, expanding its mobile width from 96px to 124px, ensuring words up to 12 letters and their length pills fit without truncation.
+  - **Status Bar Badges Removal**: Removed the `"Similar Concepts & Synonyms"` and `"All Dictionaries"` meta badges to the right of the search counter, keeping the counter bar uncluttered and focused.
+  - **BANTAM Resolution**: Documented that BANTAM is present on the list in Similar mode at rank #3,203 (matching via the taxonomic synonym `fowl` in its definition), positioned after literal `bird` definitions due to exact-keyword ranking priority.
 
 ---
 
@@ -240,4 +242,4 @@ Short ID:  0f15e8b0
   - Force-updated tags `START_OVER_POINT_NOVEMBER_13`, `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`.
   - Pulled to `132.148.72.249`, PM2 restarted, live HTTP 200 OK verified on `https://morpheme.games/`.
   - Local server running cleanly on `http://localhost:5001/`.
-  - Build version bumped to `33208` (cache-buster `1794154000`).
+  - Build version bumped to `33209` (cache-buster `1794155000`).
