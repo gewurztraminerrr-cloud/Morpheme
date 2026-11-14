@@ -410,6 +410,12 @@ function debounce(func, wait) {
         }
         window.currentUserTimezone = currentTz;
         try { localStorage.setItem('morpheme_timezone', currentTz); } catch (e) {}
+        if (typeof window.refreshLobbyChatDates === 'function') {
+            window.refreshLobbyChatDates();
+        }
+        if (typeof window.refreshCurrentToolDates === 'function') {
+            window.refreshCurrentToolDates();
+        }
 
         // Allow Private Messages
         if (settings.allow_pm !== undefined) {

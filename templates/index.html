@@ -35,6 +35,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
     
     <script>
+        /* Instant Timezone Initialization from Server Session */
+        window.currentUserTimezone = {{ initial_timezone|default('auto')|tojson }};
+        try {
+            if (window.currentUserTimezone === 'auto' || !localStorage.getItem('morpheme_timezone')) {
+                localStorage.setItem('morpheme_timezone', window.currentUserTimezone);
+            }
+        } catch (_) {}
+    </script>
+    <script>
         /* Instant Desktop Firefox Detection (Head-Executed before First Paint) */
         (function() {
             try {
@@ -10186,15 +10195,15 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1794132000"></script>
+    <script src="/js/settings.js?v=1794133000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794132000"></script>
-    <script src="/js/lobby.js?v=1794132000"></script>
+    <script src="/js/app.js?v=1794133000"></script>
+    <script src="/js/lobby.js?v=1794133000"></script>
     <script src="/js/play.js?v=1794130000"></script>
-    <script src="/js/tournaments.js?v=1794132000"></script>
+    <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1794132000"></script>
+    <script src="/js/tools.js?v=1794133000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1794131000"></script>

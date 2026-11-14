@@ -4720,7 +4720,21 @@ def get_recent_donations():
 def index():
     # USER REQUEST: once the user logs in, entering "morpheme.games" (or refreshing root)
     # should automatically take them to the lobby without having to login again.
-    resp = make_response(render_template('index.html'))
+    user_tz = 'auto'
+    if 'user_id' in session:
+        try:
+            conn = sqlite3.connect(DB_PATH, timeout=30)
+            row = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'timezone'", (session['user_id'],)).fetchone()
+            if row and row[0]:
+                user_tz = row[0]
+            else:
+                row2 = conn.execute("SELECT timezone FROM users WHERE id = ?", (session['user_id'],)).fetchone()
+                if row2 and row2[0]:
+                    user_tz = row2[0]
+            conn.close()
+        except Exception:
+            pass
+    resp = make_response(render_template('index.html', initial_timezone=user_tz))
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
     resp.headers['Pragma'] = 'no-cache'
     resp.headers['Expires'] = '0'

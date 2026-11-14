@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33155';
+const CURRENT_APP_BUILD = '33160';
 (function() {
     try {
         const lastBuild = localStorage.getItem('morpheme_build_version');
@@ -77,7 +77,7 @@ window.currentUserIsMod = (localStorage.getItem('morpheme_is_mod') === 'true');
 window.currentUserIsRootMod = false;
 
 window.currentUserConfigRatings = {};
-window.currentUserTimezone = (function() {
+window.currentUserTimezone = window.currentUserTimezone || (function() {
     try {
         const stored = localStorage.getItem('morpheme_timezone');
         if (stored) return stored;
@@ -130,6 +130,9 @@ function setCurrentUser(username, email = null, isGuest = false, isMod = null, r
     if (typeof updateAuthUI === 'function') {
         updateAuthUI(rating || window.currentUserRating || window.lastPlayerRating);
     }
+    if (typeof loadCurrentUserConfigRatings === 'function' && !window.currentUserIsGuest) {
+        try { loadCurrentUserConfigRatings(); } catch (_) {}
+    }
 }
 window.setCurrentUser = setCurrentUser;
 window.getCurrentUser = () => currentUser || window.currentUser;
@@ -180,17 +183,47 @@ window.TIMEZONE_ABBR_MAP = {
     'America/Chicago': 'CT',
     'America/Winnipeg': 'CT',
     'America/Regina': 'CT',
+    'America/Swift_Current': 'CT',
+    'America/Rainy_River': 'CT',
+    'America/Rankin_Inlet': 'CT',
+    'America/Resolute': 'CT',
+    'America/Coral_Harbour': 'CT',
+    'America/Atikokan': 'CT',
     'America/Menominee': 'CT',
     'America/Matamoros': 'CT',
+    'Canada/Central': 'CT',
+    'Canada/Saskatchewan': 'CT',
+    'Canada/East-Saskatchewan': 'CT',
+    'CST6CDT': 'CT',
+    'US/Central': 'CT',
     'America/Denver': 'MT',
     'America/Edmonton': 'MT',
     'America/Boise': 'MT',
     'America/Phoenix': 'MST',
+    'America/Whitehorse': 'MST',
+    'America/Dawson': 'MST',
+    'America/Creston': 'MST',
+    'America/Fort_Nelson': 'MST',
+    'America/Yellowknife': 'MT',
+    'America/Inuvik': 'MT',
+    'America/Cambridge_Bay': 'MT',
+    'Canada/Mountain': 'MT',
+    'Canada/Yukon': 'MST',
+    'MST7MDT': 'MT',
+    'US/Mountain': 'MT',
+    'US/Arizona': 'MST',
     'America/Los_Angeles': 'PT',
     'America/Vancouver': 'PT',
     'America/Tijuana': 'PT',
+    'Canada/Pacific': 'PT',
+    'PST8PDT': 'PT',
+    'US/Pacific': 'PT',
     'America/Anchorage': 'AKT',
     'America/Juneau': 'AKT',
+    'America/Sitka': 'AKT',
+    'America/Yakutat': 'AKT',
+    'America/Nome': 'AKT',
+    'America/Metlakatla': 'AKT',
     'Pacific/Honolulu': 'HST',
     'America/Sao_Paulo': 'BRT',
     'Europe/London': 'GMT',
@@ -225,8 +258,11 @@ window.getEffectiveTimezone = function(customTz = null) {
         return customTz === 'auto' ? null : customTz;
     }
     const current = window.currentUserTimezone;
-    if (current) {
-        return current === 'auto' ? null : current;
+    if (current === 'auto') {
+        return null;
+    }
+    if (current && current !== 'auto') {
+        return current;
     }
     try {
         const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('morpheme_timezone') : null;
@@ -241,16 +277,32 @@ window.getAppTimezoneAbbr = function(tz, rawAbbr) {
     if (tz && tz !== 'auto' && window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[tz]) {
         return window.TIMEZONE_ABBR_MAP[tz];
     }
-    if (!tz || tz === 'auto') {
-        try {
-            const devTz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat)
-                ? Intl.DateTimeFormat().resolvedOptions().timeZone
-                : null;
-            if (devTz && window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[devTz]) {
-                return window.TIMEZONE_ABBR_MAP[devTz];
-            }
-        } catch (_) {}
+    let devTz = null;
+    try {
+        if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
+            devTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+    } catch (_) {}
+
+    if (devTz) {
+        if (window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[devTz]) {
+            return window.TIMEZONE_ABBR_MAP[devTz];
+        }
+        const lowDev = devTz.toLowerCase();
+        if (lowDev.includes('winnipeg') || lowDev.includes('regina') || lowDev.includes('saskatchewan') || lowDev.includes('central') || lowDev.includes('chicago') || lowDev.includes('manitoba') || lowDev.includes('swift_current') || lowDev.includes('rainy_river')) {
+            return 'CT';
+        }
+        if (lowDev.includes('denver') || lowDev.includes('edmonton') || lowDev.includes('mountain') || lowDev.includes('phoenix') || lowDev.includes('whitehorse') || lowDev.includes('yukon') || lowDev.includes('boise')) {
+            return 'MT';
+        }
+        if (lowDev.includes('los_angeles') || lowDev.includes('vancouver') || lowDev.includes('pacific') || lowDev.includes('tijuana')) {
+            return 'PT';
+        }
+        if (lowDev.includes('new_york') || lowDev.includes('toronto') || lowDev.includes('montreal') || lowDev.includes('eastern') || lowDev.includes('detroit')) {
+            return 'ET';
+        }
     }
+
     const abbr = String(rawAbbr || '').trim().toUpperCase();
     if (abbr === 'CST' || abbr === 'CDT') return 'CT';
     if (abbr === 'EST' || abbr === 'EDT') return 'ET';
@@ -430,6 +482,12 @@ async function loadCurrentUserConfigRatings() {
             if (data.timezone) {
                 window.currentUserTimezone = data.timezone;
                 try { localStorage.setItem('morpheme_timezone', data.timezone); } catch (e) {}
+                if (typeof window.refreshLobbyChatDates === 'function') {
+                    window.refreshLobbyChatDates();
+                }
+                if (typeof window.refreshCurrentToolDates === 'function') {
+                    window.refreshCurrentToolDates();
+                }
             }
             if (data.country_flag) {
                 window.currentUserFlag = data.country_flag;
@@ -617,6 +675,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof handleLobbyMusicState === 'function') handleLobbyMusicState();
     if (window.loadFAQUserCounts) window.loadFAQUserCounts();
     if (window.loadFAQDictionaryStats) window.loadFAQDictionaryStats();
+    if (typeof loadCurrentUserConfigRatings === 'function') {
+        try { loadCurrentUserConfigRatings(); } catch (_) {}
+    }
     
     // Mobile restriction: Hide/filter out Cube/3D options
     if (typeof filterCubeOnMobile === 'function') {
