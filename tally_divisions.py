@@ -258,12 +258,13 @@ def get_word_division_info(word: str) -> dict:
         }
 
     # Calculate division based on find count range:
-    # Division 1 = Most commonly found (highest find count, base + 0 pts)
-    # Division K = Rarest words (lowest find count, base + (K-1) pts)
-    if find_count >= max_count:
+    # Division 1 = Most commonly found / Default for unplayed words (base + 0 pts)
+    # Division K = Rarest words with low find counts (base + (K-1) pts)
+    if find_count <= 0 or find_count >= max_count:
+        # Default to Division 1 per user instruction:
+        # "Default to 1, not 5. Let TESTING grow over time so that, probably being the
+        # one of the most commonly found, it simply stays at the first division (5 pts)"
         division = 1
-    elif find_count <= 0:
-        division = k_divisions
     else:
         # Distance from top divided by total span, mapped to 1..K
         frac = (max_count - find_count) / float(max_count)
