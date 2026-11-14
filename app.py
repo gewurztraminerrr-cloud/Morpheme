@@ -7980,6 +7980,7 @@ def get_room_state(room_id):
                 'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
                 'previous_dictionary': getattr(room, 'previous_dictionary', 'NWL'),
                 'previous_use_added_words': getattr(room, 'previous_use_added_words', False),
+                'previous_board_format': getattr(room, 'previous_board_format', getattr(room, 'current_board_format', 'Normal')),
                 'spinner_params': (
                     getattr(room, 'frozen_revealed_params', None) or getattr(room, 'spinner_params', {}) or {}
                 ),

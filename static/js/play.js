@@ -7098,6 +7098,13 @@ function updateTripleMusicState(remaining) {
     const audio = document.getElementById('triple-music');
     if (!audio) return;
 
+    if (typeof isOnPlayPage === 'function' && !isOnPlayPage()) {
+        if (!audio.paused) {
+            audio.pause();
+        }
+        return;
+    }
+
     // Respect user triple music preferences
     const musicEnabled = (!window.userSettings || (window.userSettings.triple_music !== false && window.userSettings.triple_music !== 'false'));
     if (!musicEnabled) {
@@ -7124,18 +7131,33 @@ function updateTripleMusicState(remaining) {
         audio.loop = true;
     }
 
-    const sp = state.spinner_params || {};
-    const isIntermission = state.state === 'intermission';
-    const isRevealed = state.spinner_params_revealed === true || state.spinner_params_revealed === 'true';
-    const preferSp = isIntermission && isRevealed;
+    const isIntermission = state.state === 'intermission' || state.intermission === true;
+    const isActive = state.state === 'active';
 
-    const factFmt = (preferSp ? (sp.board_format || state.current_board_format) : (state.current_board_format || sp.board_format)) || 'Normal';
-    const isTriple = isTripleFormat(factFmt) || (state.state === 'active' && isTripleFormat(state.current_board_format));
-
-    if (state.state === 'active') {
+    if (isActive) {
         window._lastActiveRoundFormat = state.current_board_format || 'Normal';
     }
-    const wasTriplePrevious = isTripleFormat(window._lastActiveRoundFormat);
+
+    // Previous round was Triple if recorded in memory or passed by state
+    const wasTriplePrevious = isTripleFormat(state.previous_board_format || window._lastActiveRoundFormat || (isIntermission ? state.current_board_format : ''));
+
+    // Upcoming round is Triple if revealed in spinner_params, next_round_format, displayedParams, or current format
+    const sp = state.spinner_params || {};
+    const upcomingCandidates = [
+        state.next_round_format,
+        sp.board_format,
+        (window._displayedParams && window._displayedParams.fmt) ? window._displayedParams.fmt : null,
+        state.current_board_format
+    ];
+    let isUpcomingTriple = false;
+    for (const fmt of upcomingCandidates) {
+        if (fmt && isTripleFormat(fmt)) {
+            isUpcomingTriple = true;
+            break;
+        }
+    }
+
+    const isActiveTriple = isActive && isTripleFormat(state.current_board_format);
 
     const safePlay = () => {
         if (!audio.paused) return;
@@ -7159,8 +7181,9 @@ function updateTripleMusicState(remaining) {
         }
     };
 
-    if (state.state === 'active') {
-        if (isTriple) {
+    if (isActive) {
+        // Active Round: "play it all throughout the round"
+        if (isActiveTriple) {
             audio.volume = 1.0;
             if (audio.paused) {
                 audio.currentTime = 0;
@@ -7169,27 +7192,40 @@ function updateTripleMusicState(remaining) {
         } else {
             if (!audio.paused) {
                 audio.pause();
+                audio.currentTime = 0;
             }
         }
     } else if (isIntermission) {
-        if (wasTriplePrevious && remaining >= 50.0) {
-            // Fade-out: 10s from start of intermission (remaining: 60.0 -> 50.0)
-            const fadeOutVolume = Math.max(0.0, Math.min(1.0, (remaining - 50.0) / 10.0));
-            audio.volume = fadeOutVolume;
-            if (fadeOutVolume > 0) {
-                if (audio.paused) {
+        const remainingSec = (typeof remaining === 'number' && !isNaN(remaining))
+            ? remaining
+            : (state._clientTimeRemaining !== undefined ? state._clientTimeRemaining : 60);
+
+        if (remainingSec > 50.0) {
+            // "as soon as the round ends, fade the music away until 0:50 during the next intermission, at which point it can no longer be heard."
+            if (wasTriplePrevious) {
+                // Linear fade: 1.0 at >=60.0 down to 0.0 at 50.0
+                const fadeOutVolume = Math.max(0.0, Math.min(1.0, (remainingSec - 50.0) / 10.0));
+                audio.volume = fadeOutVolume;
+                if (fadeOutVolume > 0 && audio.paused) {
                     safePlay();
                 }
             } else {
                 if (!audio.paused) {
                     audio.pause();
+                    audio.currentTime = 0;
                 }
             }
-        } else if (isTriple && remaining >= 0 && remaining <= 10.0) {
-            // Fade-in: 10s before round starts (remaining: 10.0 -> 0.0)
-            const fadeInVolume = Math.max(0.0, Math.min(1.0, (10.0 - remaining) / 10.0));
-            audio.volume = fadeInVolume;
-            if (fadeInVolume > 0) {
+        } else if (remainingSec <= 50.0 && remainingSec > 10.0) {
+            // "until 0:50 during the next intermission, at which point it can no longer be heard."
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            audio.volume = 0.0;
+        } else if (remainingSec <= 10.0) {
+            // "When the Format is Triple, begin playing the music at 0:10 time during intermission"
+            if (isUpcomingTriple) {
+                audio.volume = 1.0;
                 if (audio.paused) {
                     audio.currentTime = 0;
                     safePlay();
@@ -7197,16 +7233,15 @@ function updateTripleMusicState(remaining) {
             } else {
                 if (!audio.paused) {
                     audio.pause();
+                    audio.currentTime = 0;
                 }
-            }
-        } else {
-            if (!audio.paused) {
-                audio.pause();
+                audio.volume = 0.0;
             }
         }
     } else {
         if (!audio.paused) {
             audio.pause();
+            audio.currentTime = 0;
         }
     }
 }
