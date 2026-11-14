@@ -10078,6 +10078,14 @@ _EXPLICIT_NON_NOUN_REGEX = re.compile(
     re.IGNORECASE
 )
 
+_EXPLICIT_NOUN_TAG_REGEX = re.compile(
+    r'(?:'
+    r'\[(?:[a-z\s,/]*\b)?n(?:oun)?\b|'
+    r'^\s*\((?:noun|proper\s+noun|n\.)\)'
+    r')',
+    re.IGNORECASE
+)
+
 _NOUN_SUFFIX_REGEX = re.compile(
     r'(?:tion|sion|ment|ness|ity|ism|ship|hood|ist|ance|ence)s?$',
     re.IGNORECASE
@@ -10111,26 +10119,55 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
         if candidate_ref != w_lower and len(candidate_ref) > 2:
             ref_target = candidate_ref
 
+    has_explicit_non_noun = bool(_EXPLICIT_NON_NOUN_REGEX.search(combined_text))
+    has_explicit_noun_tag = bool(_EXPLICIT_NOUN_TAG_REGEX.search(combined_text))
+
     is_noun = False
-    if _NOUN_DEF_REGEX.search(combined_text):
-        is_noun = True
-    else:
-        try:
-            from nltk.corpus import wordnet as wn
-            wn_all = wn.synsets(w_lower)
-            if wn_all:
-                is_noun = bool(wn.synsets(w_lower, pos=wn.NOUN))
+    try:
+        from nltk.corpus import wordnet as wn
+        wn_direct = wn.synsets(w_lower)
+        wn_direct_nouns = wn.synsets(w_lower, pos=wn.NOUN)
+        wn_ref_nouns = wn.synsets(ref_target, pos=wn.NOUN) if ref_target else []
+        wn_ref_all = wn.synsets(ref_target) if ref_target else []
+
+        # 1. WordNet Authority: if WordNet knows the word or its reference target
+        if wn_direct:
+            if wn_direct_nouns:
+                is_noun = True
+            elif wn_ref_nouns:
+                is_noun = True
             else:
+                # WordNet indexes this word, and it has ZERO noun senses (e.g. VEHEMENT, DIALYSE, DESTROY, QUICKLY)
+                return False, None, None
+        elif ref_target and wn_ref_all:
+            if wn_ref_nouns:
+                is_noun = True
+            else:
+                return False, None, None
+    except Exception:
+        pass
+
+    if not is_noun:
+        # If definition explicitly tags as non-noun and not noun (e.g. (verb), (adjective))
+        if has_explicit_non_noun and not has_explicit_noun_tag:
+            return False, None, None
+
+        # 2. Check semantic noun patterns in definition (e.g. citizen of, digestive enzyme, plural of)
+        if _NOUN_DEF_REGEX.search(combined_text):
+            is_noun = True
+        else:
+            try:
+                from nltk.corpus import wordnet as wn
                 m = wn.morphy(w_lower, wn.NOUN)
                 if m and wn.synsets(m, pos=wn.NOUN):
                     is_noun = True
                 elif ref_target and wn.synsets(ref_target, pos=wn.NOUN):
                     is_noun = True
-                elif not _EXPLICIT_NON_NOUN_REGEX.search(combined_text) and _NOUN_SUFFIX_REGEX.search(w_lower):
+                elif not has_explicit_non_noun and _NOUN_SUFFIX_REGEX.search(w_lower):
                     is_noun = True
-        except Exception:
-            if not _EXPLICIT_NON_NOUN_REGEX.search(combined_text) and _NOUN_SUFFIX_REGEX.search(w_lower):
-                is_noun = True
+            except Exception:
+                if not has_explicit_non_noun and _NOUN_SUFFIX_REGEX.search(w_lower):
+                    is_noun = True
 
     if not is_noun:
         return False, None, None
