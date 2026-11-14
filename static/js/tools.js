@@ -3644,7 +3644,7 @@ async function renderProfile(user) {
         if (!user.best_words || user.best_words.length === 0) {
             bestWordsList.innerHTML = '<p class="placeholder">No exceptional word finds recorded yet.</p>';
         } else {
-            const displayWords = user.best_words.slice(0, 50);
+            const displayWords = user.best_words.slice(0, 200);
             const bwHeader = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); text-transform: uppercase; letter-spacing: 0.5px;">Best Words (Relative Good Finds)</span>

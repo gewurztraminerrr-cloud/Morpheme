@@ -3568,6 +3568,14 @@ def init_db():
         print("Migrated DB: Added games_played column to users")
     except sqlite3.OperationalError:
         pass # Column likely exists
+
+    # MIGRATION: Ensure total_points column exists
+    try:
+        conn.execute('ALTER TABLE users ADD COLUMN total_points INTEGER DEFAULT 0')
+        conn.commit()
+        print("Migrated DB: Added total_points column to users")
+    except sqlite3.OperationalError:
+        pass # Column likely exists
         
     # MIGRATION: Ensure wins column exists
     try:
@@ -5729,7 +5737,7 @@ def get_public_profile(username):
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
                full_name, age, gender, location, quote, description, proof_url, wins,
-               max_pe, avg_pe, pe_count, created_at, last_visited, timezone
+               max_pe, avg_pe, pe_count, created_at, last_visited, timezone, COALESCE(total_points, 0)
         FROM users WHERE username = ? COLLATE NOCASE
     ''', (username,))
     user = cursor.fetchone()
@@ -5914,6 +5922,14 @@ def get_public_profile(username):
     pt_sum_period = sum(p['total_score'] for p in multiplayer_rounds)
     wins_period = sum(1 for p in multiplayer_rounds if p['all_players'] and p['total_score'] >= p['all_players'][0]['score'])
 
+    if period == 'all':
+        u_games = user[3] or 0
+        u_wins = user[13] or 0
+        u_pts = user[20] or 0
+        games_played_period = max(games_played_period, u_games)
+        wins_period = max(wins_period, u_wins)
+        pt_sum_period = max(pt_sum_period, u_pts)
+
     # TOP 10 RATE rule:
     # If the number of players is greater than or equal to 20, and if the room is ACCUMULATIVE, include TOP 10 RATE.
     # TOP 10 RATE simply means the user scored within the top 10 placements (placement <= 10).
@@ -6064,7 +6080,7 @@ def get_public_profile(username):
         qualified_words.values(),
         key=lambda x: (x['timestamp'], x['points'], x['length']),
         reverse=True
-    )[:50]
+    )[:200]
 
     best_word_game_ids = {w['game_id'] for w in profile_best_words if w.get('game_id')}
     best_words_rounds = [p for p in standard_rounds if p['game_id'] in best_word_game_ids]
@@ -6421,7 +6437,7 @@ def get_room_achievements(username, game_type, board_dimensions, time_limit):
     if not filtered_best:
         filtered_best = unique_word_list
 
-    best_words = sorted(filtered_best, key=lambda x: (x['points'], len(x['word']), x['timestamp']), reverse=True)[:50]
+    best_words = sorted(filtered_best, key=lambda x: (x['points'], len(x['word']), x['timestamp']), reverse=True)[:200]
 
     # Collect round objects for best_words
     best_word_game_ids = {w['game_id'] for w in best_words if w.get('game_id')}
@@ -9831,6 +9847,161 @@ def _prune_old_word_paths():
         _time.sleep(86400)  # 24 hours
 
 threading.Thread(target=_prune_old_word_paths, daemon=True).start()
+
+# ---------------------------------------------------------------------------
+# AUTOMATED RETENTION: Prune non-visible rounds from round_history
+# USER MANDATE: Only keep information that is displaying somewhere throughout
+# the app. When it falls out of use / visibility, get rid of it.
+# ---------------------------------------------------------------------------
+def prune_non_visible_round_history():
+    """
+    Identifies all rounds currently visible anywhere in the UI:
+    - User Profile: 50 Recent Rounds per user
+    - User Profile: 50 Exceptional Rounds per user (performance_ratio >= 2.0)
+    - User Profile: Rounds producing Top 200 Best Words per user
+    - Leaderboards / Records: Top 50 records (Scores, Words, PE, WPM)
+    - Active Rooms: Recent rounds (last 48 hours)
+    - Tournament rounds
+    
+    Before removing non-visible records, career totals are updated in users
+    and user_ratings so user career stats (games, wins, total points) never decrease.
+    """
+    import json
+    try:
+        with get_db() as conn:
+            c = conn.cursor()
+
+            # Ensure total_points column exists on users
+            try:
+                c.execute('ALTER TABLE users ADD COLUMN total_points INTEGER DEFAULT 0;')
+            except sqlite3.OperationalError:
+                pass
+
+            user_rows = c.execute('SELECT DISTINCT user_id FROM round_history WHERE user_id > 0').fetchall()
+            user_ids = [r[0] for r in user_rows]
+
+            # 1. Roll up lifetime stats into users before any pruning
+            for uid in user_ids:
+                rows = c.execute('''
+                    SELECT id, total_score, timestamp, room_id, round_number, words_json, performance_ratio
+                    FROM round_history
+                    WHERE user_id = ?
+                    ORDER BY timestamp DESC, id DESC
+                ''', (uid,)).fetchall()
+                if not rows:
+                    continue
+
+                tot_score = sum(r[1] for r in rows if r[1])
+                tot_games = len(rows)
+                c.execute('''
+                    UPDATE users 
+                    SET games_played = MAX(COALESCE(games_played, 0), ?),
+                        total_points = MAX(COALESCE(total_points, 0), ?)
+                    WHERE id = ?
+                ''', (tot_games, tot_score, uid))
+
+            # 2. Identify all visible round IDs across the application
+            visible_ids = set()
+
+            # 2a. Recent 50 rounds per user
+            for uid in user_ids:
+                recents = c.execute('''
+                    SELECT id FROM round_history 
+                    WHERE user_id = ? 
+                    ORDER BY timestamp DESC, id DESC 
+                    LIMIT 50
+                ''', (uid,)).fetchall()
+                for r in recents:
+                    visible_ids.add(r[0])
+
+            # 2b. Exceptional 50 rounds per user
+            for uid in user_ids:
+                exceptions = c.execute('''
+                    SELECT id FROM round_history 
+                    WHERE user_id = ? AND performance_ratio >= 2.0
+                    ORDER BY timestamp DESC, id DESC 
+                    LIMIT 50
+                ''', (uid,)).fetchall()
+                for r in exceptions:
+                    visible_ids.add(r[0])
+
+            # 2c. Best Words (Top 200 per user)
+            for uid in user_ids:
+                u_rounds = c.execute('''
+                    SELECT id, words_json, timestamp, total_score, board_format
+                    FROM round_history 
+                    WHERE user_id = ? 
+                    ORDER BY timestamp DESC, id DESC
+                ''', (uid,)).fetchall()
+
+                user_words = []
+                for r in u_rounds:
+                    try:
+                        words = json.loads(r[1]) if r[1] else []
+                        for w in words:
+                            if isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) <= 0):
+                                continue
+                            w_text = w.get('word', '').upper() if isinstance(w, dict) else str(w).upper()
+                            if len(w_text) >= 7:
+                                user_words.append({
+                                    'round_id': r[0],
+                                    'word': w_text,
+                                    'points': w.get('points', 0) if isinstance(w, dict) else 0,
+                                    'timestamp': r[2]
+                                })
+                    except Exception:
+                        pass
+
+                sorted_bw = sorted(user_words, key=lambda x: (x['timestamp'], x['points'], len(x['word'])), reverse=True)[:200]
+                for w in sorted_bw:
+                    visible_ids.add(w['round_id'])
+
+            # 2d. Leaderboard Top 50 records across categories
+            for r in c.execute('SELECT id FROM round_history ORDER BY total_score DESC LIMIT 50').fetchall():
+                visible_ids.add(r[0])
+            for r in c.execute('SELECT id FROM round_history WHERE best_word IS NOT NULL ORDER BY best_word_score DESC, LENGTH(best_word) DESC LIMIT 50').fetchall():
+                visible_ids.add(r[0])
+            for r in c.execute('SELECT id FROM round_history WHERE performance_ratio > 0 ORDER BY performance_ratio DESC LIMIT 50').fetchall():
+                visible_ids.add(r[0])
+            for r in c.execute('SELECT id FROM round_history WHERE wpm > 0 ORDER BY wpm DESC LIMIT 50').fetchall():
+                visible_ids.add(r[0])
+
+            # 2e. Recent rounds across all active rooms (past 48h)
+            for r in c.execute("SELECT id FROM round_history WHERE timestamp >= datetime('now', '-2 days')").fetchall():
+                visible_ids.add(r[0])
+
+            # 2f. Tournament rounds
+            for r in c.execute("SELECT id FROM round_history WHERE room_id LIKE 'tourn_%'").fetchall():
+                visible_ids.add(r[0])
+
+            # 3. Purge any round not in visible_ids
+            if visible_ids:
+                all_ids = set(r[0] for r in c.execute('SELECT id FROM round_history').fetchall())
+                stale_ids = list(all_ids - visible_ids)
+                if stale_ids:
+                    for i in range(0, len(stale_ids), 500):
+                        chunk = stale_ids[i:i+500]
+                        placeholders = ','.join(['?'] * len(chunk))
+                        c.execute(f"DELETE FROM round_history WHERE id IN ({placeholders})", chunk)
+                    print(f"[Cleanup] Pruned {len(stale_ids)} non-visible round_history records. Kept {len(visible_ids)} active visible records.")
+                else:
+                    print(f"[Cleanup] round_history clean: all {len(all_ids)} records currently in active visibility.")
+
+            conn.commit()
+    except Exception as e:
+        print(f"[Cleanup] Error in prune_non_visible_round_history: {e}")
+
+def _prune_non_visible_loop():
+    import time as _time
+    _time.sleep(5.0)  # Wait for startup
+    while True:
+        try:
+            prune_non_visible_round_history()
+        except Exception as _e:
+            print(f"[Cleanup Loop] Error: {_e}")
+        _time.sleep(21600)  # Runs every 6 hours
+
+threading.Thread(target=_prune_non_visible_loop, daemon=True).start()
 
 TOOLS_DICT_CACHE = {}
 COMBO_QUERY_CACHE = {}
