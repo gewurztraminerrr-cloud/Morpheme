@@ -979,6 +979,20 @@ body[class*="theme-light-"] .intermission-winner-card .winner-bonus-word {
     word-break: break-word;
 }
 
+.definition-division-row {
+    margin-top: 10px;
+    margin-bottom: 2px;
+    display: flex;
+    align-items: center;
+}
+
+.definition-division-row .tool-def-division-badge {
+    font-size: 0.82rem;
+    padding: 3px 9px;
+    border-radius: 6px;
+    letter-spacing: 0.2px;
+}
+
 .definition-wiki-row {
     margin-top: 12px;
     margin-bottom: 4px;
@@ -1034,6 +1048,14 @@ body[class*="theme-light-"] .intermission-winner-card .winner-bonus-word {
     background: rgba(2, 132, 199, 0.16);
     border-color: rgba(2, 132, 199, 0.45);
     color: #0369a1;
+}
+
+body.theme-white .tool-def-division-badge,
+[class*="theme-white"] .tool-def-division-badge,
+[class*="theme-light-"] .tool-def-division-badge {
+    background: rgba(147, 51, 234, 0.12) !important;
+    border: 1px solid rgba(147, 51, 234, 0.35) !important;
+    color: #7e22ce !important;
 }
 
 /* 24H Room Fireworks Celebration */

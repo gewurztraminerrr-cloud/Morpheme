@@ -11703,18 +11703,7 @@ function renderDefinitionData(data, word, defContent, defPron) {
     if (window._currentDefWord !== word) return;
     const defDivBadge = document.getElementById('definition-division-badge');
     if (defDivBadge) {
-        const dInfo = data && data.division_info;
-        if (dInfo && (dInfo.has_divisions || (dInfo.length && dInfo.length >= 5))) {
-            defDivBadge.textContent = `Div ${dInfo.division || 1} of ${dInfo.max_divisions || 1} (${dInfo.points || dInfo.base_points || 0} of ${dInfo.max_points || 0} pts)`;
-            defDivBadge.title = `Current Point Value: ${dInfo.points || dInfo.base_points || 0} pts (Division ${dInfo.division || 1} of ${dInfo.max_divisions || 1}, Max: ${dInfo.max_points || 0} pts)`;
-            defDivBadge.style.setProperty('display', 'inline-flex', 'important');
-        } else if (dInfo) {
-            defDivBadge.textContent = `${dInfo.points || dInfo.base_points || 1} pt${(dInfo.points || dInfo.base_points || 1) === 1 ? '' : 's'}`;
-            defDivBadge.title = `Point Value: ${dInfo.points || dInfo.base_points || 1} pt${(dInfo.points || dInfo.base_points || 1) === 1 ? '' : 's'}`;
-            defDivBadge.style.setProperty('display', 'inline-flex', 'important');
-        } else {
-            defDivBadge.style.setProperty('display', 'none', 'important');
-        }
+        defDivBadge.style.setProperty('display', 'none', 'important');
     }
 
     if (data && (data.definition || data.pronunciation || data.image_url)) {
@@ -11734,6 +11723,14 @@ function renderDefinitionData(data, word, defContent, defPron) {
         }
         if (data.definition) {
             html += `<span class="definition-text">${formatDefinitionWithLinks(data.definition)}</span>`;
+        }
+        const dInfo = data && data.division_info;
+        if (dInfo && (dInfo.has_divisions || (dInfo.length && dInfo.length >= 5))) {
+            const divLabel = `Div ${dInfo.division || 1} of ${dInfo.max_divisions || 1} (${dInfo.points || dInfo.base_points || 0} of ${dInfo.max_points || 0} pts)`;
+            html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${dInfo.points || dInfo.base_points || 0} pts (Division ${dInfo.division || 1} of ${dInfo.max_divisions || 1}, Max: ${dInfo.max_points || 0} pts)">${divLabel}</span></div>`;
+        } else if (dInfo && (dInfo.points || dInfo.base_points)) {
+            const pts = dInfo.points || dInfo.base_points || 1;
+            html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${pts} pt${pts === 1 ? '' : 's'}">${pts} pt${pts === 1 ? '' : 's'}</span></div>`;
         }
         if (data.is_noun && data.wiki_url) {
             const wikiTitle = data.wiki_title || word;
