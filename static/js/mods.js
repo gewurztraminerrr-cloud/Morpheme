@@ -1829,6 +1829,8 @@ async function loadRatingConfigs() {
         const stat1200El = document.getElementById('stat-total-1200');
         const stat1200BreakdownEl = document.getElementById('stat-1200-breakdown');
         const statUnratedPoliciesEl = document.getElementById('stat-total-unrated-policies');
+        const statPlayingNowEl = document.getElementById('stat-total-playing-now');
+        const statPlayedTodayEl = document.getElementById('stat-total-played-today');
         if (statEstEl) statEstEl.textContent = totals.established_count ?? '--';
         if (stat1200El) stat1200El.textContent = totals.count_1200 ?? '--';
         if (stat1200BreakdownEl) {
@@ -1837,6 +1839,8 @@ async function loadRatingConfigs() {
                 : '';
         }
         if (statUnratedPoliciesEl) statUnratedPoliciesEl.textContent = totals.unrated_placement_configs ?? '0';
+        if (statPlayingNowEl) statPlayingNowEl.textContent = totals.total_playing_now ?? '0';
+        if (statPlayedTodayEl) statPlayedTodayEl.textContent = totals.total_played_today ?? '0';
 
         const previouslyChecked = new Set(Array.from(document.querySelectorAll('.rating-cfg-checkbox:checked')).map(cb => cb.value));
 
@@ -1870,7 +1874,7 @@ async function loadRatingConfigs() {
                         <span>${groupName}</span>
                         <span style="font-size: 0.75rem; opacity: 0.6; font-weight: normal;">${configs.length} configs</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px;">
             `;
 
             configs.forEach(c => {
@@ -1881,22 +1885,34 @@ async function loadRatingConfigs() {
                 const avgText = (c.avg_rating !== null && c.avg_rating !== undefined) ? ` <span style="opacity: 0.85; font-size: 0.72rem; font-weight: normal;">(avg ${c.avg_rating})</span>` : '';
                 const c1200 = c.count_1200 || 0;
                 const isChecked = previouslyChecked.has(c.key);
+                const playingNow = c.playing_now || 0;
+                const playedToday = c.played_today || 0;
 
                 const isUnratedActive = Boolean(c.unrated_placement);
                 const switchTitle = !isRoot
                     ? `Restricted: Only jeffb can toggle rating placement switches.`
                     : (isUnratedActive
-                        ? `10-Rounds rating established policy is ACTIVE for ${c.label}. Toggle OFF to return to Standard 1200.`
-                        : `Standard 1200 rating active for ${c.label}. Toggle ON to enact transfer over to 10-rounds-rating-established.`);
+                        ? `10-Round Zero-Change Equilibrium Est. policy is ACTIVE for ${c.label}. Toggle OFF to return to Start at 1200.`
+                        : `Start at 1200 active for ${c.label}. Toggle ON to enact transfer over to 10-Round Zero-Change Equilibrium Est.`);
 
                 html += `
                     <div class="rating-cfg-card" style="display: flex; flex-direction: column; gap: 7px; padding: 10px 12px; border-radius: 7px; border: 1px solid ${cardBorder}; background: ${cardBg}; user-select: none; transition: border-color 0.15s ease;">
-                        <!-- Row 1: Checkbox & Configuration Title -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-                            <label style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1; cursor: pointer; margin: 0;">
+                        <!-- Row 1: Checkbox & Parameter Title with Live Activity Counts Right Next to It -->
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
+                            <label style="display: flex; align-items: center; gap: 8px; overflow: hidden; flex: 1 1 auto; min-width: 110px; cursor: pointer; margin: 0;">
                                 <input type="checkbox" class="rating-cfg-checkbox" value="${c.key}" data-users="${estCount}" ${isChecked ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px; margin: 0; flex-shrink: 0;">
                                 <span style="font-size: 0.86rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${c.label}">${c.label}</span>
                             </label>
+                            <!-- Activity Badges right next to parameters -->
+                            <div style="display: flex; align-items: center; gap: 5px; flex-shrink: 0; font-size: 0.72rem;">
+                                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 10px; font-weight: 600; background: ${playingNow > 0 ? 'rgba(34, 197, 94, 0.18)' : 'rgba(255, 255, 255, 0.05)'}; color: ${playingNow > 0 ? '#22c55e' : 'var(--text-secondary)'}; border: 1px solid ${playingNow > 0 ? 'rgba(34, 197, 94, 0.4)' : 'rgba(255, 255, 255, 0.1)'};" title="${playingNow} user${playingNow === 1 ? '' : 's'} playing currently in these parameters">
+                                    <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${playingNow > 0 ? '#22c55e' : 'var(--text-40)'}; ${playingNow > 0 ? 'box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);' : ''}"></span>
+                                    ${playingNow} playing
+                                </span>
+                                <span style="display: inline-flex; align-items: center; padding: 2px 7px; border-radius: 10px; font-weight: 600; background: ${playedToday > 0 ? 'rgba(56, 189, 248, 0.18)' : 'rgba(255, 255, 255, 0.05)'}; color: ${playedToday > 0 ? '#38bdf8' : 'var(--text-secondary)'}; border: 1px solid ${playedToday > 0 ? 'rgba(56, 189, 248, 0.4)' : 'rgba(255, 255, 255, 0.1)'};" title="${playedToday} user${playedToday === 1 ? '' : 's'} have played in these parameters total today">
+                                    📅 ${playedToday} today
+                                </span>
+                            </div>
                         </div>
 
                         <!-- Row 2: Full Width Dedicated Rating Counts -->
@@ -1910,9 +1926,9 @@ async function loadRatingConfigs() {
                         </div>
 
                         <!-- Row 3: Toggle Switch with Transfer Status -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.73rem; padding-left: 24px; padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.06);">
-                            <span style="color: ${isUnratedActive ? '#10b981' : 'var(--text-secondary)'}; font-weight: 600;">
-                                ${isUnratedActive ? '⚡ 10-Rounds Est.' : 'Standard 1200'}
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.73rem; padding-left: 24px; padding-top: 4px; border-top: 1px solid rgba(255, 255, 255, 0.06); gap: 6px;">
+                            <span style="color: ${isUnratedActive ? '#10b981' : 'var(--text-secondary)'}; font-weight: 600; line-height: 1.25;">
+                                ${isUnratedActive ? '⚡ 10-Round Zero-Change Equilibrium Est.' : 'Start at 1200'}
                             </span>
                             <label class="mod-toggle-switch" style="position: relative; display: inline-block; width: 34px; height: 18px; flex-shrink: 0; margin: 0; cursor: ${isRoot ? 'pointer' : 'not-allowed'}; opacity: ${isRoot ? '1' : '0.45'};" title="${switchTitle}">
                                 <input type="checkbox" class="mod-policy-toggle-input" data-key="${c.key}" ${isUnratedActive ? 'checked' : ''} ${!isRoot ? 'disabled' : ''} onchange="window.toggleSingleRatingPolicy && window.toggleSingleRatingPolicy('${c.key}', this.checked); event.stopPropagation();" style="opacity: 0; width: 0; height: 0; margin: 0; position: absolute;">
@@ -2087,10 +2103,10 @@ window.toggleSingleRatingPolicy = async function (configKey, enable) {
         });
         const data = await res.json();
         if (res.ok && data.success) {
-            showModStatus(`Successfully ${enable ? 'enacted' : 'revoked'} transfer over to 10-rounds-rating-established for ${configKey}.`, false, 'rating-adj-status-area');
+            showModStatus(`Successfully ${enable ? 'enacted' : 'revoked'} transfer over to 10-Round Zero-Change Equilibrium Est. for ${configKey}.`, false, 'rating-adj-status-area');
             await loadRatingConfigs();
         } else {
-            showModStatus(data.error || `Failed to ${actionDesc} 10-rounds-rating-established policy.`, true, 'rating-adj-status-area');
+            showModStatus(data.error || `Failed to ${actionDesc} 10-Round Zero-Change Equilibrium Est. policy.`, true, 'rating-adj-status-area');
             await loadRatingConfigs();
         }
     } catch (err) {
@@ -2106,7 +2122,7 @@ window.batchToggleRatingPolicy = async function (enable) {
     try {
         const checkedBoxes = Array.from(document.querySelectorAll('.rating-cfg-checkbox:checked'));
         if (checkedBoxes.length === 0) {
-            showModStatus(`Please select at least one configuration to ${enable ? 'enact' : 'revoke'} unrated placement.`, true, 'rating-adj-status-area');
+            showModStatus(`Please select at least one configuration to ${enable ? 'enact' : 'revoke'} 10-Round Zero-Change Equilibrium Est. policy.`, true, 'rating-adj-status-area');
             return;
         }
         const configs = checkedBoxes.map(cb => cb.value);
@@ -2119,10 +2135,10 @@ window.batchToggleRatingPolicy = async function (enable) {
         const data = await res.json();
         if (res.ok && data.success) {
             const count = (data.configs || []).length;
-            showModStatus(`Successfully ${enable ? 'enacted' : 'revoked'} transfer over to 10-rounds-rating-established for ${count} configuration(s)! New users henceforth will ${enable ? 'start unrated with a white square for 10 rounds, establishing their rating at round 10' : 'start at standard 1200 rating'}.`, false, 'rating-adj-status-area');
+            showModStatus(`Successfully ${enable ? 'enacted' : 'revoked'} transfer over to 10-Round Zero-Change Equilibrium Est. for ${count} configuration(s)! New users henceforth will ${enable ? 'start unrated with a white square for 10 rounds, establishing their rating at round 10' : 'Start at 1200'}.`, false, 'rating-adj-status-area');
             await loadRatingConfigs();
         } else {
-            showModStatus(data.error || `Failed while ${actionDesc} 10-rounds-rating-established policy.`, true, 'rating-adj-status-area');
+            showModStatus(data.error || `Failed while ${actionDesc} 10-Round Zero-Change Equilibrium Est. policy.`, true, 'rating-adj-status-area');
         }
     } catch (err) {
         console.error("Error batch toggling rating policy:", err);

@@ -3069,6 +3069,7 @@ def get_rating_configs():
 
     conn = get_db_connection()
     try:
+        # 1. Total games played per user/config in round_history
         rh_cur = conn.execute('''
             SELECT user_id, LOWER(game_type), LOWER(board_dimensions), round_duration, COUNT(*)
             FROM round_history
@@ -3080,6 +3081,55 @@ def get_rating_configs():
             k1 = f"{canon_gt}|{r_dims}|{r_dur}"
             rh_counts[(r_uid, k1)] = rh_counts.get((r_uid, k1), 0) + r_cnt
 
+        # 2. Currently playing users by constant parameter config
+        current_players_by_cfg = {}
+        all_current_uids = set()
+        try:
+            from game_room import room_manager
+            if room_manager and hasattr(room_manager, 'rooms'):
+                for room in list(room_manager.rooms.values()):
+                    if getattr(room, 'is_closing', False) or getattr(room, 'state', '') == 'finished':
+                        continue
+                    r_gt = str(getattr(room, 'game_type', '')).lower()
+                    canon_gt = 'accumulative' if r_gt in ('classic', 'accumulative') else ('3d' if r_gt in ('3d', 'cube') else r_gt)
+                    dims = str(getattr(room, 'board_dimensions', '')).lower()
+                    dur = str(getattr(room, 'time_limit', ''))
+                    r_cfg = f"{canon_gt}|{dims}|{dur}"
+
+                    players = getattr(room, 'players', []) or []
+                    for p in players:
+                        if getattr(p, 'is_ai', False) or getattr(p, 'has_abandoned', False):
+                            continue
+                        u_name = getattr(p, 'username', '')
+                        if u_name == 'System':
+                            continue
+                        u_id = getattr(p, 'user_id', None)
+                        ident = u_id if (u_id is not None and u_id not in (-1, 0)) else u_name
+                        if ident:
+                            current_players_by_cfg.setdefault(r_cfg, set()).add(ident)
+                            all_current_uids.add(ident)
+        except Exception as e_room:
+            print(f"[get_rating_configs] Error querying room_manager: {e_room}")
+
+        # 3. Users who played today by constant parameter config
+        chicago_now = datetime.datetime.now(DAILY_TZ)
+        chicago_today_str = chicago_now.strftime('%Y-%m-%d')
+        history_today_by_cfg = {}
+        all_today_uids = set(all_current_uids)
+
+        rh_today_cur = conn.execute('''
+            SELECT user_id, LOWER(game_type), LOWER(board_dimensions), round_duration
+            FROM round_history
+            WHERE date(timestamp) = ? OR (typeof(timestamp) = 'integer' AND date(timestamp, 'unixepoch') = ?)
+        ''', (chicago_today_str, chicago_today_str))
+
+        for r_uid, r_gt, r_dims, r_dur in rh_today_cur.fetchall():
+            canon_gt = 'accumulative' if r_gt in ('classic', 'accumulative') else ('3d' if r_gt in ('3d', 'cube') else r_gt)
+            k_today = f"{canon_gt}|{r_dims}|{r_dur}"
+            history_today_by_cfg.setdefault(k_today, set()).add(r_uid)
+            all_today_uids.add(r_uid)
+
+        # 4. User ratings breakdown
         cur = conn.execute('''
             SELECT ur.config_key, ur.user_id, ur.rating,
                    COALESCE(ur.games_played, 0) as ur_games,
@@ -3169,6 +3219,23 @@ def get_rating_configs():
         total_est_1200 += est_1200
         total_established_count += established_cnt
 
+        # Calculate currently playing users for this config
+        playing_set = set(current_players_by_cfg.get(k, set()))
+        if k.startswith('3d|'):
+            playing_set |= current_players_by_cfg.get(k.replace('3d|', 'cube|', 1), set())
+        elif k.startswith('cube|'):
+            playing_set |= current_players_by_cfg.get(k.replace('cube|', '3d|', 1), set())
+        playing_now = len(playing_set)
+
+        # Calculate users who played today (completed rounds today + currently playing)
+        today_set = set(history_today_by_cfg.get(k, set()))
+        if k.startswith('3d|'):
+            today_set |= history_today_by_cfg.get(k.replace('3d|', 'cube|', 1), set())
+        elif k.startswith('cube|'):
+            today_set |= history_today_by_cfg.get(k.replace('cube|', '3d|', 1), set())
+        today_set |= playing_set
+        played_today = len(today_set)
+
         result.append({
             'key': k,
             'label': format_config_label(k),
@@ -3178,7 +3245,9 @@ def get_rating_configs():
             'unestablished_1200': unest_1200,
             'established_1200': est_1200,
             'avg_rating': avg_rating,
-            'unrated_placement': unrated_placement
+            'unrated_placement': unrated_placement,
+            'playing_now': playing_now,
+            'played_today': played_today
         })
 
     return jsonify({
@@ -3189,7 +3258,9 @@ def get_rating_configs():
             'count_1200': total_1200_count,
             'unestablished_1200': total_unest_1200,
             'established_1200': total_est_1200,
-            'unrated_placement_configs': total_unrated_placement_configs
+            'unrated_placement_configs': total_unrated_placement_configs,
+            'total_playing_now': len(all_current_uids),
+            'total_played_today': len(all_today_uids)
         }
     })
 
