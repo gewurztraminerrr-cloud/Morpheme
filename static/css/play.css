@@ -979,6 +979,63 @@ body[class*="theme-light-"] .intermission-winner-card .winner-bonus-word {
     word-break: break-word;
 }
 
+.definition-wiki-row {
+    margin-top: 12px;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+.definition-wiki-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    color: #38bdf8;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+}
+
+.definition-wiki-link:hover {
+    background: rgba(56, 189, 248, 0.18);
+    border-color: rgba(56, 189, 248, 0.5);
+    color: #7dd3fc;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.definition-wiki-link .wiki-title-text {
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.definition-wiki-link .wiki-external-arrow {
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+[class*="theme-white"] .definition-wiki-link,
+[class*="theme-light-"] .definition-wiki-link {
+    color: #0284c7;
+    background: rgba(2, 132, 199, 0.08);
+    border-color: rgba(2, 132, 199, 0.25);
+}
+
+[class*="theme-white"] .definition-wiki-link:hover,
+[class*="theme-light-"] .definition-wiki-link:hover {
+    background: rgba(2, 132, 199, 0.16);
+    border-color: rgba(2, 132, 199, 0.45);
+    color: #0369a1;
+}
+
 /* 24H Room Fireworks Celebration */
 .definitions-panel.has-fireworks {
     position: relative !important;

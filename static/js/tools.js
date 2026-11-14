@@ -8437,6 +8437,10 @@ async function generateRandomWord() {
                 html += `<div class="pronunciation" style="margin-bottom: 8px; font-size: 1.5rem; letter-spacing: 2px;">${data.pronunciation}</div>`;
             }
             html += `<div class="definition-text" style="font-size: 1.2rem; line-height: 1.5;">${window.formatDefinitionWithLinks(definition) || "No definition available."}</div>`;
+            if (data.is_noun && data.wiki_url) {
+                const wikiTitle = data.wiki_title || word;
+                html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
+            }
             if (data.image_url) {
                 html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
             }
@@ -8518,6 +8522,10 @@ async function updateWotd() {
                 html += `<div class="pronunciation" style="margin-bottom: 5px;">${data.pronunciation}</div>`;
             }
             html += `<div class="definition-text">${window.formatDefinitionWithLinks(data.definition) || "No definition available."}</div>`;
+            if (data.is_noun && data.wiki_url) {
+                const wikiTitle = data.wiki_title || data.word;
+                html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
+            }
             if (data.image_url) {
                 html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
             }
@@ -9312,6 +9320,10 @@ async function runValidationCheck() {
                 }
                 if (data.definition) {
                     html += `<div class="definition-text" style="font-size: 1.3rem; line-height: 1.6; color: var(--text-primary); font-style: normal;">${window.formatDefinitionWithLinks(data.definition)}</div>`;
+                }
+                if (data.is_noun && data.wiki_url) {
+                    const wikiTitle = data.wiki_title || word;
+                    html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
                 }
                 if (data.image_url) {
                     html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
@@ -11733,6 +11745,10 @@ window.showWordDefinitionPopup = async function (word, event) {
                 html += window.formatDefinitionWithLinks(data.definition);
             } else {
                 html += '<span style="opacity: 0.6; font-style: italic;">No definition available for this word.</span>';
+            }
+            if (data && data.is_noun && data.wiki_url) {
+                const wikiTitle = data.wiki_title || cleanWord;
+                html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
             }
             if (data && data.image_url) {
                 html += `<div class="definition-image-container" style="margin-top: 12px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 160px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;

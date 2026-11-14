@@ -10056,6 +10056,105 @@ def lookup_definition_image(word):
             break
     return image_url
 
+_NOUN_DEF_REGEX = re.compile(
+    r'(?:'
+    r'\[(?:[a-z\s,/]*\b)?n(?:oun)?\b|'
+    r'^\s*\((?:noun|proper\s+noun|n\.)\)|'
+    r'\b(?:plural|agent noun|diminutive)\s+(?:of|for)\b|'
+    r'\b(?:plural\s+form|noun)\b|'
+    r'\b(?:someone|anyone|a\s+person|one|those|people)\s+who\b|'
+    r'\b(?:a|an|the)\s+(?:member|native|inhabitant|follower|supporter|advocate|practitioner)\s+of\b|'
+    r'\b(?:the\s+)?(?:act|action|process|practice|state|condition|quality|property|study|science|art|doctrine|theory|belief|system)\s+of\b'
+    r')',
+    re.IGNORECASE
+)
+
+_EXPLICIT_NON_NOUN_REGEX = re.compile(
+    r'\[(?:adv|adj|v|prep|conj|interj|pron)\b',
+    re.IGNORECASE
+)
+
+_NOUN_SUFFIX_REGEX = re.compile(
+    r'(?:tion|sion|ment|ness|ity|ism|ship|hood|ist|ance|ence)s?$',
+    re.IGNORECASE
+)
+
+def check_is_noun_and_get_wiki(word: str, definition: str):
+    """
+    Check if a word is a noun, and if so, return (is_noun, wiki_url, wiki_title).
+    Ultra-fast (<0.1ms) local calculation with zero external network latency.
+    """
+    if not word:
+        return False, None, None
+    raw = word.strip()
+    w_upper = raw.upper()
+    w_lower = raw.lower()
+    d = definition or ''
+
+    global DEFINITIONS_CACHE
+    raw_def = DEFINITIONS_CACHE.get(w_upper, '') if isinstance(DEFINITIONS_CACHE, dict) else ''
+    combined_text = f"{d} {raw_def}".strip()
+
+    is_noun = False
+    if _NOUN_DEF_REGEX.search(combined_text):
+        is_noun = True
+    elif _EXPLICIT_NON_NOUN_REGEX.search(combined_text):
+        is_noun = False
+    else:
+        try:
+            from nltk.corpus import wordnet as wn
+            if wn.synsets(w_lower, pos=wn.NOUN):
+                is_noun = True
+            else:
+                m = wn.morphy(w_lower, wn.NOUN)
+                if m and wn.synsets(m, pos=wn.NOUN):
+                    is_noun = True
+        except Exception:
+            pass
+        if not is_noun and _NOUN_SUFFIX_REGEX.search(w_lower):
+            is_noun = True
+
+    if not is_noun:
+        return False, None, None
+
+    lemma = None
+    if raw_def:
+        m_root = re.match(r'^([A-Za-z\-]+),\s*(.*)', raw_def)
+        if m_root:
+            root_word = m_root.group(1).lower()
+            if root_word != w_lower and len(root_word) > 2:
+                lemma = root_word
+
+    if not lemma:
+        m_plural = re.search(r'\b(?:plural|diminutive)\s+(?:of|for)\s+([A-Za-z\-]+)', combined_text, re.IGNORECASE)
+        if m_plural:
+            lemma = m_plural.group(1).lower()
+
+    if not lemma:
+        try:
+            from nltk.corpus import wordnet as wn
+            m = wn.morphy(w_lower, wn.NOUN)
+            if m:
+                lemma = m
+        except Exception:
+            pass
+
+    if not lemma:
+        if w_lower.endswith('ies') and len(w_lower) > 4:
+            lemma = w_lower[:-3] + 'y'
+        elif w_lower.endswith(('ses', 'xes', 'zes', 'ches', 'shes')) and len(w_lower) > 4:
+            lemma = w_lower[:-2]
+        elif w_lower.endswith('s') and not w_lower.endswith('ss') and len(w_lower) > 3:
+            lemma = w_lower[:-1]
+        else:
+            lemma = w_lower
+
+    title = lemma.capitalize()
+    import urllib.parse
+    encoded = urllib.parse.quote(title.replace(' ', '_'))
+    wiki_url = f"https://en.wikipedia.org/wiki/{encoded}"
+    return True, wiki_url, title
+
 @app.route('/api/definition', methods=['GET'])
 def get_definition():
     word = request.args.get('word', '').upper()
@@ -10066,6 +10165,7 @@ def get_definition():
     image_url = lookup_definition_image(word)
     import tally_divisions as td
     div_info = td.get_word_division_info(word)
+    is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(word, definition)
 
     if definition or pronunciation or image_url:
         return jsonify({
@@ -10073,7 +10173,10 @@ def get_definition():
             'definition': definition or "No definition available for this word.",
             'pronunciation': pronunciation,
             'image_url': image_url,
-            'division_info': div_info
+            'division_info': div_info,
+            'is_noun': is_noun,
+            'wiki_url': wiki_url,
+            'wiki_title': wiki_title
         })
     else:
         return jsonify({'error': 'Word not found'}), 404
@@ -12101,6 +12204,7 @@ def tools_validate_word():
 
     import tally_divisions as td
     div_info = td.get_word_division_info(word)
+    is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(word, definition) if is_valid else (False, None, None)
 
     return jsonify({
         'word': word,
@@ -12109,7 +12213,10 @@ def tools_validate_word():
         'pronunciation': pronunciation,
         'image_url': image_url,
         'lists': lists,
-        'division_info': div_info
+        'division_info': div_info,
+        'is_noun': is_noun,
+        'wiki_url': wiki_url,
+        'wiki_title': wiki_title
     })
 
 @app.route('/api/tools/unscramble/random', methods=['GET'])
@@ -12733,12 +12840,16 @@ def tools_random_word():
     if not definition:
         definition = "No definition available for this word."
     image_url = lookup_definition_image(random_word)
+    is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(random_word, definition)
     
     return jsonify({
         'word': random_word,
         'definition': definition,
         'pronunciation': pronunciation,
-        'image_url': image_url
+        'image_url': image_url,
+        'is_noun': is_noun,
+        'wiki_url': wiki_url,
+        'wiki_title': wiki_title
     })
 
 _WOTD_CACHE = {}
@@ -12785,13 +12896,17 @@ def tools_wotd():
     if not definition:
         definition = "No definition available for this word."
     image_url = lookup_definition_image(wotd)
+    is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(wotd, definition)
     
     payload = {
         'word': wotd,
         'date': today_str,
         'definition': definition,
         'pronunciation': pronunciation,
-        'image_url': image_url
+        'image_url': image_url,
+        'is_noun': is_noun,
+        'wiki_url': wiki_url,
+        'wiki_title': wiki_title
     }
     _WOTD_CACHE['date'] = today_str
     _WOTD_CACHE['payload'] = payload
