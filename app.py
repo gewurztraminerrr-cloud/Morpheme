@@ -10070,7 +10070,10 @@ _NOUN_DEF_REGEX = re.compile(
 )
 
 _EXPLICIT_NON_NOUN_REGEX = re.compile(
-    r'\[(?:adv|adj|v|prep|conj|interj|pron)\b',
+    r'(?:'
+    r'\[(?:adv|adj|v|prep|conj|interj|pron)\b|'
+    r'^\s*\((?:adjective|adverb|verb|transitive\s+verb|intransitive\s+verb|preposition|conjunction|interjection|pronoun)\b'
+    r')',
     re.IGNORECASE
 )
 
@@ -10098,21 +10101,21 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
     is_noun = False
     if _NOUN_DEF_REGEX.search(combined_text):
         is_noun = True
-    elif _EXPLICIT_NON_NOUN_REGEX.search(combined_text):
-        is_noun = False
     else:
         try:
             from nltk.corpus import wordnet as wn
-            if wn.synsets(w_lower, pos=wn.NOUN):
-                is_noun = True
+            wn_all = wn.synsets(w_lower)
+            if wn_all:
+                is_noun = bool(wn.synsets(w_lower, pos=wn.NOUN))
             else:
                 m = wn.morphy(w_lower, wn.NOUN)
                 if m and wn.synsets(m, pos=wn.NOUN):
                     is_noun = True
+                elif not _EXPLICIT_NON_NOUN_REGEX.search(combined_text) and _NOUN_SUFFIX_REGEX.search(w_lower):
+                    is_noun = True
         except Exception:
-            pass
-        if not is_noun and _NOUN_SUFFIX_REGEX.search(w_lower):
-            is_noun = True
+            if not _EXPLICIT_NON_NOUN_REGEX.search(combined_text) and _NOUN_SUFFIX_REGEX.search(w_lower):
+                is_noun = True
 
     if not is_noun:
         return False, None, None
