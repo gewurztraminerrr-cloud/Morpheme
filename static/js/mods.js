@@ -2223,6 +2223,7 @@ async function loadTallyDivisionsStatus() {
         window._tallyDivisionsIsJeffb = !!data.is_jeffb;
 
         const badge = document.getElementById('tally-divisions-status-badge');
+        const toggleInput = document.getElementById('tally-divisions-toggle-input');
         const btn = document.getElementById('tally-divisions-toggle-btn');
 
         if (badge) {
@@ -2234,6 +2235,17 @@ async function loadTallyDivisionsStatus() {
                 badge.textContent = 'INACTIVE (uniqueNWL)';
                 badge.style.background = '#64748b';
                 badge.style.color = '#fff';
+            }
+        }
+
+        if (toggleInput) {
+            toggleInput.checked = window._tallyDivisionsState;
+            if (!window._tallyDivisionsIsJeffb) {
+                toggleInput.title = 'Only jeffb can toggle this switch';
+                toggleInput.style.cursor = 'not-allowed';
+            } else {
+                toggleInput.title = 'Toggle Tally Divisions Mode';
+                toggleInput.style.cursor = 'pointer';
             }
         }
 
@@ -2272,17 +2284,22 @@ async function loadTallyDivisionsStatus() {
     }
 }
 
-async function toggleTallyDivisions() {
+async function toggleTallyDivisions(e) {
+    const toggleInput = document.getElementById('tally-divisions-toggle-input');
+    const btn = document.getElementById('tally-divisions-toggle-btn');
+
     if (!window._tallyDivisionsIsJeffb) {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        if (toggleInput) toggleInput.checked = window._tallyDivisionsState;
         showTallyStatus('⚠️ Unauthorized: Only jeffb can toggle the Tally Divisions switch.', '#ef4444');
         return;
     }
 
-    const btn = document.getElementById('tally-divisions-toggle-btn');
+    if (toggleInput) toggleInput.disabled = true;
     if (btn) btn.disabled = true;
 
     try {
-        const nextState = !window._tallyDivisionsState;
+        const nextState = toggleInput ? toggleInput.checked : !window._tallyDivisionsState;
         const u = localStorage.getItem('morpheme_username') || '';
         const headers = { 'Content-Type': 'application/json' };
         if (u) headers['X-Username'] = u;
@@ -2297,10 +2314,13 @@ async function toggleTallyDivisions() {
             await loadTallyDivisionsStatus();
         } else {
             showTallyStatus(`⚠️ Error: ${data.error || 'Failed to toggle'}`, '#ef4444');
+            if (toggleInput) toggleInput.checked = window._tallyDivisionsState;
         }
     } catch (e) {
         showTallyStatus(`⚠️ Network error: ${e.message}`, '#ef4444');
+        if (toggleInput) toggleInput.checked = window._tallyDivisionsState;
     } finally {
+        if (toggleInput) toggleInput.disabled = false;
         if (btn) btn.disabled = false;
     }
 }
@@ -2458,6 +2478,9 @@ function showTallyStatus(msg, color) {
 }
 
 function setupTallyDivisionsHandlers() {
+    const toggleInput = document.getElementById('tally-divisions-toggle-input');
+    if (toggleInput) toggleInput.onchange = (e) => toggleTallyDivisions(e);
+
     const toggleBtn = document.getElementById('tally-divisions-toggle-btn');
     if (toggleBtn) toggleBtn.onclick = toggleTallyDivisions;
 

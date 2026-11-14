@@ -62,8 +62,21 @@ def run_test(is_mobile=False):
         time.sleep(1.5)
 
         badge_text = driver.find_element(By.ID, 'tally-divisions-status-badge').text
-        toggle_btn = driver.find_element(By.ID, 'tally-divisions-toggle-btn')
-        print(f"Initial Tally Badge: '{badge_text}', Toggle Btn: '{toggle_btn.text}'")
+        toggle_input = driver.find_element(By.ID, 'tally-divisions-toggle-input')
+        print(f"Initial Tally Badge: '{badge_text}', Toggle Switch Checked: {toggle_input.is_selected()}")
+
+        # Test toggling the switch as jeffb
+        initial_checked = toggle_input.is_selected()
+        driver.execute_script("document.getElementById('tally-divisions-toggle-input').click();")
+        time.sleep(1.2)
+        assert toggle_input.is_selected() != initial_checked, "Toggle switch failed to flip state"
+        print(f"✓ Toggle switch flipped to: {toggle_input.is_selected()} ('{driver.find_element(By.ID, 'tally-divisions-status-badge').text}')")
+
+        # Flip back to initial state
+        driver.execute_script("document.getElementById('tally-divisions-toggle-input').click();")
+        time.sleep(1.2)
+        assert toggle_input.is_selected() == initial_checked, "Toggle switch failed to revert state"
+        print(f"✓ Toggle switch cleanly reverted to: {toggle_input.is_selected()} ('{driver.find_element(By.ID, 'tally-divisions-status-badge').text}')")
 
         # Test repopulate examples
         driver.execute_script("window.loadTallyDivisionsExamples(true);")

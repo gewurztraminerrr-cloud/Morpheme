@@ -6152,9 +6152,9 @@
 
                         <!-- Master Toggle Switch Card -->
                         <div class="mod-action-card" style="margin-bottom: 20px; border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 8px; background: rgba(14, 165, 233, 0.05); padding: 16px; width: 100%; box-sizing: border-box;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 8px;">
-                                <div>
-                                    <div style="font-weight: 700; color: #0284c7; font-size: 1.05rem; display: flex; align-items: center; gap: 8px;">
+                            <label for="tally-divisions-toggle-input" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; cursor: pointer; margin-bottom: 0; user-select: none; width: 100%;">
+                                <div style="flex: 1 1 300px; min-width: 0;">
+                                    <div style="font-weight: 700; color: #0284c7; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                                         <span>📊 Tally Divisions Difficulty Mode</span>
                                         <span id="tally-divisions-status-badge" style="padding: 2px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; background: #64748b; color: #fff;">INACTIVE (uniqueNWL)</span>
                                     </div>
@@ -6162,12 +6162,13 @@
                                         When active, board uniqueness and difficulty are determined by live player find rarity in the tally file instead of static unique word files. <span style="color: #f59e0b; font-weight: 600;">(Only jeffb can toggle this switch)</span>
                                     </p>
                                 </div>
-                                <div style="display: flex; align-items: center; gap: 10px;">
-                                    <button type="button" id="tally-divisions-toggle-btn" class="mod-full-btn" style="min-width: 150px; font-weight: 700; padding: 10px 16px; border-radius: 8px; cursor: pointer; transition: all 0.2s ease;">
-                                        Enable Tally Mode
-                                    </button>
+                                <div style="display: flex; align-items: center; gap: 12px; flex-shrink: 0;">
+                                    <span class="toggle-switch" style="vertical-align: middle;">
+                                        <input type="checkbox" id="tally-divisions-toggle-input">
+                                        <span class="slider round"></span>
+                                    </span>
                                 </div>
-                            </div>
+                            </label>
                         </div>
 
                         <!-- Division Hardness Thresholds Card -->
@@ -10428,7 +10429,7 @@
     <script src="/js/tools.js?v=1794175000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1794165000"></script>
+    <script src="/js/mods.js?v=1794176000"></script>
     <script src="/js/private_matches.js?v=1793520000"></script>
     <script src="/js/donate.js?v=33806"></script>
     
