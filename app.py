@@ -12381,8 +12381,8 @@ def tools_reverse_dictionary():
             'score': score
         })
 
-    # Sort: highest score first, then shorter word lengths, then alphabetical
-    matches.sort(key=lambda x: (-x['score'], x['len'], x['word']))
+    # Sort: shortest word lengths first across all results, then highest score within length, then alphabetical
+    matches.sort(key=lambda x: (x['len'], -x['score'], x['word']))
 
     terms_set = set(words)
     for s in token_variants:
