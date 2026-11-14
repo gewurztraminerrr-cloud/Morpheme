@@ -4,7 +4,7 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33211';
+const CURRENT_APP_BUILD = '33212';
 (function() {
     try {
         localStorage.setItem('morpheme_build_version', CURRENT_APP_BUILD);
@@ -1148,9 +1148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.currentUser = null;
     }
 
-    const activePageEl = document.querySelector('.page.active');
-    const activePageId = activePageEl ? activePageEl.id : '';
-
     const gatewayAlreadyPassed = (!isLoggedOutExplicitly) && (
         window._gatewayPassed ||
         window._gatewayTransitioning
@@ -1170,9 +1167,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (currentUser) {
         // If the user is in an active game match, resume game
-        const activePageEl = document.querySelector('.page.active');
-        const activePageId = activePageEl ? activePageEl.id : '';
-
         if (privateActive || (hash === '#page-play' && window.currentRoomId) || activePageId === 'page-play') {
             showPage('page-play');
             const playBtn = document.querySelector('.nav-btn[data-page="play"]');

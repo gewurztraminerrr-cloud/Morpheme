@@ -3,8 +3,8 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_14
-Commit ID: ec785010
-Short ID:  ec785010
+Commit ID: b3fe5368
+Short ID:  b3fe5368
 ```
 *(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_14`, `STABLE_STATE_TODAY`, `stable-2026-11-14`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
@@ -13,8 +13,8 @@ Short ID:  ec785010
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `ec785010` & tagged with `START_OVER_POINT_NOVEMBER_14` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `ec785010`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `b3fe5368` & tagged with `START_OVER_POINT_NOVEMBER_14` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `b3fe5368`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
 | **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33211`) |
 
 ---
@@ -27,6 +27,9 @@ Short ID:  ec785010
   - The **ENTER LOBBY** screen now reliably and consistently appears whenever the site is opened, refreshed, or visited from an external URL (such as navigating to `google.ca` and then returning to `morpheme.games`).
   - Single-page in-app navigation across top tabs (Lobby, Play, Tools, Mods, Leaderboard, Settings, Profile, Forum) continues smoothly without re-prompting the gateway.
   - Active game sessions (`#page-play`) remain protected so ongoing matches resume seamlessly on refresh.
+- **Lobby Initialization & Top Nav Clickability (`static/js/app.js`, `static/js/lobby.js`):**
+  - Resolved `SyntaxError: Identifier 'activePageEl' has already been declared` in `app.js` and `ReferenceError: Cannot access 'isFetchingLobbyStats' before initialization` in `lobby.js`.
+  - Restored full top menu button responsiveness (`setupNavigation()`) and proper Lobby grid rendering across all devices.
 
 ### 2. Reverse Dictionary Tool ("Key Word in Definition" / Find Words by Meaning)
 - **Tool Architecture & Interface (`templates/index.html`, `static/js/tools.js`, `static/css/play.css`):**

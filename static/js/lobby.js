@@ -1356,6 +1356,9 @@ function stopLobbyPolling() {
 }
 
 // Stats Polling
+let isFetchingLobbyStats = false;
+let lastLobbyTimeoutSyncTime = 0;
+
 function startStatsPolling() {
     stopStatsPolling();
 
@@ -1408,9 +1411,6 @@ window.syncLobbyTimeoutState = async function() {
         return false;
     }
 };
-
-let isFetchingLobbyStats = false;
-let lastLobbyTimeoutSyncTime = 0;
 
 // mode: 'all' (initial/entry) | 'accumulative_only' (auto-poll) | 'fcfs_sp_only' (Refresh click)
 async function fetchLobbyStats(mode = 'all') {
