@@ -321,7 +321,8 @@ window.showTool = function(toolId) {
                 initCustomScrollbarForElement('reverse-dict-table-scroll', 'reverse-dict-scrollbar-track', 'reverse-dict-scrollbar-thumb');
             }
             const inp = document.getElementById('reverse-dict-input');
-            if (inp) setTimeout(() => inp.focus(), 80);
+            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (inp && !isMobile) setTimeout(() => inp.focus(), 80);
         } else {
             content.classList.remove('has-reverse-dictionary-active');
         }

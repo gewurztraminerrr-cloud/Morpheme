@@ -3,8 +3,8 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_13
-Commit ID: 5cc840b4
-Short ID:  5cc840b4
+Commit ID: ea85b50d
+Short ID:  ea85b50d
 ```
 *(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
@@ -13,9 +13,9 @@ Short ID:  5cc840b4
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `5cc840b4` & tagged with `START_OVER_POINT_NOVEMBER_13` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `5cc840b4`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
-| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33206`) |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `ea85b50d` & tagged with `START_OVER_POINT_NOVEMBER_13` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `ea85b50d`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
+| **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33207`) |
 
 ---
 
@@ -213,6 +213,11 @@ Short ID:  5cc840b4
     3. `Definition`: Full definition text with matched keywords highlighted via `<mark class="reverse-dict-highlight">`.
     4. `Dictionaries`: High-contrast badges (`NWL`, `CSW`, `AW`).
   - Theme compatibility across all Dark, White, and Light themes.
+- **Mobile Responsive Optimization & Vertical Table Expansion (`static/css/play.css`, `static/js/tools.js`):**
+  - **Tool Description Visibility**: Made the description box (`#tool-reverse-dictionary .tool-header p`) clearly visible on mobile devices with high-contrast text and clean badge styling (`max-height: 44px; padding: 4px 8px; font-size: 0.74rem`).
+  - **Auto-Focus Mobile Protection**: Gated `inp.focus()` on tab switch strictly to non-mobile devices (`!isMobile`), preventing the mobile virtual keyboard from opening unprompted and scrolling the header description out of view.
+  - **Reduced Spacing Above & Below Textbox**: Resolved `flex: 1 1 280px` wrapper expansion in column layout, compacting the search input and action controls from 330px down to 88px with reduced top/bottom padding and margins.
+  - **Expanded Vertical Table Length**: Set `.reverse-dict-table-card` and `.list-scroll-area-wrapper` to `flex: 1 1 0px` on mobile, increasing the vertical length of the "Find Words by Meaning" table from ~217px to ~457px+ (more than doubling visible rows).
 
 ---
 
@@ -225,8 +230,8 @@ Short ID:  5cc840b4
   - Reverse Dictionary queries (`snake`, `fishes`, `mean old woman`, `derogatory`): 200 OK across both Exact and Similar modes.
   - Recursive hyponym queries (`bird`, `fowl`): verified `PAJOCK`, `SHEATHBILL`, and `CHIONIDID` present in full 9,151 results with no table truncation.
 - Production deployment:
-  - Commit `5cc840b4` pushed to GitHub `origin/main`.
+  - Commit `ea85b50d` pushed to GitHub `origin/main`.
   - Force-updated tags `START_OVER_POINT_NOVEMBER_13`, `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`.
   - Pulled to `132.148.72.249`, PM2 restarted, live HTTP 200 OK verified on `https://morpheme.games/`.
   - Local server running cleanly on `http://localhost:5001/`.
-  - Build version bumped to `33206` (cache-buster `1794152000`).
+  - Build version bumped to `33207` (cache-buster `1794153000`).
