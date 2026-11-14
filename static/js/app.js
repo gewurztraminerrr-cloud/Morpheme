@@ -77,7 +77,13 @@ window.currentUserIsMod = (localStorage.getItem('morpheme_is_mod') === 'true');
 window.currentUserIsRootMod = false;
 
 window.currentUserConfigRatings = {};
-window.currentUserTimezone = localStorage.getItem('morpheme_timezone') || 'auto';
+window.currentUserTimezone = (function() {
+    try {
+        const stored = localStorage.getItem('morpheme_timezone');
+        if (stored) return stored;
+    } catch (_) {}
+    return 'auto';
+})();
 window.currentUserFlag = localStorage.getItem('morpheme_country_flag') || '';
 
 function setCurrentUser(username, email = null, isGuest = false, isMod = null, rating = null) {
@@ -133,7 +139,7 @@ try {
 } catch (e) {}
 
 window.TIMEZONE_LABELS = {
-    'auto': 'Auto (Device)',
+    'auto': 'Auto (Device Local)',
     'UTC': 'UTC (Universal Time)',
     'America/New_York': 'US Eastern Time (ET)',
     'America/Chicago': 'US Central Time (CT)',
@@ -166,19 +172,35 @@ window.TIMEZONE_LABELS = {
 
 window.TIMEZONE_ABBR_MAP = {
     'America/New_York': 'ET',
+    'America/Toronto': 'ET',
+    'America/Montreal': 'ET',
+    'America/Detroit': 'ET',
+    'America/Kentucky/Louisville': 'ET',
+    'America/Indiana/Indianapolis': 'ET',
     'America/Chicago': 'CT',
     'America/Winnipeg': 'CT',
+    'America/Regina': 'CT',
+    'America/Menominee': 'CT',
+    'America/Matamoros': 'CT',
     'America/Denver': 'MT',
+    'America/Edmonton': 'MT',
+    'America/Boise': 'MT',
     'America/Phoenix': 'MST',
     'America/Los_Angeles': 'PT',
-    'America/Anchorage': 'AKT',
-    'Pacific/Honolulu': 'HST',
-    'America/Toronto': 'ET',
     'America/Vancouver': 'PT',
+    'America/Tijuana': 'PT',
+    'America/Anchorage': 'AKT',
+    'America/Juneau': 'AKT',
+    'Pacific/Honolulu': 'HST',
     'America/Sao_Paulo': 'BRT',
     'Europe/London': 'GMT',
+    'Europe/Dublin': 'GMT',
     'Europe/Paris': 'CET',
+    'Europe/Berlin': 'CET',
+    'Europe/Rome': 'CET',
+    'Europe/Madrid': 'CET',
     'Europe/Athens': 'EET',
+    'Europe/Helsinki': 'EET',
     'Europe/Moscow': 'MSK',
     'Asia/Dubai': 'GST',
     'Asia/Kolkata': 'IST',
@@ -190,14 +212,44 @@ window.TIMEZONE_ABBR_MAP = {
     'Asia/Seoul': 'KST',
     'Australia/Perth': 'AWST',
     'Australia/Adelaide': 'ACST',
+    'Australia/Darwin': 'ACST',
     'Australia/Sydney': 'AEST',
+    'Australia/Melbourne': 'AEST',
+    'Australia/Brisbane': 'AEST',
     'Pacific/Auckland': 'NZST',
     'UTC': 'UTC'
 };
 
+window.getEffectiveTimezone = function(customTz = null) {
+    if (customTz) {
+        return customTz === 'auto' ? null : customTz;
+    }
+    const current = window.currentUserTimezone;
+    if (current) {
+        return current === 'auto' ? null : current;
+    }
+    try {
+        const stored = typeof localStorage !== 'undefined' ? localStorage.getItem('morpheme_timezone') : null;
+        if (stored) {
+            return stored === 'auto' ? null : stored;
+        }
+    } catch (_) {}
+    return null;
+};
+
 window.getAppTimezoneAbbr = function(tz, rawAbbr) {
-    if (tz && window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[tz]) {
+    if (tz && tz !== 'auto' && window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[tz]) {
         return window.TIMEZONE_ABBR_MAP[tz];
+    }
+    if (!tz || tz === 'auto') {
+        try {
+            const devTz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat)
+                ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                : null;
+            if (devTz && window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[devTz]) {
+                return window.TIMEZONE_ABBR_MAP[devTz];
+            }
+        } catch (_) {}
     }
     const abbr = String(rawAbbr || '').trim().toUpperCase();
     if (abbr === 'CST' || abbr === 'CDT') return 'CT';
@@ -206,6 +258,13 @@ window.getAppTimezoneAbbr = function(tz, rawAbbr) {
     if (abbr === 'MST' || abbr === 'MDT') return 'MT';
     if (abbr === 'AKST' || abbr === 'AKDT') return 'AKT';
     if (abbr === 'HST' || abbr === 'HDT') return 'HST';
+    if (abbr === 'BST' || abbr === 'GMT') return 'GMT';
+    if (abbr === 'CET' || abbr === 'CEST') return 'CET';
+    if (abbr === 'EET' || abbr === 'EEST') return 'EET';
+    if (abbr === 'AEST' || abbr === 'AEDT') return 'AEST';
+    if (abbr === 'ACST' || abbr === 'ACDT') return 'ACST';
+    if (abbr === 'AWST') return 'AWST';
+    if (abbr === 'NZST' || abbr === 'NZDT') return 'NZST';
     return abbr;
 };
 
@@ -227,13 +286,9 @@ function formatAppDate(val, includeTime = false, customTz = null) {
     }
     if (isNaN(d.getTime())) return String(val);
 
-    const tz = (customTz && customTz !== 'auto') 
-        ? customTz 
-        : (window.currentUserTimezone && window.currentUserTimezone !== 'auto'
-            ? window.currentUserTimezone
-            : (typeof localStorage !== 'undefined' && localStorage.getItem('morpheme_timezone') && localStorage.getItem('morpheme_timezone') !== 'auto'
-                ? localStorage.getItem('morpheme_timezone')
-                : undefined));
+    const tz = (typeof window.getEffectiveTimezone === 'function')
+        ? window.getEffectiveTimezone(customTz)
+        : (customTz && customTz !== 'auto' ? customTz : (window.currentUserTimezone && window.currentUserTimezone !== 'auto' ? window.currentUserTimezone : undefined));
 
     try {
         const dtf = new Intl.DateTimeFormat('en-US', {
@@ -244,7 +299,7 @@ function formatAppDate(val, includeTime = false, customTz = null) {
             minute: includeTime ? '2-digit' : undefined,
             hour12: true,
             timeZoneName: includeTime ? 'short' : undefined,
-            timeZone: tz
+            timeZone: tz || undefined
         });
         const parts = dtf.formatToParts(d);
         const p = {};
@@ -273,8 +328,10 @@ function formatAppDate(val, includeTime = false, customTz = null) {
             const minutes = String(d.getMinutes()).padStart(2, '0');
             const ampm = hours >= 12 ? 'PM' : 'AM';
             hours = hours % 12 || 12;
-            const fallbackAbbr = tz && window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[tz] ? ` ${window.TIMEZONE_ABBR_MAP[tz]}` : '';
-            return `${dateStr} ${hours}:${minutes} ${ampm}${fallbackAbbr}`;
+            const fallbackAbbr = (typeof window.getAppTimezoneAbbr === 'function')
+                ? ` ${window.getAppTimezoneAbbr(tz, '')}`
+                : (tz && window.TIMEZONE_ABBR_MAP && window.TIMEZONE_ABBR_MAP[tz] ? ` ${window.TIMEZONE_ABBR_MAP[tz]}` : '');
+            return `${dateStr} ${hours}:${minutes} ${ampm}${fallbackAbbr.trim() ? fallbackAbbr : ''}`;
         }
         return dateStr;
     }
@@ -296,10 +353,10 @@ function formatTimeoutTimestamp(val) {
         return window.formatTournamentStartDate(d.getTime());
     }
 
-    const profileTz = (window.currentUserTimezone && window.currentUserTimezone !== 'auto')
-        ? window.currentUserTimezone
-        : (localStorage.getItem('morpheme_timezone') && localStorage.getItem('morpheme_timezone') !== 'auto'
-            ? localStorage.getItem('morpheme_timezone')
+    const profileTz = (typeof window.getEffectiveTimezone === 'function')
+        ? window.getEffectiveTimezone()
+        : (window.currentUserTimezone && window.currentUserTimezone !== 'auto'
+            ? window.currentUserTimezone
             : null);
 
     try {
@@ -370,12 +427,9 @@ async function loadCurrentUserConfigRatings() {
         const resp = await fetch(`/api/profile/${encodeURIComponent(window.currentUser)}?t=${Date.now()}`);
         const data = await resp.json();
         if (data) {
-            if (data.timezone && data.timezone !== 'auto') {
+            if (data.timezone) {
                 window.currentUserTimezone = data.timezone;
-                localStorage.setItem('morpheme_timezone', data.timezone);
-            } else if (!localStorage.getItem('morpheme_timezone') || localStorage.getItem('morpheme_timezone') === 'auto') {
-                window.currentUserTimezone = data.timezone || 'auto';
-                localStorage.setItem('morpheme_timezone', window.currentUserTimezone);
+                try { localStorage.setItem('morpheme_timezone', data.timezone); } catch (e) {}
             }
             if (data.country_flag) {
                 window.currentUserFlag = data.country_flag;

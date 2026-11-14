@@ -66,10 +66,10 @@ function formatTournamentStartDate(epochSeconds) {
     const d = new Date(typeof epochSeconds === 'number' ? (epochSeconds < 1e11 ? epochSeconds * 1000 : epochSeconds) : epochSeconds);
     if (isNaN(d.getTime())) return '';
 
-    const profileTz = (window.currentUserTimezone && window.currentUserTimezone !== 'auto')
-        ? window.currentUserTimezone
-        : (localStorage.getItem('morpheme_timezone') && localStorage.getItem('morpheme_timezone') !== 'auto'
-            ? localStorage.getItem('morpheme_timezone')
+    const profileTz = (typeof window.getEffectiveTimezone === 'function')
+        ? window.getEffectiveTimezone()
+        : (window.currentUserTimezone && window.currentUserTimezone !== 'auto'
+            ? window.currentUserTimezone
             : null);
 
     try {

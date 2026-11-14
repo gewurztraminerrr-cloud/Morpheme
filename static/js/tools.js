@@ -2122,13 +2122,15 @@ window.getUserCurrentTime = function(tz) {
             minute: '2-digit',
             hour12: true
         };
-        const activeTz = (tz && tz !== 'auto')
-            ? tz
-            : (window.currentUserTimezone && window.currentUserTimezone !== 'auto'
-                ? window.currentUserTimezone
-                : (typeof localStorage !== 'undefined' && localStorage.getItem('morpheme_timezone') && localStorage.getItem('morpheme_timezone') !== 'auto'
-                    ? localStorage.getItem('morpheme_timezone')
-                    : undefined));
+        const activeTz = (typeof window.getEffectiveTimezone === 'function')
+            ? window.getEffectiveTimezone(tz)
+            : (tz && tz !== 'auto'
+                ? tz
+                : (window.currentUserTimezone && window.currentUserTimezone !== 'auto'
+                    ? window.currentUserTimezone
+                    : (typeof localStorage !== 'undefined' && localStorage.getItem('morpheme_timezone') && localStorage.getItem('morpheme_timezone') !== 'auto'
+                        ? localStorage.getItem('morpheme_timezone')
+                        : undefined)));
         if (activeTz) {
             options.timeZone = activeTz;
         }
@@ -3308,6 +3310,9 @@ async function renderProfile(user) {
                 }
                 if (typeof window.refreshCurrentToolDates === 'function') {
                     window.refreshCurrentToolDates();
+                }
+                if (typeof window.refreshLobbyChatDates === 'function') {
+                    window.refreshLobbyChatDates();
                 }
             };
         } else {
@@ -9576,7 +9581,7 @@ function renderPMHistory(messages) {
 
     const html = messages.map(m => {
         const typeClass = m.is_me ? 'me' : 'them';
-        const timeStr = new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(m.timestamp, true) : new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         return `
             <div class="pm-entry ${typeClass}">

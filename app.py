@@ -4388,8 +4388,12 @@ def get_settings():
         conn = sqlite3.connect(DB_PATH, timeout=30)
         cursor = conn.execute('SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?', (session['user_id'],))
         rows = cursor.fetchall()
-        conn.close()
         settings = {row[0]: row[1] for row in rows}
+        if 'timezone' not in settings:
+            u_row = conn.execute('SELECT timezone FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+            if u_row and u_row[0]:
+                settings['timezone'] = u_row[0]
+        conn.close()
 
     if 'lobby_guide_dismissed' in session and 'lobby_guide_dismissed' not in settings:
         settings['lobby_guide_dismissed'] = session['lobby_guide_dismissed']

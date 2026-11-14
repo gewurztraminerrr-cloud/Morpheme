@@ -408,6 +408,8 @@ function debounce(func, wait) {
         if (tzSelect) {
             tzSelect.value = currentTz;
         }
+        window.currentUserTimezone = currentTz;
+        try { localStorage.setItem('morpheme_timezone', currentTz); } catch (e) {}
 
         // Allow Private Messages
         if (settings.allow_pm !== undefined) {
@@ -935,6 +937,9 @@ function debounce(func, wait) {
             }).catch(err => console.error(err));
             if (typeof window.refreshCurrentToolDates === 'function') {
                 window.refreshCurrentToolDates();
+            }
+            if (typeof window.refreshLobbyChatDates === 'function') {
+                window.refreshLobbyChatDates();
             }
         });
     }

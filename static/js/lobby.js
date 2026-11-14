@@ -1751,6 +1751,17 @@ function formatLobbyMessageTime(isoOrSeconds) {
     }
 }
 
+function refreshLobbyChatDates() {
+    const timeEls = document.querySelectorAll('#lobby-chat-history .lobby-chat-time');
+    timeEls.forEach(el => {
+        const ts = el.getAttribute('data-timestamp');
+        if (ts) {
+            el.textContent = formatLobbyMessageTime(ts);
+        }
+    });
+}
+window.refreshLobbyChatDates = refreshLobbyChatDates;
+
 function closeLobbyChatDrawer() {
     isLobbyChatDrawerOpen = false;
     const drawer = document.getElementById('lobby-chat-drawer');
@@ -1875,7 +1886,8 @@ function renderLobbyState(data) {
         let msgHtml = '';
         messages.forEach(m => {
             const author = m.username || 'Guest';
-            const timeStr = formatLobbyMessageTime(m.timestamp || m.time);
+            const msgTs = m.timestamp || m.time;
+            const timeStr = formatLobbyMessageTime(msgTs);
             const text = (m.message || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const flagHtml = (window.getFlagHtml && m.country_flag) ? window.getFlagHtml(m.country_flag) : (m.country_flag || '');
             
@@ -1883,7 +1895,7 @@ function renderLobbyState(data) {
                 <div class="lobby-chat-msg">
                     <div class="lobby-chat-msg-header">
                         <span class="lobby-chat-author" onclick="if (window.showMiniProfile) window.showMiniProfile('${author}'); if (window.getSelection) window.getSelection().removeAllRanges(); event.preventDefault(); event.stopPropagation();" onmousedown="event.preventDefault();" ontouchend="if (window.getSelection) window.getSelection().removeAllRanges();">${flagHtml}${flagHtml ? ' ' : ''}${author}</span>
-                        <span class="lobby-chat-time">${timeStr}</span>
+                        <span class="lobby-chat-time" data-timestamp="${msgTs}">${timeStr}</span>
                     </div>
                     <div class="lobby-chat-text">${text}</div>
                 </div>
@@ -1932,15 +1944,16 @@ async function handleLobbyChatSubmit(e) {
     // Optimistically append the message immediately so there is zero delay in UI
     const chatHistory = document.getElementById('lobby-chat-history');
     if (chatHistory) {
-        const myName = (window.currentUser && window.currentUser.username) || 'You';
-        const nowStr = formatLobbyMessageTime(Date.now() / 1000);
+        const myName = (window.currentUser && window.currentUser.username) || (typeof window.currentUser === 'string' ? window.currentUser : 'You');
+        const nowSec = Date.now() / 1000;
+        const nowStr = formatLobbyMessageTime(nowSec);
         const safeText = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
         const optMsg = document.createElement('div');
         optMsg.className = 'lobby-chat-msg';
         optMsg.innerHTML = `
             <div class="lobby-chat-msg-header">
                 <span class="lobby-chat-author">${myName}</span>
-                <span class="lobby-chat-time">${nowStr}</span>
+                <span class="lobby-chat-time" data-timestamp="${nowSec}">${nowStr}</span>
             </div>
             <div class="lobby-chat-text">${safeText}</div>
         `;
