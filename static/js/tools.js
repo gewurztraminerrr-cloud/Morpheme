@@ -11473,7 +11473,7 @@ window.showWordDefinitionPopup = async function (word, event) {
             const p = document.getElementById('tool-word-def-popover');
             if (p && p.classList.contains('active')) {
                 if (Date.now() - (p._openedAt || 0) < 180) return;
-                if (!p.contains(e.target) && !e.target.closest('.clickable-word-link') && !e.target.closest('.full-list-item')) {
+                if (!p.contains(e.target) && !e.target.closest('.clickable-word-link') && !e.target.closest('.full-list-item') && !e.target.closest('.notepad-word-line') && !e.target.closest('.notepad-scroll-btn')) {
                     window.hideWordDefinitionPopup();
                 }
             }
@@ -11591,20 +11591,45 @@ window.showWordDefinitionPopup = async function (word, event) {
     if (target && typeof target.getBoundingClientRect === 'function') {
         const rect = target.getBoundingClientRect();
         const popWidth = Math.min(340, window.innerWidth - 16);
-        let left = rect.left;
-        if (left + popWidth > window.innerWidth - 10) {
-            left = window.innerWidth - popWidth - 10;
-        }
-        if (left < 10) left = 10;
-
         const popHeight = popover.offsetHeight || 220;
-        let top = rect.bottom + 8;
-        if (top + popHeight > window.innerHeight - 10 && rect.top > popHeight + 10) {
-            top = rect.top - popHeight - 8;
-        } else if (top + popHeight > window.innerHeight - 10) {
-            top = Math.max(10, window.innerHeight - popHeight - 10);
+        let left, top;
+
+        const notepadCard = target.closest && target.closest('.notepad-card');
+        if (notepadCard && typeof notepadCard.getBoundingClientRect === 'function') {
+            const cardRect = notepadCard.getBoundingClientRect();
+            // Check if there is room to the right of the notepad card
+            if (window.innerWidth - cardRect.right >= popWidth + 14) {
+                left = cardRect.right + 10;
+                top = Math.max(10, Math.min(rect.top - 10, window.innerHeight - popHeight - 10));
+            } else if (cardRect.left >= popWidth + 14) {
+                // Room to the left of the notepad card
+                left = cardRect.left - popWidth - 10;
+                top = Math.max(10, Math.min(rect.top - 10, window.innerHeight - popHeight - 10));
+            } else {
+                // Mobile or narrow viewport: place centered horizontally, above or below clicked line
+                left = Math.max(10, Math.round((window.innerWidth - popWidth) / 2));
+                top = rect.bottom + 8;
+                if (top + popHeight > window.innerHeight - 10 && rect.top > popHeight + 10) {
+                    top = rect.top - popHeight - 8;
+                } else if (top + popHeight > window.innerHeight - 10) {
+                    top = Math.max(10, window.innerHeight - popHeight - 10);
+                }
+            }
+        } else {
+            left = rect.left;
+            if (left + popWidth > window.innerWidth - 10) {
+                left = window.innerWidth - popWidth - 10;
+            }
+            if (left < 10) left = 10;
+
+            top = rect.bottom + 8;
+            if (top + popHeight > window.innerHeight - 10 && rect.top > popHeight + 10) {
+                top = rect.top - popHeight - 8;
+            } else if (top + popHeight > window.innerHeight - 10) {
+                top = Math.max(10, window.innerHeight - popHeight - 10);
+            }
+            if (top < 10) top = 10;
         }
-        if (top < 10) top = 10;
 
         popover.style.left = `${left}px`;
         popover.style.top = `${top}px`;
@@ -11641,11 +11666,16 @@ window.showWordDefinitionPopup = async function (word, event) {
         }
 
         if (contentEl) {
+            let html = '';
             if (data && data.definition && data.definition.trim()) {
-                contentEl.innerHTML = window.formatDefinitionWithLinks(data.definition);
+                html += window.formatDefinitionWithLinks(data.definition);
             } else {
-                contentEl.innerHTML = '<span style="opacity: 0.6; font-style: italic;">No definition available for this word.</span>';
+                html += '<span style="opacity: 0.6; font-style: italic;">No definition available for this word.</span>';
             }
+            if (data && data.image_url) {
+                html += `<div class="definition-image-container" style="margin-top: 12px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 160px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
+            }
+            contentEl.innerHTML = html;
         }
     }
 

@@ -1544,6 +1544,9 @@ function startPolling() {
     window._wasEverInRoster = false; // Reset roster flag to prevent instantaneous eviction on re-entry
     hasPlayedIntermissionBell = false;
     hasPlayedIntermissionVibration = false;
+    if (typeof window.closeNotepadPopup === 'function') {
+        window.closeNotepadPopup();
+    }
     resetIdleTimer();
     
     if (pollInterval) {
@@ -2890,6 +2893,9 @@ async function _doUpdateGameState(incomingState = null) {
 
         // Enable/disable input and buttons
         const isActive = state.state === 'active';
+        if (isActive && typeof window.closeNotepadPopup === 'function') {
+            window.closeNotepadPopup();
+        }
         const inputEl = document.getElementById('word-input');
         const submitBtnEl = document.getElementById('submit-word-btn');
         const rotateBtn = document.getElementById('rotate-board-btn');
@@ -11002,6 +11008,9 @@ async function leaveCurrentRoom() {
 
     // 1. Clear local state and stop polling immediately (synchronous)
     stopPolling();
+    if (typeof window.closeNotepadPopup === 'function') {
+        window.closeNotepadPopup();
+    }
     hasPlayedIntermissionBell = false;
     hasPlayedIntermissionVibration = false;
     window.currentRoomId = null;
@@ -14374,6 +14383,10 @@ window.showFinderModal = function (word) {
 window.showNotepadPopup = function(username) {
     console.log('[Notepad] Requesting notepad for:', username);
 
+    if (typeof window.hideWordDefinitionPopup === 'function') {
+        window.hideWordDefinitionPopup();
+    }
+
     const state = window.lastGameState;
     if (!state || !state.players) return;
 
@@ -14466,7 +14479,7 @@ window.showNotepadPopup = function(username) {
                         `;
 
                         return `
-                            <div class="notepad-word-line" data-word="${wordText}" style="cursor: pointer;" title="Click to view definition">
+                            <div class="notepad-word-line clickable-word-link" data-word="${wordUpper}" style="cursor: pointer;" title="Click to view definition">
                                 <span class="notepad-word"><span class="notepad-word-num">${idx + 1}.</span>${wordText}</span>
                                 <div class="notepad-word-right">
                                     <span class="notepad-word-points">${pts} pts</span>
@@ -14494,14 +14507,30 @@ window.showNotepadPopup = function(username) {
         }
     });
 
-    // Click on any word line in notepad to view its definition / toggle selection
+    // Click on any word line in notepad to view its definition popup
     modal.querySelectorAll('.notepad-word-line').forEach(line => {
         line.addEventListener('click', (e) => {
+            if (e && typeof e.stopPropagation === 'function') {
+                e.stopPropagation();
+            }
             const w = line.dataset.word;
             if (w) {
-                window.closeNotepadPopup();
+                // Highlight word in notepad
+                modal.querySelectorAll('.notepad-word-line').forEach(el => {
+                    el.classList.toggle('selected', el === line);
+                });
+
+                // Trace word path on background board if available
                 if (typeof window.toggleWordSelection === 'function') {
+                    window.highlightedFoundWord = null; // Guarantee selection
                     window.toggleWordSelection(w, line);
+                }
+
+                // Show definition popup for the clicked found word
+                if (typeof window.showWordDefinitionPopup === 'function') {
+                    window.showWordDefinitionPopup(w, e);
+                } else if (typeof window.lookupWord === 'function') {
+                    window.lookupWord(w, e);
                 }
             }
         });
@@ -14555,6 +14584,9 @@ window.closeNotepadPopup = function() {
     const modal = document.getElementById('notepad-modal');
     if (modal) {
         modal.classList.add('hidden');
+    }
+    if (typeof window.hideWordDefinitionPopup === 'function') {
+        window.hideWordDefinitionPopup();
     }
 };
 

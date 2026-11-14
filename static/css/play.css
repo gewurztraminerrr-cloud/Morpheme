@@ -11478,10 +11478,22 @@ body.is-desktop .word-input-section {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding-left: 6px;
     padding-right: 15px;
     font-size: 1.1rem;
     font-weight: 700;
     color: #073642; /* Beautiful retro ink color */
+    border-radius: 4px;
+    transition: background 0.15s ease;
+    cursor: pointer;
+}
+
+.notepad-word-line:hover {
+    background: rgba(181, 137, 0, 0.15);
+}
+
+.notepad-word-line.selected {
+    background: rgba(42, 161, 152, 0.25);
 }
 
 .notepad-word-num {
