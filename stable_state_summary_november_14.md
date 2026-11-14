@@ -3,8 +3,8 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_14
-Commit ID: 9c9c42ac
-Short ID:  9c9c42ac
+Commit ID: 85eb685c
+Short ID:  85eb685c
 ```
 *(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_14`, `STABLE_STATE_TODAY`, `stable-2026-11-14`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
@@ -13,8 +13,8 @@ Short ID:  9c9c42ac
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `9c9c42ac` & tagged with `START_OVER_POINT_NOVEMBER_14` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `9c9c42ac`, PM2 online (`morpheme`), verified HTTP 200 and letter length select verified via headless Chrome on `https://morpheme.games/` |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` & tagged with `START_OVER_POINT_NOVEMBER_14` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
 | **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33213`) |
 
 ---
@@ -103,9 +103,14 @@ Short ID:  9c9c42ac
   - Highlight accuracy: verified `passerine` and `birds` highlighted in `RHABDORNIS`, and `ovenbirds` highlighted in `RAYADITO`.
   - Monotonic sorting: verified word lengths are strictly non-decreasing across all 9,151 rows (`ALK` at #16, `BANTAM` at #1,029, `ILIOTROCHANTERICUSES` at #9,136).
   - Rating placement contracts (`scratch/test_unrated_placement.py`): 3/3 tests OK.
+  - Letter length filtering (`scratch/test_reverse_length_select.py`): End-to-end verified via headless Chrome on both Desktop (1280x800) and Mobile (390x844) against localhost and production:
+    - Dropdown populated with counts: `All Lengths (9,151)`, `5 Letters (545)`, `4 Letters (213)`, etc.
+    - 5 Letters filtered view renders all 545 rows with sequential row numbers 1 to 545 and length 5 badges.
+    - Interactive word length badge click (length `4`) automatically selects `4` in dropdown and filters table to 213 rows.
+    - Zero severe JS errors.
 - Production deployment:
   - Pushed to GitHub `origin/main`.
   - Force-updated tags `START_OVER_POINT_NOVEMBER_14`, `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_14`, `STABLE_STATE_TODAY`, `stable-2026-11-14`, `start-over`, `latest-stable-state`, and `current-stable-state`.
   - Pulled to `132.148.72.249`, PM2 restarted, live HTTP 200 OK verified on `https://morpheme.games/`.
   - Local server running cleanly on `http://localhost:5001/`.
-  - Build version bumped to `33211` (cache-buster `1794157000`).
+  - Build version bumped to `33213` (cache-buster `1794160000`).
