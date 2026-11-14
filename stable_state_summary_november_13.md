@@ -3,8 +3,8 @@
 ## Start Over Point Tag & Commit ID
 ```
 Tag:       START_OVER_POINT_NOVEMBER_13
-Commit ID: ea85b50d
-Short ID:  ea85b50d
+Commit ID: dcc4e208
+Short ID:  dcc4e208
 ```
 *(Also tagged as `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`)*
 
@@ -13,8 +13,8 @@ Short ID:  ea85b50d
 | Environment | Status | Verification Details |
 |:---|:---|:---|
 | **Localhost** | ✅ Synchronized | Working tree clean on `main`, zero uncommitted changes, verified HTTP 200 on `http://localhost:5001/` |
-| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `ea85b50d` & tagged with `START_OVER_POINT_NOVEMBER_13` |
-| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `ea85b50d`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
+| **GitHub (`origin/main`)** | ✅ Synchronized | Pushed to `origin/main` at `dcc4e208` & tagged with `START_OVER_POINT_NOVEMBER_13` |
+| **morpheme.games (`132.148.72.249`)** | ✅ Synchronized | Reset hard to `origin/main` at `dcc4e208`, PM2 online (`morpheme`), verified HTTP 200 on `https://morpheme.games/` |
 | **App (Mobile WebView)** | ✅ Synchronized | Mobile WebView loads live production environment with full asset caching (Build `33207`) |
 
 ---
@@ -230,7 +230,7 @@ Short ID:  ea85b50d
   - Reverse Dictionary queries (`snake`, `fishes`, `mean old woman`, `derogatory`): 200 OK across both Exact and Similar modes.
   - Recursive hyponym queries (`bird`, `fowl`): verified `PAJOCK`, `SHEATHBILL`, and `CHIONIDID` present in full 9,151 results with no table truncation.
 - Production deployment:
-  - Commit `ea85b50d` pushed to GitHub `origin/main`.
+  - Commit `dcc4e208` pushed to GitHub `origin/main`.
   - Force-updated tags `START_OVER_POINT_NOVEMBER_13`, `START_OVER_POINT_TODAY`, `STABLE_STATE_NOVEMBER_13`, `STABLE_STATE_TODAY`, `stable-2026-11-13`, `start-over`, `latest-stable-state`, and `current-stable-state`.
   - Pulled to `132.148.72.249`, PM2 restarted, live HTTP 200 OK verified on `https://morpheme.games/`.
   - Local server running cleanly on `http://localhost:5001/`.
