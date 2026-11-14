@@ -11293,18 +11293,33 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 
 
 /* Profile Name / Age / Gender: large, bordered, blank click-to-type boxes (no hyphen / placeholder) */
+#profile-meta-name .meta-label,
+#profile-meta-age .meta-label,
+#profile-meta-gender .meta-label {
+    margin-right: 6px !important;
+}
+
 #profile-full-name,
 #profile-age-val,
 #profile-gender-val {
     display: inline-block;
     min-width: 140px;
     min-height: 1.6em;
-    padding: 4px 10px !important;
+    margin: 0 0 0 10px !important;
+    padding: 5px 12px !important;
     border: 1px solid rgba(var(--text-primary-rgb), 0.45) !important;
     border-radius: 8px;
     background: rgba(var(--text-primary-rgb), 0.06);
     box-sizing: border-box;
 }
+
+#profile-full-name[contenteditable="true"],
+#profile-age-val[contenteditable="true"],
+#profile-gender-val[contenteditable="true"] {
+    margin: 0 0 0 10px !important;
+    padding: 5px 12px !important;
+}
+
 #profile-age-val { min-width: 90px; }
 #profile-full-name:empty::before,
 #profile-age-val:empty::before,
@@ -11315,6 +11330,7 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 #profile-age-val:focus,
 #profile-gender-val:focus {
     border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25) !important;
 }
 
 
