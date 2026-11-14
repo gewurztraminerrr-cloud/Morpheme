@@ -2021,6 +2021,14 @@
                     if (!activeUser && !isLoggedOutExplicitly) {
                         activeUser = localStorage.getItem('morpheme_username');
                     }
+                    var isGatewayPassed = (sessionStorage.getItem('morpheme_gateway_passed') === 'true') && !isLoggedOutExplicitly;
+                    if (isGatewayPassed) {
+                        window._gatewayPassed = true;
+                        var pLoad = document.getElementById('page-loading');
+                        var pLobby = document.getElementById('page-lobby');
+                        if (pLoad) { pLoad.classList.remove('active'); pLoad.style.display = 'none'; }
+                        if (pLobby) { pLobby.classList.add('active'); pLobby.style.display = 'flex'; }
+                    }
                     var gb = document.getElementById('btn-enter-lobby-gateway');
                     var lb = document.getElementById('btn-login-gateway');
                     if (gb && lb) {
@@ -2075,6 +2083,11 @@
                 var housing = document.getElementById('gateway-housing');
                 if (evt && evt.target && evt.target !== gb && (!gb || !gb.contains(evt.target)) && evt.target !== housing && (!housing || !housing.contains(evt.target))) return;
 
+                // Lock transition immediately so synthetic double clicks / pointerup events cannot race
+                window._gatewayTransitioning = true;
+                window._gatewayPassed = true;
+                try { sessionStorage.setItem('morpheme_gateway_passed', 'true'); } catch(e) {}
+
                 // Immediately trigger mobile fullscreen synchronously on direct user gesture
                 if (typeof window.triggerMobileFullscreen === 'function') {
                     window.triggerMobileFullscreen();
@@ -2091,6 +2104,9 @@
                     activeUser = (typeof currentUser !== 'undefined' && currentUser) || window.currentUser;
                 }
                 if (!activeUser) {
+                    window._gatewayPassed = false;
+                    window._gatewayTransitioning = false;
+                    try { sessionStorage.removeItem('morpheme_gateway_passed'); } catch(e) {}
                     if (gb) gb.classList.remove('pressed');
                     window.currentPageId = 'page-login';
                     if (typeof window.showPage === 'function') {
@@ -2122,8 +2138,6 @@
                     }
                 }
 
-                window._gatewayPassed = true;
-                window._gatewayTransitioning = true;
                 window.currentPageId = 'page-lobby';
                 window._lobbyEnterCooldown = true;
 
@@ -2202,6 +2216,7 @@
                 // Clear room-entry cooldown after 350ms so intentional clicks on lobby buttons are enabled
                 // (prevents double clicks on ENTER LOBBY from mistakenly entering game rooms)
                 setTimeout(function() {
+                    window._gatewayTransitioning = false;
                     window._lobbyEnterCooldown = false;
                 }, 350);
             };
@@ -2370,9 +2385,17 @@
                         if (loginGwBtn) loginGwBtn.style.display = 'none';
                     }
 
-                    // Keep the Gateway Screen (ENTER LOBBY) active so users never see a jarring login flash!
-                    // Clean up any stale hash so the app cleanly displays the Gateway screen.
-                    if (window.location.hash && window.location.hash !== '#page-play') {
+                    // If gateway already passed in this session (and not logged out), retain active lobby directly
+                    const isGatewayPassed = (window._gatewayPassed || sessionStorage.getItem('morpheme_gateway_passed') === 'true') && !loggedOut;
+                    if (isGatewayPassed) {
+                        window._gatewayPassed = true;
+                        const pLoad = document.getElementById('page-loading');
+                        const pLobby = document.getElementById('page-lobby');
+                        if (pLoad) { pLoad.classList.remove('active'); pLoad.style.display = 'none'; }
+                        if (pLobby) { pLobby.classList.add('active'); pLobby.style.display = 'flex'; }
+                    } else if (window.location.hash && window.location.hash !== '#page-play') {
+                        // Keep the Gateway Screen (ENTER LOBBY) active so users never see a jarring login flash!
+                        // Clean up any stale hash so the app cleanly displays the Gateway screen.
                         try {
                             history.replaceState(null, null, window.location.pathname + window.location.search);
                         } catch(e) {}
@@ -10157,7 +10180,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1794134000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794135000"></script>
+    <script src="/js/app.js?v=1794142000"></script>
     <script src="/js/lobby.js?v=1794133000"></script>
     <script src="/js/play.js?v=1794135000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>

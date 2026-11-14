@@ -4,20 +4,10 @@ if ('scrollRestoration' in history) {
 }
 
 // Client Auto-Sync Version Check
-const CURRENT_APP_BUILD = '33195';
+const CURRENT_APP_BUILD = '33196';
 (function() {
     try {
-        const lastBuild = localStorage.getItem('morpheme_build_version');
-        if (lastBuild && lastBuild !== CURRENT_APP_BUILD) {
-            localStorage.setItem('morpheme_build_version', CURRENT_APP_BUILD);
-            if (!sessionStorage.getItem('morpheme_reload_done')) {
-                sessionStorage.setItem('morpheme_reload_done', '1');
-                window.location.reload(true);
-                return;
-            }
-        } else {
-            localStorage.setItem('morpheme_build_version', CURRENT_APP_BUILD);
-        }
+        localStorage.setItem('morpheme_build_version', CURRENT_APP_BUILD);
         sessionStorage.removeItem('morpheme_reload_done');
     } catch(e) {}
 })();
@@ -738,6 +728,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     let gatewayTransitioning = false;
     const executeGatewayTransition = async (e) => {
         if (gatewayTransitioning || window._gatewayTransitioning) return;
+        gatewayTransitioning = true;
+        window._gatewayTransitioning = true;
+        window._gatewayPassed = true;
+        try { sessionStorage.setItem('morpheme_gateway_passed', 'true'); } catch (err) {}
 
         // Immediately trigger mobile fullscreen synchronously on user gesture so notice appears on ENTER LOBBY
         if (typeof window.triggerMobileFullscreen === 'function') {
@@ -751,6 +745,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             activeUser = currentUser || window.currentUser;
         }
         if (!activeUser) {
+            gatewayTransitioning = false;
+            window._gatewayTransitioning = false;
+            window._gatewayPassed = false;
+            try { sessionStorage.removeItem('morpheme_gateway_passed'); } catch (err) {}
             window.currentPageId = 'page-login';
             showPage('page-login');
             if (typeof window.refreshCaptchas === 'function') window.refreshCaptchas();
@@ -763,9 +761,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateAuthUI();
         }
 
-        gatewayTransitioning = true;
-        window._gatewayTransitioning = true;
-        window._gatewayPassed = true;
         window.currentPageId = 'page-lobby';
         window._lobbyEnterCooldown = true;
 
@@ -853,6 +848,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Clear room-entry cooldown after 350ms so intentional clicks on lobby buttons are enabled
         // (prevents double clicks on ENTER LOBBY from mistakenly entering game rooms)
         setTimeout(() => {
+            gatewayTransitioning = false;
+            window._gatewayTransitioning = false;
             window._lobbyEnterCooldown = false;
         }, 350);
     };
@@ -1150,19 +1147,28 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.currentUser = null;
     }
 
-    if (currentUser) {
-        // If user already clicked ENTER LOBBY during startup, keep them in the Lobby
-        if (window._gatewayPassed) {
-            console.log('[app.js] Gateway already passed by user; retaining active view.');
-            const curPage = window.currentPageId || 'page-lobby';
-            showPage(curPage);
-            const targetNav = curPage.replace('page-', '');
-            const navBtn = document.querySelector(`.nav-btn[data-page="${targetNav}"]`) || document.querySelector('.nav-btn[data-page="lobby"]');
-            if (navBtn) updateActiveNav(navBtn);
-            handleLobbyMusicState();
-            return;
-        }
+    const gatewayAlreadyPassed = (!isLoggedOutExplicitly) && (
+        window._gatewayPassed ||
+        sessionStorage.getItem('morpheme_gateway_passed') === 'true' ||
+        window._gatewayTransitioning ||
+        window.currentPageId === 'page-lobby' ||
+        activePageId === 'page-lobby'
+    );
 
+    if (gatewayAlreadyPassed) {
+        console.log('[app.js] Gateway already passed by user; retaining active view.');
+        window._gatewayPassed = true;
+        try { sessionStorage.setItem('morpheme_gateway_passed', 'true'); } catch(e) {}
+        const curPage = (window.currentPageId && window.currentPageId !== 'page-loading') ? window.currentPageId : 'page-lobby';
+        showPage(curPage);
+        const targetNav = curPage.replace('page-', '');
+        const navBtn = document.querySelector(`.nav-btn[data-page="${targetNav}"]`) || document.querySelector('.nav-btn[data-page="lobby"]');
+        if (navBtn) updateActiveNav(navBtn);
+        handleLobbyMusicState();
+        return;
+    }
+
+    if (currentUser) {
         // If the user is in an active game match, resume game
         const activePageEl = document.querySelector('.page.active');
         const activePageId = activePageEl ? activePageEl.id : '';
@@ -2429,6 +2435,14 @@ window.showPage = showPage;
         console.warn('[Navigation] Unauthorized access to mods page. Redirecting to lobby.');
         pageId = 'page-lobby';
     }
+    if (pageId === 'page-loading') {
+        const isLoggedOut = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
+        const gatewayPassed = (!isLoggedOut) && (window._gatewayPassed || sessionStorage.getItem('morpheme_gateway_passed') === 'true');
+        if (gatewayPassed) {
+            console.warn('[Navigation] Gateway already passed. Preventing return to page-loading.');
+            pageId = (window.currentPageId && window.currentPageId !== 'page-loading') ? window.currentPageId : 'page-lobby';
+        }
+    }
     if (pageId === 'page-play') {
         if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
             console.warn('[Navigation] User is timed out. Preventing navigation to page-play.');
@@ -2450,6 +2464,7 @@ window.showPage = showPage;
     if (pageId && pageId !== 'page-loading' && pageId !== 'page-login') {
         sessionStorage.setItem('morpheme_active_page', pageId);
         window._gatewayPassed = true;
+        try { sessionStorage.setItem('morpheme_gateway_passed', 'true'); } catch(e) {}
         const isLoggedOut = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
         const activeUser = isLoggedOut ? null : (currentUser || window.currentUser || localStorage.getItem('morpheme_username'));
         if (activeUser) {
