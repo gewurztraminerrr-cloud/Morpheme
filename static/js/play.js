@@ -6836,13 +6836,11 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
 
 function triggerIntermissionVibration() {
     // 1. Web Vibration API (Android Chrome, Firefox, Samsung Internet, Edge, etc.)
+    // Single solid pulse (500ms) rather than double pattern
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
         try {
             let vibrated = false;
-            try { vibrated = navigator.vibrate([400, 150, 400]); } catch (_) {}
-            if (!vibrated) {
-                try { vibrated = navigator.vibrate(500); } catch (_) {}
-            }
+            try { vibrated = navigator.vibrate(500); } catch (_) {}
             if (!vibrated) {
                 try { navigator.vibrate(300); } catch (_) {}
             }
@@ -6855,7 +6853,6 @@ function triggerIntermissionVibration() {
     if (typeof MorphemeAudioBridge !== 'undefined') {
         try {
             MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 500 }));
-            MorphemeAudioBridge.postMessage(JSON.stringify({ type: 'vibrate', duration: 500 }));
         } catch (e) {
             console.error("MorphemeAudioBridge vibration error:", e);
         }
@@ -6866,16 +6863,17 @@ function playIntermissionBell(bellType) {
     bellType = bellType || (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
 
     // 1. Mobile App Bridge (Flutter WebView / Native Wrappers)
+    let bridgeHandled = false;
     if (typeof MorphemeAudioBridge !== 'undefined') {
         try {
             MorphemeAudioBridge.postMessage(JSON.stringify({ sound: 'bell', type: bellType }));
-            MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'bell', type: bellType }));
+            bridgeHandled = true;
         } catch (e) {
             console.error("MorphemeAudioBridge bell error:", e);
         }
     }
 
-    // 2. Web Audio API via BoardAudio (Pre-unlocked AudioContext - immune to browser autoplay blocking)
+    // 2. Web Audio API via BoardAudio (Pre-unlocked AudioContext - primary browser playback)
     let playedViaWebAudio = false;
     try {
         if (typeof BoardAudio !== 'undefined') {
@@ -6893,31 +6891,31 @@ function playIntermissionBell(bellType) {
         console.warn('[play.js] WebAudio playBellBuffer error:', e);
     }
 
-    // 3. HTML5 Audio Element fallback (window.intermissionBellAudio)
-    try {
-        const audio = window.intermissionBellAudio;
-        if (audio) {
-            const expectedSrc = `/static/audio/${bellType}.wav`;
-            if (!audio.src || !audio.src.includes(bellType)) {
-                audio.src = expectedSrc;
-                try { audio.load(); } catch (_) {}
-            }
-            audio.currentTime = 0;
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(err => {
-                    console.warn('[play.js] HTMLAudioElement play() error:', err);
-                    if (!playedViaWebAudio) {
+    // 3. HTML5 Audio Element fallback - ONLY if Web Audio didn't play (prevents double audio echo)
+    if (!playedViaWebAudio && !bridgeHandled) {
+        try {
+            const audio = window.intermissionBellAudio;
+            if (audio) {
+                const expectedSrc = `/static/audio/${bellType}.wav`;
+                if (!audio.src || !audio.src.includes(bellType)) {
+                    audio.src = expectedSrc;
+                    try { audio.load(); } catch (_) {}
+                }
+                audio.currentTime = 0;
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(err => {
+                        console.warn('[play.js] HTMLAudioElement play() error:', err);
                         try {
                             const fallback = new Audio(expectedSrc);
                             fallback.play().catch(() => {});
                         } catch (_) {}
-                    }
-                });
+                    });
+                }
             }
+        } catch (e) {
+            console.warn('[play.js] HTML5 audio error:', e);
         }
-    } catch (e) {
-        console.warn('[play.js] HTML5 audio error:', e);
     }
 }
 
