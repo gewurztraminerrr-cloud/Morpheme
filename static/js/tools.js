@@ -3228,10 +3228,16 @@ async function renderProfile(user) {
     if (ageEl) ageEl.innerText = cleanProfileText(user.age);
     if (genderEl) genderEl.innerText = cleanProfileText(user.gender);
     // Location text comes from the selected flag (profile-flag-name); no separate value field.
-    if (quoteEl) quoteEl.innerText = user.quote || 'Enter a personal quote';
+    if (quoteEl) {
+        quoteEl.innerText = user.quote || 'Enter a personal quote';
+        if (!user.quote) quoteEl.classList.add('is-empty');
+        else quoteEl.classList.remove('is-empty');
+    }
 
     if (descriptionEl) {
         descriptionEl.innerText = user.description || 'Add a detailed description about yourself...';
+        if (!user.description) descriptionEl.classList.add('is-empty');
+        else descriptionEl.classList.remove('is-empty');
         setTimeout(() => {
             if (typeof initCustomScrollbarForElement === 'function') {
                 initCustomScrollbarForElement('profile-description-val', 'profile-desc-scrollbar-track', 'profile-desc-scrollbar-thumb');
@@ -5497,10 +5503,32 @@ function setupProfileEditing(isOwner) {
             const newEl = el.cloneNode(true);
             el.parentNode.replaceChild(newEl, el);
 
+            const checkEmptyState = () => {
+                const text = newEl.innerText.trim();
+                if (!text || text === field.placeholder) {
+                    newEl.classList.add('is-empty');
+                } else {
+                    newEl.classList.remove('is-empty');
+                }
+            };
+            checkEmptyState();
+
+            newEl.addEventListener('focus', () => {
+                if (newEl.innerText.trim() === field.placeholder) {
+                    newEl.innerText = '';
+                    checkEmptyState();
+                }
+            });
+
             newEl.addEventListener('blur', () => {
-                const cleaned = cleanProfileText(newEl.innerText.trim()).slice(0, field.max);
+                const raw = newEl.innerText.trim();
+                const cleaned = (raw === field.placeholder ? '' : cleanProfileText(raw)).slice(0, field.max);
                 saveProfileField(field.key, cleaned);
-                updateProfileFieldCounter(field.key, newEl.innerText);
+                if (!cleaned && (field.key === 'quote' || field.key === 'description')) {
+                    newEl.innerText = field.placeholder;
+                }
+                updateProfileFieldCounter(field.key, cleaned);
+                checkEmptyState();
                 if (field.key === 'description' && typeof initCustomScrollbarForElement === 'function') {
                     initCustomScrollbarForElement('profile-description-val', 'profile-desc-scrollbar-track', 'profile-desc-scrollbar-thumb');
                 }
@@ -5517,7 +5545,8 @@ function setupProfileEditing(isOwner) {
                     sel.removeAllRanges();
                     sel.addRange(range);
                 }
-                updateProfileFieldCounter(field.key, newEl.innerText);
+                updateProfileFieldCounter(field.key, newEl.innerText.trim() === field.placeholder ? '' : newEl.innerText);
+                checkEmptyState();
                 if (field.key === 'description' && typeof initCustomScrollbarForElement === 'function') {
                     initCustomScrollbarForElement('profile-description-val', 'profile-desc-scrollbar-track', 'profile-desc-scrollbar-thumb');
                 }
