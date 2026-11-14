@@ -10069,7 +10069,7 @@ _NOUN_DEF_REGEX = re.compile(
     r'\b(?:plural\s+form|noun)\b|'
     r'\b(?:someone|anyone|a\s+person|one|those|people)\s+who\b|'
     r'\b(?:citizen|inhabitant|native|member|resident|ruler|leader|official|follower|supporter|advocate|practitioner)\s+of\b|'
-    r'\b(?:an?\s+(?:[a-z\-]+\s+)*(?:enzyme|protein|hormone|chemical|substance|compound|mineral|metal|alloy|element|acid|alkaloid|polymer|lipid|sugar|vitamin|organism|plant|animal|tree|shrub|flower|bird|fish|insect|reptile|mammal|device|instrument|tool|apparatus|machine|vessel|vehicle|garment|clothing|fabric|structure|building|settlement|town|city|region))\b|'
+    r'\b(?:an?\s+(?:[a-z\-]+\s+)*(?:enzyme|protein|hormone|chemical|substance|compound|mineral|metal|alloy|element|acid|alkaloid|polymer|lipid|sugar|vitamin|organism|plant|animal|tree|shrub|flower|bird|fish|insect|reptile|mammal|device|instrument|tool|apparatus|machine|vessel|vehicle|garment|clothing|fabric|structure|building|settlement|town|city|region|shield|armor|armour|weapon|sword|blade|dagger|helm|helmet|buckler|breastplate))\b|'
     r'\b(?:the\s+)?(?:act|action|process|practice|state|condition|quality|property|study|science|art|doctrine|theory|belief|system)\s+of\b'
     r')',
     re.IGNORECASE
@@ -10123,6 +10123,18 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
         candidate_ref = m_ptr.group(1).lower()
         if candidate_ref != w_lower and len(candidate_ref) > 2:
             ref_target = candidate_ref
+
+    if not ref_target and raw_def:
+        m_root = re.match(r'^([A-Za-z\-]+),\s*(.*)', raw_def)
+        if m_root:
+            cand_root = m_root.group(1).lower()
+            if cand_root != w_lower and len(cand_root) > 2:
+                ref_target = cand_root
+
+    if ref_target and isinstance(DEFINITIONS_CACHE, dict):
+        ref_raw_def = DEFINITIONS_CACHE.get(ref_target.upper(), '')
+        if ref_raw_def:
+            combined_text = f"{combined_text} {ref_raw_def}".strip()
 
     has_explicit_non_noun = bool(_EXPLICIT_NON_NOUN_REGEX.search(combined_text))
     has_explicit_noun_tag = bool(_EXPLICIT_NOUN_TAG_REGEX.search(combined_text))
@@ -10236,7 +10248,7 @@ def get_definition():
     is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(word, definition)
 
     if definition or pronunciation or image_url:
-        return jsonify({
+        resp = jsonify({
             'word': word, 
             'definition': definition or "No definition available for this word.",
             'pronunciation': pronunciation,
@@ -10246,6 +10258,8 @@ def get_definition():
             'wiki_url': wiki_url,
             'wiki_title': wiki_title
         })
+        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        return resp
     else:
         return jsonify({'error': 'Word not found'}), 404
 
@@ -12274,7 +12288,7 @@ def tools_validate_word():
     div_info = td.get_word_division_info(word)
     is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(word, definition) if is_valid else (False, None, None)
 
-    return jsonify({
+    resp = jsonify({
         'word': word,
         'is_valid': is_valid,
         'definition': definition,
@@ -12286,6 +12300,8 @@ def tools_validate_word():
         'wiki_url': wiki_url,
         'wiki_title': wiki_title
     })
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return resp
 
 @app.route('/api/tools/unscramble/random', methods=['GET'])
 def tools_unscramble_random():
