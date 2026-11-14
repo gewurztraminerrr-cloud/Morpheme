@@ -13575,6 +13575,21 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
         max-height: 36px !important;
     }
 
+    /* Mobile Devices: Slight padding above tabs to separate description from the tabs */
+    #page-tools #tool-new-users .player-stats-subtabs,
+    body.is-mobile #page-tools #tool-new-users .player-stats-subtabs {
+        padding-top: 10px !important;
+        margin-top: 2px !important;
+        margin-bottom: 12px !important;
+        padding-bottom: 8px !important;
+    }
+
+    #page-tools #tool-new-users .player-stats-subtab-btn,
+    body.is-mobile #page-tools #tool-new-users .player-stats-subtab-btn {
+        padding: 6px 14px !important;
+        font-size: 0.82rem !important;
+    }
+
     /* Stats Grid: side-by-side, reduce padding above REGISTRATIONS THIS WEEK and below TOTAL USERS */
     #page-tools #tool-new-users .new-users-stats-grid {
         flex: 0 0 auto !important;
