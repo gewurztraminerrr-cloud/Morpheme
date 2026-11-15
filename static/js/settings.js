@@ -916,12 +916,17 @@ function debounce(func, wait) {
                     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
                         try {
                             let vib = false;
-                            try { vib = navigator.vibrate([200, 100, 250]); } catch (_) {}
-                            if (!vib) try { navigator.vibrate(250); } catch (_) {}
+                            try { vib = navigator.vibrate([260, 100, 320]); } catch (_) {}
+                            if (!vib) try { navigator.vibrate(300); } catch (_) {}
                         } catch (_) {}
                     }
+                    try {
+                        const vibAudio = window.vibrationAudio || new Audio('/static/audio/vibrate.wav?v=1794250000');
+                        vibAudio.currentTime = 0;
+                        vibAudio.play().catch(() => {});
+                    } catch (_) {}
                     if (typeof MorphemeAudioBridge !== 'undefined') {
-                        try { MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 250 })); } catch (_) {}
+                        try { MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 500 })); } catch (_) {}
                     }
                 }
             }

@@ -418,8 +418,9 @@ let stableServerTimeOffset = null; // Persistent offset to prevent jitter
 let bestServerTimeRTT = Infinity; // Track the best RTT seen so far
 let timerFormatIs24h = false;     // Cached format to prevent flashing between HH:MM:SS and M:SS
 
-// Global audio object to bypass mobile autoplay restrictions
+// Global audio objects to bypass mobile autoplay restrictions
 window.intermissionBellAudio = new Audio();
+window.vibrationAudio = new Audio('/static/audio/vibrate.wav?v=1794250000');
 
 window.updateIntermissionBellSource = function() {
     if (window.intermissionBellAudio) {
@@ -430,6 +431,10 @@ window.updateIntermissionBellSource = function() {
         } catch (e) {
             console.warn('[play.js] Failed to load intermission bell audio:', e);
         }
+    }
+    if (window.vibrationAudio && !window.vibrationAudio.src) {
+        window.vibrationAudio.src = '/static/audio/vibrate.wav?v=1794250000';
+        try { window.vibrationAudio.load(); } catch (_) {}
     }
 };
 
@@ -444,6 +449,17 @@ const unlockAudio = () => {
                 p.then(() => {
                     window.intermissionBellAudio.pause();
                     window.intermissionBellAudio.currentTime = 0;
+                }).catch(() => {});
+            }
+        } catch (_) {}
+    }
+    if (window.vibrationAudio) {
+        try {
+            const vp = window.vibrationAudio.play();
+            if (vp !== undefined) {
+                vp.then(() => {
+                    window.vibrationAudio.pause();
+                    window.vibrationAudio.currentTime = 0;
                 }).catch(() => {});
             }
         } catch (_) {}
@@ -485,6 +501,7 @@ const BoardAudio = {
     tileBuffers: [],
     successBuffer: null,
     failureBuffer: null,
+    vibrationBuffer: null,
     bellBuffers: {},
 
     preloadBell(bellType) {
@@ -532,6 +549,27 @@ const BoardAudio = {
             }
         } else {
             this.preloadBell(bellType);
+        }
+        return false;
+    },
+
+    playVibrationBuffer() {
+        if (!this.ctx) this.init();
+        if (!this.ctx) return false;
+        if (this.ctx.state === 'suspended') {
+            try { this.ctx.resume(); } catch (_) {}
+        }
+        const buffer = this.vibrationBuffer;
+        if (buffer) {
+            try {
+                const source = this.ctx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(this.masterGain || this.ctx.destination);
+                source.start(0);
+                return true;
+            } catch (e) {
+                console.warn('[BoardAudio] playVibrationBuffer source error:', e);
+            }
         }
         return false;
     },
@@ -628,6 +666,38 @@ const BoardAudio = {
                 data[i] = saw * env * 0.18;
             }
             this.failureBuffer = buffer;
+        }
+
+        // 4. Pre-render Mobile Tactile Vibration Buffer (158Hz dual mechanical buzz burst)
+        {
+            const duration = 0.72;
+            const numSamples = Math.floor(sampleRate * duration);
+            const buffer = this.ctx.createBuffer(1, numSamples, sampleRate);
+            const data = buffer.getChannelData(0);
+
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sampleRate;
+                const inBurst1 = (t >= 0.0 && t < 0.26);
+                const inBurst2 = (t >= 0.36 && t < 0.68);
+                if (inBurst1 || inBurst2) {
+                    const bt = inBurst1 ? t : (t - 0.36);
+                    const bDur = inBurst1 ? 0.26 : 0.32;
+                    const attack = Math.min(1.0, bt / 0.02);
+                    const decay = Math.min(1.0, (bDur - bt) / 0.03);
+                    const env = attack * decay;
+                    const flutter = 0.75 + 0.25 * Math.sin(2 * Math.PI * 38 * bt);
+                    const f0 = 158.0;
+                    const w1 = Math.sin(2 * Math.PI * f0 * bt);
+                    const w2 = 0.5 * Math.sin(2 * Math.PI * 2 * f0 * bt);
+                    const w3 = 0.35 * Math.sin(2 * Math.PI * 3 * f0 * bt);
+                    const w4 = 0.2 * Math.sin(2 * Math.PI * 5 * f0 * bt);
+                    const raw = (w1 + w2 + w3 + w4) * 0.55;
+                    data[i] = Math.tanh(raw * 1.5) * env * flutter * 0.95;
+                } else {
+                    data[i] = 0;
+                }
+            }
+            this.vibrationBuffer = buffer;
         }
     },
 
@@ -6907,66 +6977,55 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
     }
 }
 
-// Helper to lazily create and maintain iOS switch element for native Taptic Engine triggering
+// Helper to lazily create and maintain iOS switch & label elements for native Taptic Engine triggering
 function getOrCreateIosHapticSwitch() {
     if (typeof document === 'undefined') return null;
-    let el = document.getElementById('ios-haptic-switch');
-    if (!el && document.body) {
+    let sw = document.getElementById('ios-haptic-switch');
+    let lbl = document.getElementById('ios-haptic-label');
+    if (!sw && document.body) {
         try {
-            el = document.createElement('input');
-            el.type = 'checkbox';
-            el.setAttribute('switch', '');
-            el.id = 'ios-haptic-switch';
-            el.tabIndex = -1;
-            el.setAttribute('aria-hidden', 'true');
-            el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0.001;pointer-events:none;width:1px;height:1px;z-index:-9999;';
-            document.body.appendChild(el);
+            const container = document.createElement('div');
+            container.id = 'ios-haptic-container';
+            container.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0.001;pointer-events:none;width:1px;height:1px;z-index:-9999;';
+
+            sw = document.createElement('input');
+            sw.type = 'checkbox';
+            sw.setAttribute('switch', '');
+            sw.id = 'ios-haptic-switch';
+            sw.tabIndex = -1;
+            sw.setAttribute('aria-hidden', 'true');
+
+            lbl = document.createElement('label');
+            lbl.id = 'ios-haptic-label';
+            lbl.htmlFor = 'ios-haptic-switch';
+            lbl.textContent = 'haptic';
+
+            container.appendChild(sw);
+            container.appendChild(lbl);
+            document.body.appendChild(container);
         } catch (_) {}
     }
-    return el;
+    return { sw: document.getElementById('ios-haptic-switch'), lbl: document.getElementById('ios-haptic-label') };
 }
 
-// Trigger physical Taptic Engine vibration on iOS Safari (iOS 18+) via programmatic switch toggles
+// Trigger physical Taptic Engine vibration on iOS Safari (iOS 18+) via programmatic switch & label toggles
 function triggerIosHapticFeedback(patternCount = 3) {
     try {
-        const sw = getOrCreateIosHapticSwitch();
-        if (sw) {
+        const pair = getOrCreateIosHapticSwitch();
+        if (pair && pair.lbl) {
             let count = 0;
             const step = () => {
-                try { sw.click(); } catch (_) {}
+                try {
+                    pair.lbl.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                    pair.lbl.click();
+                    if (pair.sw) pair.sw.click();
+                } catch (_) {}
                 count++;
                 if (count < patternCount) {
-                    setTimeout(step, 110);
+                    setTimeout(step, 120);
                 }
             };
             step();
-        }
-    } catch (_) {}
-}
-
-// Acoustic tactile pulse: Generates a low-frequency sub-bass tactile impulse (55-65Hz)
-// Physically excites mobile phone speaker bodies and internal dampening coils for tangible tactile feedback
-function triggerAcousticHapticPulse() {
-    try {
-        if (typeof BoardAudio !== 'undefined') {
-            BoardAudio.init();
-            if (BoardAudio.ctx) {
-                if (BoardAudio.ctx.state === 'suspended') {
-                    BoardAudio.ctx.resume().catch(() => {});
-                }
-                const ctx = BoardAudio.ctx;
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(60, ctx.currentTime);
-                gain.gain.setValueAtTime(0.001, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.85, ctx.currentTime + 0.04);
-                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-                osc.connect(gain);
-                gain.connect(BoardAudio.masterGain || ctx.destination);
-                osc.start(ctx.currentTime);
-                osc.stop(ctx.currentTime + 0.36);
-            }
         }
     } catch (_) {}
 }
@@ -6977,22 +7036,22 @@ function triggerIntermissionVibration() {
     // 1. Android & Standards Web Vibration API (Multi-Pattern Cascade)
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
         try {
-            // Pattern 1: Rhythmic high-urgency countdown pulse [250ms, 100ms pause, 250ms, 100ms pause, 350ms]
             let vibrated = false;
-            try { vibrated = navigator.vibrate([250, 100, 250, 100, 350]); } catch (_) {}
+            // Pattern 1: Rhythmic dual motor pulse [260ms, 100ms pause, 320ms]
+            try { vibrated = navigator.vibrate([260, 100, 320]); } catch (_) {}
             if (!vibrated) {
-                // Pattern 2: Dual strong pulse
-                try { vibrated = navigator.vibrate([300, 150, 300]); } catch (_) {}
+                // Pattern 2: Triple pulse
+                try { vibrated = navigator.vibrate([200, 100, 200, 100, 250]); } catch (_) {}
             }
             if (!vibrated) {
-                // Pattern 3: Array single pulse (required by some Android vendors)
-                try { vibrated = navigator.vibrate([500]); } catch (_) {}
+                // Pattern 3: Array single pulse
+                try { vibrated = navigator.vibrate([400]); } catch (_) {}
             }
             if (!vibrated) {
                 // Pattern 4: Raw scalar durations
-                try { vibrated = navigator.vibrate(500); } catch (_) {}
+                try { vibrated = navigator.vibrate(400); } catch (_) {}
                 if (!vibrated) {
-                    try { navigator.vibrate(300); } catch (_) {}
+                    try { navigator.vibrate(250); } catch (_) {}
                 }
             }
         } catch (err) {
@@ -7000,11 +7059,25 @@ function triggerIntermissionVibration() {
         }
     }
 
-    // 2. iOS Safari / WebKit Taptic Engine (Switch Haptic Trigger for iOS 18+)
+    // 2. iOS Safari / WebKit Taptic Engine (Switch & Label Haptic Trigger for iOS 18+)
     triggerIosHapticFeedback(3);
 
-    // 3. Acoustic Low-End Haptic Pulse (Physical speaker vibration across all phones)
-    triggerAcousticHapticPulse();
+    // 3. Acoustic Physical Vibration Resonance (Pre-rendered 158Hz buffer & HTML5 Audio element fallback)
+    let playedVibAudio = false;
+    if (typeof BoardAudio !== 'undefined') {
+        try {
+            playedVibAudio = BoardAudio.playVibrationBuffer();
+        } catch (_) {}
+    }
+    if (!playedVibAudio && window.vibrationAudio) {
+        try {
+            window.vibrationAudio.currentTime = 0;
+            const p = window.vibrationAudio.play();
+            if (p !== undefined) {
+                p.catch(() => {});
+            }
+        } catch (_) {}
+    }
 
     // 4. Native App / Mobile WebView Bridges
     // 4a. MorphemeAudioBridge (Flutter / WebViews)
@@ -7015,7 +7088,7 @@ function triggerIntermissionVibration() {
                 sound: 'vibrate',
                 type: 'vibrate',
                 duration: 500,
-                pattern: [250, 100, 250, 100, 350]
+                pattern: [260, 100, 320]
             }));
         } catch (e) {
             console.error("MorphemeAudioBridge vibration error:", e);
@@ -7026,7 +7099,7 @@ function triggerIntermissionVibration() {
     try {
         if (window.webkit && window.webkit.messageHandlers) {
             if (window.webkit.messageHandlers.vibrate) {
-                window.webkit.messageHandlers.vibrate.postMessage({ duration: 500, pattern: [250, 100, 250, 100, 350] });
+                window.webkit.messageHandlers.vibrate.postMessage({ duration: 500, pattern: [260, 100, 320] });
             }
             if (window.webkit.messageHandlers.MorphemeAudioBridge) {
                 window.webkit.messageHandlers.MorphemeAudioBridge.postMessage(JSON.stringify({
@@ -7053,6 +7126,19 @@ function triggerIntermissionVibration() {
             window.ReactNativeWebView.postMessage(JSON.stringify({ action: 'vibrate', duration: 500 }));
         }
     } catch (e) {}
+
+    // 5. Visual Tactile Haptic Pulse across mobile viewport
+    try {
+        const timerVal = document.getElementById('timer-value');
+        if (timerVal) {
+            timerVal.classList.remove('vibration-pulse');
+            void timerVal.offsetWidth;
+            timerVal.classList.add('vibration-pulse');
+            setTimeout(() => {
+                if (timerVal) timerVal.classList.remove('vibration-pulse');
+            }, 800);
+        }
+    } catch (_) {}
 }
 window.triggerIntermissionVibration = triggerIntermissionVibration;
 
@@ -7123,16 +7209,16 @@ function checkAndTriggerIntermissionAlerts(remaining) {
         return;
     }
 
-    // Reset flags whenever countdown is in early/mid intermission (> 10.5s)
+    // Reset flags whenever countdown is in early/mid intermission (> 10.8s)
     // Guarantees upcoming 0:10 threshold will always fire cleanly without stale state!
-    if (remaining > 10.5) {
+    if (remaining > 10.8) {
         hasPlayedIntermissionVibration = false;
         hasPlayedIntermissionBell = false;
         return;
     }
 
-    // Trigger window: when countdown reaches 0:10 (between 10.1 and 0.5 seconds remaining)
-    if ((remaining <= 10.1 || Math.ceil(remaining) <= 10 || Math.round(remaining) <= 10) && remaining > 0.5) {
+    // Trigger window: when countdown reaches 0:10 (between 10.5 and 0.5 seconds remaining)
+    if (remaining <= 10.5 && remaining > 0.5) {
         // 1. Mobile Vibration Alert at 0:10
         const vibrationEnabled = !window.userSettings || (
             window.userSettings.vibration_alert !== false &&
