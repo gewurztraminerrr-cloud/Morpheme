@@ -5599,7 +5599,7 @@ class RoomManager:
                 if getattr(room, 'next_round_words', None):
                     actual_wc = len(room.next_round_words)
                     use_aw_val = (new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper())
-                    new_params['word_count_range'] = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val)
+                    new_params['word_count_range'] = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val, dictionary=new_params.get('dictionary'))
                     new_params['min_word_length'] = min(len(w) for w in room.next_round_words)
                 if getattr(room, 'next_round_format', None):
                     new_params['board_format'] = room.next_round_format
@@ -5741,6 +5741,9 @@ class RoomManager:
                             wc_range = SpinnerSet._spin_word_count(dictionary, min_word_len, difficulty, room.board_dimensions, use_added_words=use_aw)
                         else:
                             wc_range = wc_choice
+                        
+                        if use_aw and wc_range in ['50-100', '100-200', '200-300']:
+                            wc_range = '300-400'
                             
                         # 4. Resolve Board Format
                         if board_fmt == 'random':
@@ -5748,16 +5751,18 @@ class RoomManager:
                         else:
                             resolved_board_format = board_fmt
 
+                        dict_display = f"{dictionary} + AW" if use_aw else dictionary
                         new_params = {
                             'min_word_length': min_word_len,
                             'difficulty': difficulty,
                             'word_count_range': wc_range,
-                            'dictionary': dictionary,
+                            'dictionary': dict_display,
                             'board_format': resolved_board_format,
                             'bonus_word_length': bonus_word_len,
                             'use_added_words': use_aw,
                             'generated_at': time.time()
                         }
+                        new_params = SpinnerSet.sanitize_params(new_params, room.board_dimensions, is_24h)
                     else:
                         new_params = SpinnerSet.generate_params(
                             room.board_dimensions, 
@@ -5878,7 +5883,7 @@ class RoomManager:
                             actual_wc = len(fw_filt)
                             if is_board_count_valid(actual_wc, target_sp_range):
                                 fp_filt = {w: p for w, p in c_p.items() if w in fw_filt}
-                                actual_wc_range = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val)
+                                actual_wc_range = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val, dictionary=dict_val)
                                 new_params['word_count_range'] = actual_wc_range
                                 if fw_filt:
                                     _cache_actual_min = min(len(w) for w in fw_filt)
@@ -5978,7 +5983,7 @@ class RoomManager:
                     if getattr(room, 'next_round_words', None):
                         actual_wc = len(room.next_round_words)
                         use_aw_val = (new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper())
-                        new_params['word_count_range'] = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val)
+                        new_params['word_count_range'] = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val, dictionary=new_params.get('dictionary'))
                         new_params['min_word_length'] = min(len(w) for w in room.next_round_words)
                     if getattr(room, 'next_round_format', None):
                         new_params['board_format'] = room.next_round_format
@@ -6055,7 +6060,8 @@ class RoomManager:
                 c_board, c_words, c_bonus_cell, c_format_ret, c_paths, c_ratio, c_bonus_word, c_params = cached_candidate
                 actual_cnt = len(c_words)
                 c_use_aw = bool(c_params.get('use_added_words', False)) if c_params else use_aw
-                actual_wc_range = self._get_factchecked_wc_range(actual_cnt, use_added_words=c_use_aw)
+                c_dict_val = target_dict or (c_params.get('dictionary') if c_params else 'NWL')
+                actual_wc_range = self._get_factchecked_wc_range(actual_cnt, use_added_words=c_use_aw, dictionary=c_dict_val)
                 c_min_len = c_params.get('min_word_length', target_min) if c_params else target_min
                 if c_words:
                     real_min = min(len(w) for w in c_words)
@@ -6595,6 +6601,8 @@ class RoomManager:
                             elif '50' in str(search_wc):  min_accept = 50
                     if use_aw_flag:
                         min_accept = max(300, min_accept)
+                        if str(search_wc) in ['50-100', '100-200', '200-300']:
+                            search_wc = '300-400'
                     else:
                         min_accept = max(50, min_accept)
                     
@@ -6644,7 +6652,7 @@ class RoomManager:
                         params = dict(params)
                         actual_wc = len(_words)
                         use_aw = params.get('use_added_words', False)
-                        wc_label = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw)
+                        wc_label = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw, dictionary=params.get('dictionary'))
                         params['word_count_range'] = wc_label
                         
                         if _words:
@@ -6779,12 +6787,31 @@ class RoomManager:
                                     r_board, search_dict, (0, 99999), search_min, max_depth=25, store_paths=True, timeout=10.0, use_added_words=True
                                 )
                                 r_cnt_w = len(r_solve)
-                                if r_cnt_w >= 300 or r_cnt_w > fw_cnt:
+                                if r_cnt_w >= 300:
                                     board = r_board
                                     all_words = sorted(list(r_solve.keys()))
                                     all_words_dict = r_solve
                                     fw_cnt = r_cnt_w
                                     print(f"[RoomManager] Rescue sweep successfully raised AW board words to {fw_cnt}.")
+                                else:
+                                    print(f"[RoomManager] Rescue sweep reached {r_cnt_w} words (< 300). Attempting high-density fill...")
+                                    from board_generator import LETTER_FREQ_SUPER_DENSITY
+                                    for _aw_try in range(10):
+                                        dense_b = self.board_generator._create_normal_board(
+                                            r_cnt, c_cnt, LETTER_FREQ_SUPER_DENSITY, depth=d_cnt,
+                                            difficulty='Easy', dictionary=search_dict, word_count_range='300-400', use_added_words=True
+                                        )
+                                        dense_s = self.board_generator._solve_board(dense_b, search_dict, (0, 99999), search_min, max_depth=25, store_paths=True, timeout=10.0, use_added_words=True)
+                                        if len(dense_s) >= 300:
+                                            board = dense_b
+                                            all_words = sorted(list(dense_s.keys()))
+                                            all_words_dict = dense_s
+                                            fw_cnt = len(dense_s)
+                                            print(f"[RoomManager] High-density fallback reached {fw_cnt} words for AW board.")
+                                            break
+                                    if fw_cnt < 300 and board_attempts < 4:
+                                        board_attempts += 1
+                                        continue
                             except Exception as aw_resc_err:
                                 print(f"[RoomManager] Error during AW rescue sweep: {aw_resc_err}")
 

@@ -2138,15 +2138,17 @@ class BoardGenerator:
 
         # USER REQUEST: Parse word count range from spinner instead of hardcoding
         min_words, max_words = self._parse_word_count_range(word_count_range)
-        if original_dict_name in ["AW", "ADDED_WORDS", "ALL"]:
-            parts = dimensions.split("x")
-            rows_cols = (int(parts[1]) * int(parts[2])) if len(parts) == 3 else (int(parts[0]) * int(parts[1]))
-            if rows_cols <= 24:
-                min_words, max_words = 300, 400
-                print(f"[BoardGen] AW Dictionary: Force defaulted target range to 300-400 words (grid size <= 24).")
-            else:
-                min_words, max_words = 500, 99999
-                print(f"[BoardGen] AW Dictionary: Force defaulted target range to 500+ words (grid size > 24).")
+        is_any_aw = use_aw_flag or has_aw_suffix or (original_dict_name in ["AW", "ADDED_WORDS", "ALL"]) or ("+ AW" in original_dict_name) or ("+AW" in original_dict_name)
+        if is_any_aw:
+            if min_words < 300 or str(word_count_range).strip() in ['50-100', '100-200', '200-300']:
+                parts = dimensions.split("x")
+                rows_cols = (int(parts[1]) * int(parts[2])) if len(parts) == 3 else (int(parts[0]) * int(parts[1]))
+                if rows_cols <= 24:
+                    min_words, max_words = 300, 400
+                else:
+                    min_words, max_words = 500, 99999
+                word_count_range = f"{min_words}-{max_words}" if max_words < 99999 else "500+"
+                print(f"[BoardGen] + AW Dictionary ({original_dict_name}): Force clamped target range to {word_count_range} words.")
         target_min_words, target_max_words = min_words, max_words
         print(f"[BoardGen] generate_board called for {dimensions} | Range: {word_count_range} ({min_words}-{max_words}) | MinLen: {min_word_length}L")
         
@@ -2230,8 +2232,11 @@ class BoardGenerator:
             if "equality freq" in safe_format:
                 weights = LETTER_FREQ_EQUALITY
             elif difficulty == "Easy":
-                # For Easy boards, always prioritize standard user frequencies unless repeatedly failing
-                weights = LETTER_FREQ_EASY if (min_words >= 300 or attempts > 3) else LETTER_FREQ_USER
+                # For Easy boards, prioritize density if AW is active and min length is high (>= 5L) to guarantee >= 300 words
+                if use_aw_flag and min_word_length >= 5:
+                    weights = LETTER_FREQ_SUPER_DENSITY
+                else:
+                    weights = LETTER_FREQ_EASY if (min_words >= 300 or attempts > 3) else LETTER_FREQ_USER
             else:
                 # For Medium/Hard boards:
                 # ONLY use Super Density if word count target is high (>= 200) OR board size is extremely small (<= 16) and min_word_length is high
@@ -2735,7 +2740,7 @@ class BoardGenerator:
 
                 if is_aw_effective:
                     # AW rounds prioritize high word counts (300-400+) and density; bypass uniqueness checks
-                    is_compliant = (min_words <= count <= max_words)
+                    is_compliant = (min_words <= count <= max_words) and (count >= 300)
                 else:
                     max_strict = 3 if (min_word_length and int(min_word_length) >= 6) else 4
                     if attempts > max_strict:
@@ -2784,8 +2789,8 @@ class BoardGenerator:
                     board, all_words_dict, dictionary, use_aw_flag, min_word_length, final_depth, depth, is_checkerboard, protected_positions=embedded_path, bonus_cell=None, difficulty=difficulty
                 )
                 final_count = len(all_words_dict)
-                if not (min_words <= final_count <= max_words):
-                    print(f"[BoardGen] ATTEMPT {attempts}: Final solve count {final_count} does not match target range {min_words}-{max_words}. Discarding board...")
+                if not (min_words <= final_count <= max_words) or (is_aw_effective and final_count < 300):
+                    print(f"[BoardGen] ATTEMPT {attempts}: Final solve count {final_count} does not match target range {min_words}-{max_words} (AW requires >= 300). Discarding board...")
                     continue
 
                 print(f"[BoardGen] ✓ IRONCLAD COMPLIANT BOARD FOUND ({final_count} words @ {min_word_length}L+) on attempt {attempts}")
@@ -2907,10 +2912,12 @@ class BoardGenerator:
                 if time_elapsed > timeout - 1.2 or attempts >= 80:
                     print(f"[BoardGen] Early exit: Nearing timeout or max attempts reached ({time_elapsed:.1f}s/attempts={attempts}). Returning best-effort (distance={best_distance}).")
                     if best_board_data and best_distance == 0:
-                        b_layout = best_board_data[0]
-                        b_hash = get_board_hash(b_layout)
-                        mark_board_hash_used(b_hash)
-                        return best_board_data
+                        b_words = best_board_data[1]
+                        if not (use_aw_flag and len(b_words) < 300):
+                            b_layout = best_board_data[0]
+                            b_hash = get_board_hash(b_layout)
+                            mark_board_hash_used(b_hash)
+                            return best_board_data
 
         # FINAL FALLBACK (If timeout reached)
         print("[BoardGen] !! TIMEOUT REACHED. FORCING EMERGENCY CLEAN SLATE.")
@@ -2960,6 +2967,10 @@ class BoardGenerator:
                 min_word_length = 3
 
         min_words, max_words = self._parse_word_count_range(word_count_range)
+        if use_aw_flag or has_aw_suffix or original_dict_name in ["AW", "ADDED_WORDS", "ALL"] or "+ AW" in original_dict_name or "+AW" in original_dict_name:
+            if min_words < 300 or str(word_count_range).strip() in ['50-100', '100-200', '200-300']:
+                min_words, max_words = 300, 400
+                word_count_range = '300-400'
         
         # Dimension Parsing
         if dimensions == "3x3x3": depth, rows, cols = 6, 3, 3
@@ -3325,6 +3336,20 @@ class BoardGenerator:
                                 board = rescue_board
                                 final_solve = rescue_solve
                                 count = len(final_solve)
+                            if use_aw_flag and count < 300:
+                                print(f"[BoardGen] ⚠️ AW board still < 300 words ({count}). Forcing super-density generation...")
+                                for _aw_try in range(15):
+                                    dense_b = self._create_normal_board(
+                                        rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=depth,
+                                        difficulty='Easy', dictionary=dictionary, word_count_range='300-400', use_added_words=True
+                                    )
+                                    dense_s = self._solve_board(dense_b, dictionary, (0, 99999), display_min, store_paths=True, timeout=10.0, use_added_words=True)
+                                    if len(dense_s) >= 300:
+                                        board = dense_b
+                                        final_solve = dense_s
+                                        count = len(final_solve)
+                                        print(f"[BoardGen] ✅ Super-density generation hit {count} words for AW.")
+                                        break
                         except Exception as r_err:
                             print(f"[BoardGen] Rescue sweep error: {r_err}")
                     else:
@@ -3403,6 +3428,10 @@ class BoardGenerator:
         
         num_tiles = rows * cols * depth
         min_words, max_words = self._parse_word_count_range(word_count_range)
+        if use_aw_flag or has_aw_suffix or original_dict_name in ["AW", "ADDED_WORDS", "ALL"] or "+ AW" in original_dict_name or "+AW" in original_dict_name:
+            if min_words < 300 or str(word_count_range).strip() in ['50-100', '100-200', '200-300']:
+                min_words, max_words = 300, 400
+                word_count_range = '300-400'
         
         # Determine dictionary set to use for location-based word count checks
         from word_validator import word_validator

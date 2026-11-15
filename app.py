@@ -15657,6 +15657,9 @@ def create_solo_match():
         # Use custom range provided by user
         wc_range = custom_word_count_range
 
+    if use_aw_flag and wc_range in ['50-100', '100-200', '200-300']:
+        wc_range = '300-400'
+
     # Bonus word length: spin if random (equal weights for 6-10)
     bonus_len_choice = parameters.get('bonus_word_length', 'random')
     if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) in ['0', 'None', 'null', 'nan']:
@@ -15680,8 +15683,9 @@ def create_solo_match():
     elif getattr(room, 'next_round_bonus', None):
         initial_bw_len = len(room.next_round_bonus)
 
+    dict_display = f"{dict_name} + AW" if use_aw_flag else dict_name
     room.spinner_params = {
-        'dictionary': dict_name,
+        'dictionary': dict_display,
         'min_word_length': min_word_len,
         'bonus_word_length': initial_bw_len,
         'board_format': board_format,
@@ -15689,6 +15693,7 @@ def create_solo_match():
         'word_count_range': wc_range,
         'use_added_words': use_aw_flag
     }
+    room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, board_dimensions, is_24h_room)
     room.use_added_words = use_aw_flag
     
     # Cleanup only if NOT in this room

@@ -516,7 +516,11 @@ class SpinnerSet:
     @staticmethod
     def get_factchecked_wc_range(count, use_added_words=False, dictionary=None):
         """Map actual word count to the exact truthful range bucket.
-           Every word count strictly maps to its truthful bucket:
+           For '+ AW' dictionaries (CSW + AW, NWL + AW, AW):
+             Range is strictly restricted to '300-400', '400-500', or '500+'.
+             Word counts below 300 MUST floor to '300-400'. '200-300', '100-200', and '50-100'
+             are NEVER permitted for any Added Words round.
+           For standard dictionaries (CSW, NWL):
              - 500+ words -> '500+'
              - 400 - 499 words -> '400-500'
              - 300 - 399 words -> '300-400'
@@ -528,6 +532,21 @@ class SpinnerSet:
             count = int(count)
         except (ValueError, TypeError):
             count = 0
+
+        d_str = str(dictionary or '').upper()
+        is_aw = (
+            bool(use_added_words)
+            or ('+ AW' in d_str)
+            or ('+AW' in d_str)
+            or (d_str in ['AW', 'ADDED_WORDS'])
+        ) and (d_str != 'SUBANAGRAMS')
+
+        if is_aw:
+            if count >= 500:
+                return '500+'
+            if count >= 400:
+                return '400-500'
+            return '300-400'
 
         if count >= 500:
             return '500+'
