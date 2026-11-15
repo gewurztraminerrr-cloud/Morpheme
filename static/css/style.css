@@ -1650,7 +1650,7 @@ body {
     display: none;
 }
 
-@media (min-width: 901px) {
+@media (min-width: 993px) {
     /* Keep the top menu (and MORPHEME MORE-FEEM) fixed in position when scrolling down after selecting a tab */
     body:not(.play-active):not(:has(#page-play.active)):not(.lobby-active):not(:has(#page-lobby.active)) .top-menu-bar {
         position: fixed !important;
