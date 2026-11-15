@@ -101,7 +101,7 @@ class SpinnerSet:
         """Generate granular spinner parameters, enforcing Valued Letters and 300-400 words for 24h matches."""
         try:
             res = None
-            for _attempt in range(6):
+            for _attempt in range(20):
                 cand = SpinnerSet._generate_params_raw(board_dimensions, is_24h, is_split, previous_params)
                 if is_24h and isinstance(cand, dict):
                     cand['board_format'] = 'Valued Letters'

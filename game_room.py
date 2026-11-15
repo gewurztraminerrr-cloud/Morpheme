@@ -1949,13 +1949,13 @@ class GameRoom:
                 wc_label = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=(is_aw_effective or use_aw_val), dictionary=dict_val)
                 
                 new_sp = {
-                    'dictionary': dict_val,
+                    'dictionary': target_params.get('dictionary') or dict_val,
                     'difficulty': target_params.get('difficulty') or fparams.get('difficulty', 'Medium'),
-                    'word_count_range': wc_label,
-                    'board_format': fparams.get('board_format', 'Normal'),
-                    'min_word_length': fparams.get('min_word_length', 3),
-                    'bonus_word_length': len(fbw) if fbw else fparams.get('bonus_word_len', 6),
-                    'use_added_words': use_aw_val,
+                    'word_count_range': target_params.get('word_count_range') or wc_label,
+                    'board_format': target_params.get('board_format') or fparams.get('board_format', 'Normal'),
+                    'min_word_length': target_params.get('min_word_length') or fparams.get('min_word_length', 3),
+                    'bonus_word_length': target_params.get('bonus_word_length') or (len(fbw) if fbw else fparams.get('bonus_word_len', 6)),
+                    'use_added_words': target_params.get('use_added_words', use_aw_val),
                     'board_dimensions': self.board_dimensions,
                     'time_limit': self.time_limit,
                     'generated_at': time.time()
@@ -2048,15 +2048,15 @@ class GameRoom:
                 e_scores[w] = {'total': s, 'base': s}
         self.next_round_word_scores = e_scores
         
-        # Build next_spinner_params from the actual emergency board params
+        # Build next_spinner_params from the actual emergency board params, keeping spun parameters authoritative
         esp = {
-            'dictionary': e_params.get('dictionary', e_dict) if e_params else e_dict,
+            'dictionary': source_sp.get('dictionary') or (e_params.get('dictionary', e_dict) if e_params else e_dict),
             'difficulty': source_sp.get('difficulty') or (e_params.get('difficulty', 'Medium') if e_params else 'Medium'),
-            'word_count_range': e_tr or '100-200',
-            'board_format': e_fmt or 'Normal',
-            'min_word_length': e_params.get('min_word_length', 3) if e_params else 3,
-            'bonus_word_length': len(e_bonus_word) if e_bonus_word else 6,
-            'use_added_words': e_use_aw,
+            'word_count_range': source_sp.get('word_count_range') or e_tr or '100-200',
+            'board_format': source_sp.get('board_format') or e_fmt or 'Normal',
+            'min_word_length': source_sp.get('min_word_length') or (e_params.get('min_word_length', 3) if e_params else 3),
+            'bonus_word_length': source_sp.get('bonus_word_length') or (len(e_bonus_word) if e_bonus_word else 6),
+            'use_added_words': source_sp.get('use_added_words', e_use_aw),
             'board_dimensions': self.board_dimensions,
             'time_limit': self.time_limit,
             'generated_at': time.time()
@@ -2583,16 +2583,6 @@ class GameRoom:
 
         # 3. Intermission state check (milestones handled by RoomManager)
         if self.state == 'intermission':
-            is_daily = (self.time_limit >= 7200)
-            if not is_daily:
-                elapsed = now - self.intermission_start_time
-                # 10s elapsed corresponds to 50s remaining (0:50) of a 60s intermission
-                if elapsed >= 10.0 and not getattr(self, '_did_050_fallback_rescue', False):
-                    # If not staged yet, trigger early fallback rescue
-                    if not self.next_round_board or not self.next_round_words:
-                        self._did_050_fallback_rescue = True
-                        print(f"[Fallback-Rescue] 0:50 remaining time reached (elapsed: {elapsed:.2f}s) without staged board for room {self.room_id}. Triggering early fallback board instantly.")
-                        self.trigger_early_fallback_rescue()
             return True
 
         return False
@@ -2683,13 +2673,13 @@ class GameRoom:
             wc_label = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val, dictionary=dict_val)
 
         new_sp = {
-            'dictionary': dict_val,
-            'difficulty': fparams.get('difficulty') or sp.get('difficulty', 'Medium'),
-            'word_count_range': wc_label,
-            'board_format': ff or sp.get('board_format', 'Normal'),
-            'min_word_length': fparams.get('min_word_length') or sp.get('min_word_length', 3),
-            'bonus_word_length': len(fbw) if fbw else (fparams.get('bonus_word_len') or 6),
-            'use_added_words': use_aw_val,
+            'dictionary': sp.get('dictionary') or dict_val,
+            'difficulty': sp.get('difficulty') or fparams.get('difficulty', 'Medium'),
+            'word_count_range': declared_target_wc or wc_label,
+            'board_format': sp.get('board_format') or ff or 'Normal',
+            'min_word_length': sp.get('min_word_length') or fparams.get('min_word_length', 3),
+            'bonus_word_length': sp.get('bonus_word_length') or (len(fbw) if fbw else (fparams.get('bonus_word_len') or 6)),
+            'use_added_words': sp.get('use_added_words', use_aw_val),
             'board_dimensions': self.board_dimensions,
             'time_limit': self.time_limit,
             'generated_at': now,
@@ -5654,10 +5644,10 @@ class RoomManager:
             is_split = (room.game_type == 'split')
             
             with room._state_lock:
-                # USER REQUEST: Prevent re-rolling! Check lock state INSIDE the atomic block.
-                # In Solo mode, we always prefer the user's initial settings over background pre-gen!
-                if (getattr(room, 'spinner_params_generated', False) or getattr(room, 'next_round_board', None)) and (getattr(room, 'next_spinner_params', None) or getattr(room, 'next_round_spinner_params', None)):
-                    new_params = dict(room.next_spinner_params or room.next_round_spinner_params)
+                # Atomic check: only reuse existing params if they were already generated for this specific upcoming round
+                is_already_staged_for_round = getattr(room, 'spinner_params_generated', False) and bool(getattr(room, 'next_spinner_params', None))
+                if is_already_staged_for_round:
+                    new_params = dict(room.next_spinner_params)
                     if room.game_type == 'subanagrams' and getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
                         staged_seq_len = len(room.next_round_board[0]) if (isinstance(room.next_round_board[0], list)) else len(room.next_round_board)
                         has_full_w = any(len(w) == staged_seq_len for w in room.next_round_words)
@@ -5879,6 +5869,11 @@ class RoomManager:
                             if not candidate:
                                 break
                             c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_params = candidate
+                            target_diff_base = SpinnerSet.strip_difficulty_pct(new_params.get('difficulty', 'Medium'))
+                            cand_diff_base = SpinnerSet.strip_difficulty_pct(c_params.get('difficulty', 'Medium')) if c_params else 'Medium'
+                            if target_diff_base != cand_diff_base:
+                                print(f"[generate_spinner_params] Candidate cached board difficulty '{cand_diff_base}' != target '{target_diff_base}'. Discarding.")
+                                continue
                             fw_filt = [w for w in c_w if len(w) >= m_len]
                             actual_wc = len(fw_filt)
                             if is_board_count_valid(actual_wc, target_sp_range):
@@ -6630,10 +6625,11 @@ class RoomManager:
                             break
                         _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
                         _fw_filtered = [w for w in _fw if len(w) >= search_min]
+                        search_diff_base = SpinnerSet.strip_difficulty_pct(search_diff)
                         is_diff_match = True
-                        if search_diff == 'Hard' and _fr < 0.35:
+                        if search_diff_base == 'Hard' and _fr < 0.35:
                             is_diff_match = False
-                        elif search_diff == 'Easy' and _fr > 0.25:
+                        elif search_diff_base == 'Easy' and _fr > 0.25:
                             is_diff_match = False
 
                         if is_board_count_valid(len(_fw_filtered), search_wc) and len(_fw_filtered) >= min_accept and is_diff_match:

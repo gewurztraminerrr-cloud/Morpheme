@@ -339,7 +339,7 @@ class PrivateMatchManager:
             
         target_difficulty = parameters.get('difficulty', 'random')
         if target_difficulty == 'random':
-            target_difficulty = SpinnerSet._spin_difficulty()
+            target_difficulty = SpinnerSet._spin_difficulty(dims, min_len)
         else:
             target_difficulty = SpinnerSet.format_difficulty_with_pct(target_difficulty)
             

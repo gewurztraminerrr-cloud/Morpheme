@@ -15667,6 +15667,7 @@ def create_solo_match():
         bonus_word_len = random.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
     else:
         bonus_word_len = _safe_int_param(bonus_len_choice, 8)
+    bonus_word_len = max(min_word_len, bonus_word_len)
 
     # Check if the user wants randomization per round
     room.randomize_spinner = (
