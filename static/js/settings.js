@@ -939,9 +939,16 @@ function debounce(func, wait) {
                 return;
             }
             try {
-                const res = navigator.vibrate([400, 150, 400]);
+                let res = false;
+                if (typeof triggerIntermissionVibration === 'function') {
+                    res = triggerIntermissionVibration();
+                } else if (typeof window.triggerIntermissionVibration === 'function') {
+                    res = window.triggerIntermissionVibration();
+                } else {
+                    res = navigator.vibrate([400, 150, 400]);
+                }
                 if (statusEl) {
-                    if (res) {
+                    if (res !== false) {
                         statusEl.innerHTML = `<span style="color: #10b981; font-weight: 600;">✓ Browser triggered vibration successfully!</span><br>If your phone still didn't buzz, Android is muting it: check <b>Phone Settings → Sounds and vibration → Vibration intensity</b> (turn up Touch/System vibration slider) and ensure <b>Battery Saver</b> is OFF.`;
                     } else {
                         statusEl.innerHTML = `<span style="color: #ef4444; font-weight: 600;">✗ Vibration was blocked by browser.</span>`;

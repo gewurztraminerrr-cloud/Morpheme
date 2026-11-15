@@ -6962,35 +6962,28 @@ function triggerIosHapticFeedback(patternCount = 3) {
 
 function triggerIntermissionVibration() {
     console.log('[play.js] Executing 0:10 intermission vibration alert across all mobile channels...');
+    let vibrated = false;
 
-    // 1. Android & Standards Web Vibration API (Multi-Pattern Cascade)
+    // 1. Android & Standards Web Vibration API (Proven Dual Pulse: [400ms, 150ms pause, 400ms])
     if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
         try {
-            let vibrated = false;
-            // Pattern 1: Rhythmic dual motor pulse [260ms, 100ms pause, 320ms]
-            try { vibrated = navigator.vibrate([260, 100, 320]); } catch (_) {}
+            vibrated = navigator.vibrate([400, 150, 400]);
             if (!vibrated) {
-                // Pattern 2: Triple pulse
-                try { vibrated = navigator.vibrate([200, 100, 200, 100, 250]); } catch (_) {}
-            }
-            if (!vibrated) {
-                // Pattern 3: Array single pulse
-                try { vibrated = navigator.vibrate([400]); } catch (_) {}
-            }
-            if (!vibrated) {
-                // Pattern 4: Raw scalar durations
-                try { vibrated = navigator.vibrate(400); } catch (_) {}
-                if (!vibrated) {
-                    try { navigator.vibrate(250); } catch (_) {}
-                }
+                vibrated = navigator.vibrate(500);
             }
         } catch (err) {
             console.warn('[play.js] navigator.vibrate error:', err);
         }
     }
 
-    // 2. iOS Safari / WebKit Taptic Engine (Switch & Label Haptic Trigger for iOS 18+)
-    triggerIosHapticFeedback(3);
+    // 2. iOS Safari / WebKit Taptic Engine (ONLY for iOS devices - never execute on Android)
+    const isIosDevice = typeof navigator !== 'undefined' && (
+        /iPad|iPhone|iPod/.test(navigator.userAgent || '') ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    );
+    if (isIosDevice) {
+        triggerIosHapticFeedback(3);
+    }
 
     // 3. Mobile App Bridge (Flutter WebView / Native Wrappers)
     const bridge = (typeof MorphemeAudioBridge !== 'undefined' ? MorphemeAudioBridge : (typeof window !== 'undefined' && window.MorphemeAudioBridge ? window.MorphemeAudioBridge : null));
@@ -7002,6 +6995,7 @@ function triggerIntermissionVibration() {
                 type: 'vibrate',
                 duration: 500
             }));
+            vibrated = true;
         } catch (e) {
             console.error("MorphemeAudioBridge vibration error:", e);
         }
@@ -7016,9 +7010,11 @@ function triggerIntermissionVibration() {
                     sound: 'vibrate',
                     duration: 500
                 }));
+                vibrated = true;
             }
             if (window.webkit.messageHandlers.vibrate) {
                 window.webkit.messageHandlers.vibrate.postMessage({ duration: 500, pattern: [400, 150, 400] });
+                vibrated = true;
             }
         }
     } catch (e) {}
@@ -7027,9 +7023,11 @@ function triggerIntermissionVibration() {
     try {
         if (window.Android && typeof window.Android.vibrate === 'function') {
             window.Android.vibrate(500);
+            vibrated = true;
         }
         if (window.AndroidBridge && typeof window.AndroidBridge.vibrate === 'function') {
             window.AndroidBridge.vibrate(500);
+            vibrated = true;
         }
     } catch (e) {}
 
@@ -7037,6 +7035,7 @@ function triggerIntermissionVibration() {
     try {
         if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
             window.ReactNativeWebView.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 500 }));
+            vibrated = true;
         }
     } catch (e) {}
 
@@ -7052,6 +7051,8 @@ function triggerIntermissionVibration() {
             }, 800);
         }
     } catch (_) {}
+
+    return vibrated;
 }
 window.triggerIntermissionVibration = triggerIntermissionVibration;
 
@@ -7115,10 +7116,60 @@ function playIntermissionBell(bellType) {
     }
 }
 
+function armIntermissionVibrationSchedule(remaining) {
+    if (window._intermissionVibrationTimer) {
+        clearTimeout(window._intermissionVibrationTimer);
+        window._intermissionVibrationTimer = null;
+    }
+    if (typeof remaining !== 'number' || remaining <= 10.2) return;
+    const delayMs = (remaining - 10.0) * 1000;
+    if (delayMs > 0 && delayMs < 65000) {
+        window._intermissionVibrationTimer = setTimeout(() => {
+            const curState = (window.lastGameState && window.lastGameState.state) || '';
+            if (curState === 'intermission' && !hasPlayedIntermissionVibration) {
+                const vibrationEnabled = !window.userSettings || (
+                    window.userSettings.vibration_alert !== false &&
+                    window.userSettings.vibration_alert !== 'false' &&
+                    window.userSettings.vibration_alert !== 'False' &&
+                    window.userSettings.vibration_alert !== '0' &&
+                    window.userSettings.vibration_alert !== 0
+                );
+                if (vibrationEnabled) {
+                    console.log('[play.js] Firing pre-scheduled intermission vibration alert at 0:10');
+                    hasPlayedIntermissionVibration = true;
+                    triggerIntermissionVibration();
+                }
+            }
+        }, delayMs);
+    }
+}
+window.armIntermissionVibrationSchedule = armIntermissionVibrationSchedule;
+
+// Refresh intermission vibration schedule whenever user interacts with screen during intermission
+if (typeof document !== 'undefined') {
+    ['pointerdown', 'touchstart', 'mousedown'].forEach(evt => {
+        document.addEventListener(evt, () => {
+            if (window.lastGameState && window.lastGameState.state === 'intermission' && !hasPlayedIntermissionVibration) {
+                if (typeof localEndTime === 'number') {
+                    const now = Date.now() / 1000;
+                    const rem = Math.max(0, localEndTime - now);
+                    if (rem > 10.2) {
+                        armIntermissionVibrationSchedule(rem);
+                    }
+                }
+            }
+        }, { passive: true });
+    });
+}
+
 function checkAndTriggerIntermissionAlerts(remaining) {
     if (!window.lastGameState || window.lastGameState.state !== 'intermission') {
         hasPlayedIntermissionVibration = false;
         hasPlayedIntermissionBell = false;
+        if (window._intermissionVibrationTimer) {
+            clearTimeout(window._intermissionVibrationTimer);
+            window._intermissionVibrationTimer = null;
+        }
         return;
     }
 
@@ -7127,6 +7178,7 @@ function checkAndTriggerIntermissionAlerts(remaining) {
     if (remaining > 10.8) {
         hasPlayedIntermissionVibration = false;
         hasPlayedIntermissionBell = false;
+        armIntermissionVibrationSchedule(remaining);
         return;
     }
 
