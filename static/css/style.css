@@ -12965,5 +12965,127 @@ body.is-mobile #setting-subpage-allow-invites .invitations-mobile-break {
     }
 }
 
+/* Random Word Tool Mobile Controls & Panels: Compact vertical spacing to maximize screen real estate */
+@media (max-width: 900px) {
+    #page-tools #tool-random .tool-header,
+    body.is-mobile #page-tools #tool-random .tool-header {
+        flex: 0 0 auto !important;
+        margin-bottom: 2px !important;
+        padding: 0 !important;
+    }
+
+    #page-tools #tool-random .tool-header p,
+    body.is-mobile #page-tools #tool-random .tool-header p {
+        margin: 0 0 6px 0 !important;
+        padding: 4px 8px !important;
+        font-size: 0.76rem !important;
+        line-height: 1.25 !important;
+        max-height: 42px !important;
+    }
+
+    #page-tools #tool-random .combo-control-panel,
+    body.is-mobile #page-tools #tool-random .combo-control-panel {
+        flex: 0 0 auto !important;
+        padding: 6px 8px !important;
+        margin-bottom: 6px !important;
+        border-radius: 8px !important;
+    }
+
+    #page-tools #tool-random .combo-control-panel .input-row,
+    body.is-mobile #page-tools #tool-random .combo-control-panel .input-row {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 5px !important;
+        width: 100% !important;
+    }
+
+    #page-tools #tool-random .combo-control-panel .input-row > select,
+    #page-tools #tool-random .combo-control-panel .input-row > button,
+    body.is-mobile #page-tools #tool-random .combo-control-panel .input-row > select,
+    body.is-mobile #page-tools #tool-random .combo-control-panel .input-row > button {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 8px !important;
+        font-size: 0.82rem !important;
+        border-radius: 6px !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-random #random-dict,
+    body.is-mobile #page-tools #tool-random #random-dict {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+    }
+
+    #page-tools #tool-random #random-gen-btn,
+    body.is-mobile #page-tools #tool-random #random-gen-btn {
+        grid-column: 1 / -1 !important;
+        width: 100% !important;
+    }
+
+    #page-tools #tool-random .random-word-container,
+    body.is-mobile #page-tools #tool-random .random-word-container {
+        margin-top: 0 !important;
+        margin-bottom: 4px !important;
+        padding: 8px 10px !important;
+        min-height: auto !important;
+        border-radius: 8px !important;
+    }
+
+    #page-tools #tool-random #random-word-display,
+    body.is-mobile #page-tools #tool-random #random-word-display {
+        padding: 2px 0 !important;
+        margin: 0 !important;
+        line-height: 1.15 !important;
+    }
+
+    #page-tools #tool-random #random-word-badges,
+    body.is-mobile #page-tools #tool-random #random-word-badges {
+        margin-top: 4px !important;
+        margin-bottom: 2px !important;
+        padding: 0 4px !important;
+    }
+
+    #page-tools #tool-random #random-word-definition,
+    body.is-mobile #page-tools #tool-random #random-word-definition {
+        margin-top: 4px !important;
+        padding: 2px 4px !important;
+        font-size: 0.95rem !important;
+        line-height: 1.35 !important;
+    }
+
+    #page-tools #tool-random .definition-division-row,
+    body.is-mobile #page-tools #tool-random .definition-division-row {
+        margin-top: 4px !important;
+        margin-bottom: 2px !important;
+    }
+
+    #page-tools #tool-random .definition-wiki-row,
+    body.is-mobile #page-tools #tool-random .definition-wiki-row {
+        margin-top: 5px !important;
+        margin-bottom: 2px !important;
+    }
+
+    #page-tools #tool-random .tool-def-actions,
+    body.is-mobile #page-tools #tool-random .tool-def-actions,
+    .random-word-container .tool-def-actions,
+    body.is-mobile .random-word-container .tool-def-actions {
+        padding-top: 6px !important;
+        margin-top: 6px !important;
+        gap: 6px !important;
+    }
+
+    .random-word-container .tool-def-footer-link,
+    body.is-mobile .random-word-container .tool-def-footer-link {
+        height: 28px !important;
+        font-size: 0.78rem !important;
+        padding: 2px 6px !important;
+        border-radius: 6px !important;
+    }
+}
+
 
 
