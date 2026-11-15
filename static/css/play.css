@@ -1775,7 +1775,7 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     grid-row: 1 / -1 !important;
     width: 100% !important;
     max-width: min(94%, 640px) !important;
-    min-height: 240px;
+    min-height: 200px;
     color: var(--text-primary);
     background: rgba(10, 15, 30, 0.85);
     border: 2px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.2);
@@ -1786,7 +1786,7 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     text-align: center !important;
     overflow: hidden;
-    margin: 32px auto 20px auto !important;
+    margin: 0 auto !important;
 }
 .glow-spinner {
     width: 44px;
@@ -1896,7 +1896,7 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     background: rgba(255, 255, 255, 0.2);
     transform: scale(0.96);
 }
-@media (max-width: 768px) {
+@media (max-width: 992px) {
     .game-board-loading,
     #game-board.game-board-loading,
     .board-panel #game-board.game-board-loading,
@@ -1915,19 +1915,21 @@ body.is-subanagrams .timer-display #transpose-board-btn {
         grid-template-rows: none !important;
         grid-column: 1 / -1 !important;
         grid-row: 1 / -1 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        padding: 8px !important;
-        min-height: 220px !important;
-        margin: 0 auto !important;
+        width: calc(100% - 24px) !important;
+        max-width: 480px !important;
+        padding: 0 !important;
+        min-height: 160px !important;
+        margin: 8px auto 12px auto !important;
         float: none !important;
+        box-sizing: border-box !important;
     }
     .loading-container { 
-        padding: 18px 16px !important; 
-        min-height: 190px !important; 
+        padding: 16px 14px !important; 
+        min-height: 150px !important; 
         max-width: 100% !important; 
         width: 100% !important; 
-        margin: 20px auto 14px auto !important; 
+        margin: 0 auto !important; 
+        box-sizing: border-box !important;
     }
     .glow-spinner { width: 34px; height: 34px; border-width: 2.5px; margin-bottom: 12px; }
     .glow-title { font-size: 0.92rem; letter-spacing: 1px; white-space: normal; padding: 0 8px; width: 100%; max-width: 100%; }
@@ -17327,14 +17329,14 @@ body.is-mobile #page-settings .theme-selector-grid {
     grid-column: 1 / -1 !important;
     grid-row: 1 / -1 !important;
     width: 100% !important;
-    max-width: 100% !important;
-    min-height: 220px !important;
+    max-width: 640px !important;
+    min-height: 180px !important;
     height: auto !important;
-    padding: 16px 8px !important;
+    padding: 0 !important;
     background: transparent !important;
     border: none !important;
     box-sizing: border-box !important;
-    margin: 0 auto !important;
+    margin: 12px auto !important;
     float: none !important;
 }
 
@@ -17348,24 +17350,60 @@ body.is-mobile #page-settings .theme-selector-grid {
     justify-content: center !important;
     width: 100% !important;
     max-width: min(94%, 640px) !important;
-    min-height: 200px !important;
-    margin: 32px auto 20px auto !important;
+    min-height: 180px !important;
+    margin: 0 auto !important;
     padding: 24px 28px !important;
     box-sizing: border-box !important;
     text-align: center !important;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
+    .board-panel #game-board.game-board-loading,
+    .board-panel.full-bleed-mobile #game-board.game-board-loading,
+    #game-board.game-board-loading,
+    .game-board-loading {
+        width: calc(100% - 24px) !important;
+        max-width: 480px !important;
+        min-height: 160px !important;
+        margin: 8px auto 12px auto !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
     .board-panel #game-board.game-board-loading .loading-container,
     .board-panel.full-bleed-mobile #game-board.game-board-loading .loading-container,
     #game-board.game-board-loading .loading-container,
     .loading-container {
-        padding: 18px 16px !important;
-        min-height: 190px !important;
+        padding: 16px 14px !important;
+        min-height: 150px !important;
         max-width: 100% !important;
         width: 100% !important;
-        margin: 20px auto 14px auto !important;
+        margin: 0 auto !important;
+        box-sizing: border-box !important;
     }
+}
+
+body.is-mobile .board-panel #game-board.game-board-loading,
+body.is-mobile .board-panel.full-bleed-mobile #game-board.game-board-loading,
+body.is-mobile #game-board.game-board-loading,
+body.is-mobile .game-board-loading {
+    width: calc(100% - 24px) !important;
+    max-width: 480px !important;
+    min-height: 160px !important;
+    margin: 8px auto 12px auto !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+body.is-mobile .board-panel #game-board.game-board-loading .loading-container,
+body.is-mobile .board-panel.full-bleed-mobile #game-board.game-board-loading .loading-container,
+body.is-mobile #game-board.game-board-loading .loading-container,
+body.is-mobile .loading-container {
+    padding: 16px 14px !important;
+    min-height: 150px !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    box-sizing: border-box !important;
 }
 
 /* --- Tool Word Definition Popover --- */

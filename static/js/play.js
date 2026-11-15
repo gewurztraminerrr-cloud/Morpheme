@@ -1401,6 +1401,7 @@ window.stopGamePolling = function () {
  */
 function ensureLoadingCardStyles() {
     const boardEl = document.getElementById('game-board');
+    const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || document.body.classList.contains('is-mobile');
     if (boardEl) {
         boardEl.className = 'game-board-loading';
         boardEl.style.display = 'flex';
@@ -1413,10 +1414,10 @@ function ensureLoadingCardStyles() {
         boardEl.style.removeProperty('grid-template-rows');
         boardEl.style.removeProperty('--board-cols');
         boardEl.style.removeProperty('--board-rows');
-        boardEl.style.width = '100%';
-        boardEl.style.maxWidth = '100%';
-        boardEl.style.margin = '20px auto 10px auto';
-        boardEl.style.padding = '16px 8px';
+        boardEl.style.width = isMobile ? 'calc(100% - 24px)' : '100%';
+        boardEl.style.maxWidth = isMobile ? '480px' : '640px';
+        boardEl.style.margin = isMobile ? '8px auto 12px auto' : '12px auto';
+        boardEl.style.padding = '0';
         boardEl.style.background = 'transparent';
         boardEl.style.border = 'none';
         boardEl.style.boxSizing = 'border-box';
