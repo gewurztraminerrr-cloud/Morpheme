@@ -9149,9 +9149,6 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         margin-top: 0 !important;
         margin-bottom: 2px !important;
     }
-    #mobile-leave-room-btn {
-        display: inline-block !important;
-    }
     .play-header .timer-display,
     .board-panel .timer-display {
         display: flex !important;
