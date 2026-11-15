@@ -3038,11 +3038,20 @@ def get_user_config_rating_data(conn, user_id, config_key, is_24h=False):
         # Placement is only complete once prov_g >= 10 rounds played with established rated opponents,
         # or if rating has already moved away from 1200. Solo rounds or rounds without established opponents
         # must NEVER disqualify or prematurely revert an unrated player back to 1200.
+        # User Mandate: If the user in the room is present when the switch is toggled,
+        # keep them Unrated from thereon and let them finish their 10 rounds.
         if prov_g >= 10 or r != 1200:
             is_unr = False
-        elif is_policy_active and r == 1200 and prov_g < 10:
+        elif (is_policy_active or is_unr or prov_g > 0) and r == 1200 and prov_g < 10:
             is_unr = True
-        elif not is_policy_active:
+            # Persist unrated state if not yet marked in DB so state survives subsequent policy toggle changes
+            if not bool(row[1]):
+                try:
+                    conn.execute('UPDATE user_ratings SET is_unrated = 1 WHERE user_id = ? AND (config_key = ? OR config_key = ?)', (user_id, config_key, cube_alias))
+                    conn.commit()
+                except Exception:
+                    pass
+        else:
             is_unr = False
         return {
             'rating': r,
@@ -3058,7 +3067,9 @@ def get_user_config_rating_data(conn, user_id, config_key, is_24h=False):
             conn.execute('''
                 INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, provisional_games, provisional_ratings_sum, provisional_rating, games_played)
                 VALUES (?, ?, 1200, 1, 0, 0.0, 1200.0, 0)
-                ON CONFLICT(user_id, config_key) DO NOTHING
+                ON CONFLICT(user_id, config_key) DO UPDATE SET
+                    is_unrated = 1
+                WHERE user_ratings.provisional_games < 10 AND user_ratings.rating = 1200
             ''', (user_id, config_key))
             conn.commit()
         except Exception:
@@ -3450,6 +3461,32 @@ def toggle_unrated_placement():
                         updated_by = excluded.updated_by
                 ''', (c_val, 1 if enabled else 0, now_iso, session.get('username')))
         conn.commit()
+
+        # User Mandate: If the user in the room is present when the switch is toggled,
+        # keep them Unrated from thereon and let them finish their 10 rounds.
+        if enabled:
+            try:
+                from game_room import room_manager
+                if 'room_manager' in globals() or room_manager:
+                    for r_id, room in list(room_manager.rooms.items()):
+                        gt = getattr(room, 'game_type', '').replace('solo_', '')
+                        rcfg = f"{gt}|{getattr(room, 'board_dimensions', '')}|{getattr(room, 'time_limit', '')}"
+                        is_match = (rcfg in sanitized_configs) or (rcfg.startswith('cube|') and rcfg.replace('cube|', '3d|', 1) in sanitized_configs) or (rcfg.startswith('3d|') and rcfg.replace('3d|', 'cube|', 1) in sanitized_configs)
+                        if is_match:
+                            for p in getattr(room, 'players', []):
+                                if not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False):
+                                    if getattr(p, 'rating', 1200) == 1200 and getattr(p, 'provisional_games', 0) < 10:
+                                        p.is_unrated = True
+                                        conn.execute('''
+                                            INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, provisional_games, provisional_ratings_sum, provisional_rating, games_played)
+                                            VALUES (?, ?, 1200, 1, ?, ?, ?, 0)
+                                            ON CONFLICT(user_id, config_key) DO UPDATE SET
+                                                is_unrated = 1
+                                            WHERE user_ratings.provisional_games < 10 AND user_ratings.rating = 1200
+                                        ''', (p.user_id, rcfg, getattr(p, 'provisional_games', 0), getattr(p, 'provisional_ratings_sum', 0.0), getattr(p, 'provisional_rating', 1200.0)))
+                    conn.commit()
+            except Exception as active_err:
+                print(f"[RatingPlacement] Error updating active room players on enable: {active_err}")
     except Exception as e:
         conn.rollback()
         return jsonify({'error': f"Database error toggling unrated placement: {str(e)}"}), 500
@@ -7659,8 +7696,6 @@ def get_room_state(room_id):
                 finally:
                     conn.close()
 
-            user_rating_for_snapshot = 'Unrated' if r_info['is_unrated'] else rating
-
             # Automatically sync active polling user into room.players OR room.spectators if not already present
             if not room.is_solo and not room.get_player(uid) and not room.get_spectator(uid):
                 has_limits = (room.min_rating > 0 or room.max_rating < 9999)
@@ -7683,10 +7718,23 @@ def get_room_state(room_id):
 
             p_obj = room.get_player(uid)
             if p_obj and not is_guest:
+                # User mandate: If the user in the room is present when the switch is toggled,
+                # keep them Unrated from thereon and let them finish their 10 rounds.
+                if getattr(p_obj, 'is_unrated', False) and getattr(p_obj, 'provisional_games', 0) < 10 and getattr(p_obj, 'rating', 1200) == 1200:
+                    r_info['is_unrated'] = True
+                    try:
+                        conn_up = sqlite3.connect(DB_PATH, timeout=5)
+                        conn_up.execute('UPDATE user_ratings SET is_unrated = 1 WHERE user_id = ? AND (config_key = ? OR config_key = ?)', (uid, config_key, config_key.replace('3d|', 'cube|', 1) if config_key.startswith('3d|') else config_key.replace('cube|', '3d|', 1)))
+                        conn_up.commit()
+                        conn_up.close()
+                    except Exception:
+                        pass
                 p_obj.is_unrated = r_info['is_unrated']
                 p_obj.provisional_games = r_info['provisional_games']
                 p_obj.provisional_ratings_sum = r_info['provisional_ratings_sum']
                 p_obj.provisional_rating = r_info['provisional_rating']
+
+            user_rating_for_snapshot = 'Unrated' if (r_info.get('is_unrated') or (p_obj and getattr(p_obj, 'is_unrated', False))) else rating
             if p_obj:
                 p_obj.game_room_chat = get_user_chat_setting(uid)
                 p_obj._last_seen_before_update = getattr(p_obj, 'last_active', time.time())

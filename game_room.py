@@ -2362,7 +2362,7 @@ class GameRoom:
                                 ]
 
                                 def _is_established_opponent(o):
-                                    if getattr(o, 'is_unrated', False):
+                                    if getattr(o, 'is_unrated', False) or (0 < getattr(o, 'provisional_games', 0) < 10 and getattr(o, 'rating', 1200) == 1200):
                                         return False
                                     o_rating = getattr(o, 'rating', 1200)
                                     if o_rating == 1200:
@@ -2376,10 +2376,14 @@ class GameRoom:
                                     for p in self.players + quitters_snapshot:
                                         if p.user_id in rating_changes:
                                             simulated_change = rating_changes[p.user_id]
-                                            if getattr(p, 'is_unrated', False):
+                                            is_p_unrated = getattr(p, 'is_unrated', False) or (
+                                                0 < getattr(p, 'provisional_games', 0) < 10 and getattr(p, 'rating', 1200) == 1200
+                                            )
+                                            if is_p_unrated:
                                                 # 10-Game Unrated Placement:
                                                 # User starts unrated and rating remains unchanged for first 10 games (with white square).
                                                 # Only rounds played alongside at least one established rated opponent count toward placement.
+                                                p.is_unrated = True
                                                 p.rating_change = 0
                                                 opponents = [
                                                     o for o in active_humans
