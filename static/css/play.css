@@ -8903,36 +8903,19 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         box-sizing: border-box !important;
     }
 
-    /* Mobile game rooms: Top menu bar is an off-screen fixed slide-down drawer.
-       When hidden, it takes 0 document flow height so everything in #page-play is shifted all the way up.
-       When the user swipes down, adding .mobile-top-menu-revealed slides it smoothly into view. */
+    /* Mobile game rooms: Top menu bar is static in document flow (scrolled past on room enter).
+       When swiping down over the Spinner Set, smooth window scroll to 0 reveals MORPHEME MORE-FEEM sliding down. */
     body.play-active .top-menu-bar,
     body:has(#page-play.active) .top-menu-bar {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        z-index: 100000 !important;
-        background: var(--bg-primary, #000000) !important;
-        transform: translateY(-100%) !important;
-        -webkit-transform: translateY(-100%) !important;
-        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
-        -webkit-transition: -webkit-transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease !important;
-        box-shadow: none !important;
-        pointer-events: none !important;
+        position: static !important;
+        background: transparent !important;
+        transform: none !important;
+        -webkit-transform: none !important;
         display: block !important;
         height: auto !important;
         min-height: 0 !important;
         margin: 0 !important;
         padding: 0 !important;
-    }
-
-    body.play-active.mobile-top-menu-revealed .top-menu-bar,
-    body:has(#page-play.active).mobile-top-menu-revealed .top-menu-bar {
-        transform: translateY(0) !important;
-        -webkit-transform: translateY(0) !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 20px rgba(0, 0, 0, 0.5) !important;
         pointer-events: auto !important;
     }
 
@@ -8943,13 +8926,11 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     }
 
     #page-play.active {
-        height: 100vh !important;
-        height: 100dvh !important;
         min-height: 100vh !important;
         min-height: 100dvh !important;
-        max-height: 100vh !important;
-        max-height: 100dvh !important;
-        overflow-y: hidden !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        overflow-y: visible !important;
         overflow-x: hidden !important;
         padding: 0 !important;
         margin: 0 auto !important;
@@ -17642,14 +17623,12 @@ body.is-mobile #page-settings .theme-selector-grid {
    DESKTOP & LAPTOP PLAY PAGE LAYOUT (STRICT: NOT MOBILE)
    ========================================================================== */
 /* Ensure the top menu bar is NOT fixed in game rooms; in game rooms, top menu is seen by scrolling */
-@media (min-width: 993px) {
-    body.is-desktop.play-active .top-menu-bar,
-    body.is-desktop:has(#page-play.active) .top-menu-bar,
-    body.play-active .top-menu-bar,
-    body:has(#page-play.active) .top-menu-bar {
-        position: static !important;
-        background: transparent !important;
-    }
+body.is-desktop.play-active .top-menu-bar,
+body.is-desktop:has(#page-play.active) .top-menu-bar,
+body.play-active .top-menu-bar,
+body:has(#page-play.active) .top-menu-bar {
+    position: static !important;
+    background: transparent !important;
 }
 
 body.is-desktop #page-play.active {
