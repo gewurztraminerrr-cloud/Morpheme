@@ -3003,9 +3003,14 @@ def get_user_config_rating_data(conn, user_id, config_key, is_24h=False):
             gt_raw, dims_raw, dur_raw = parts[0], parts[1], int(parts[2])
             gt_1 = 'classic' if gt_raw == 'accumulative' else ('cube' if gt_raw in ('3d', 'cube') else gt_raw)
             gt_2 = 'accumulative' if gt_raw == 'accumulative' else ('3d' if gt_raw in ('3d', 'cube') else gt_raw)
+            # User Mandate: Don't count a user's play if nobody is in the room. Only count rounds with other human players.
             rh_cur = conn.execute('''
-                SELECT COUNT(*) FROM round_history
-                WHERE user_id = ? AND LOWER(game_type) IN (?, ?) AND LOWER(board_dimensions) = ? AND round_duration = ?
+                SELECT COUNT(DISTINCT rh.id) FROM round_history rh
+                WHERE rh.user_id = ? AND LOWER(rh.game_type) IN (?, ?) AND LOWER(rh.board_dimensions) = ? AND rh.round_duration = ?
+                  AND EXISTS (
+                      SELECT 1 FROM round_history rh2
+                      WHERE rh2.room_id = rh.room_id AND rh2.round_number = rh.round_number AND rh2.user_id != rh.user_id AND rh2.total_score > 0
+                  )
             ''', (user_id, gt_1, gt_2, dims_raw, dur_raw))
             rh_row = rh_cur.fetchone()
             if rh_row and rh_row[0]:
@@ -3029,10 +3034,16 @@ def get_user_config_rating_data(conn, user_id, config_key, is_24h=False):
         prov_r = row[4]
         ur_games = row[5] or 0
         cfg_games = max(ur_games, rh_games)
-        if prov_g >= 10 or r != 1200 or cfg_games > 10:
+        # 10-Round Zero-Change Equilibrium Estimation:
+        # Placement is only complete once prov_g >= 10 rounds played with established rated opponents,
+        # or if rating has already moved away from 1200. Solo rounds or rounds without established opponents
+        # must NEVER disqualify or prematurely revert an unrated player back to 1200.
+        if prov_g >= 10 or r != 1200:
             is_unr = False
-        elif is_policy_active and r == 1200 and cfg_games <= 10 and prov_g < 10:
+        elif is_policy_active and r == 1200 and prov_g < 10:
             is_unr = True
+        elif not is_policy_active:
+            is_unr = False
         return {
             'rating': r,
             'is_unrated': is_unr,
@@ -10456,10 +10467,23 @@ def prune_non_visible_round_history():
                     continue
 
                 tot_score = sum(r[1] for r in rows if r[1])
-                tot_games = len(rows)
+                # Only count multiplayer rounds where >= 2 players played for games_played
+                multi_row = c.execute('''
+                    SELECT COUNT(DISTINCT rh.id)
+                    FROM round_history rh
+                    WHERE rh.user_id = ?
+                      AND EXISTS (
+                          SELECT 1 FROM round_history rh2
+                          WHERE rh2.room_id = rh.room_id
+                            AND rh2.round_number = rh.round_number
+                            AND rh2.user_id != rh.user_id
+                            AND rh2.total_score > 0
+                      )
+                ''', (uid,)).fetchone()
+                tot_games = multi_row[0] if (multi_row and multi_row[0] is not None) else 0
                 c.execute('''
                     UPDATE users 
-                    SET games_played = MAX(COALESCE(games_played, 0), ?),
+                    SET games_played = ?,
                         total_points = MAX(COALESCE(total_points, 0), ?)
                     WHERE id = ?
                 ''', (tot_games, tot_score, uid))

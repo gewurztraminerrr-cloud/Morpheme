@@ -2397,7 +2397,8 @@ class GameRoom:
                                                     o for o in active_humans
                                                     if o.user_id != p.user_id and _is_established_opponent(o)
                                                 ] if p in active_humans else []
-                                                if opponents:
+                                                # User Mandate: Don't count a user's play if nobody is in the room as well as if no rating-established player playing along with them.
+                                                if len(active_humans) >= 2 and opponents:
                                                     opp_score = sum(getattr(o, 'score', 0) for o in opponents)
                                                     opp_rating = sum(float(getattr(o, 'rating', 1200)) for o in opponents)
                                                     user_score = getattr(p, 'score', 0)
@@ -2453,22 +2454,33 @@ class GameRoom:
                                                                 games_played = COALESCE(user_ratings.games_played, 0) + 1
                                                         ''', (p.user_id, config_key, p.provisional_games, p.provisional_ratings_sum, p.provisional_rating))
                                                 else:
-                                                    print(f"[RatingPlacement] {p.username} round skipped for placement in {config_key} (no established rated opponents in room).")
+                                                    print(f"[RatingPlacement] {p.username} round skipped for placement in {config_key} (nobody in room or no established rated opponents).")
                                             else:
                                                 p.rating_change = simulated_change
                                                 p.rating += p.rating_change
-                                                p.config_games_played = (getattr(p, 'config_games_played', 0) or 0) + 1
-                                                # Update Global Rating
-                                                conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
-                                                
-                                                # Update Config-Specific Rating
-                                                conn_p.execute('''
-                                                    INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, games_played)
-                                                    VALUES (?, ?, MAX(400, 1200 + ?), 0, 1)
-                                                    ON CONFLICT(user_id, config_key) DO UPDATE SET 
-                                                        rating = MAX(400, rating + ?),
-                                                        games_played = COALESCE(user_ratings.games_played, 0) + 1
-                                                ''', (p.user_id, config_key, p.rating_change, p.rating_change))
+
+                                                # User Mandate: Don't count a user's play if nobody is in the room as well as if no rating-established player playing along with them.
+                                                has_established_opponent = any(
+                                                    o.user_id != p.user_id and _is_established_opponent(o)
+                                                    for o in active_humans
+                                                ) if p in active_humans else False
+
+                                                if len(active_humans) >= 2 and has_established_opponent:
+                                                    p.config_games_played = (getattr(p, 'config_games_played', 0) or 0) + 1
+                                                    # Update Global Rating
+                                                    if p.rating_change != 0:
+                                                        conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
+                                                    
+                                                    # Update Config-Specific Rating
+                                                    conn_p.execute('''
+                                                        INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, games_played)
+                                                        VALUES (?, ?, MAX(400, 1200 + ?), 0, 1)
+                                                        ON CONFLICT(user_id, config_key) DO UPDATE SET 
+                                                            rating = MAX(400, rating + ?),
+                                                            games_played = COALESCE(user_ratings.games_played, 0) + 1
+                                                    ''', (p.user_id, config_key, p.rating_change, p.rating_change))
+                                                else:
+                                                    p.rating_change = 0
                                         else:
                                             p.rating_change = 0
 
