@@ -2225,6 +2225,8 @@ class GameRoom:
                 self.previous_all_words_paths = dict(self.all_words_paths) if isinstance(self.all_words_paths, dict) else {}
                 self.previous_bonus_cell = getattr(self, 'bonus_cell', None)
                 self.previous_board_format = getattr(self, 'current_board_format', 'Normal')
+                if 'CSW' in str(getattr(self, 'current_dictionary', '')).upper():
+                    word_validator.word_validator.ensure_csw_loaded()
                 if getattr(self, 'csw_only_words', None) and len(self.csw_only_words) > 0:
                     self.previous_csw_only_words = list(self.csw_only_words)
                 else:
@@ -3171,7 +3173,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             if str(fmt).lower() == 'normal':
                 cache_candidates.append((min_l, r_item, 'Normal', base_dict, use_added_words))
                 cache_candidates.append((floor_l, r_item, 'Normal', base_dict, use_added_words))
-                cache_candidates.append((floor_l, r_item, 'Normal', base_dict, False))
+                if not use_added_words:
+                    cache_candidates.append((floor_l, r_item, 'Normal', base_dict, False))
         
         diff_order = [difficulty] + [d for d in ['Hard', 'Medium', 'Easy'] if d != difficulty] if difficulty else ['Medium', 'Easy', 'Hard']
         for (cml, ctr, cfmt, cdict, caw) in cache_candidates:
@@ -3199,6 +3202,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                                 continue
                                 
                             actual_wc = len(cwords_filtered)
+                            if is_aw and actual_wc < 300:
+                                print(f"[get_emergency_fallback_board] Cached board had only {actual_wc} words for +AW (needed >= 300). REJECTING cached board...")
+                                continue
                             if actual_wc < min_accept or actual_wc > max_accept:
                                 print(f"[get_emergency_fallback_board] Cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
                                 continue
@@ -3247,6 +3253,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     matching_final_min = sum(1 for w in words_filtered if len(w) == final_min)
                     if matching_final_min < 3:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had only {matching_final_min} words of length {final_min} (needed >= 3). REJECTING cached board...")
+                    elif is_aw and actual_wc < 300:
+                        print(f"[get_emergency_fallback_board] Ultimate cached board had only {actual_wc} words for +AW (needed >= 300). REJECTING cached board...")
                     elif actual_wc < min_accept or actual_wc > max_accept:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
                     else:
@@ -3285,7 +3293,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             l_b, l_w, l_c, l_f, l_p, l_r = live_res[:6]
             l_bw = live_res[6] if len(live_res) >= 7 else (l_w[0] if l_w else 'PLANETS')
             l_w_filt = [w for w in (l_w or []) if len(w) >= min_word_length]
-            min_required = 15
+            min_required = 300 if is_aw else 15
             if len(l_w_filt) >= min_required:
                 # If target_range_resolved was provided and generated board exceeded max_accept, sample down
                 if False and max_accept < 99999 and len(l_w_filt) > max_accept:  # never truncate valid words
@@ -3761,10 +3769,18 @@ class RoomManager:
                                             return existing_room
 
                                     print(f"[RoomManager] Wakeup empty singleton {existing_room.room_id} to Active Round 1 with fresh board...")
-                                    from board_generator import pop_any_cached_board
-                                    pre_pop = pop_any_cached_board(existing_room.board_dimensions)
+                                    from board_generator import pop_any_cached_board, pop_compatible_cached_board
+                                    sp_fresh = SpinnerSet.generate_params(existing_room.board_dimensions, is_24h=(existing_room.time_limit >= 7200))
+                                    f_dict = sp_fresh.get('dictionary', 'NWL')
+                                    f_aw = sp_fresh.get('use_added_words', False)
+                                    f_fmt = sp_fresh.get('board_format', 'Normal')
+                                    f_min = sp_fresh.get('min_word_length', 3)
+                                    f_wc = sp_fresh.get('word_count_range')
+                                    pre_pop = pop_compatible_cached_board(existing_room.board_dimensions, f_dict, f_fmt, f_min, f_aw)
+                                    if not pre_pop and f_fmt == 'Normal':
+                                        pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format='Normal', dictionary=f_dict, use_added_words=f_aw)
                                     if not pre_pop:
-                                        pre_pop = get_emergency_fallback_board(existing_room.board_dimensions, 'Normal', existing_room.time_limit)
+                                        pre_pop = get_emergency_fallback_board(existing_room.board_dimensions, f_fmt, existing_room.time_limit, dictionary=f_dict, use_added_words=f_aw, target_range=f_wc, min_word_length=f_min)
                                     if pre_pop:
                                         if len(pre_pop) >= 9:
                                             r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, _, r_params = pre_pop
@@ -4147,13 +4163,20 @@ class RoomManager:
                                 except Exception as e_sgen:
                                     print(f"[RoomManager] Solo emergency generate error: {e_sgen}")
                         else:
-                            pre_pop = pop_any_cached_board(room.board_dimensions)
-
-                        if not pre_pop:
-                            pre_pop = get_emergency_fallback_board(
-                                room.board_dimensions, 'Normal', room.time_limit,
-                                dictionary='NWL', use_added_words=False, target_range='100-200', min_word_length=3, difficulty='Medium'
-                            )
+                            sp_kick = SpinnerSet.generate_params(room.board_dimensions, is_24h=(room.time_limit >= 7200))
+                            k_dict = sp_kick.get('dictionary', 'NWL')
+                            k_aw = sp_kick.get('use_added_words', False)
+                            k_fmt = sp_kick.get('board_format', 'Normal')
+                            k_min = sp_kick.get('min_word_length', 3)
+                            k_wc = sp_kick.get('word_count_range')
+                            pre_pop = pop_compatible_cached_board(room.board_dimensions, k_dict, k_fmt, k_min, k_aw)
+                            if not pre_pop and k_fmt == 'Normal':
+                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=k_min, target_format='Normal', dictionary=k_dict, use_added_words=k_aw)
+                            if not pre_pop:
+                                pre_pop = get_emergency_fallback_board(
+                                    room.board_dimensions, k_fmt, room.time_limit,
+                                    dictionary=k_dict, use_added_words=k_aw, target_range=k_wc, min_word_length=k_min, difficulty=sp_kick.get('difficulty', 'Medium')
+                                )
 
                         if pre_pop:
                             if len(pre_pop) >= 9:
@@ -4977,7 +5000,7 @@ class RoomManager:
                         elif '400' in str(target_range): min_accept = 400
                         elif '500' in str(target_range): min_accept = 500
                 if use_aw_flag:
-                    min_accept = max(100, min_accept)
+                    min_accept = max(300, min_accept)
                 elif m_len >= 6:
                     min_accept = min(min_accept, 30)
                 else:
@@ -4990,16 +5013,17 @@ class RoomManager:
                 # SOLO MODE FAST PATH: Try popping compatible cached board matching room format for 1ms instant board!
                 if getattr(room, 'is_solo', False):
                     target_fmt = room.spinner_params.get('board_format', 'Normal')
+                    target_dict_raw = room.spinner_params.get('dictionary', 'NWL')
                     from board_generator import pop_compatible_cached_board
                     solo_pop = pop_compatible_cached_board(
                         room.board_dimensions,
-                        room.spinner_params.get('dictionary', 'NWL'),
+                        target_dict_raw,
                         target_fmt,
                         room.spinner_params.get('min_word_length', 3),
                         use_aw_flag
                     )
                     if not solo_pop and str(target_fmt).lower() == 'normal':
-                        solo_pop = pop_any_cached_board(room.board_dimensions, target_format='Normal')
+                        solo_pop = pop_any_cached_board(room.board_dimensions, min_word_length=m_len, target_format='Normal', dictionary=target_dict_raw, use_added_words=use_aw_flag)
                     
                     if solo_pop:
                         if len(solo_pop) >= 9:
@@ -6030,12 +6054,9 @@ class RoomManager:
             try:
                 # Try compatible match with spun parameters
                 cached_candidate = pop_compatible_cached_board(dims, target_dict, target_fmt, target_min, use_aw, bonus_word_len=bw_len)
-                if not cached_candidate:
-                    # Try any cached board for these dimensions and format
-                    cached_candidate = pop_any_cached_board(dims, min_word_length=target_min, target_format=target_fmt)
-                if not cached_candidate:
-                    # Try any cached board for these dimensions
-                    cached_candidate = pop_any_cached_board(dims)
+                if not cached_candidate and str(target_fmt).lower() == 'normal':
+                    # Try any cached Normal board strictly matching dictionary and use_added_words
+                    cached_candidate = pop_any_cached_board(dims, min_word_length=target_min, target_format='Normal', dictionary=target_dict, use_added_words=use_aw)
             except Exception as pop_err:
                 print(f"[RoomManager] Error popping pregenerated board in easy fallback: {pop_err}")
 
@@ -7173,7 +7194,7 @@ class RoomManager:
                         room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bonus_word_len
                     )
                     if not candidate and str(fmt_val).lower() == 'normal':
-                        candidate = pop_any_cached_board(room.board_dimensions, target_format='Normal')
+                        candidate = pop_any_cached_board(room.board_dimensions, min_word_length=m_len, target_format='Normal', dictionary=dict_val, use_added_words=use_aw_val)
                     if not candidate:
                         print(f"[start_next_round] Cache miss for {room_id}. Generating instant emergency fallback board for format '{fmt_val}'.")
                         candidate = get_emergency_fallback_board(
@@ -7657,7 +7678,7 @@ class RoomManager:
                 if getattr(room, 'game_type', None) != 'subanagrams' and room.board and room.all_words and not verify_board_words_consistency(room.board, room.all_words, room.all_words_paths):
                     print(f"[RoomManager] CRITICAL WARNING: Active board and words mismatch detected for {room_id} post-promotion! Auto-healing word list...")
                     _bg = self.board_generator
-                    solved_dict = _bg._solve_board(room.board, dictionary=getattr(room, 'current_dictionary', 'NWL'), min_word_length=display_min)
+                    solved_dict = _bg._solve_board(room.board, dictionary=getattr(room, 'current_dictionary', 'NWL'), min_word_length=display_min, use_added_words=getattr(room, 'use_added_words', False))
                     room.all_words_paths = {w: p for w, p in solved_dict.items() if len(w) >= display_min}
                     room.all_words = set(room.all_words_paths.keys())
 
@@ -8111,12 +8132,24 @@ class RoomManager:
                     room.state = 'active'
                     return room
 
-            # Pop from cached board pool or emergency fallback
-            pre = pop_any_cached_board(room.board_dimensions, target_format=None)
+            # Pop from cached board pool or emergency fallback matching room parameters
+            sp_target = room.spinner_params or getattr(room, 'frozen_revealed_params', None) or {}
+            d_target = sp_target.get('dictionary', 'NWL')
+            use_aw_target = sp_target.get('use_added_words', False) or ('+ AW' in str(d_target).upper())
+            fmt_target = sp_target.get('board_format', 'Normal')
+            m_len_target = sp_target.get('min_word_length', 3)
+            wc_target = sp_target.get('word_count_range', '300-400' if use_aw_target else '100-200')
+            diff_target = sp_target.get('difficulty', 'Medium')
+
+            pre = pop_compatible_cached_board(
+                room.board_dimensions, d_target, fmt_target, m_len_target, use_aw_target
+            )
+            if not pre:
+                pre = pop_any_cached_board(room.board_dimensions, min_word_length=m_len_target, target_format=fmt_target, dictionary=d_target, use_added_words=use_aw_target)
             if not pre:
                 pre = get_emergency_fallback_board(
-                    room.board_dimensions, 'Normal', room.time_limit,
-                    dictionary='NWL', use_added_words=False, target_range='100-200', min_word_length=3, difficulty='Medium'
+                    room.board_dimensions, fmt_target, room.time_limit,
+                    dictionary=d_target, use_added_words=use_aw_target, target_range=wc_target, min_word_length=m_len_target, difficulty=diff_target
                 )
             if pre:
                 if len(pre) >= 9:
@@ -8149,22 +8182,29 @@ class RoomManager:
 
                 room.bonus_word = str(bw_candidate or '').upper().strip()
                 room.previous_bonus_word = room.bonus_word
-                wc_lbl_fib = SpinnerSet.get_factchecked_wc_range(len(room.all_words), use_added_words=raw_aw, dictionary=raw_dict)
+                final_dict = d_target if d_target else raw_dict
+                final_aw = use_aw_target if use_aw_target is not None else raw_aw
+                final_fmt = fmt_target if fmt_target else r_fmt
+                wc_lbl_fib = SpinnerSet.get_factchecked_wc_range(len(room.all_words), use_added_words=final_aw, dictionary=final_dict)
                 room.current_word_count_range = wc_lbl_fib
                 if isinstance(getattr(room, 'spinner_params', None), dict):
                     room.spinner_params['bonus_word_length'] = len(room.bonus_word)
                     room.spinner_params['word_count_range'] = wc_lbl_fib
+                    room.spinner_params['dictionary'] = final_dict
+                    room.spinner_params['use_added_words'] = final_aw
                 if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                     room.frozen_revealed_params['bonus_word_length'] = len(room.bonus_word)
                     room.frozen_revealed_params['word_count_range'] = wc_lbl_fib
+                    room.frozen_revealed_params['dictionary'] = final_dict
+                    room.frozen_revealed_params['use_added_words'] = final_aw
                 room.board = r_board
                 room.bonus_cell = r_bonus_c
                 room.total_words_count = len(room.all_words)
                 room.initial_total_words = room.total_words_count
-                room.current_board_format = r_fmt
-                room.current_dictionary = raw_dict
+                room.current_board_format = final_fmt
+                room.current_dictionary = final_dict
                 room.current_min_length = board_min_l
-                room.use_added_words = raw_aw
+                room.use_added_words = final_aw
                 room.current_difficulty = r_params.get('difficulty', 'Medium')
                 room.current_round = max(1, room.current_round)
                 room.round_start_time = time.time()

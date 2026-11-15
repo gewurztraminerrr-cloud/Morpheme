@@ -314,7 +314,7 @@ def mark_board_hash_used(board_hash, conn=None):
         return True
 
 
-def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, exclude_format=None):
+def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, exclude_format=None, dictionary=None, use_added_words=None):
     if isinstance(dimensions, (tuple, list)):
         if len(dimensions) == 3:
             dimensions = f"{dimensions[0]}x{dimensions[1]}x{dimensions[2]}"
@@ -326,28 +326,54 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
     floor_len = 4 if '4x6' in dimensions else (5 if '5x7' in dimensions else (6 if ('6x8' in dimensions or '3x3x3' in dimensions) else 3))
     min_word_length = max(floor_len, int(min_word_length or floor_len))
 
+    # Normalize dictionary and use_added_words if provided
+    norm_dict = None
+    is_aw = None
+    if dictionary is not None:
+        d_up = str(dictionary).upper()
+        norm_dict = 'CSW' if 'CSW' in d_up else 'NWL'
+        if '+ AW' in d_up or '+AW' in d_up or d_up in ['AW', 'ADDED_WORDS']:
+            is_aw = True
+    if use_added_words is not None:
+        is_aw = bool(use_added_words or is_aw)
+
     conn = None
     try:
         conn = get_db_connection(timeout=60.0, row_factory=sqlite3.Row)
         cursor = conn.cursor()
         
         while True:
-            dim_pattern = f'%"dimensions": "{dimensions}"%'
+            where_clauses = ["param_key LIKE ?"]
+            query_params = [f'%"dimensions": "{dimensions}"%']
+
+            if norm_dict:
+                where_clauses.append("param_key LIKE ?")
+                query_params.append(f'%"dictionary": "{norm_dict}"%')
+
+            if is_aw is True:
+                where_clauses.append("param_key LIKE ?")
+                query_params.append('%"use_added_words": true%')
+            elif is_aw is False:
+                where_clauses.append("param_key LIKE ?")
+                query_params.append('%"use_added_words": false%')
+
             if target_format:
-                fmt_pattern = f'%"board_format": "{target_format}"%'
-                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, fmt_pattern))
-                row = cursor.fetchone()
-                if not row:
-                    fmt_pattern_wild = f'%"board_format": "%{target_format}%"%'
-                    cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, fmt_pattern_wild))
-                    row = cursor.fetchone()
+                where_clauses.append("param_key LIKE ?")
+                query_params.append(f'%"board_format": "{target_format}"%')
             elif exclude_format:
-                ex_pattern = f'%"board_format": "%{exclude_format}%"%'
-                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key NOT LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, ex_pattern))
+                where_clauses.append("param_key NOT LIKE ?")
+                query_params.append(f'%"board_format": "%{exclude_format}%"%')
+
+            where_sql = " AND ".join(where_clauses)
+            cursor.execute(f"SELECT id, param_key, board_json FROM pregenerated_boards WHERE {where_sql} ORDER BY RANDOM() LIMIT 1;", tuple(query_params))
+            row = cursor.fetchone()
+
+            if not row and target_format:
+                # Try wildcard format match
+                query_params[-1] = f'%"board_format": "%{target_format}%"%'
+                cursor.execute(f"SELECT id, param_key, board_json FROM pregenerated_boards WHERE {where_sql} ORDER BY RANDOM() LIMIT 1;", tuple(query_params))
                 row = cursor.fetchone()
-            else:
-                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern,))
-                row = cursor.fetchone()
+
             if not row:
                 break
                 
@@ -363,11 +389,27 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
             if params.get('v') != BOARD_CACHE_VERSION:
                 continue
 
+            # Strict validation against requested dictionary and use_added_words
+            if norm_dict:
+                cached_d = str(params.get('dictionary', 'NWL')).upper().replace('+ AW', '').replace('+AW', '').strip()
+                if cached_d not in ['NWL', 'CSW']: cached_d = 'NWL'
+                if cached_d != norm_dict:
+                    continue
+            if is_aw is not None:
+                cached_aw = bool(params.get('use_added_words', False))
+                if cached_aw != is_aw:
+                    continue
+
             board_json = row['board_json']
             data = json.loads(board_json)
             board = data["board"]
             all_words = data["all_words"]
             
+            # For + AW, word count must strictly be >= 300
+            if is_aw is True and len(all_words) < 300:
+                print(f"[BoardGen] Discarding any_cached board for {dimensions}: +AW requires >= 300 words, got {len(all_words)}")
+                continue
+
             min_l_int = int(min_word_length)
             matching_min_words = sum(1 for w in all_words if len(w) == min_l_int)
             if matching_min_words < 5:

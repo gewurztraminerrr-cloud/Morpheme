@@ -231,10 +231,7 @@ class SpinnerSet:
 
         wc_range = p.get('word_count_range')
 
-        if p.get('_exact_wc_calculated') or p.get('_lock_word_count_range'):
-            # Pre-calculated from an actual solved board; do not randomly reroll
-            pass
-        elif is_24h:
+        if is_24h:
             p['board_format'] = 'Valued Letters'
             wc_range = '300-400'
             p['use_added_words'] = False
@@ -246,28 +243,30 @@ class SpinnerSet:
             # + AW dictionaries MUST ALWAYS be 300-400, 400-500, or 500+ (never 50-100, 100-200, or 200-300)
             if wc_range not in ['300-400', '400-500', '500+']:
                 wc_range = _rng.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-            # For 8L min length with + AW, 300-400 is the reliable high-density target
-            if min_word_length >= 8 and wc_range in ['400-500', '500+']:
+        elif p.get('_exact_wc_calculated') or p.get('_lock_word_count_range'):
+            # Pre-calculated from an actual solved board for standard dictionary
+            if wc_range == '400-500':
                 wc_range = '300-400'
+            elif wc_range == '50-100' and min_word_length != max_len_for_dims:
+                wc_range = '100-200'
         else:
             # Standard NWL and CSW dictionaries:
             # Maximum normal range is 300-400 (NEVER 400-500), plus 1% chance of 500+.
-            # 50-100 is allowed for the top two min word lengths of the board dimension (e.g., 4L & 5L on 4x4).
+            # 50-100 is allowed strictly for the single greatest min word length of the board dimension (e.g. 5L on 4x4, 6L on 4x6, 7L on 5x7, 8L on 6x8/Cube).
+            greatest_min = max_len_for_dims
             if wc_range == '400-500' or not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '500+']:
-                if min_word_length in low_wc_allowed_mins:
-                    wc_range = _rng.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[15, 28, 28, 28, 1])[0]
+                if min_word_length == greatest_min:
+                    wc_range = _rng.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
                 else:
                     wc_range = _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
 
-            # 50-100 is restricted to the top two min lengths for the board dimension
-            if wc_range == '50-100' and min_word_length not in low_wc_allowed_mins:
+            # 50-100 is restricted strictly to the single greatest min length for the board dimension
+            if wc_range == '50-100' and min_word_length != greatest_min:
                 wc_range = _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
 
             # Preserve the 1% 500+ roll by adjusting min_word_length down to floor_len if needed
             if wc_range == '500+' and min_word_length > floor_len:
                 min_word_length = floor_len
-            elif min_word_length >= 8 and wc_range == '300-400':
-                wc_range = _rng.choices(['50-100', '100-200', '200-300'], weights=[20, 40, 40])[0]
 
         p['min_word_length'] = min_word_length
         p['word_count_range'] = wc_range
@@ -311,9 +310,8 @@ class SpinnerSet:
             is_aw_effective = ('+ AW' in dictionary or '+AW' in dictionary) and not is_24h
             use_added_words = is_aw_effective
 
-            # 3. Difficulty (25% Easy | 50% Medium | 25% Hard) with percentage in brackets
-            base_diff = _rng.choices(['Easy', 'Medium', 'Hard'], weights=[25, 50, 25])[0]
-            difficulty = SpinnerSet.format_difficulty_with_pct(base_diff)
+            # 3. Difficulty (25% Easy | 50% Medium | 25% Hard, 21% Hard on 6x8/Cube) with percentage in brackets
+            difficulty = SpinnerSet._spin_difficulty(board_dimensions, min_word_length)
 
             # 4. Word Count Range (ALWAYS 300-400 for 24h rooms)
             if is_24h:
@@ -322,10 +320,8 @@ class SpinnerSet:
                     min_word_length = allowed_mins[0]
             elif is_aw_effective:
                 wc_range = _rng.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-                if min_word_length >= 8 and wc_range in ['400-500', '500+']:
-                    wc_range = '300-400'
             else:
-                wc_range = SpinnerSet._spin_word_count(dictionary, min_word_length, base_diff, dims, use_added_words=False)
+                wc_range = SpinnerSet._spin_word_count(dictionary, min_word_length, SpinnerSet.strip_difficulty_pct(difficulty), dims, use_added_words=False)
                 if wc_range == '500+' and min_word_length > allowed_mins[0]:
                     min_word_length = allowed_mins[0]
 
@@ -334,9 +330,9 @@ class SpinnerSet:
             prev_normal_streak = int(previous_params.get('normal_streak', 0)) if isinstance(previous_params, dict) else 0
             normal_streak = (prev_normal_streak + 1) if (board_format and board_format.lower() == 'normal') else 0
 
-            # 6. Bonus Word Length (always >= min_word_length)
-            valid_bw = [l for l in [6, 7, 8, 9, 10] if l >= min_word_length] or [max(min_word_length, 6)]
-            bw_len = _rng.choice(valid_bw)
+            # 6. Bonus Word Length (20% each for 6L, 7L, 8L, 9L, 10L; automatically capped to >= min_word_length)
+            rolled_bw = _rng.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
+            bw_len = max(min_word_length, rolled_bw)
 
             res = {
                 'min_word_length': min_word_length,
@@ -371,9 +367,14 @@ class SpinnerSet:
 
     @staticmethod
     def _spin_difficulty(board_dimensions='4x4', min_word_length=3):
-        """Balanced difficulty selection: 25% Easy, 50% Medium, 25% Hard with percentage in brackets."""
-        choices = ['Easy', 'Medium', 'Hard']
-        weights = [25, 50, 25]
+        """Balanced difficulty selection: 25% Easy, 50% Medium, 25% Hard (21% on 6x8/Cube) with percentage in brackets."""
+        dims = str(board_dimensions).lower().replace(" ", "")
+        if '6x8' in dims or '3x3x3' in dims:
+            choices = ['Easy', 'Medium', 'Hard']
+            weights = [25, 50, 21]
+        else:
+            choices = ['Easy', 'Medium', 'Hard']
+            weights = [25, 50, 25]
         return SpinnerSet.format_difficulty_with_pct(_rng.choices(choices, weights=weights)[0])
 
     @staticmethod
@@ -385,20 +386,16 @@ class SpinnerSet:
         except Exception:
             mwl = 3
         if is_aw:
-            if mwl >= 8:
-                return '300-400'
             choices = ['300-400', '400-500', '500+']
             weights = [33, 33, 34]
             return _rng.choices(choices, weights=weights)[0]
         else:
             allowed_mins = SpinnerSet.get_allowed_min_lengths(board_dimensions)
-            low_wc_allowed_mins = allowed_mins[1:]  # Top two min lengths per dimension (e.g. 4L & 5L for 4x4)
-            if mwl >= 8:
-                choices = ['50-100', '100-200', '200-300', '500+']
-                weights = [20, 39, 40, 1]
-            elif mwl in low_wc_allowed_mins:
+            greatest_min = allowed_mins[-1]
+            if mwl == greatest_min:
+                # 50-100 is allowed strictly for the single greatest min-length: 9%
                 choices = ['50-100', '100-200', '200-300', '300-400', '500+']
-                weights = [15, 28, 28, 28, 1]
+                weights = [9, 30, 30, 30, 1]
             else:
                 choices = ['100-200', '200-300', '300-400', '500+']
                 weights = [33, 33, 33, 1]
@@ -413,7 +410,7 @@ class SpinnerSet:
 
     @staticmethod
     def _spin_board_format(is_24h=False, dimensions='4x4', previous_params=None):
-        """Original board format weights with repetition safeguard for rare modifiers."""
+        """Original board format weights from Spinner Set Odds window."""
         if is_24h:
             return 'Valued Letters'
 
@@ -421,25 +418,22 @@ class SpinnerSet:
             return 'Normal'
 
         prev_fmt = None
-        normal_streak = 0
         if isinstance(previous_params, dict):
             prev_fmt = str(previous_params.get('board_format', '')).strip()
-            normal_streak = int(previous_params.get('normal_streak', 0))
-            if prev_fmt.lower() != 'normal':
-                normal_streak = 0
+
+        # Odds window exact weights:
+        # Normal 66%, Checkerboard 12%, Equality Freq 4%,
+        # Bounce 2%, Penalty 2%, Mania 2%, Either/Or 2%, Bonus Letter 2%, Valued Letters 2%, Density 2%, Rotation 2%,
+        # Double 1%, Triple 1%
+        formats = [
+            'Normal', 'Checkerboard', 'Equality Freq', 'Bounce', 'Density',
+            'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters',
+            'Rotation', 'Double', 'Triple'
+        ]
+        weights = [66, 12, 4, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
 
         for _ in range(25):
-            # If Normal has appeared 2 or more times consecutively, force a non-Normal format
-            if normal_streak >= 2:
-                result = _rng.choices(
-                    ['Checkerboard', 'Equality Freq', 'Bounce', 'Density', 'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
-                    weights=[12, 4, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
-                )[0]
-            else:
-                result = _rng.choices(
-                    ['Normal', 'Checkerboard', 'Equality Freq', 'Bounce', 'Density', 'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
-                    weights=[66, 12, 4, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
-                )[0]
+            result = _rng.choices(formats, weights=weights)[0]
 
             if result == 'Bounce':
                 result = _rng.choices(['Bounce 1x', 'Bounce 2x', 'Bounce 3x'], weights=[33, 33, 34])[0]
@@ -452,15 +446,12 @@ class SpinnerSet:
                     mania_letter = _rng.choice(['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'])
                 result = f'{mania_letter} Mania'
 
-            # Strict anti-repetition safeguard:
+            # Strict anti-repetition safeguard: Do not repeat rare non-Normal format back-to-back
             if prev_fmt:
-                # 1. Do not repeat rare non-Normal format back-to-back
                 if prev_fmt.lower() != 'normal' and result.strip().lower() == prev_fmt.strip().lower():
                     continue
-                # 2. Never repeat ANY Mania format back-to-back (prevents 2 or 3 Manias in a row)
                 if 'mania' in result.lower() and 'mania' in prev_fmt.lower():
                     continue
-                # 3. Never repeat Bounce back-to-back
                 if 'bounce' in result.lower() and 'bounce' in prev_fmt.lower():
                     continue
             break
@@ -515,18 +506,29 @@ class SpinnerSet:
     @staticmethod
     def get_factchecked_wc_range(count, use_added_words=False, dictionary=None):
         """Map actual word count to the exact corresponding standard range bucket.
-           Standard buckets: 50-100, 100-200, 200-300, 300-400, 400-500, 500+
-           Truthful and factual: unconditionally maps the actual integer count.
+           Standard buckets:
+             - Standard Dictionaries (NWL & CSW): 50-100, 100-200, 200-300, 300-400, 500+
+               (400-500 is never allowed on standard dictionaries)
+             - Extended Dictionaries (+ AW): 300-400, 400-500, 500+
+               (Extended dictionaries strictly only allow 300-400, 400-500, and 500+)
         """
         try:
             count = int(count)
         except (ValueError, TypeError):
             count = 0
 
+        d_str = str(dictionary or '').upper()
+        is_aw = bool(use_added_words) or ('+ AW' in d_str) or ('+AW' in d_str) or (d_str in ['AW', 'ADDED_WORDS', 'ALL'])
+
+        if is_aw:
+            if count >= 500:
+                return '500+'
+            if count >= 400:
+                return '400-500'
+            return '300-400'
+
         if count >= 500:
             return '500+'
-        if count >= 400:
-            return '400-500'
         if count >= 300:
             return '300-400'
         if count >= 200:

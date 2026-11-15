@@ -7923,11 +7923,19 @@ def get_room_state(room_id):
                                         room.next_round_bonus = None
                                         room.next_round_format = None
                                 else:
-                                    from board_generator import pop_any_cached_board
+                                    from board_generator import pop_any_cached_board, pop_compatible_cached_board
                                     from game_room import get_emergency_fallback_board
-                                    pre_next = pop_any_cached_board(room.board_dimensions, target_format=None)
+                                    sp_nxt = getattr(room, 'next_spinner_params', None) or getattr(room, 'spinner_params', None) or {}
+                                    nd_dict = sp_nxt.get('dictionary', 'NWL')
+                                    nd_aw = sp_nxt.get('use_added_words', False) or ('+ AW' in str(nd_dict).upper())
+                                    nd_fmt = sp_nxt.get('board_format', 'Normal')
+                                    nd_min = sp_nxt.get('min_word_length', 3)
+                                    nd_wc = sp_nxt.get('word_count_range', '300-400' if nd_aw else '100-200')
+                                    pre_next = pop_compatible_cached_board(room.board_dimensions, nd_dict, nd_fmt, nd_min, nd_aw)
+                                    if not pre_next and nd_fmt == 'Normal':
+                                        pre_next = pop_any_cached_board(room.board_dimensions, min_word_length=nd_min, target_format='Normal', dictionary=nd_dict, use_added_words=nd_aw)
                                     if not pre_next:
-                                        pre_next = get_emergency_fallback_board(room.board_dimensions, 'Normal', room.time_limit)
+                                        pre_next = get_emergency_fallback_board(room.board_dimensions, nd_fmt, room.time_limit, dictionary=nd_dict, use_added_words=nd_aw, target_range=nd_wc, min_word_length=nd_min)
                                     if pre_next:
                                         if len(pre_next) >= 9:
                                             nb, nw, nc, nf, np, nr, nbw, _, nparams = pre_next
