@@ -1774,34 +1774,34 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     grid-column: 1 / -1 !important;
     grid-row: 1 / -1 !important;
     width: 100% !important;
-    max-width: 440px !important;
+    max-width: min(94%, 640px) !important;
     min-height: 240px;
     color: var(--text-primary);
     background: rgba(10, 15, 30, 0.85);
     border: 2px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.2);
     border-radius: 16px;
     backdrop-filter: blur(10px);
-    padding: 20px 16px;
+    padding: 24px 28px !important;
     box-sizing: border-box !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     text-align: center !important;
     overflow: hidden;
-    margin: 0 auto !important;
+    margin: 32px auto 20px auto !important;
 }
 .glow-spinner {
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border: 3px solid rgba(255, 255, 255, 0.05);
     border-top: 3px solid var(--accent-color);
     border-right: 3px solid var(--accent-color);
     border-radius: 50%;
     animation: spin-glow 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-    margin-bottom: 14px;
+    margin-bottom: 16px;
     flex-shrink: 0;
 }
 .glow-title {
     font-weight: 800;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--text-primary);
@@ -1810,17 +1810,18 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     white-space: normal;
     word-break: break-word;
     overflow-wrap: break-word;
+    width: 100%;
     max-width: 100%;
-    padding: 0 6px;
-    line-height: 1.35;
+    padding: 0 12px;
+    line-height: 1.4;
 }
 .why-text {
-    font-size: 0.72rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     text-align: center;
     width: 100%;
-    max-width: 90%;
-    margin-top: 12px;
+    max-width: 100%;
+    margin-top: 14px;
     line-height: 1.45;
     font-weight: 400;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -1830,11 +1831,11 @@ body.is-subanagrams .timer-display #transpose-board-btn {
 }
 .status-ticker {
     font-family: monospace;
-    font-size: 0.7rem;
+    font-size: 0.8rem;
     color: var(--accent-color);
-    margin-top: 10px;
+    margin-top: 14px;
     background: rgba(0, 0, 0, 0.4);
-    padding: 6px 12px;
+    padding: 8px 18px;
     border-radius: 15px;
     border: 1px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.15);
     font-weight: 600;
@@ -1842,9 +1843,11 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     white-space: normal;
     word-break: break-word;
     overflow-wrap: break-word;
-    max-width: 92%;
+    width: auto;
+    max-width: 100%;
     box-sizing: border-box;
-    line-height: 1.35;
+    line-height: 1.4;
+    display: inline-block;
 }
 .loading-watchdog-actions {
     display: none;
@@ -1919,11 +1922,17 @@ body.is-subanagrams .timer-display #transpose-board-btn {
         margin: 0 auto !important;
         float: none !important;
     }
-    .loading-container { padding: 14px 10px; min-height: 190px; max-width: 100% !important; width: 100% !important; }
-    .glow-spinner { width: 32px; height: 32px; border-width: 2px; margin-bottom: 10px; }
-    .glow-title { font-size: 0.82rem; letter-spacing: 1px; white-space: normal; }
-    .status-ticker { font-size: 0.62rem; margin-top: 8px; padding: 4px 8px; white-space: normal; max-width: 96%; }
-    .why-text { font-size: 0.62rem; margin-top: 8px; padding-top: 8px; max-width: 96%; }
+    .loading-container { 
+        padding: 18px 16px !important; 
+        min-height: 190px !important; 
+        max-width: 100% !important; 
+        width: 100% !important; 
+        margin: 20px auto 14px auto !important; 
+    }
+    .glow-spinner { width: 34px; height: 34px; border-width: 2.5px; margin-bottom: 12px; }
+    .glow-title { font-size: 0.92rem; letter-spacing: 1px; white-space: normal; padding: 0 8px; width: 100%; max-width: 100%; }
+    .status-ticker { font-size: 0.72rem; margin-top: 10px; padding: 6px 14px; white-space: normal; max-width: 100%; width: auto; }
+    .why-text { font-size: 0.72rem; margin-top: 10px; padding-top: 10px; max-width: 100%; width: 100%; }
 }
 
 :root {
@@ -17338,11 +17347,25 @@ body.is-mobile #page-settings .theme-selector-grid {
     align-items: center !important;
     justify-content: center !important;
     width: 100% !important;
-    max-width: 440px !important;
+    max-width: min(94%, 640px) !important;
     min-height: 200px !important;
-    margin: 0 auto !important;
+    margin: 32px auto 20px auto !important;
+    padding: 24px 28px !important;
     box-sizing: border-box !important;
     text-align: center !important;
+}
+
+@media (max-width: 768px) {
+    .board-panel #game-board.game-board-loading .loading-container,
+    .board-panel.full-bleed-mobile #game-board.game-board-loading .loading-container,
+    #game-board.game-board-loading .loading-container,
+    .loading-container {
+        padding: 18px 16px !important;
+        min-height: 190px !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 20px auto 14px auto !important;
+    }
 }
 
 /* --- Tool Word Definition Popover --- */

@@ -1415,7 +1415,7 @@ function ensureLoadingCardStyles() {
         boardEl.style.removeProperty('--board-rows');
         boardEl.style.width = '100%';
         boardEl.style.maxWidth = '100%';
-        boardEl.style.margin = '0 auto';
+        boardEl.style.margin = '20px auto 10px auto';
         boardEl.style.padding = '16px 8px';
         boardEl.style.background = 'transparent';
         boardEl.style.border = 'none';

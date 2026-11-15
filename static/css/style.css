@@ -9845,6 +9845,12 @@ main.pages,
     letter-spacing: 1.5px !important;
     color: #ffffff !important;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8) !important;
+    margin-top: 14px !important;
+    max-width: 90vw !important;
+    padding: 0 20px !important;
+    text-align: center !important;
+    line-height: 1.4 !important;
+    box-sizing: border-box !important;
 }
 
 @keyframes globalSpin {
