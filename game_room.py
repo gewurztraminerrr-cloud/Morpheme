@@ -1928,7 +1928,7 @@ class GameRoom:
         if fallback:
             fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
             _bg = _room_manager_instance.board_generator if (_room_manager_instance and hasattr(_room_manager_instance, 'board_generator')) else BoardGenerator()
-            _rep, _rw, _rp = sync_board_checkerboard_and_resolve(_bg, fb, fmt_val, f_min_l, _dict, _use_aw, fc)
+            _rep, _rw, _rp = sync_board_checkerboard_and_resolve(_bg, fb, fmt_val, f_min_l, dict_val, use_aw_val, fc)
             if _rep and _rw:
                 fw, fp = _rw, _rp
             print(f"[GameRoom] ensure_next_board_ready: Popped fallback cached board for {self.room_id}")
@@ -1951,19 +1951,7 @@ class GameRoom:
                 else:
                     dict_val = clean_dict
                 
-                if is_aw_effective or use_aw_val or '+ AW' in str(dict_val).upper():
-                    if actual_wc >= 500: wc_label = '500+'
-                    elif actual_wc >= 400: wc_label = '400-500'
-                    else: wc_label = '300-400'
-                else:
-                    wc_label = fparams.get('word_count_range')
-                    if not wc_label:
-                        if actual_wc < 100: wc_label = '50-100'
-                        elif actual_wc < 200: wc_label = '100-200'
-                        elif actual_wc < 300: wc_label = '200-300'
-                        elif actual_wc < 400: wc_label = '300-400'
-                        elif actual_wc < 500: wc_label = '400-500'
-                        else: wc_label = '500+'
+                wc_label = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=(is_aw_effective or use_aw_val), dictionary=dict_val)
                 
                 new_sp = {
                     'dictionary': dict_val,
@@ -2004,7 +1992,7 @@ class GameRoom:
         e_dict = source_sp.get('dictionary', 'NWL')
         e_use_aw = source_sp.get('use_added_words', False)
         e_wc = source_sp.get('word_count_range')
-        if not e_wc or (e_use_aw and e_wc not in ['300-400', '400-500', '500+']):
+        if not e_wc:
             e_wc = SpinnerSet._spin_word_count(e_dict, 6 if '6x8' in str(self.board_dimensions) else 3, 'Medium', self.board_dimensions, use_added_words=e_use_aw)
         
         e_min_len = source_sp.get('min_word_length')
@@ -2640,9 +2628,8 @@ class GameRoom:
             e_dict = sp.get('dictionary', 'NWL')
             e_use_aw = sp.get('use_added_words', False) or '+ AW' in str(e_dict).upper() or '+AW' in str(e_dict).upper()
             e_wc = sp.get('word_count_range')
-            if not e_wc or (e_use_aw and e_wc not in ['300-400', '400-500', '500+']):
-                import random
-                e_wc = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0] if e_use_aw else '100-200'
+            if not e_wc:
+                e_wc = '100-200'
             e_min_len = sp.get('min_word_length')
             e_diff = sp.get('difficulty', 'Medium')
             
@@ -2685,21 +2672,10 @@ class GameRoom:
             fp = {w: p for w, p in fp.items() if w in sampled_set}
 
         actual_wc = len(fw)
-        if use_aw_val or '+ AW' in str(dict_val).upper():
-            if declared_target_wc and declared_target_wc in ['300-400', '400-500', '500+']:
-                wc_label = declared_target_wc
-            elif actual_wc >= 500: wc_label = '500+'
-            elif actual_wc >= 400: wc_label = '400-500'
-            else: wc_label = '300-400'
-        elif declared_target_wc:
+        if declared_target_wc and is_board_count_valid(actual_wc, declared_target_wc):
             wc_label = declared_target_wc
         else:
-            if actual_wc < 100: wc_label = '50-100'
-            elif actual_wc < 200: wc_label = '100-200'
-            elif actual_wc < 300: wc_label = '200-300'
-            elif actual_wc < 400: wc_label = '300-400'
-            elif actual_wc < 500: wc_label = '400-500'
-            else: wc_label = '500+'
+            wc_label = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val, dictionary=dict_val)
 
         new_sp = {
             'dictionary': dict_val,
@@ -2707,7 +2683,7 @@ class GameRoom:
             'word_count_range': wc_label,
             'board_format': ff or sp.get('board_format', 'Normal'),
             'min_word_length': fparams.get('min_word_length') or sp.get('min_word_length', 3),
-            'bonus_word_length': fparams.get('bonus_word_len') or len(fbw) if fbw else 6,
+            'bonus_word_length': len(fbw) if fbw else (fparams.get('bonus_word_len') or 6),
             'use_added_words': use_aw_val,
             'board_dimensions': self.board_dimensions,
             'time_limit': self.time_limit,
@@ -2724,6 +2700,7 @@ class GameRoom:
         self.next_round_spinner_params = new_sp
         if getattr(self, 'frozen_revealed_params', None) and isinstance(self.frozen_revealed_params, dict):
             self.frozen_revealed_params['word_count_range'] = new_sp['word_count_range']
+            self.frozen_revealed_params['bonus_word_length'] = new_sp['bonus_word_length']
         self.spinner_params_generated = True
         self.spinner_params_revealed = True
         self._reveal_sync_complete = True
@@ -3085,6 +3062,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 fb_params
             )
         
+    from spinner_set import SpinnerSet
     floor_l = 3
     if '4x6' in dimensions:
         floor_l = 4
@@ -3164,6 +3142,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         elif not is_24h:
             target_range_resolved = '100-200'
         
+        from spinner_set import SpinnerSet
         floor_l = 3 if '4x4' in dimensions else (4 if '4x6' in dimensions else (5 if '5x7' in dimensions else 6))
 
         # --- CACHE-FIRST FAST PATH ---
@@ -3220,25 +3199,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                                 print(f"[get_emergency_fallback_board] Cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
                                 continue
                                 
-                            if is_aw or caw or '+ AW' in str(cdict).upper():
-                                if actual_wc >= 500: ctr_resolved = '500+'
-                                elif actual_wc >= 400: ctr_resolved = '400-500'
-                                else: ctr_resolved = '300-400'
-                            else:
-                                if actual_wc < 100: ctr_resolved = '50-100'
-                                elif actual_wc < 200: ctr_resolved = '100-200'
-                                elif actual_wc < 300: ctr_resolved = '200-300'
-                                elif actual_wc < 400: ctr_resolved = '300-400'
-                                elif actual_wc < 500: ctr_resolved = '400-500'
-                                else: ctr_resolved = '500+'
-                            
-                            # Enforce standard dictionaries for word counts < 300
+                            ctr_resolved = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=(is_aw or caw), dictionary=cdict)
                             caw_resolved = caw
                             cdict_resolved = cdict
-                            if actual_wc < 300:
-                                caw_resolved = False
-                                cdict_resolved = str(cdict).replace('+ AW', '').replace('+AW', '').strip()
-                                if cdict_resolved == 'AW': cdict_resolved = 'NWL'
+                            if cdict_resolved == 'AW': cdict_resolved = 'NWL'
 
                             eparams_dict = {
                                 'min_word_length': final_min,
@@ -3283,27 +3247,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                         print(f"[get_emergency_fallback_board] Ultimate cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
                     else:
                         is_aw_ult = use_added_words or params.get('use_added_words', False) or '+ AW' in str(params.get('dictionary', '')).upper() or '+ AW' in str(dictionary).upper()
-                        if is_aw_ult:
-                            if actual_wc >= 500: ctr = '500+'
-                            elif actual_wc >= 400: ctr = '400-500'
-                            else: ctr = '300-400'
-                        else:
-                            if actual_wc < 100: ctr = '50-100'
-                            elif actual_wc < 200: ctr = '100-200'
-                            elif actual_wc < 300: ctr = '200-300'
-                            elif actual_wc < 400: ctr = '300-400'
-                            elif actual_wc < 500: ctr = '400-500'
-                            else: ctr = '500+'
-                        
-                        # Enforce standard dictionaries for word counts < 300
-                        use_aw_val = params.get('use_added_words', False)
-                        dict_val = params.get('dictionary', 'NWL')
-                        if actual_wc < 300:
-                            use_aw_val = False
-                            dict_val = str(dict_val).replace('+ AW', '').replace('+AW', '').strip()
-                            if dict_val == 'AW': dict_val = 'NWL'
-                        params['use_added_words'] = use_aw_val
-                        params['dictionary'] = dict_val
+                        ctr = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=is_aw_ult, dictionary=params.get('dictionary', dictionary))
+                        params['use_added_words'] = is_aw_ult
+                        params['dictionary'] = params.get('dictionary', dictionary)
                         params['min_word_length'] = final_min
                         params['word_count_range'] = ctr
                         
@@ -3335,7 +3281,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             l_b, l_w, l_c, l_f, l_p, l_r = live_res[:6]
             l_bw = live_res[6] if len(live_res) >= 7 else (l_w[0] if l_w else 'PLANETS')
             l_w_filt = [w for w in (l_w or []) if len(w) >= min_word_length]
-            min_required = 300 if is_aw else 15
+            min_required = 15
             if len(l_w_filt) >= min_required:
                 # If target_range_resolved was provided and generated board exceeded max_accept, sample down
                 if False and max_accept < 99999 and len(l_w_filt) > max_accept:  # never truncate valid words
@@ -3346,17 +3292,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     l_p = {w: p for w, p in l_p.items() if w in sampled_set}
                 l_p_filt = {w: p for w, p in l_p.items() if w in l_w_filt}
 
-                if is_aw:
-                    if len(l_w_filt) >= 500: target_range_resolved = '500+'
-                    elif len(l_w_filt) >= 400: target_range_resolved = '400-500'
-                    else: target_range_resolved = '300-400'
-                else:
-                    if len(l_w_filt) < 100: target_range_resolved = '50-100'
-                    elif len(l_w_filt) < 200: target_range_resolved = '100-200'
-                    elif len(l_w_filt) < 300: target_range_resolved = '200-300'
-                    elif len(l_w_filt) < 400: target_range_resolved = '300-400'
-                    elif len(l_w_filt) < 500: target_range_resolved = '400-500'
-                    else: target_range_resolved = '500+'
+                target_range_resolved = SpinnerSet.get_factchecked_wc_range(len(l_w_filt), use_added_words=is_aw, dictionary=dictionary)
 
                 eparams = {
                     'min_word_length': min_word_length,
@@ -3448,7 +3384,6 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             words_filtered.append(bonus_word)
             paths_filtered[bonus_word] = [bonus_cell or (0, 0)]
 
-    from spinner_set import SpinnerSet
     actual_cnt = len(words_filtered)
     target_range_resolved = SpinnerSet.get_factchecked_wc_range(actual_cnt, use_added_words=use_added_words, dictionary=dictionary)
 
@@ -3846,7 +3781,7 @@ class RoomManager:
                                         existing_room.all_words = set(existing_room.all_words_paths.keys())
 
                                         wc_cnt = len(existing_room.all_words)
-                                        wc_lbl = self._get_factchecked_wc_range(wc_cnt, use_added_words=raw_aw, dictionary=raw_dict)
+                                        wc_lbl = SpinnerSet.get_factchecked_wc_range(wc_cnt, use_added_words=raw_aw, dictionary=raw_dict)
 
                                         existing_room.spinner_params = {
                                             'dictionary': raw_dict,
@@ -3884,6 +3819,11 @@ class RoomManager:
 
                                         existing_room.bonus_word = str(bw_candidate or '').upper().strip()
                                         existing_room.previous_bonus_word = existing_room.bonus_word
+                                        # CRITICAL: Always keep spinner_params bonus_word_length and word_count_range strictly synchronized with the actual board!
+                                        existing_room.spinner_params['bonus_word_length'] = len(existing_room.bonus_word)
+                                        existing_room.spinner_params['word_count_range'] = wc_lbl
+                                        import copy
+                                        existing_room.frozen_revealed_params = copy.deepcopy(existing_room.spinner_params)
                                         existing_room.board = r_board
                                         existing_room.bonus_cell = r_bonus_c
                                         existing_room.total_words_count = len(existing_room.all_words)
@@ -4233,7 +4173,7 @@ class RoomManager:
 
                             # Derive truthful word count range label
                             wc_cnt = len(room.all_words)
-                            wc_lbl = self._get_factchecked_wc_range(wc_cnt, use_added_words=raw_aw, dictionary=raw_dict)
+                            wc_lbl = SpinnerSet.get_factchecked_wc_range(wc_cnt, use_added_words=raw_aw, dictionary=raw_dict)
 
                             # Construct spinner params ONCE from exact board parameters
                             room.spinner_params = {
@@ -4272,6 +4212,11 @@ class RoomManager:
 
                             room.bonus_word = str(bw_candidate or '').upper().strip()
                             room.previous_bonus_word = room.bonus_word
+                            # CRITICAL: Always keep spinner_params bonus_word_length and word_count_range strictly synchronized with the actual board!
+                            room.spinner_params['bonus_word_length'] = len(room.bonus_word)
+                            room.spinner_params['word_count_range'] = wc_lbl
+                            import copy
+                            room.frozen_revealed_params = copy.deepcopy(room.spinner_params)
                             room.board = r_board
                             room.bonus_cell = r_bonus_c
                             room.total_words_count = len(room.all_words)
@@ -4969,8 +4914,6 @@ class RoomManager:
             # Once params are locked (revealed during intermission), do NOT mutate them.
             if not getattr(room, 'spinner_params_revealed', False):
                 room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, room.board_dimensions, is_24h)
-            if getattr(room, 'is_solo', False) and room.game_type != 'subanagrams' and not getattr(room, 'locked_solo_params', None) and isinstance(room.spinner_params, dict):
-                room.locked_solo_params = copy.deepcopy(room.spinner_params)  # PREFACE #23
             
             # GET BONUS WORD (Use override if available, else roll new)
             if bonus_word_override:
@@ -5308,12 +5251,7 @@ class RoomManager:
             elif isinstance(room.spinner_params, dict) and getattr(room, '_spinner_params_locked', False):
                 _declared_sr = room.spinner_params.get('word_count_range')
 
-            if _use_aw_val and _declared_sr not in ['300-400', '400-500', '500+']:
-                _declared_sr = None
-
-            _final_wc_sr = _declared_sr or _real_wc_sr
-            if _use_aw_val and _final_wc_sr not in ['300-400', '400-500', '500+']:
-                _final_wc_sr = '300-400'
+            _final_wc_sr = _declared_sr if (_declared_sr and is_board_count_valid(_actual_wc, _declared_sr)) else _real_wc_sr
 
             room.current_word_count_range = _final_wc_sr
             if isinstance(room.spinner_params, dict):
@@ -5352,7 +5290,12 @@ class RoomManager:
 
             if final_bonus_word:
                 room.bonus_word = final_bonus_word
-                room.spinner_params['bonus_word_length'] = len(final_bonus_word)
+            if room.bonus_word:
+                actual_bw_len = len(room.bonus_word)
+                if isinstance(room.spinner_params, dict):
+                    room.spinner_params['bonus_word_length'] = actual_bw_len
+                if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                    room.frozen_revealed_params['bonus_word_length'] = actual_bw_len
 
             print(f"[RoomManager] ROUND {room.current_round} START for {room_id}. Words found: {len(all_words)}")
             with open(DEBUG_FLOW_PATH, 'a') as f:
@@ -5723,11 +5666,6 @@ class RoomManager:
                     # Generate new parameters
                     if room.game_type == 'subanagrams':
                         new_params = SpinnerSet.generate_subanagrams_params(previous_params=room.spinner_params)
-                    elif getattr(room, 'is_solo', False) and getattr(room, 'locked_solo_params', None):
-                        # PREFACE #23: Solo repeats the very same parameters every round until exit.
-                        import copy as _cp2
-                        new_params = _cp2.deepcopy(room.locked_solo_params)
-                        new_params['generated_at'] = time.time()
                     elif getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                         initial_solo_params = room.initial_solo_params
                         dict_choice = initial_solo_params.get('dictionary', 'random')
@@ -5787,7 +5725,7 @@ class RoomManager:
                             
                         # 4. Resolve Board Format
                         if board_fmt == 'random':
-                            resolved_board_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=room.board_dimensions)
+                            resolved_board_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=room.board_dimensions, previous_params=room.spinner_params)
                         else:
                             resolved_board_format = board_fmt
 
@@ -5811,9 +5749,6 @@ class RoomManager:
                     # Metadata: Ensure dimensions and time limits are included for the reveal animation
                     new_params['board_dimensions'] = room.board_dimensions
                     new_params['time_limit'] = room.time_limit
-                    if getattr(room, 'is_solo', False) and room.game_type != 'subanagrams' and not getattr(room, 'locked_solo_params', None):
-                        import copy as _cp
-                        room.locked_solo_params = _cp.deepcopy(new_params)
 
                     if room.game_type == 'subanagrams':
                         room.next_spinner_params = new_params
@@ -5895,15 +5830,7 @@ class RoomManager:
                                         # FIX: Update new_params word_count_range with ACTUAL count (not target)
                                         # so frozen_revealed_params and the Spinner Set show the real board size.
                                         is_aw_eff = new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper()
-                                        if is_aw_eff:
-                                            actual_wc_range_exact = '300-400' if actual_cnt < 400 else ('400-500' if actual_cnt < 500 else '500+')
-                                        else:
-                                            if actual_cnt < 100: actual_wc_range_exact = '50-100'
-                                            elif actual_cnt < 200: actual_wc_range_exact = '100-200'
-                                            elif actual_cnt < 300: actual_wc_range_exact = '200-300'
-                                            elif actual_cnt < 400: actual_wc_range_exact = '300-400'
-                                            elif actual_cnt < 500: actual_wc_range_exact = '400-500'
-                                            else: actual_wc_range_exact = '500+'
+                                        actual_wc_range_exact = SpinnerSet.get_factchecked_wc_range(actual_cnt, use_added_words=is_aw_eff, dictionary=new_params.get('dictionary', 'NWL'))
                                         new_params['word_count_range'] = actual_wc_range_exact
                                         cached_board_data = (board, fw_filtered, bonus_cell, board_format_ret, {w: p for w, p in all_words_dict.items() if len(w) >= f_min_l}, ratio, final_bonus_word, new_params)
                                         print(f"[RoomManager] Solo exact cache hit for key: {exact_key[:80]}...")
@@ -6885,10 +6812,8 @@ class RoomManager:
                     planned_wc = (
                         (target_room.frozen_revealed_params.get('word_count_range') if getattr(target_room, 'frozen_revealed_params', None) else None)
                         or (target_room.next_spinner_params.get('word_count_range') if getattr(target_room, 'next_spinner_params', None) else None)
-                        or ('300-400' if use_aw_flag else '100-200')
+                        or '100-200'
                     )
-                    if use_aw_flag and planned_wc not in ['300-400', '400-500', '500+']:
-                        planned_wc = '300-400'
                     max_cap = None
                     if planned_wc == '50-100': max_cap = 99
                     elif planned_wc == '100-200': max_cap = 199
@@ -7750,6 +7675,14 @@ class RoomManager:
                     else:
                         current_bw = self._get_bonus_word(length=max(6, bw_l), dictionary=dict_val, alternating=('checkerboard' in str(room.current_board_format).lower()))
                 room.bonus_word = str(current_bw or '').upper().strip()
+                if room.bonus_word:
+                    actual_bw_len = len(room.bonus_word)
+                    if isinstance(room.spinner_params, dict):
+                        room.spinner_params['bonus_word_length'] = actual_bw_len
+                    if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                        room.frozen_revealed_params['bonus_word_length'] = actual_bw_len
+                    if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
+                        room.next_spinner_params['bonus_word_length'] = actual_bw_len
                 
                 room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
 
@@ -7856,12 +7789,7 @@ class RoomManager:
                 if not declared_wc and active_params:
                     declared_wc = active_params.get('word_count_range')
 
-                if _use_aw and declared_wc not in ['300-400', '400-500', '500+']:
-                    declared_wc = None
-
-                final_wc = declared_wc or real_wc
-                if _use_aw and final_wc not in ['300-400', '400-500', '500+']:
-                    final_wc = '300-400'
+                final_wc = declared_wc if (declared_wc and is_board_count_valid(wc_cnt, declared_wc)) else real_wc
 
                 room.current_word_count_range = final_wc
                 if isinstance(room.spinner_params, dict):
@@ -8180,7 +8108,7 @@ class RoomManager:
                     return room
 
             # Pop from cached board pool or emergency fallback
-            pre = pop_any_cached_board(room.board_dimensions, target_format='Normal')
+            pre = pop_any_cached_board(room.board_dimensions, target_format=None)
             if not pre:
                 pre = get_emergency_fallback_board(
                     room.board_dimensions, 'Normal', room.time_limit,
@@ -8217,6 +8145,14 @@ class RoomManager:
 
                 room.bonus_word = str(bw_candidate or '').upper().strip()
                 room.previous_bonus_word = room.bonus_word
+                wc_lbl_fib = SpinnerSet.get_factchecked_wc_range(len(room.all_words), use_added_words=raw_aw, dictionary=raw_dict)
+                room.current_word_count_range = wc_lbl_fib
+                if isinstance(getattr(room, 'spinner_params', None), dict):
+                    room.spinner_params['bonus_word_length'] = len(room.bonus_word)
+                    room.spinner_params['word_count_range'] = wc_lbl_fib
+                if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                    room.frozen_revealed_params['bonus_word_length'] = len(room.bonus_word)
+                    room.frozen_revealed_params['word_count_range'] = wc_lbl_fib
                 room.board = r_board
                 room.bonus_cell = r_bonus_c
                 room.total_words_count = len(room.all_words)
@@ -8240,32 +8176,7 @@ class RoomManager:
         return room
     
     def _get_factchecked_wc_range(self, count, use_added_words=False, dictionary=None):
-        """Map actual word count to the exact corresponding standard range bucket.
-           Standard buckets: 50-100, 100-200, 200-300, 300-400, 400-500, 500+
-           For Added Words (+ AW), ranges MUST ALWAYS be 300-400, 400-500, or 500+.
-        """
-        try:
-            count = int(count)
-        except (ValueError, TypeError):
-            count = 0
-
-        is_aw = bool(use_added_words)
-        if not is_aw and dictionary:
-            dict_str = str(dictionary).upper()
-            if '+ AW' in dict_str or '+AW' in dict_str or 'ADDED' in dict_str or dict_str == 'AW':
-                is_aw = True
-
-        if is_aw:
-            if count >= 500: return '500+'
-            if count >= 400: return '400-500'
-            return '300-400'
-            
-        if count >= 500: return '500+'
-        if count >= 400: return '400-500'
-        if count >= 300: return '300-400'
-        if count >= 200: return '200-300'
-        if count >= 100: return '100-200'
-        return '50-100'
+        return SpinnerSet.get_factchecked_wc_range(count, use_added_words=use_added_words, dictionary=dictionary)
 
     def _get_board_fingerprint(self, board):
         """Return a deterministic string fingerprint of a 2D or 3D board for dedup tracking."""

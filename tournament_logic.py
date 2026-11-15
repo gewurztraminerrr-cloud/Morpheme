@@ -415,7 +415,8 @@ class TournamentManager:
             'dictionary': f"{dict_name} + AW" if use_aw_flag else dict_name,
             'use_added_words': use_aw_flag,
             'word_count_range': factual_range,
-            'min_word_length': factual_min
+            'min_word_length': factual_min,
+            'bonus_word_length': len(bonus_word) if bonus_word else 0
         })))
         
         # 4. Generate Matchups for this round

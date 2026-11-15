@@ -331,6 +331,8 @@ class SpinnerSet:
 
             # 5. Board Format
             board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions, previous_params=previous_params)
+            prev_normal_streak = int(previous_params.get('normal_streak', 0)) if isinstance(previous_params, dict) else 0
+            normal_streak = (prev_normal_streak + 1) if (board_format and board_format.lower() == 'normal') else 0
 
             # 6. Bonus Word Length (always >= min_word_length)
             valid_bw = [l for l in [6, 7, 8, 9, 10] if l >= min_word_length] or [max(min_word_length, 6)]
@@ -343,6 +345,7 @@ class SpinnerSet:
                 'dictionary': dictionary,
                 'use_added_words': use_added_words,
                 'board_format': board_format,
+                'normal_streak': normal_streak,
                 'bonus_word_length': bw_len,
                 'generated_at': time.time()
             }
@@ -418,14 +421,25 @@ class SpinnerSet:
             return 'Normal'
 
         prev_fmt = None
+        normal_streak = 0
         if isinstance(previous_params, dict):
             prev_fmt = str(previous_params.get('board_format', '')).strip()
+            normal_streak = int(previous_params.get('normal_streak', 0))
+            if prev_fmt.lower() != 'normal':
+                normal_streak = 0
 
-        for _ in range(5):
-            result = _rng.choices(
-                ['Normal', 'Checkerboard', 'Equality Freq', 'Bounce', 'Density', 'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
-                weights=[66, 12, 4, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
-            )[0]
+        for _ in range(25):
+            # If Normal has appeared 2 or more times consecutively, force a non-Normal format
+            if normal_streak >= 2:
+                result = _rng.choices(
+                    ['Checkerboard', 'Equality Freq', 'Bounce', 'Density', 'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
+                    weights=[12, 4, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
+                )[0]
+            else:
+                result = _rng.choices(
+                    ['Normal', 'Checkerboard', 'Equality Freq', 'Bounce', 'Density', 'Mania', 'Penalty', 'Either/Or', 'Bonus Letter', 'Valued Letters', 'Rotation', 'Double', 'Triple'],
+                    weights=[66, 12, 4, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1]
+                )[0]
 
             if result == 'Bounce':
                 result = _rng.choices(['Bounce 1x', 'Bounce 2x', 'Bounce 3x'], weights=[33, 33, 34])[0]
@@ -438,9 +452,17 @@ class SpinnerSet:
                     mania_letter = _rng.choice(['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'])
                 result = f'{mania_letter} Mania'
 
-            # Safeguard: do not repeat rare non-Normal formats back-to-back
-            if prev_fmt and prev_fmt != 'Normal' and result == prev_fmt:
-                continue
+            # Strict anti-repetition safeguard:
+            if prev_fmt:
+                # 1. Do not repeat rare non-Normal format back-to-back
+                if prev_fmt.lower() != 'normal' and result.strip().lower() == prev_fmt.strip().lower():
+                    continue
+                # 2. Never repeat ANY Mania format back-to-back (prevents 2 or 3 Manias in a row)
+                if 'mania' in result.lower() and 'mania' in prev_fmt.lower():
+                    continue
+                # 3. Never repeat Bounce back-to-back
+                if 'bounce' in result.lower() and 'bounce' in prev_fmt.lower():
+                    continue
             break
         return result
 
@@ -492,26 +514,19 @@ class SpinnerSet:
 
     @staticmethod
     def get_factchecked_wc_range(count, use_added_words=False, dictionary=None):
-        """Map actual word count to the exact corresponding standard range bucket,
-           respecting dictionary constraints (+AW is always >= 300-400; non-AW never 400-500).
+        """Map actual word count to the exact corresponding standard range bucket.
+           Standard buckets: 50-100, 100-200, 200-300, 300-400, 400-500, 500+
+           Truthful and factual: unconditionally maps the actual integer count.
         """
         try:
             count = int(count)
         except (ValueError, TypeError):
             count = 0
 
-        d_upper = str(dictionary or '').upper()
-        is_aw = bool(use_added_words or '+ AW' in d_upper or '+AW' in d_upper or 'ADDED' in d_upper)
-
-        if is_aw:
-            if count >= 500:
-                return '500+'
-            if count >= 400:
-                return '400-500'
-            return '300-400'
-
         if count >= 500:
             return '500+'
+        if count >= 400:
+            return '400-500'
         if count >= 300:
             return '300-400'
         if count >= 200:

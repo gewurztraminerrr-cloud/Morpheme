@@ -7877,7 +7877,7 @@ def get_room_state(room_id):
                                 else:
                                     from board_generator import pop_any_cached_board
                                     from game_room import get_emergency_fallback_board
-                                    pre_next = pop_any_cached_board(room.board_dimensions, target_format='Normal')
+                                    pre_next = pop_any_cached_board(room.board_dimensions, target_format=None)
                                     if not pre_next:
                                         pre_next = get_emergency_fallback_board(room.board_dimensions, 'Normal', room.time_limit)
                                     if pre_next:

@@ -314,7 +314,7 @@ def mark_board_hash_used(board_hash, conn=None):
         return True
 
 
-def pop_any_cached_board(dimensions, min_word_length=3, target_format='Normal', exclude_format=None):
+def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, exclude_format=None):
     if isinstance(dimensions, (tuple, list)):
         if len(dimensions) == 3:
             dimensions = f"{dimensions[0]}x{dimensions[1]}x{dimensions[2]}"
@@ -333,30 +333,21 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format='Normal', 
         
         while True:
             dim_pattern = f'%"dimensions": "{dimensions}"%'
-            if target_format and str(target_format).lower() == 'checkerboard':
-                fmt_pattern = '%"board_format": "Checkerboard"%'
+            if target_format:
+                fmt_pattern = f'%"board_format": "{target_format}"%'
                 cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, fmt_pattern))
-                row = cursor.fetchone()
-            elif target_format and str(target_format).lower() == 'equality freq':
-                fmt_pattern = '%"board_format": "Equality Freq"%'
-                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, fmt_pattern))
-                row = cursor.fetchone()
-            else:
-                normal_pattern = '%"board_format": "Normal"%'
-                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, normal_pattern))
                 row = cursor.fetchone()
                 if not row:
-                    cursor.execute("""
-                        SELECT id, param_key, board_json FROM pregenerated_boards 
-                        WHERE param_key LIKE ? 
-                        AND param_key NOT LIKE '%"board_format": "Checkerboard"%'
-                        AND param_key NOT LIKE '%"board_format": "%Mania%"'
-                        AND param_key NOT LIKE '%"board_format": "%Either/Or%"'
-                        AND param_key NOT LIKE '%"board_format": "%Bounce%"'
-                        AND param_key NOT LIKE '%"board_format": "%Penalty%"'
-                        ORDER BY RANDOM() LIMIT 1;
-                    """, (dim_pattern,))
+                    fmt_pattern_wild = f'%"board_format": "%{target_format}%"%'
+                    cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, fmt_pattern_wild))
                     row = cursor.fetchone()
+            elif exclude_format:
+                ex_pattern = f'%"board_format": "%{exclude_format}%"%'
+                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? AND param_key NOT LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern, ex_pattern))
+                row = cursor.fetchone()
+            else:
+                cursor.execute("SELECT id, param_key, board_json FROM pregenerated_boards WHERE param_key LIKE ? ORDER BY RANDOM() LIMIT 1;", (dim_pattern,))
+                row = cursor.fetchone()
             if not row:
                 break
                 
