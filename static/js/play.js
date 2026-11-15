@@ -6430,10 +6430,14 @@ function updateParameters(state) {
     const factDiff = useSp ? (sp.difficulty || state.current_difficulty || 'Medium') : (state.current_difficulty || 'Medium');
     const factBonus = (!isIntermission && state.bonus_word) ? state.bonus_word.length : (useSp ? (sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0) : ((state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0));
     const factMinLen = (!isIntermission && state.current_min_length) ? state.current_min_length : (useSp ? (sp.min_word_length || state.current_min_length || 3) : (state.current_min_length || 3));
-    const rawDict = useSp ? (sp.dictionary || state.current_dictionary || 'NWL') : (state.current_dictionary || 'NWL');
-    const useAW = useSp 
-        ? (sp.use_added_words === true || /\+\s*AW/i.test(sp.dictionary || ''))
-        : (state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || ''));
+    const rawDict = (!isIntermission && state.current_dictionary)
+        ? state.current_dictionary
+        : (useSp ? (sp.dictionary || state.current_dictionary || 'NWL') : (state.current_dictionary || 'NWL'));
+    const useAW = (!isIntermission && state.use_added_words !== undefined)
+        ? (state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || ''))
+        : (useSp 
+            ? (sp.use_added_words === true || /\+\s*AW/i.test(sp.dictionary || ''))
+            : (state.use_added_words === true || /\+\s*AW/i.test(state.current_dictionary || '')));
     const cleanBaseDict = rawDict.replace(/\s*\+\s*AW/i, '').replace(/\s*\+AW/i, '').replace(/ADDED_WORDS/i, '').trim() || 'NWL';
     const factDict = useAW ? `${cleanBaseDict} + AW` : cleanBaseDict;
     let rawWordRange = (!isIntermission && state.current_word_count_range) 
