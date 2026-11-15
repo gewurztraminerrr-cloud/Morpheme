@@ -8645,9 +8645,31 @@ def update_input_method(room_id):
 DEFINITIONS_CACHE = None
 DEFINITIONS_PATH = None
 PRONUNCIATIONS_CACHE = None
+WORDS_MISSING_DEFINITIONS = None
+NEGATIVE_DEFINITIONS_CACHE = set()
 
 def load_definitions():
-    global DEFINITIONS_CACHE, DEFINITIONS_PATH
+    global DEFINITIONS_CACHE, DEFINITIONS_PATH, WORDS_MISSING_DEFINITIONS, NEGATIVE_DEFINITIONS_CACHE
+    # Load fast rejection cache for words missing definitions
+    if WORDS_MISSING_DEFINITIONS is None:
+        WORDS_MISSING_DEFINITIONS = set()
+        missing_paths = [
+            os.path.join(os.path.dirname(__file__), 'dictionaries', 'words_missing_definitions.txt'),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'words_missing_definitions.txt'),
+        ]
+        for mp in missing_paths:
+            if os.path.exists(mp):
+                try:
+                    with open(mp, 'r', encoding='utf-8', errors='ignore') as mf:
+                        for line in mf:
+                            line = line.strip().upper()
+                            if line and not line.startswith('#') and not line.startswith('=') and 'WORDS)' not in line:
+                                WORDS_MISSING_DEFINITIONS.add(line)
+                    print(f"Loaded {len(WORDS_MISSING_DEFINITIONS)} words missing definitions into fast rejection cache")
+                    break
+                except Exception as ex:
+                    print(f"Error loading words_missing_definitions: {ex}")
+
     # Skip reload only if cache is already populated
     if DEFINITIONS_CACHE:
         return
@@ -8935,35 +8957,53 @@ def lookup_wiki_definition_from_db(word):
     return None
 
 def get_definition_cached_or_online(w):
-    global DEFINITIONS_CACHE
+    global DEFINITIONS_CACHE, WORDS_MISSING_DEFINITIONS, NEGATIVE_DEFINITIONS_CACHE
     if not DEFINITIONS_CACHE:
         load_definitions()
     d = DEFINITIONS_CACHE.get(w)
+    if d:
+        return d
+    if WORDS_MISSING_DEFINITIONS and w in WORDS_MISSING_DEFINITIONS:
+        return None
+    if NEGATIVE_DEFINITIONS_CACHE and w in NEGATIVE_DEFINITIONS_CACHE:
+        return None
+    d = lookup_wiki_definition_from_db(w)
     if not d:
-        d = lookup_wiki_definition_from_db(w)
-        if not d:
-            d = lookup_raw_definition_online(w)
-            if d:
-                try:
-                    conn = sqlite3.connect(DB_PATH, timeout=5)
-                    with conn:
-                        conn.execute("INSERT OR REPLACE INTO wiktionary_definitions (word, definition) VALUES (?, ?);", (w.upper(), d))
-                    conn.close()
-                except Exception as e:
-                    print(f"[Definitions] Error caching wiki definition to DB: {e}")
+        d = lookup_raw_definition_online(w)
         if d:
-            DEFINITIONS_CACHE[w] = d
+            try:
+                conn = sqlite3.connect(DB_PATH, timeout=5)
+                with conn:
+                    conn.execute("INSERT OR REPLACE INTO wiktionary_definitions (word, definition) VALUES (?, ?);", (w.upper(), d))
+                conn.close()
+            except Exception as e:
+                print(f"[Definitions] Error caching wiki definition to DB: {e}")
+        else:
+            NEGATIVE_DEFINITIONS_CACHE.add(w)
+    if d:
+        DEFINITIONS_CACHE[w] = d
+    else:
+        NEGATIVE_DEFINITIONS_CACHE.add(w)
     return d
 
 def get_definition_cached_or_online_with_guess(w):
+    global DEFINITIONS_CACHE, WORDS_MISSING_DEFINITIONS, NEGATIVE_DEFINITIONS_CACHE
     d = get_definition_cached_or_online(w)
     if d:
         return d
+    if WORDS_MISSING_DEFINITIONS and w in WORDS_MISSING_DEFINITIONS:
+        return None
+    if NEGATIVE_DEFINITIONS_CACHE and w in NEGATIVE_DEFINITIONS_CACHE:
+        return None
         
     def _local_lookup(root):
-        global DEFINITIONS_CACHE
+        global DEFINITIONS_CACHE, WORDS_MISSING_DEFINITIONS, NEGATIVE_DEFINITIONS_CACHE
         if DEFINITIONS_CACHE and root in DEFINITIONS_CACHE:
             return DEFINITIONS_CACHE[root]
+        if WORDS_MISSING_DEFINITIONS and root in WORDS_MISSING_DEFINITIONS:
+            return None
+        if NEGATIVE_DEFINITIONS_CACHE and root in NEGATIVE_DEFINITIONS_CACHE:
+            return None
         res = lookup_wiki_definition_from_db(root)
         if not res:
             res = get_definition_cached_or_online(root)
@@ -10268,22 +10308,19 @@ def get_definition():
     is_noun, wiki_url, wiki_title = check_is_noun_and_get_wiki(word, definition)
     lists = get_word_dictionaries(word)
 
-    if definition or pronunciation or image_url:
-        resp = jsonify({
-            'word': word, 
-            'definition': definition or "No definition available for this word.",
-            'pronunciation': pronunciation,
-            'image_url': image_url,
-            'division_info': div_info,
-            'is_noun': is_noun,
-            'wiki_url': wiki_url,
-            'wiki_title': wiki_title,
-            'lists': lists
-        })
-        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        return resp
-    else:
-        return jsonify({'error': 'Word not found'}), 404
+    resp = jsonify({
+        'word': word, 
+        'definition': definition or "No definition available for this word.",
+        'pronunciation': pronunciation,
+        'image_url': image_url,
+        'division_info': div_info,
+        'is_noun': is_noun,
+        'wiki_url': wiki_url,
+        'wiki_title': wiki_title,
+        'lists': lists
+    })
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return resp
 
 
 

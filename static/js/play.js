@@ -11721,7 +11721,7 @@ function renderDefinitionData(data, word, defContent, defPron) {
         defListsContainer.style.setProperty('display', lists.length ? 'inline-flex' : 'none', 'important');
     }
 
-    if (data && (data.definition || data.pronunciation || data.image_url)) {
+    if (data && (data.definition || data.pronunciation || data.image_url || (data.lists && data.lists.length) || data.division_info)) {
         if (data.pronunciation && defPron) {
             defPron.textContent = data.pronunciation;
             defPron.classList.remove('hidden');
@@ -11736,8 +11736,10 @@ function renderDefinitionData(data, word, defContent, defPron) {
         if (data.pronunciation && !defPron) {
             html += `<div class="pronunciation">${data.pronunciation}</div>`;
         }
-        if (data.definition) {
+        if (data.definition && data.definition !== "No definition available for this word.") {
             html += `<span class="definition-text">${formatDefinitionWithLinks(data.definition)}</span>`;
+        } else {
+            html += `<p class="placeholder" style="margin: 4px 0 8px 0; font-style: italic; opacity: 0.85;">No definition available for this word.</p>`;
         }
         const dInfo = data && data.division_info;
         if (dInfo && (dInfo.has_divisions || (dInfo.length && dInfo.length >= 5))) {
@@ -11761,7 +11763,7 @@ function renderDefinitionData(data, word, defContent, defPron) {
             defPron.classList.add('hidden');
             defPron.style.setProperty('display', 'none', 'important');
         }
-        defContent.innerHTML = `<p class="placeholder">Definition not found.</p>`;
+        defContent.innerHTML = `<p class="placeholder" style="margin: 4px 0 8px 0; font-style: italic; opacity: 0.85;">No definition available for this word.</p>`;
     }
 }
 
@@ -12012,7 +12014,7 @@ async function fetchDefinition(word) {
     }
 
     // Check instant client-side cache
-    if (window._gameDefCache && window._gameDefCache.has(cleanWord) && window._gameDefCache.get(cleanWord).division_info) {
+    if (window._gameDefCache && window._gameDefCache.has(cleanWord)) {
         renderDefinitionData(window._gameDefCache.get(cleanWord), cleanWord, defContent, defPron);
         return;
     }
@@ -12021,7 +12023,16 @@ async function fetchDefinition(word) {
 
     try {
         const resp = await fetch(`/api/definition?word=${encodeURIComponent(word)}`);
-        const data = await resp.json();
+        let data;
+        if (!resp.ok) {
+            data = {
+                word: cleanWord,
+                definition: "No definition available for this word.",
+                lists: []
+            };
+        } else {
+            data = await resp.json();
+        }
 
         if (window._gameDefCache) {
             window._gameDefCache.set(cleanWord, data);
@@ -12035,7 +12046,12 @@ async function fetchDefinition(word) {
             defPron.classList.add('hidden');
             defPron.style.setProperty('display', 'none', 'important');
         }
-        defContent.innerHTML = `<p class="placeholder">Error: ${e.message}</p>`;
+        const fallbackData = {
+            word: cleanWord,
+            definition: "No definition available for this word.",
+            lists: []
+        };
+        renderDefinitionData(fallbackData, cleanWord, defContent, defPron);
     }
 }
 
