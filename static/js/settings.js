@@ -908,11 +908,21 @@ function debounce(func, wait) {
             window.userSettings.vibration_alert = val;
             saveSettingDebounced('vibration_alert', val);
             if (val) {
-                if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-                    try { navigator.vibrate(250); } catch (_) {}
-                }
-                if (typeof MorphemeAudioBridge !== 'undefined') {
-                    try { MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 250 })); } catch (_) {}
+                if (typeof triggerIntermissionVibration === 'function') {
+                    triggerIntermissionVibration();
+                } else if (typeof window.triggerIntermissionVibration === 'function') {
+                    window.triggerIntermissionVibration();
+                } else {
+                    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+                        try {
+                            let vib = false;
+                            try { vib = navigator.vibrate([200, 100, 250]); } catch (_) {}
+                            if (!vib) try { navigator.vibrate(250); } catch (_) {}
+                        } catch (_) {}
+                    }
+                    if (typeof MorphemeAudioBridge !== 'undefined') {
+                        try { MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 250 })); } catch (_) {}
+                    }
                 }
             }
         });
