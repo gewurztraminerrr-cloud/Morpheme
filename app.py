@@ -8635,6 +8635,10 @@ def update_input_method(room_id):
         
     player = room.get_player(user_id)
     if player:
+        # STRICT GUARD: Only update input method during an active round.
+        # Preserve the word submission method all throughout intermission.
+        if getattr(room, 'state', None) != 'active':
+            return jsonify({'success': False, 'message': 'Cannot update input method outside active round'}), 200
         player.input_method = input_method
         room.update_player_activity(user_id)
         return jsonify({'success': True})

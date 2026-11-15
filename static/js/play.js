@@ -969,8 +969,9 @@ let lastSpinnerDataJSON = null; // Detect if parameters have actually changed
 // Input Method Tracking
 let currentInputMethod = 'mouse';
 function updateInputMethod(method) {
-    // Only apply/track input method changes DURING an active round
-    if (window.lastGameState && window.lastGameState.state !== 'active') return;
+    // STRICT GUARD: Only apply/track input method changes DURING an active round
+    if (!window.lastGameState || window.lastGameState.state !== 'active') return;
+    if (typeof window.lastGameState.time_remaining === 'number' && window.lastGameState.time_remaining <= 0) return;
 
     if (currentInputMethod === method) return;
     currentInputMethod = method;
@@ -1259,14 +1260,22 @@ let lastTouchTime = 0;
 
 document.addEventListener('mousedown', (e) => {
     if (Date.now() - lastTouchTime < 1500) return; // ignore ghost mouse from touch
-    updateInputMethod('mouse');
+    // Only switch input method to mouse if clicking on an actual board cell during an active round
+    const isBoardCell = e.target && (e.target.classList.contains('board-cell') || (typeof e.target.closest === 'function' && e.target.closest('.board-cell')));
+    if (isBoardCell) {
+        updateInputMethod('mouse');
+    }
     if (isOnPlayPage() && window.currentPageId === 'page-play') resetIdleTimer();
     else lastGameInteractionTime = Date.now();
 }, true);
 
-document.addEventListener('touchstart', () => {
+document.addEventListener('touchstart', (e) => {
     lastTouchTime = Date.now();
-    updateInputMethod('touch');
+    // Only switch input method to touch if touching an actual board cell during an active round
+    const isBoardCell = e.target && (e.target.classList.contains('board-cell') || (typeof e.target.closest === 'function' && e.target.closest('.board-cell')));
+    if (isBoardCell) {
+        updateInputMethod('touch');
+    }
     if (isOnPlayPage() && window.currentPageId === 'page-play') resetIdleTimer();
     else lastGameInteractionTime = Date.now();
 }, true);
@@ -4450,19 +4459,23 @@ function renderPlayers(players, currentUser = null, state = null) {
         }
         const shineClass = (isSubanagrams || isUnrated || (!isGuest && p.games_played === 0)) ? '' : (window.getRatingShineClass ? window.getRatingShineClass(displayRating) : '');
 
-        // Input Method Icon
+        // Chat disabled icon logic (Crossed-out horn: user cannot read chats)
+        const isSelf = (p.username === (state.your_username || window.currentUsername) || (state.your_user_id && p.user_id === state.your_user_id));
+
+        // Input Method Icon: Keep the word-submission method visible all throughout intermission
+        let playerMethod = p.input_method;
+        if (isSelf && currentInputMethod) {
+            playerMethod = currentInputMethod;
+        }
         let inputIcon = '🖱️';
-        if (p.input_method === 'keyboard') inputIcon = '⌨️';
-        if (p.input_method === 'touch') inputIcon = '📱';
+        if (playerMethod === 'keyboard') inputIcon = '⌨️';
+        if (playerMethod === 'touch') inputIcon = '📱';
 
         // Trophy Logic (Exceptional Performance) - User Directive: Displayed strictly during intermission
         const isIntermission = (state && state.state === 'intermission') || (window.lastGameState && window.lastGameState.state === 'intermission');
         const peVal = (typeof p.performance_efficiency === 'number' && p.performance_efficiency > 0) ? p.performance_efficiency : 0;
         const trophyTitle = peVal > 0 ? `Exceptional Performance (PE: ${peVal.toFixed(2)}x)` : `Exceptional Performance`;
         const trophyHtml = (p.has_exceptional_round && isIntermission && !p.is_ai) ? `<span title="${trophyTitle}" class="trophy-icon">🏆</span>` : '';
-
-        // Chat disabled icon logic (Crossed-out horn: user cannot read chats)
-        const isSelf = (p.username === (state.your_username || window.currentUsername) || (state.your_user_id && p.user_id === state.your_user_id));
         let hasChatDisabled = false;
         if (isSelf) {
             if (window.userSettings && window.userSettings.game_room_chat !== undefined) {
@@ -10382,6 +10395,13 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             }
             return node;
         });
+    }
+
+    // Determine submission input method: typed words are keyboard, traced words are mouse/touch
+    if (pathParam !== null && pathParam.length > 0) {
+        currentInputMethod = (lastTouchTime && Date.now() - lastTouchTime < 3000) ? 'touch' : 'mouse';
+    } else {
+        currentInputMethod = 'keyboard';
     }
 
     try {
