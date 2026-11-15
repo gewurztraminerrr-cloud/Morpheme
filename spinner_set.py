@@ -133,6 +133,17 @@ class SpinnerSet:
                 res = cand
                 # Avoid repeating the exact same Spinner Set tuple back-to-back when previous_params is given
                 if isinstance(previous_params, dict) and not is_24h:
+                    prev_fmt_raw = str(previous_params.get('board_format', '')).strip()
+                    curr_fmt_raw = str(cand.get('board_format', '')).strip()
+                    # Strict safeguard: Do not repeat rare non-Normal formats back-to-back
+                    if prev_fmt_raw and prev_fmt_raw.lower() != 'normal':
+                        if curr_fmt_raw.lower() == prev_fmt_raw.lower():
+                            continue
+                        if 'mania' in curr_fmt_raw.lower() and 'mania' in prev_fmt_raw.lower():
+                            continue
+                        if 'bounce' in curr_fmt_raw.lower() and 'bounce' in prev_fmt_raw.lower():
+                            continue
+
                     prev_sig = (
                         str(previous_params.get('dictionary', '')),
                         str(previous_params.get('word_count_range', '')),
@@ -247,21 +258,20 @@ class SpinnerSet:
             # Pre-calculated from an actual solved board for standard dictionary
             if wc_range == '400-500':
                 wc_range = '300-400'
-            elif wc_range == '50-100' and min_word_length != max_len_for_dims:
+            elif wc_range == '50-100' and min_word_length not in low_wc_allowed_mins:
                 wc_range = '100-200'
         else:
             # Standard NWL and CSW dictionaries:
             # Maximum normal range is 300-400 (NEVER 400-500), plus 1% chance of 500+.
-            # 50-100 is allowed strictly for the single greatest min word length of the board dimension (e.g. 5L on 4x4, 6L on 4x6, 7L on 5x7, 8L on 6x8/Cube).
-            greatest_min = max_len_for_dims
+            # 50-100 is allowed for the two highest min word lengths of the board dimension (e.g. 4L & 5L on 4x4, 5L & 6L on 4x6, 6L & 7L on 5x7, 7L & 8L on 6x8/Cube).
             if wc_range == '400-500' or not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '500+']:
-                if min_word_length == greatest_min:
+                if min_word_length in low_wc_allowed_mins:
                     wc_range = _rng.choices(['50-100', '100-200', '200-300', '300-400', '500+'], weights=[9, 30, 30, 30, 1])[0]
                 else:
                     wc_range = _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
 
-            # 50-100 is restricted strictly to the single greatest min length for the board dimension
-            if wc_range == '50-100' and min_word_length != greatest_min:
+            # 50-100 is restricted strictly to the two highest min lengths for the board dimension
+            if wc_range == '50-100' and min_word_length not in low_wc_allowed_mins:
                 wc_range = _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
 
             # Preserve the 1% 500+ roll by adjusting min_word_length down to floor_len if needed
@@ -391,9 +401,9 @@ class SpinnerSet:
             return _rng.choices(choices, weights=weights)[0]
         else:
             allowed_mins = SpinnerSet.get_allowed_min_lengths(board_dimensions)
-            greatest_min = allowed_mins[-1]
-            if mwl == greatest_min:
-                # 50-100 is allowed strictly for the single greatest min-length: 9%
+            low_wc_allowed_mins = allowed_mins[1:]
+            if mwl in low_wc_allowed_mins:
+                # 50-100 is allowed for the two highest min-lengths: 9%
                 choices = ['50-100', '100-200', '200-300', '300-400', '500+']
                 weights = [9, 30, 30, 30, 1]
             else:
@@ -505,30 +515,24 @@ class SpinnerSet:
 
     @staticmethod
     def get_factchecked_wc_range(count, use_added_words=False, dictionary=None):
-        """Map actual word count to the exact corresponding standard range bucket.
-           Standard buckets:
-             - Standard Dictionaries (NWL & CSW): 50-100, 100-200, 200-300, 300-400, 500+
-               (400-500 is never allowed on standard dictionaries)
-             - Extended Dictionaries (+ AW): 300-400, 400-500, 500+
-               (Extended dictionaries strictly only allow 300-400, 400-500, and 500+)
+        """Map actual word count to the exact truthful range bucket.
+           Every word count strictly maps to its truthful bucket:
+             - 500+ words -> '500+'
+             - 400 - 499 words -> '400-500'
+             - 300 - 399 words -> '300-400'
+             - 200 - 299 words -> '200-300'
+             - 100 - 199 words -> '100-200'
+             - < 100 words -> '50-100'
         """
         try:
             count = int(count)
         except (ValueError, TypeError):
             count = 0
 
-        d_str = str(dictionary or '').upper()
-        is_aw = bool(use_added_words) or ('+ AW' in d_str) or ('+AW' in d_str) or (d_str in ['AW', 'ADDED_WORDS', 'ALL'])
-
-        if is_aw:
-            if count >= 500:
-                return '500+'
-            if count >= 400:
-                return '400-500'
-            return '300-400'
-
         if count >= 500:
             return '500+'
+        if count >= 400:
+            return '400-500'
         if count >= 300:
             return '300-400'
         if count >= 200:

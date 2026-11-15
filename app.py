@@ -15521,24 +15521,30 @@ def create_solo_match():
         if not dict_name or dict_name not in ['NWL', 'CSW']:
             dict_name = 'NWL'
 
-    board_format = 'Valued Letters' if is_24h_room else parameters.get('board_format', 'Normal')
     from spinner_set import SpinnerSet
-    if not is_24h_room and board_format == 'random':
+    board_format = 'Valued Letters' if is_24h_room else parameters.get('board_format')
+    if not is_24h_room and (not board_format or board_format == 'random'):
         board_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=board_dimensions)
+    elif not board_format:
+        board_format = 'Normal'
 
     # First-round difficulty randomization
     target_difficulty = parameters.get('difficulty', 'random')
-    if target_difficulty == 'random':
-        from spinner_set import SpinnerSet
-        target_difficulty = SpinnerSet._spin_difficulty()
+    if target_difficulty == 'random' or not target_difficulty:
+        target_difficulty = SpinnerSet._spin_difficulty(board_dimensions)
+
+    # Min word length: spin according to board dimension weights if not specified or 'random'
+    min_word_len_raw = parameters.get('min_word_length')
+    if not min_word_len_raw or min_word_len_raw == 'random':
+        min_word_len = SpinnerSet._spin_min_word_length(board_dimensions)
+    else:
+        min_word_len = _safe_int_param(min_word_len_raw, SpinnerSet.get_allowed_min_lengths(board_dimensions)[0])
 
     # Point range / word count: allow user to specify, else spin a default
     custom_word_count_range = parameters.get('word_count_range', 'random')
-    min_word_len = _safe_int_param(parameters.get('min_word_length'), 3)
     if is_24h_room:
         wc_range = '300-400'
-    elif custom_word_count_range == 'random':
-        from spinner_set import SpinnerSet
+    elif custom_word_count_range == 'random' or not custom_word_count_range:
         wc_range = SpinnerSet._spin_word_count(dict_name, min_word_len, target_difficulty, board_dimensions, use_added_words=use_aw_flag)
     else:
         # Use custom range provided by user

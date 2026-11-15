@@ -1813,18 +1813,6 @@ class GameRoom:
             if elapsed >= reveal_threshold and not getattr(self, 'spinner_params_revealed', False):
                 return 'reveal'
 
-        # 2b. Board Search Deadline Check at 0:55 (5s into intermission)
-        # If by 0:55 the board has not been found, change parameters to an easy configuration and use that one.
-        if self.state == 'intermission':
-            if not self.intermission_start_time or self.intermission_start_time <= 0:
-                self.intermission_start_time = now
-            elapsed = now - self.intermission_start_time
-            intermission_duration = 5 if self.time_limit >= 7200 else 60
-            easy_threshold = 5.0 if intermission_duration >= 20 else 0.2
-            if elapsed >= easy_threshold and not getattr(self, 'next_round_board', None):
-                if not getattr(self, 'easy_fallback_applied', False) and not getattr(self, 'spinner_params_revealed', False):
-                    return 'easy_fallback'
-
         # 3. Proactive Parameter Generation (1s into ANY state)
         state_start = self.intermission_start_time if self.state == 'intermission' else self.round_start_time
         state_elapsed = now - (state_start if state_start > 0 else now)
@@ -1866,7 +1854,14 @@ class GameRoom:
                 self.spinner_params_generated = True
             return
         from board_generator import pop_compatible_cached_board
-        target_params = getattr(self, 'next_spinner_params', None) or getattr(self, 'spinner_params', None) or {}
+        target_params = getattr(self, 'next_spinner_params', None)
+        if not target_params:
+            target_params = SpinnerSet.generate_params(
+                self.board_dimensions,
+                is_24h=(self.time_limit >= 7200),
+                previous_params=getattr(self, 'spinner_params', None)
+            )
+            self.next_spinner_params = dict(target_params)
         dict_val = target_params.get('dictionary', 'NWL')
         fmt_val = target_params.get('board_format', 'Normal')
         min_l_val = target_params.get('min_word_length', 3)
@@ -3514,11 +3509,6 @@ class RoomManager:
                             if not getattr(room, '_transition_spinner_launched', False):
                                 room._transition_spinner_launched = True
                                 threading.Thread(target=self.generate_spinner_params, args=(room_id, False), daemon=True).start()
-                        elif milestone == 'easy_fallback':
-                            with room._state_lock:
-                                if not getattr(room, 'easy_fallback_applied', False):
-                                    room.easy_fallback_applied = True
-                                    threading.Thread(target=self.apply_easy_fallback_and_search, args=(room_id,), daemon=True).start()
                         elif milestone == 'reveal':
                             if not getattr(room, 'spinner_params_revealed', False):
                                 threading.Thread(target=self.generate_spinner_params, args=(room_id, True), daemon=True).start()
@@ -4839,12 +4829,6 @@ class RoomManager:
                 if milestone == 'spinner':
                     # Proactive generation
                     threading.Thread(target=self.generate_spinner_params, args=(room_id, False), daemon=True).start()
-                
-                elif milestone == 'easy_fallback':
-                    with room._state_lock:
-                        if not getattr(room, 'easy_fallback_applied', False):
-                            room.easy_fallback_applied = True
-                            threading.Thread(target=self.apply_easy_fallback_and_search, args=(room_id,), daemon=True).start()
 
                 elif milestone == 'reveal':
                     # Reveal (Intermission only)
@@ -6777,6 +6761,32 @@ class RoomManager:
                             print(f"[RoomManager] Generated board has only {fw_cnt} words of len>={search_min} (needed >= {min_accept}). Retrying...")
                             board_attempts += 1
                             continue
+
+                        # If Added Words game and count is below 300, perform rescue sweep to ensure >= 300 words
+                        if use_aw_flag and fw_cnt < 300:
+                            print(f"[RoomManager] Added Words board has only {fw_cnt} words (< 300). Attempting rescue fill...")
+                            try:
+                                b_dims = room.board_dimensions.split('x')
+                                r_cnt = int(b_dims[1] if len(b_dims) == 3 else b_dims[0])
+                                c_cnt = int(b_dims[2] if len(b_dims) == 3 else b_dims[1])
+                                d_cnt = int(b_dims[0]) if len(b_dims) == 3 else 1
+                                r_board = self.board_generator._perform_rescue_sweep(
+                                    board, r_cnt, c_cnt, d_cnt, search_dict, search_min, 300, 400,
+                                    set(), search_diff, rescue_depth=25, is_checkerboard=('checkerboard' in str(search_fmt).lower()),
+                                    board_format=search_fmt, use_added_words=True
+                                )
+                                r_solve = self.board_generator._solve_board(
+                                    r_board, search_dict, (0, 99999), search_min, max_depth=25, store_paths=True, timeout=10.0, use_added_words=True
+                                )
+                                r_cnt_w = len(r_solve)
+                                if r_cnt_w >= 300 or r_cnt_w > fw_cnt:
+                                    board = r_board
+                                    all_words = sorted(list(r_solve.keys()))
+                                    all_words_dict = r_solve
+                                    fw_cnt = r_cnt_w
+                                    print(f"[RoomManager] Rescue sweep successfully raised AW board words to {fw_cnt}.")
+                            except Exception as aw_resc_err:
+                                print(f"[RoomManager] Error during AW rescue sweep: {aw_resc_err}")
 
                         if not is_duplicate:
                             break

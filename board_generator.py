@@ -2402,7 +2402,11 @@ class BoardGenerator:
             print(f"[BoardGen] ATTEMPT {attempts} PRE-SWEEP: Count={count} Target={min_words}-{max_words}")
 
             # Accept in emergency mode if count is within target range or at least 50% of min_words
-            min_acceptable_emergency = max(30, int(min_words * 0.5)) if min_words > 0 else 30
+            # CRITICAL: Added Words (+ AW) games strictly require at least 300 words (300-400, 400-500, 500+)
+            if use_aw_flag:
+                min_acceptable_emergency = max(300, min_words)
+            else:
+                min_acceptable_emergency = max(30, int(min_words * 0.5)) if min_words > 0 else 30
             if is_emergency and count >= min_acceptable_emergency and (count <= max_words or max_words >= 500):
                 print(f"[BoardGen] EMERGENCY FAST-ACCEPT: Count={count} >= {min_acceptable_emergency}. Accepting board immediately in attempt {attempts}!")
                 break
@@ -3306,8 +3310,8 @@ class BoardGenerator:
                             print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Uniqueness ratio {ratio:.2f} is outside range {adj_min:.2f}-{adj_max:.2f} (base: {min_ratio:.2f}-{max_ratio:.2f}) for target {difficulty}. Retrying...")
                             continue
                 if _attempt >= 50:
-                    if count < min_words:
-                        print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Count {count} < target min {min_words}. Running fast density rescue sweep...")
+                    if count < min_words or (use_aw_flag and count < 300):
+                        print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Count {count} < target min {min_words} (AW={use_aw_flag}). Running fast density rescue sweep...")
                         try:
                             rescue_board = self._create_normal_board(
                                 rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=depth,
@@ -3316,7 +3320,7 @@ class BoardGenerator:
                             rescue_solve = self._solve_board(
                                 rescue_board, dictionary, (0, 99999), display_min, store_paths=True, timeout=10.0, use_added_words=use_aw_flag
                             )
-                            if len(rescue_solve) >= min_words or len(rescue_solve) > count:
+                            if len(rescue_solve) >= (300 if use_aw_flag else min_words) or len(rescue_solve) > count:
                                 print(f"[BoardGen] ✅ RESCUE SUCCESSFUL: Hit {len(rescue_solve)} words.")
                                 board = rescue_board
                                 final_solve = rescue_solve
