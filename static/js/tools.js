@@ -12530,6 +12530,12 @@ window.applyReverseDictLengthFilter = function() {
         const targetLen = parseInt(selectedLength, 10);
         filtered = allResults.filter(item => (item.len || (item.word ? item.word.length : 0)) === targetLen);
     }
+    filtered = filtered.slice().sort((a, b) => {
+        const lenA = a.len || (a.word ? a.word.length : 0);
+        const lenB = b.len || (b.word ? b.word.length : 0);
+        if (lenA !== lenB) return lenA - lenB;
+        return String(a.word || '').localeCompare(String(b.word || ''));
+    });
 
     if (filtered.length === 0) {
         if (countText) {
