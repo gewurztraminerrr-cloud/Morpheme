@@ -418,9 +418,8 @@ let stableServerTimeOffset = null; // Persistent offset to prevent jitter
 let bestServerTimeRTT = Infinity; // Track the best RTT seen so far
 let timerFormatIs24h = false;     // Cached format to prevent flashing between HH:MM:SS and M:SS
 
-// Global audio objects to bypass mobile autoplay restrictions
+// Global audio object to bypass mobile autoplay restrictions
 window.intermissionBellAudio = new Audio();
-window.vibrationAudio = new Audio('/static/audio/vibrate.wav?v=1794250000');
 
 window.updateIntermissionBellSource = function() {
     if (window.intermissionBellAudio) {
@@ -431,10 +430,6 @@ window.updateIntermissionBellSource = function() {
         } catch (e) {
             console.warn('[play.js] Failed to load intermission bell audio:', e);
         }
-    }
-    if (window.vibrationAudio && !window.vibrationAudio.src) {
-        window.vibrationAudio.src = '/static/audio/vibrate.wav?v=1794250000';
-        try { window.vibrationAudio.load(); } catch (_) {}
     }
 };
 
@@ -449,17 +444,6 @@ const unlockAudio = () => {
                 p.then(() => {
                     window.intermissionBellAudio.pause();
                     window.intermissionBellAudio.currentTime = 0;
-                }).catch(() => {});
-            }
-        } catch (_) {}
-    }
-    if (window.vibrationAudio) {
-        try {
-            const vp = window.vibrationAudio.play();
-            if (vp !== undefined) {
-                vp.then(() => {
-                    window.vibrationAudio.pause();
-                    window.vibrationAudio.currentTime = 0;
                 }).catch(() => {});
             }
         } catch (_) {}
@@ -501,7 +485,6 @@ const BoardAudio = {
     tileBuffers: [],
     successBuffer: null,
     failureBuffer: null,
-    vibrationBuffer: null,
     bellBuffers: {},
 
     preloadBell(bellType) {
@@ -549,27 +532,6 @@ const BoardAudio = {
             }
         } else {
             this.preloadBell(bellType);
-        }
-        return false;
-    },
-
-    playVibrationBuffer() {
-        if (!this.ctx) this.init();
-        if (!this.ctx) return false;
-        if (this.ctx.state === 'suspended') {
-            try { this.ctx.resume(); } catch (_) {}
-        }
-        const buffer = this.vibrationBuffer;
-        if (buffer) {
-            try {
-                const source = this.ctx.createBufferSource();
-                source.buffer = buffer;
-                source.connect(this.masterGain || this.ctx.destination);
-                source.start(0);
-                return true;
-            } catch (e) {
-                console.warn('[BoardAudio] playVibrationBuffer source error:', e);
-            }
         }
         return false;
     },
@@ -666,38 +628,6 @@ const BoardAudio = {
                 data[i] = saw * env * 0.18;
             }
             this.failureBuffer = buffer;
-        }
-
-        // 4. Pre-render Mobile Tactile Vibration Buffer (158Hz dual mechanical buzz burst)
-        {
-            const duration = 0.72;
-            const numSamples = Math.floor(sampleRate * duration);
-            const buffer = this.ctx.createBuffer(1, numSamples, sampleRate);
-            const data = buffer.getChannelData(0);
-
-            for (let i = 0; i < numSamples; i++) {
-                const t = i / sampleRate;
-                const inBurst1 = (t >= 0.0 && t < 0.26);
-                const inBurst2 = (t >= 0.36 && t < 0.68);
-                if (inBurst1 || inBurst2) {
-                    const bt = inBurst1 ? t : (t - 0.36);
-                    const bDur = inBurst1 ? 0.26 : 0.32;
-                    const attack = Math.min(1.0, bt / 0.02);
-                    const decay = Math.min(1.0, (bDur - bt) / 0.03);
-                    const env = attack * decay;
-                    const flutter = 0.75 + 0.25 * Math.sin(2 * Math.PI * 38 * bt);
-                    const f0 = 158.0;
-                    const w1 = Math.sin(2 * Math.PI * f0 * bt);
-                    const w2 = 0.5 * Math.sin(2 * Math.PI * 2 * f0 * bt);
-                    const w3 = 0.35 * Math.sin(2 * Math.PI * 3 * f0 * bt);
-                    const w4 = 0.2 * Math.sin(2 * Math.PI * 5 * f0 * bt);
-                    const raw = (w1 + w2 + w3 + w4) * 0.55;
-                    data[i] = Math.tanh(raw * 1.5) * env * flutter * 0.95;
-                } else {
-                    data[i] = 0;
-                }
-            }
-            this.vibrationBuffer = buffer;
         }
     },
 
@@ -7062,55 +6992,38 @@ function triggerIntermissionVibration() {
     // 2. iOS Safari / WebKit Taptic Engine (Switch & Label Haptic Trigger for iOS 18+)
     triggerIosHapticFeedback(3);
 
-    // 3. Acoustic Physical Vibration Resonance (Pre-rendered 158Hz buffer & HTML5 Audio element fallback)
-    let playedVibAudio = false;
-    if (typeof BoardAudio !== 'undefined') {
+    // 3. Mobile App Bridge (Flutter WebView / Native Wrappers)
+    const bridge = (typeof MorphemeAudioBridge !== 'undefined' ? MorphemeAudioBridge : (typeof window !== 'undefined' && window.MorphemeAudioBridge ? window.MorphemeAudioBridge : null));
+    if (bridge && typeof bridge.postMessage === 'function') {
         try {
-            playedVibAudio = BoardAudio.playVibrationBuffer();
-        } catch (_) {}
-    }
-    if (!playedVibAudio && window.vibrationAudio) {
-        try {
-            window.vibrationAudio.currentTime = 0;
-            const p = window.vibrationAudio.play();
-            if (p !== undefined) {
-                p.catch(() => {});
-            }
-        } catch (_) {}
-    }
-
-    // 4. Native App / Mobile WebView Bridges
-    // 4a. MorphemeAudioBridge (Flutter / WebViews)
-    if (typeof MorphemeAudioBridge !== 'undefined') {
-        try {
-            MorphemeAudioBridge.postMessage(JSON.stringify({
+            bridge.postMessage(JSON.stringify({
                 action: 'vibrate',
                 sound: 'vibrate',
                 type: 'vibrate',
-                duration: 500,
-                pattern: [260, 100, 320]
+                duration: 500
             }));
         } catch (e) {
             console.error("MorphemeAudioBridge vibration error:", e);
         }
     }
 
-    // 4b. WebKit messageHandlers (iOS WKWebView / Native Swift Wrapper)
+    // 4. WebKit messageHandlers (iOS WKWebView / Native Swift Wrapper)
     try {
         if (window.webkit && window.webkit.messageHandlers) {
-            if (window.webkit.messageHandlers.vibrate) {
-                window.webkit.messageHandlers.vibrate.postMessage({ duration: 500, pattern: [260, 100, 320] });
-            }
             if (window.webkit.messageHandlers.MorphemeAudioBridge) {
                 window.webkit.messageHandlers.MorphemeAudioBridge.postMessage(JSON.stringify({
                     action: 'vibrate',
+                    sound: 'vibrate',
                     duration: 500
                 }));
+            }
+            if (window.webkit.messageHandlers.vibrate) {
+                window.webkit.messageHandlers.vibrate.postMessage({ duration: 500, pattern: [400, 150, 400] });
             }
         }
     } catch (e) {}
 
-    // 4c. Android WebView JavascriptInterface (Native Android wrappers)
+    // 5. Android WebView JavascriptInterface (Native Android wrappers)
     try {
         if (window.Android && typeof window.Android.vibrate === 'function') {
             window.Android.vibrate(500);
@@ -7120,14 +7033,14 @@ function triggerIntermissionVibration() {
         }
     } catch (e) {}
 
-    // 4d. React Native WebView
+    // 6. React Native WebView
     try {
         if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
-            window.ReactNativeWebView.postMessage(JSON.stringify({ action: 'vibrate', duration: 500 }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ action: 'vibrate', sound: 'vibrate', duration: 500 }));
         }
     } catch (e) {}
 
-    // 5. Visual Tactile Haptic Pulse across mobile viewport
+    // 7. Visual Tactile Haptic Pulse across mobile viewport
     try {
         const timerVal = document.getElementById('timer-value');
         if (timerVal) {
