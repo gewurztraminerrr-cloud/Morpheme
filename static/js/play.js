@@ -249,31 +249,105 @@ window.addEventListener('resize', () => {
     }
 });
 
-// Mobile Game Room: Top Menu Management (Keeps play window shifted all the way to top)
+// Mobile Game Room: Swipe Down to Reveal Top Menu & Swipe Up to Hide
 function getTopHeaderHeight() {
     return 0;
 }
 
 window.hideGameRoomTopMenu = function(immediate = true) {
     if (window.innerWidth > 992) return;
-    const playPage = document.getElementById('page-play');
-    if (!playPage || !playPage.classList.contains('active')) return;
-    window.scrollTo(0, 0);
-    if (document.documentElement) document.documentElement.scrollTop = 0;
-    if (document.body) document.body.scrollTop = 0;
+    document.body.classList.remove('mobile-top-menu-revealed');
 };
 
 window.showGameRoomTopMenu = function(immediate = false) {
     if (window.innerWidth > 992) return;
     const playPage = document.getElementById('page-play');
     if (!playPage || !playPage.classList.contains('active')) return;
-    window.scrollTo(0, 0);
-    if (document.documentElement) document.documentElement.scrollTop = 0;
-    if (document.body) document.body.scrollTop = 0;
+    document.body.classList.add('mobile-top-menu-revealed');
+};
+
+window.toggleGameRoomTopMenu = function() {
+    if (window.innerWidth > 992) return;
+    const playPage = document.getElementById('page-play');
+    if (!playPage || !playPage.classList.contains('active')) return;
+    document.body.classList.toggle('mobile-top-menu-revealed');
 };
 
 (function _setupMobileGameRoomHeaderReveal() {
-    // Top menu is cleanly hidden on mobile game rooms so layout stays shifted up to top
+    let touchStartY = 0;
+    let touchStartX = 0;
+    let isTracking = false;
+
+    document.addEventListener('touchstart', (e) => {
+        if (window.innerWidth > 992) return;
+        const playPage = document.getElementById('page-play');
+        if (!playPage || !playPage.classList.contains('active')) return;
+
+        // If top menu drawer is currently open:
+        if (document.body.classList.contains('mobile-top-menu-revealed')) {
+            // Tapping outside the top menu bar closes it
+            if (!e.target.closest('.top-menu-bar')) {
+                window.hideGameRoomTopMenu();
+            }
+            touchStartY = e.touches && e.touches[0] ? e.touches[0].clientY : 0;
+            touchStartX = e.touches && e.touches[0] ? e.touches[0].clientX : 0;
+            isTracking = true;
+            return;
+        }
+
+        // Never track touches that start on board cells, tiles, inputs, or chat
+        if (e.target.closest('#game-board, .board-cell, .game-board, input, textarea, select, .chat-panel, #chat-history')) {
+            isTracking = false;
+            return;
+        }
+
+        if (e.touches && e.touches.length === 1) {
+            touchStartY = e.touches[0].clientY;
+            touchStartX = e.touches[0].clientX;
+            // Track swipe down from the top region (touchStartY <= 140 or inside .play-header or top of panel)
+            const panel = e.target.closest('.left-panel-container, .board-panel, .words-panel, #page-play');
+            const panelAtTop = !panel || panel.scrollTop <= 5;
+            if (panelAtTop && (touchStartY <= 140 || e.target.closest('.play-header'))) {
+                isTracking = true;
+            }
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isTracking || window.innerWidth > 992) return;
+        const playPage = document.getElementById('page-play');
+        if (!playPage || !playPage.classList.contains('active')) return;
+        if (!e.touches || e.touches.length !== 1) return;
+
+        // Cancel if letter selection is active
+        if (typeof mouseState !== 'undefined' && mouseState.isDown) {
+            isTracking = false;
+            return;
+        }
+
+        const currentY = e.touches[0].clientY;
+        const currentX = e.touches[0].clientX;
+        const diffY = currentY - touchStartY;
+        const diffX = Math.abs(currentX - touchStartX);
+
+        if (document.body.classList.contains('mobile-top-menu-revealed')) {
+            // Swiping up while drawer is open closes it
+            if (diffY < -20 && Math.abs(diffY) > diffX * 1.2) {
+                isTracking = false;
+                window.hideGameRoomTopMenu();
+            }
+        } else {
+            // Swiping down reveals it
+            if (diffY > 30 && diffY > diffX * 1.2) {
+                isTracking = false;
+                window.showGameRoomTopMenu();
+            }
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', () => {
+        isTracking = false;
+    }, { passive: true });
 })();
 
 // =============================================================================
@@ -12526,10 +12600,7 @@ function handleCellTouchStart(e) {
 
     // If top menu was revealed on mobile, ensure touching the board hides it so the full game room is in view
     if (window.innerWidth <= 992) {
-        const headerH = (document.querySelector('.header')?.offsetHeight || 0) + (document.querySelector('.separator')?.offsetHeight || 0);
-        if (headerH > 0 && window.scrollY < headerH - 5) {
-            window.scrollTo(0, headerH);
-        }
+        document.body.classList.remove('mobile-top-menu-revealed');
     }
 
     if (isCubeBoard()) return; // Cube: typing-only, no touch tile selection

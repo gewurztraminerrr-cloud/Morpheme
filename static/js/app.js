@@ -2578,6 +2578,9 @@ window.showPage = showPage;
     document.body.classList.toggle('mods-active', pageId === 'page-mods');
     document.body.classList.toggle('forums-active', pageId === 'page-forums');
     document.body.classList.toggle('login-active', pageId === 'page-login');
+    if (pageId !== 'page-play') {
+        document.body.classList.remove('mobile-top-menu-revealed');
+    }
     const isMobileDevice = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (pageId === 'page-play' && isMobileDevice) {
         const alignPlayTop = () => {
