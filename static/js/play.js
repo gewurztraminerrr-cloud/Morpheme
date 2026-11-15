@@ -1446,6 +1446,7 @@ function clearGameUIAndCache() {
     if (tripleMusic && !tripleMusic.paused) {
         tripleMusic.pause();
     }
+    window._tripleMusicActiveRound = false;
     if (typeof BoardAudio !== 'undefined' && typeof BoardAudio.suspend === 'function') {
         BoardAudio.suspend();
     }
@@ -7317,7 +7318,7 @@ function updateTripleMusicState(remaining) {
     }
 
     // Previous round was Triple if recorded in memory or passed by state
-    const wasTriplePrevious = isTripleFormat(state.previous_board_format || window._lastActiveRoundFormat || (isIntermission ? state.current_board_format : ''));
+    const wasTriplePrevious = isTripleFormat(state.previous_board_format || window._lastActiveRoundFormat || (isIntermission ? state.current_board_format : '')) || !!window._tripleMusicActiveRound;
 
     // Upcoming round is Triple if revealed in spinner_params, next_round_format, displayedParams, or current format
     const sp = state.spinner_params || {};
@@ -7335,7 +7336,7 @@ function updateTripleMusicState(remaining) {
         }
     }
 
-    const isActiveTriple = isActive && isTripleFormat(state.current_board_format);
+    const isActiveTriple = isActive && (isTripleFormat(state.current_board_format) || !!window._tripleMusicActiveRound || isUpcomingTriple);
 
     const safePlay = () => {
         if (!audio.paused) return;
@@ -7360,11 +7361,12 @@ function updateTripleMusicState(remaining) {
     };
 
     if (isActive) {
-        // Active Round: "play it all throughout the round"
+        // Active Round: "play it all throughout the round" without hiccups or restarting from 0
         if (isActiveTriple) {
+            window._tripleMusicActiveRound = true;
             audio.volume = 1.0;
             if (audio.paused) {
-                audio.currentTime = 0;
+                // Resume seamlessly from current position; never reset currentTime to 0 at round start!
                 safePlay();
             }
         } else {
@@ -7372,6 +7374,7 @@ function updateTripleMusicState(remaining) {
                 audio.pause();
                 audio.currentTime = 0;
             }
+            window._tripleMusicActiveRound = false;
         }
     } else if (isIntermission) {
         const remainingSec = (typeof remaining === 'number' && !isNaN(remaining))
@@ -7392,6 +7395,7 @@ function updateTripleMusicState(remaining) {
                     audio.pause();
                     audio.currentTime = 0;
                 }
+                window._tripleMusicActiveRound = false;
             }
         } else if (remainingSec <= 50.0 && remainingSec > 10.0) {
             // "until 0:50 during the next intermission, at which point it can no longer be heard."
@@ -7400,12 +7404,17 @@ function updateTripleMusicState(remaining) {
                 audio.currentTime = 0;
             }
             audio.volume = 0.0;
+            window._tripleMusicActiveRound = false;
         } else if (remainingSec <= 10.0) {
             // "When the Format is Triple, begin playing the music at 0:10 time during intermission"
-            if (isUpcomingTriple) {
+            if (isUpcomingTriple || window._tripleMusicActiveRound) {
+                window._tripleMusicActiveRound = true;
                 audio.volume = 1.0;
                 if (audio.paused) {
-                    audio.currentTime = 0;
+                    // Only start from beginning if starting fresh for the upcoming round
+                    if (audio.currentTime === 0 || audio.ended) {
+                        audio.currentTime = 0;
+                    }
                     safePlay();
                 }
             } else {
@@ -7414,6 +7423,7 @@ function updateTripleMusicState(remaining) {
                     audio.currentTime = 0;
                 }
                 audio.volume = 0.0;
+                window._tripleMusicActiveRound = false;
             }
         }
     } else {
@@ -7421,6 +7431,7 @@ function updateTripleMusicState(remaining) {
             audio.pause();
             audio.currentTime = 0;
         }
+        window._tripleMusicActiveRound = false;
     }
 }
 window.updateTripleMusicState = updateTripleMusicState;
