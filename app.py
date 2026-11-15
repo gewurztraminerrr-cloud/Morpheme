@@ -10208,7 +10208,21 @@ _NOUN_SUFFIX_REGEX = re.compile(
 )
 
 _CROSS_REF_POINTER_REGEX = re.compile(
-    r'\b(?:alternative\s+(?:form|spelling)\s+of|variant\s+of|also|same\s+as)\s+([A-Za-z\-]+)',
+    r'\b(?:'
+    r'(?:archaic|alternative|alternate|obsolete|variant|historical|dialectal|anglicised|anglicized|british|american|us|uk|rare|former|chiefly\s+[a-z]+)?\s*'
+    r'(?:spelling|form|variant)\s+(?:of|for)|'
+    r'spelling\s+variant\s+of|'
+    r'plural\s+(?:of|for)|'
+    r'singular\s+(?:of|for)|'
+    r'diminutive\s+(?:of|for)|'
+    r'variant\s+of|'
+    r'same\s+as|'
+    r'synonym\s+of|'
+    r'another\s+name\s+for|'
+    r'also\s+(?:called|known\s+as|spelled)|'
+    r'also|'
+    r'see\s+(?:also\s+)?'
+    r')\s+([A-Za-z\-]+)',
     re.IGNORECASE
 )
 
@@ -10231,16 +10245,35 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
     ref_target = None
     m_ptr = _CROSS_REF_POINTER_REGEX.search(combined_text)
     if m_ptr:
-        candidate_ref = m_ptr.group(1).lower()
+        candidate_ref = m_ptr.group(1).lower().strip('-')
         if candidate_ref != w_lower and len(candidate_ref) > 2:
             ref_target = candidate_ref
 
     if not ref_target and raw_def:
         m_root = re.match(r'^([A-Za-z\-]+),\s*(.*)', raw_def)
         if m_root:
-            cand_root = m_root.group(1).lower()
+            cand_root = m_root.group(1).lower().strip('-')
             if cand_root != w_lower and len(cand_root) > 2:
                 ref_target = cand_root
+
+    # Follow chained variants up to 3 hops (e.g. A is variant of B, B is spelling of C -> C)
+    if ref_target and isinstance(DEFINITIONS_CACHE, dict):
+        curr_ref = ref_target
+        hops = 0
+        while curr_ref and hops < 3:
+            hops += 1
+            ref_def = DEFINITIONS_CACHE.get(curr_ref.upper(), '')
+            if not ref_def:
+                break
+            m_next = _CROSS_REF_POINTER_REGEX.search(ref_def)
+            if m_next:
+                next_cand = m_next.group(1).lower().strip('-')
+                if next_cand and next_cand != curr_ref and len(next_cand) > 2:
+                    curr_ref = next_cand
+                    continue
+            break
+        if curr_ref:
+            ref_target = curr_ref
 
     if ref_target and isinstance(DEFINITIONS_CACHE, dict):
         ref_raw_def = DEFINITIONS_CACHE.get(ref_target.upper(), '')
@@ -10301,25 +10334,23 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
         return False, None, None
 
     lemma = None
-    if raw_def:
+    # 1. Variants and alternative spellings directly target the canonical main word
+    if ref_target:
+        lemma = ref_target
+
+    if not lemma and raw_def:
         m_root = re.match(r'^([A-Za-z\-]+),\s*(.*)', raw_def)
         if m_root:
-            root_word = m_root.group(1).lower()
+            root_word = m_root.group(1).lower().strip('-')
             if root_word != w_lower and len(root_word) > 2:
                 lemma = root_word
 
     if not lemma:
         m_plural = re.search(r'\b(?:plural|diminutive)\s+(?:of|for)\s+([A-Za-z\-]+)', combined_text, re.IGNORECASE)
         if m_plural:
-            lemma = m_plural.group(1).lower()
-
-    if not lemma and ref_target:
-        try:
-            from nltk.corpus import wordnet as wn
-            if wn.synsets(ref_target, pos=wn.NOUN):
-                lemma = ref_target
-        except Exception:
-            pass
+            cand_p = m_plural.group(1).lower().strip('-')
+            if cand_p != w_lower and len(cand_p) > 2:
+                lemma = cand_p
 
     if not lemma:
         try:
