@@ -1108,11 +1108,24 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
 
 .tool-word-badges-row {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     gap: 6px;
     margin-top: 10px;
     margin-bottom: 2px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 12px;
+}
+
+body.is-desktop .tool-word-badges-row,
+body:not(.is-mobile) .tool-word-badges-row,
+@media (min-width: 901px) {
+    .tool-word-badges-row {
+        justify-content: flex-start !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
 }
 
 .tool-word-badges-row .tool-def-len-badge {

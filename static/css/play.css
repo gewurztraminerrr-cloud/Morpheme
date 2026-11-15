@@ -1010,11 +1010,24 @@ body[class*="theme-light-"] .intermission-winner-card .winner-bonus-word {
 
 .tool-word-badges-row {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     gap: 6px;
     margin-top: 10px;
     margin-bottom: 2px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 12px;
+}
+
+body.is-desktop .tool-word-badges-row,
+body:not(.is-mobile) .tool-word-badges-row,
+@media (min-width: 901px) {
+    .tool-word-badges-row {
+        justify-content: flex-start !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+    }
 }
 
 .tool-word-badges-row .tool-def-len-badge {
@@ -3166,6 +3179,7 @@ body[class*="theme-light-"] #tool-random .random-word-large,
     line-height: 1.25;
 }
 
+#random-word-definition,
 #valid-definition-display {
     width: 100%;
     max-width: 100%;
@@ -9883,12 +9897,17 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     .validation-scroll-container {
         max-height: 380px !important;
     }
-    #valid-definition-display {
+    #valid-definition-display,
+    #random-word-definition {
         max-width: 100% !important;
         width: 100% !important;
         box-sizing: border-box !important;
         padding: 4px 6px !important;
         font-size: 1rem !important;
+    }
+    .tool-word-badges-row {
+        justify-content: center !important;
+        padding: 0 6px !important;
     }
     #random-word-definition .pronunciation {
         font-size: 1.1rem !important;
