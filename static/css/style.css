@@ -1141,12 +1141,18 @@ body:not(.is-mobile) .tool-word-badges-row,
 }
 
 .definition-wiki-row {
-    margin-top: 12px;
+    margin-top: 10px;
     margin-bottom: 4px;
+    padding-top: 4px;
+    padding-bottom: 2px;
     display: flex;
     align-items: center;
     font-size: 0.95rem;
     line-height: 1.4;
+    width: 100%;
+    box-sizing: border-box;
+    scroll-margin-top: 14px;
+    scroll-margin-bottom: 14px;
 }
 
 .definition-wiki-link {
@@ -1161,6 +1167,9 @@ body:not(.is-mobile) .tool-word-badges-row,
     border-radius: 6px;
     font-weight: 500;
     font-size: 0.88rem;
+    line-height: 1.35;
+    box-sizing: border-box;
+    overflow: visible;
     transition: all 0.2s ease;
 }
 
@@ -13064,9 +13073,15 @@ body.is-mobile #setting-subpage-allow-invites .invitations-mobile-break {
     }
 
     #page-tools #tool-random .definition-wiki-row,
-    body.is-mobile #page-tools #tool-random .definition-wiki-row {
-        margin-top: 5px !important;
-        margin-bottom: 2px !important;
+    body.is-mobile #page-tools #tool-random .definition-wiki-row,
+    #page-tools #tool-valid .definition-wiki-row,
+    body.is-mobile #page-tools #tool-valid .definition-wiki-row {
+        margin-top: 6px !important;
+        margin-bottom: 3px !important;
+        padding-top: 4px !important;
+        padding-bottom: 2px !important;
+        scroll-margin-top: 16px !important;
+        scroll-margin-bottom: 16px !important;
     }
 
     #page-tools #tool-random .tool-def-actions,

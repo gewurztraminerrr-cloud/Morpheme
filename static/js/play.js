@@ -11813,6 +11813,7 @@ function renderDefinitionData(data, word, defContent, defPron) {
             html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
         }
         defContent.innerHTML = html;
+        defContent.scrollTop = 0;
     } else {
         if (defPron) {
             defPron.textContent = '';
@@ -11820,6 +11821,7 @@ function renderDefinitionData(data, word, defContent, defPron) {
             defPron.style.setProperty('display', 'none', 'important');
         }
         defContent.innerHTML = `<p class="placeholder" style="margin: 4px 0 8px 0; font-style: italic; opacity: 0.85;">No definition available for this word.</p>`;
+        defContent.scrollTop = 0;
     }
 }
 

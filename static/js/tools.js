@@ -8476,17 +8476,22 @@ async function generateRandomWord() {
             setTimeout(() => {
                 defEl.style.transition = 'opacity 0.5s ease';
                 defEl.style.opacity = '1';
-                // Scroll to the bottom on mobile viewports so all info is visible
+                // Scroll smoothly on mobile viewports so the definition and Wikipedia button fit completely onto the screen
                 const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                 if (isMobile) {
+                    const wikiBtn = defEl.querySelector('.definition-wiki-row');
+                    const actionsEl = document.querySelector('.random-word-container .tool-def-actions');
                     const contentEl = document.querySelector('#page-tools .tools-content');
                     if (contentEl) {
                         setTimeout(() => {
-                            contentEl.scrollTo({
-                                top: contentEl.scrollHeight,
-                                behavior: 'smooth'
-                            });
-                        }, 100);
+                            if (wikiBtn) {
+                                wikiBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            } else if (actionsEl) {
+                                actionsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            } else {
+                                defEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                            }
+                        }, 120);
                     }
                 }
             }, 100);
@@ -9396,17 +9401,22 @@ async function runValidationCheck() {
                 setTimeout(() => {
                      defEl.style.transition = 'opacity 0.5s ease';
                      defEl.style.opacity = '1';
-                     // Scroll to the bottom on mobile viewports so all info is visible
+                     // Scroll smoothly on mobile viewports so the definition and Wikipedia button fit completely onto the screen
                      const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                      if (isMobile) {
+                         const wikiBtn = defEl.querySelector('.definition-wiki-row');
+                         const actionsEl = document.querySelector('.random-word-container .tool-def-actions');
                          const contentEl = document.querySelector('#page-tools .tools-content');
                          if (contentEl) {
                              setTimeout(() => {
-                                 contentEl.scrollTo({
-                                     top: contentEl.scrollHeight,
-                                     behavior: 'smooth'
-                                 });
-                             }, 100);
+                                 if (wikiBtn) {
+                                     wikiBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                 } else if (actionsEl) {
+                                     actionsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                 } else {
+                                     defEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                 }
+                             }, 120);
                          }
                      }
                  }, 100);
