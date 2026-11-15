@@ -9762,6 +9762,8 @@ document.addEventListener('keydown', (e) => {
     if (e.target && e.target.id === 'word-input') {
         if (e.key === 'Enter' || e.key === 'Return') {
             e.preventDefault();
+            e.stopPropagation();
+            if (e.repeat) return;
             const wordToSubmit = e.target.value;
             console.log('[play.js] delegated submission triggered:', wordToSubmit);
             submitWord(wordToSubmit);
@@ -10069,12 +10071,23 @@ function calculateWordScoreLocally(word, path) {
     return score;
 }
 
+let _lastSubmitWord = '';
+let _lastSubmitTime = 0;
+
 async function submitWord(wordParam = null, pathParam = null, _quFallback = false) {
     window._playedCurrentRound = true;
     try {
         const input = document.getElementById('word-input');
     let word = wordParam ? wordParam.toUpperCase() : (input ? input.value.trim().toUpperCase() : '');
     const roomId = getCurrentRoomId();
+
+    const now = Date.now();
+    if (!_quFallback && word && word === _lastSubmitWord && (now - _lastSubmitTime) < 500) {
+        console.warn(`[play.js] Debouncing rapid duplicate submitWord for "${word}"`);
+        return;
+    }
+    _lastSubmitWord = word;
+    _lastSubmitTime = now;
     
     // Clear input immediately (no yellow tint — it's visual noise before validation color)
     if (input) {
@@ -10344,12 +10357,18 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                 } else {
                     // PREFACE: the board word list is complete (never truncated), so an unlisted word is
                     // invalid. Flash red at the exact same instant (0ms) and duration as the blue flash.
-                    const invMsg = isPenaltyMode
-                        ? `${word.toUpperCase()} INVALID (-3 PTS)`
-                        : `${word.toUpperCase()} INVALID`;
-                    showValidationFeedback(invMsg, false, false, finalPath, true);
-                    optimisticColor = 'red';
-                    optimisticIsDefinitive = false;
+                    // QU-FALLBACK GUARD: If this word contains QU on a swipe round with a Q tile,
+                    // do NOT flash red yet because it might be valid without the U (e.g. QANAT).
+                    // Wait for server / fallback to resolve so it never double flashes red!
+                    const couldQFallback = !_quFallback && pathParam !== null && /QU/.test(word);
+                    if (!couldQFallback) {
+                        const invMsg = isPenaltyMode
+                            ? `${word.toUpperCase()} INVALID (-3 PTS)`
+                            : `${word.toUpperCase()} INVALID`;
+                        showValidationFeedback(invMsg, false, false, finalPath, true);
+                        optimisticColor = 'red';
+                        optimisticIsDefinitive = false;
+                    }
                 }
             }
         }
@@ -10406,9 +10425,14 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         if (!data.success && !_quFallback && pathParam !== null && /QU/.test(word)) {
             const strippedWord = word.replace(/QU/g, 'Q');
             if (strippedWord !== word) {
-                console.log(`[play.js] QU-tile fallback: retrying "${word}" as "${strippedWord}"`);
-                submitWord(strippedWord, pathParam, true);
-                return;
+                const wordsList = (window.lastGameState && window.lastGameState.board_all_words) ? window.lastGameState.board_all_words : null;
+                if (wordsList && Array.isArray(wordsList) && !wordsList.includes(strippedWord)) {
+                    // Not valid even stripped; don't retry, let the invalid response handle it
+                } else {
+                    console.log(`[play.js] QU-tile fallback: retrying "${word}" as "${strippedWord}"`);
+                    submitWord(strippedWord, pathParam, true);
+                    return;
+                }
             }
         }
 
@@ -10866,6 +10890,9 @@ function showGuessingPopup() {
     }, 3000);
 }
 
+let _lastFeedbackMsg = '';
+let _lastFeedbackTime = 0;
+
 function showValidationFeedback(message, isValid, isBonus = false, path = null, playSound = true) {
     const statusEl = document.getElementById('word-validation-status');
     if (!statusEl) return;
@@ -10875,6 +10902,15 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
         statusEl.style.color = '';
         return;
     }
+
+    const now = Date.now();
+    // Guard against duplicate rapid invalid flashes (suppress duplicate invalid flash within 450ms)
+    if (!isValid && message && message === _lastFeedbackMsg && (now - _lastFeedbackTime) < 450) {
+        console.warn(`[play.js] Suppressing duplicate rapid feedback flash for "${message}"`);
+        return;
+    }
+    _lastFeedbackMsg = message;
+    _lastFeedbackTime = now;
 
     // Clear highlights, but keep active highlights if the user has already started a new swipe or typing sequence
     const isSwipingNewWord = mouseState && mouseState.isDown;
