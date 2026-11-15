@@ -184,11 +184,11 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1794300000" as="style">
+    <link rel="preload" href="/css/style.css?v=1794330000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794220000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1794300000">
+    <link rel="stylesheet" href="/css/style.css?v=1794330000">
     <link rel="stylesheet" href="/css/lobby.css?v=1794220000">
-    <link rel="stylesheet" href="/css/play.css?v=1794320000">
+    <link rel="stylesheet" href="/css/play.css?v=1794330000">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000">
@@ -9312,6 +9312,39 @@
         </div>
     </div>
 
+    <!-- In-App Wikipedia Article & Summary Modal -->
+    <div id="wikipedia-article-modal" class="modal-overlay hidden" style="z-index: 100010; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.82); backdrop-filter: blur(8px); display: none;">
+        <div class="wiki-modal-card">
+            <div class="wiki-modal-header">
+                <button type="button" class="wiki-modal-back-btn" onclick="window.closeWikipediaModal();" aria-label="Back to Morpheme">
+                    <span class="wiki-back-arrow">←</span> <span>Back</span>
+                </button>
+                <div class="wiki-modal-header-title-box">
+                    <span class="wiki-modal-brand">📖 Wikipedia</span>
+                    <h3 id="wiki-modal-title" class="wiki-modal-title">Word</h3>
+                </div>
+                <button type="button" class="wiki-modal-close-btn" onclick="window.closeWikipediaModal();" aria-label="Close">&times;</button>
+            </div>
+            <div id="wiki-modal-body" class="wiki-modal-body">
+                <div id="wiki-modal-loading" class="wiki-modal-loading">
+                    <div class="wiki-modal-spinner"></div>
+                    <span>Loading Wikipedia summary...</span>
+                </div>
+                <div id="wiki-modal-content" class="wiki-modal-content" style="display: none;">
+                    <div id="wiki-modal-description" class="wiki-modal-description"></div>
+                    <div id="wiki-modal-image-wrap" class="wiki-modal-image-wrap" style="display: none;">
+                        <img id="wiki-modal-image" class="wiki-modal-image" src="" alt="Wikipedia Image">
+                    </div>
+                    <div id="wiki-modal-extract" class="wiki-modal-extract"></div>
+                    <ul id="wiki-modal-bullets" class="wiki-modal-bullets" style="display: none;"></ul>
+                </div>
+            </div>
+            <div class="wiki-modal-footer">
+                <button type="button" class="wiki-modal-footer-back-btn" onclick="window.closeWikipediaModal();">← Back to Morpheme</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Room Achievements Modal -->
     <div id="room-achievements-modal" class="modal-overlay hidden">
         <div class="achievement-modal-container">
@@ -10436,13 +10469,13 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1794290000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794220000"></script>
+    <script src="/js/app.js?v=1794330000"></script>
     <script src="/js/lobby.js?v=1794220000"></script>
-    <script src="/js/play.js?v=1794320000"></script>
+    <script src="/js/play.js?v=1794330000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1794190000"></script>
+    <script src="/js/tools.js?v=1794330000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1794176000"></script>

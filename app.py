@@ -10424,6 +10424,82 @@ def get_definition():
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return resp
 
+_WIKI_SUMMARY_CACHE = {}
+
+@app.route('/api/wikipedia_summary', methods=['GET'])
+def get_wikipedia_summary():
+    """
+    Fetch clean in-app Wikipedia summary/extract for words.
+    Uses Wikipedia's official REST API and falls back to Action API.
+    Caches responses to guarantee near-instant lookup with zero UI lag.
+    """
+    title = request.args.get('title', '').strip()
+    if not title:
+        return jsonify({'error': 'Title parameter required'}), 400
+
+    cache_key = title.lower()
+    if cache_key in _WIKI_SUMMARY_CACHE:
+        return jsonify(_WIKI_SUMMARY_CACHE[cache_key])
+
+    import urllib.request, urllib.parse, json, re
+    headers = {'User-Agent': 'MorphemeWordGame/1.0 (https://morpheme.games; contact@morpheme.games)'}
+    safe_title = urllib.parse.quote(title.replace(' ', '_'), safe='')
+
+    result = {
+        'title': title,
+        'description': '',
+        'extract': '',
+        'is_disambiguation': False,
+        'bullets': [],
+        'thumbnail': None,
+        'url': f"https://en.wikipedia.org/wiki/{safe_title}"
+    }
+
+    try:
+        summary_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{safe_title}"
+        req = urllib.request.Request(summary_url, headers=headers)
+        with urllib.request.urlopen(req, timeout=3.5) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+            result['title'] = data.get('title') or title
+            result['description'] = data.get('description') or ''
+            result['extract'] = data.get('extract') or ''
+            result['url'] = data.get('content_urls', {}).get('desktop', {}).get('page') or result['url']
+            if data.get('thumbnail'):
+                result['thumbnail'] = data.get('thumbnail', {}).get('source')
+            if data.get('type') == 'disambiguation' or (result['description'].lower() == 'topics referred to by the same term'):
+                result['is_disambiguation'] = True
+    except Exception as e:
+        pass
+
+    if result.get('is_disambiguation') or not result.get('extract'):
+        try:
+            parse_url = f"https://en.wikipedia.org/w/api.php?action=parse&page={safe_title}&prop=text&mobileformat=1&format=json"
+            p_req = urllib.request.Request(parse_url, headers=headers)
+            with urllib.request.urlopen(p_req, timeout=3.5) as p_resp:
+                p_data = json.loads(p_resp.read().decode('utf-8'))
+                html = p_data.get('parse', {}).get('text', {}).get('*', '')
+                if html:
+                    items = re.findall(r'<li>(.*?)</li>', html, re.DOTALL)
+                    bullets = []
+                    for item in items[:12]:
+                        txt = re.sub(r'<[^>]+>', '', item).strip()
+                        if txt and len(txt) > 4:
+                            bullets.append(txt)
+                    if bullets:
+                        result['bullets'] = bullets
+                    if not result.get('extract'):
+                        first_p = re.search(r'<p>(.*?)</p>', html, re.DOTALL)
+                        if first_p:
+                            p_txt = re.sub(r'<[^>]+>', '', first_p.group(1)).strip()
+                            if p_txt:
+                                result['extract'] = p_txt
+        except Exception:
+            pass
+
+    _WIKI_SUMMARY_CACHE[cache_key] = result
+    return jsonify(result)
+
+
 
 
 # Initialize developer messages database

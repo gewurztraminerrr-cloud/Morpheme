@@ -8467,7 +8467,9 @@ async function generateRandomWord() {
             }
             if (data.is_noun && data.wiki_url) {
                 const wikiTitle = data.wiki_title || word;
-                html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
+                const safeTitle = (wikiTitle || '').replace(/'/g, "\\'");
+                const safeUrl = (data.wiki_url || '').replace(/'/g, "\\'");
+                html += `<div class="definition-wiki-row"><button type="button" class="definition-wiki-link" onclick="if(window.openWikipediaModal)window.openWikipediaModal('${safeTitle}', '${safeUrl}');" title="Read Wikipedia article for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></button></div>`;
             }
             if (data.image_url) {
                 html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
@@ -8565,7 +8567,9 @@ async function updateWotd() {
             }
             if (data.is_noun && data.wiki_url) {
                 const wikiTitle = data.wiki_title || data.word;
-                html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
+                const safeTitle = (wikiTitle || '').replace(/'/g, "\\'");
+                const safeUrl = (data.wiki_url || '').replace(/'/g, "\\'");
+                html += `<div class="definition-wiki-row"><button type="button" class="definition-wiki-link" onclick="if(window.openWikipediaModal)window.openWikipediaModal('${safeTitle}', '${safeUrl}');" title="Read Wikipedia article for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></button></div>`;
             }
             if (data.image_url) {
                 html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
@@ -9392,7 +9396,9 @@ async function runValidationCheck() {
                 }
                 if (data.is_noun && data.wiki_url) {
                     const wikiTitle = data.wiki_title || word;
-                    html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
+                    const safeTitle = (wikiTitle || '').replace(/'/g, "\\'");
+                    const safeUrl = (data.wiki_url || '').replace(/'/g, "\\'");
+                    html += `<div class="definition-wiki-row"><button type="button" class="definition-wiki-link" onclick="if(window.openWikipediaModal)window.openWikipediaModal('${safeTitle}', '${safeUrl}');" title="Read Wikipedia article for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></button></div>`;
                 }
                 if (data.image_url) {
                     html += `<div class="definition-image-container" style="margin-top: 15px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 180px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
@@ -11830,7 +11836,9 @@ window.showWordDefinitionPopup = async function (word, event) {
             }
             if (data && data.is_noun && data.wiki_url) {
                 const wikiTitle = data.wiki_title || cleanWord;
-                html += `<div class="definition-wiki-row"><a href="${data.wiki_url}" target="_blank" rel="noopener noreferrer" class="definition-wiki-link" title="Open Wikipedia page for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></a></div>`;
+                const safeTitle = (wikiTitle || '').replace(/'/g, "\\'");
+                const safeUrl = (data.wiki_url || '').replace(/'/g, "\\'");
+                html += `<div class="definition-wiki-row"><button type="button" class="definition-wiki-link" onclick="if(window.openWikipediaModal)window.openWikipediaModal('${safeTitle}', '${safeUrl}');" title="Read Wikipedia article for ${wikiTitle}"><span>📖 Wikipedia:</span> <span class="wiki-title-text">${wikiTitle}</span> <span class="wiki-external-arrow">↗</span></button></div>`;
             }
             if (data && data.image_url) {
                 html += `<div class="definition-image-container" style="margin-top: 12px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 160px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;

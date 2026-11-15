@@ -4931,5 +4931,135 @@ function fallbackCopy(text, cb) {
     document.body.removeChild(ta);
 }
 
+// =============================================================================
+// IN-APP WIKIPEDIA MODAL (ZERO TAB-SWITCH / PRESERVES FULLSCREEN CANVAS)
+// =============================================================================
+(function _setupInAppWikipediaModal() {
+    window._wikiSummaryCache = window._wikiSummaryCache || new Map();
+
+    window.openWikipediaModal = async function(title, fallbackUrl = '') {
+        const modal = document.getElementById('wikipedia-article-modal');
+        if (!modal) return;
+
+        const titleEl = document.getElementById('wiki-modal-title');
+        const descEl = document.getElementById('wiki-modal-description');
+        const extractEl = document.getElementById('wiki-modal-extract');
+        const bulletsEl = document.getElementById('wiki-modal-bullets');
+        const imgWrap = document.getElementById('wiki-modal-image-wrap');
+        const imgEl = document.getElementById('wiki-modal-image');
+        const loadingEl = document.getElementById('wiki-modal-loading');
+        const contentEl = document.getElementById('wiki-modal-content');
+
+        const cleanTitle = (title || 'Wikipedia').trim();
+        if (titleEl) titleEl.textContent = cleanTitle;
+        if (descEl) descEl.textContent = '';
+        if (extractEl) extractEl.textContent = '';
+        if (bulletsEl) {
+            bulletsEl.innerHTML = '';
+            bulletsEl.style.display = 'none';
+        }
+        if (imgWrap && imgEl) {
+            imgWrap.style.display = 'none';
+            imgEl.src = '';
+        }
+        if (loadingEl) loadingEl.style.display = 'flex';
+        if (contentEl) contentEl.style.display = 'none';
+
+        modal.classList.remove('hidden');
+        modal.classList.add('forced-show');
+        modal.style.display = 'flex';
+        window._hasPriorityModal = true;
+
+        const cacheKey = cleanTitle.toLowerCase();
+        let data = window._wikiSummaryCache.get(cacheKey);
+
+        if (!data) {
+            try {
+                const resp = await fetch(`/api/wikipedia_summary?title=${encodeURIComponent(cleanTitle)}`);
+                if (resp.ok) {
+                    data = await resp.json();
+                    if (data && !data.error) {
+                        window._wikiSummaryCache.set(cacheKey, data);
+                    }
+                }
+            } catch (err) {
+                console.warn('[Wikipedia Modal] Summary fetch error:', err);
+            }
+        }
+
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (contentEl) contentEl.style.display = 'block';
+
+        if (data && (data.extract || data.description || (data.bullets && data.bullets.length))) {
+            if (titleEl && data.title) titleEl.textContent = data.title;
+            if (descEl) {
+                if (data.description) {
+                    descEl.textContent = data.description;
+                    descEl.style.display = 'block';
+                } else {
+                    descEl.style.display = 'none';
+                }
+            }
+            if (imgWrap && imgEl) {
+                if (data.thumbnail) {
+                    imgEl.src = data.thumbnail;
+                    imgWrap.style.display = 'block';
+                } else {
+                    imgWrap.style.display = 'none';
+                }
+            }
+            if (extractEl) {
+                extractEl.textContent = data.extract || '';
+            }
+            if (bulletsEl && data.bullets && data.bullets.length) {
+                bulletsEl.innerHTML = '';
+                data.bullets.forEach(b => {
+                    const li = document.createElement('li');
+                    li.textContent = b;
+                    bulletsEl.appendChild(li);
+                });
+                bulletsEl.style.display = 'flex';
+            }
+        } else {
+            // Graceful fallback
+            if (descEl) descEl.style.display = 'none';
+            if (imgWrap) imgWrap.style.display = 'none';
+            if (extractEl) {
+                extractEl.innerHTML = `<p style="margin: 10px 0; opacity: 0.85;">Wikipedia article available for <strong>${cleanTitle}</strong>.</p>`;
+            }
+        }
+    };
+
+    window.closeWikipediaModal = function() {
+        const modal = document.getElementById('wikipedia-article-modal');
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('forced-show');
+        modal.style.display = 'none';
+        window._hasPriorityModal = false;
+    };
+
+    // Close on overlay backdrop tap or Esc key
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('wikipedia-article-modal');
+        if (modal) {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    window.closeWikipediaModal();
+                }
+            });
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('wikipedia-article-modal');
+            if (modal && !modal.classList.contains('hidden') && modal.style.display !== 'none') {
+                window.closeWikipediaModal();
+            }
+        }
+    });
+})();
+
 console.log('app.js fully loaded - version with UI optimizations');
 
