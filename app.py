@@ -8258,11 +8258,19 @@ def get_room_state(room_id):
                     print(f"[get_room_state] Detected mismatch between displayed board and all_words during intermission for {room_id}. Auto-healing...")
                     _bg = room_manager.board_generator
                     d_name = getattr(room, 'previous_dictionary', getattr(room, 'current_dictionary', 'NWL'))
-                    solved_words = _bg._solve_board(board_to_send, dictionary=d_name, min_word_length=display_floor)
+                    use_aw = bool(getattr(room, 'previous_use_added_words', False)) or ('+ AW' in str(d_name).upper()) or ('+AW' in str(d_name).upper())
+                    solved_words = _bg._solve_board(board_to_send, dictionary=d_name, min_word_length=display_floor, use_added_words=use_aw)
                     words_to_return = list(solved_words.keys())
                     room.previous_all_words = list(words_to_return)
                     room.previous_all_words_paths = dict(solved_words)
                     word_scores_to_return = {w: word_scores_to_return.get(w, 1) for w in words_to_return}
+                    if use_aw and hasattr(word_validator, 'word_validator'):
+                        intermission_added = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
+                        room.previous_added_words = list(intermission_added)
+                    if 'CSW' in str(d_name).upper() and hasattr(word_validator, 'word_validator'):
+                        word_validator.word_validator.ensure_csw_loaded()
+                        intermission_csw_only = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
+                        room.previous_csw_only_words = list(intermission_csw_only)
 
             calc_seq_len = None
             if room.game_type == 'subanagrams':
@@ -8336,7 +8344,7 @@ def get_room_state(room_id):
                 'all_words_paths': (getattr(room, 'previous_all_words_paths', None) or room.all_words_paths) if is_intermission else {},
                 'global_found_words': global_found,
                 'fcfs_found_words': list(getattr(room, 'fcfs_found_words', [])) if (is_active and is_fcfs) else [],
-                'added_words': (intermission_added if intermission_added is not None else (list(room.added_words) if (getattr(room, 'added_words', None) and getattr(room, 'use_added_words', False)) else [])),
+                'added_words': (intermission_added if intermission_added is not None else (list(room.added_words) if (getattr(room, 'added_words', None) and (getattr(room, 'use_added_words', False) or '+ AW' in str(getattr(room, 'current_dictionary', '')).upper() or '+AW' in str(getattr(room, 'current_dictionary', '')).upper())) else [])),
                 'csw_only_words': (intermission_csw_only if intermission_csw_only is not None else (list(room.csw_only_words) if getattr(room, 'csw_only_words', None) else [])),
                 'previous_all_words': list(getattr(room, 'previous_all_words', []) or []),
                 'previous_all_word_scores': getattr(room, 'previous_all_word_scores', {}) or {},
@@ -8345,12 +8353,12 @@ def get_room_state(room_id):
                 'previous_added_words': getattr(room, 'previous_added_words', []),
                 'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
                 'previous_dictionary': getattr(room, 'previous_dictionary', 'NWL'),
-                'previous_use_added_words': getattr(room, 'previous_use_added_words', False),
+                'previous_use_added_words': bool(getattr(room, 'previous_use_added_words', False)) or ('+ AW' in str(getattr(room, 'previous_dictionary', '')).upper()) or ('+AW' in str(getattr(room, 'previous_dictionary', '')).upper()),
                 'previous_board_format': getattr(room, 'previous_board_format', getattr(room, 'current_board_format', 'Normal')),
                 'spinner_params': (
                     getattr(room, 'frozen_revealed_params', None) or getattr(room, 'spinner_params', {}) or {}
                 ),
-                 'use_added_words': (getattr(room, 'previous_use_added_words', False) if is_intermission else getattr(room, 'use_added_words', False)),
+                 'use_added_words': ((bool(getattr(room, 'previous_use_added_words', False)) or '+ AW' in str(getattr(room, 'previous_dictionary', '')).upper() or '+AW' in str(getattr(room, 'previous_dictionary', '')).upper()) if is_intermission else (bool(getattr(room, 'use_added_words', False)) or '+ AW' in str(getattr(room, 'current_dictionary', '')).upper() or '+AW' in str(getattr(room, 'current_dictionary', '')).upper())),
                 'current_dictionary': (getattr(room, 'previous_dictionary', None) or getattr(room, 'current_dictionary', 'NWL')) if is_intermission else getattr(room, 'current_dictionary', 'NWL'),
                 'current_min_length': getattr(room, 'previous_min_length', room.current_min_length) if is_intermission else room.current_min_length,
                 'min_rating': getattr(room, 'min_rating', 0),

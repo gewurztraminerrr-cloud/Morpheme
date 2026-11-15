@@ -196,30 +196,50 @@ def verify_board_words_consistency(board, words, paths=None):
         if sample_words:
             for w in sample_words:
                 p = paths[w]
-                if not p or len(p) != len(w):
+                if not p:
                     return False
-                for idx, char in enumerate(w):
-                    pos = p[idx]
+                is_word_match = True
+                p_idx = 0
+                for w_idx, char in enumerate(w):
+                    if p_idx >= len(p):
+                        is_word_match = False
+                        break
+                    pos = p[p_idx]
                     if is_3d:
                         if len(pos) != 3:
-                            return False
+                            is_word_match = False
+                            break
                         f, r, c = pos[0], pos[1], pos[2]
                         if not (0 <= f < 6 and 0 <= r < len(board[f]) and 0 <= c < len(board[f][0])):
-                            return False
+                            is_word_match = False
+                            break
                         cell_val = str(board[f][r][c]).upper()
                     else:
                         r, c = pos[-2], pos[-1]
                         if not (0 <= r < len(board) and 0 <= c < len(board[0])):
-                            return False
+                            is_word_match = False
+                            break
                         cell_val = str(board[r][c]).upper()
                     
                     if '/' in cell_val:
                         if char not in cell_val.split('/'):
-                            return False
-                    elif char == 'U' and idx > 0 and w[idx-1] == 'Q' and cell_val == 'Q':
-                        pass  # QU cell representation
-                    elif cell_val != char:
-                        return False
+                            is_word_match = False
+                            break
+                        p_idx += 1
+                    elif cell_val == 'Q' and char == 'Q':
+                        if w_idx + 1 < len(w) and w[w_idx + 1] == 'U':
+                            pass  # wait for U char to advance p_idx
+                        else:
+                            p_idx += 1
+                    elif cell_val == 'Q' and char == 'U' and w_idx > 0 and w[w_idx - 1] == 'Q':
+                        p_idx += 1  # QU cell representation
+                    elif cell_val == char:
+                        p_idx += 1
+                    else:
+                        is_word_match = False
+                        break
+                if not is_word_match or p_idx != len(p):
+                    return False
             return True
 
     # 2. Solver/validator verification on sample words
@@ -1689,8 +1709,8 @@ class GameRoom:
 
                 # Capture params immediately (fast, on Waitress thread)
                 from board_generator import pop_compatible_cached_board
-                _use_aw   = self.spinner_params.get('use_added_words', False) if isinstance(self.spinner_params, dict) else False
                 _dict     = self.spinner_params.get('dictionary', 'NWL')       if isinstance(self.spinner_params, dict) else 'NWL'
+                _use_aw   = (bool(self.spinner_params.get('use_added_words', False)) or ('+ AW' in str(_dict).upper()) or ('+AW' in str(_dict).upper())) if isinstance(self.spinner_params, dict) else False
                 _fmt      = self.spinner_params.get('board_format', 'Normal')  if isinstance(self.spinner_params, dict) else 'Normal'
                 _min_len  = self.spinner_params.get('min_word_length', 3)      if isinstance(self.spinner_params, dict) else 3
                 _range    = self.spinner_params.get('word_count_range', '100-200') if isinstance(self.spinner_params, dict) else '100-200'
@@ -3200,9 +3220,11 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                                 continue
                                 
                             ctr_resolved = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=(is_aw or caw), dictionary=cdict)
-                            caw_resolved = caw
-                            cdict_resolved = cdict
+                            caw_resolved = bool(caw or is_aw)
+                            cdict_resolved = str(cdict or 'NWL').replace('+ AW', '').replace('+AW', '').strip()
                             if cdict_resolved == 'AW': cdict_resolved = 'NWL'
+                            if caw_resolved:
+                                cdict_resolved = f"{cdict_resolved} + AW"
 
                             eparams_dict = {
                                 'min_word_length': final_min,
@@ -7480,11 +7502,16 @@ class RoomManager:
                 # brief flash of the wrong label if a heartbeat fires before real_wc is ready.
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
                 room.current_dictionary = active_params.get('dictionary', 'NWL')
-                room.use_added_words = active_params.get('use_added_words', False)
+                room.use_added_words = bool(active_params.get('use_added_words', False)) or ('+ AW' in str(room.current_dictionary).upper()) or ('+AW' in str(room.current_dictionary).upper()) or (str(room.current_dictionary).upper() in ['AW', 'ADDED_WORDS'])
+                if room.use_added_words and '+ AW' not in str(room.current_dictionary) and '+AW' not in str(room.current_dictionary):
+                    _base_d = 'CSW' if 'CSW' in str(room.current_dictionary).upper() else 'NWL'
+                    room.current_dictionary = f"{_base_d} + AW"
                 raw_min = active_params.get('min_word_length', 3)
                 
                 # Update spinner_params to match the actual board being used
                 room.spinner_params = dict(active_params) if active_params else {}
+                room.spinner_params['dictionary'] = room.current_dictionary
+                room.spinner_params['use_added_words'] = room.use_added_words
 
                 active_uniq = active_params.get('uniqueness') if isinstance(active_params, dict) else None
                 next_uniq = active_uniq if active_uniq is not None else getattr(room, 'next_round_uniqueness', None)
@@ -7657,7 +7684,7 @@ class RoomManager:
                     room.previous_bonus_cell = getattr(room, 'bonus_cell', None)
                     room.previous_board_format = ghost_board_format
                     room.previous_dictionary = getattr(room, 'current_dictionary', 'NWL')
-                    room.previous_use_added_words = getattr(room, 'use_added_words', False)
+                    room.previous_use_added_words = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(room.previous_dictionary).upper()) or ('+AW' in str(room.previous_dictionary).upper())
                     # NOTE: `copy` is imported at module level. Do NOT re-import it here: a local
                     # `import copy` makes it a function-local name for ALL of start_next_round and
                     # breaks 24h rooms (which skip this branch) with UnboundLocalError.
@@ -7667,6 +7694,8 @@ class RoomManager:
                     room.previous_all_word_scores = dict(getattr(room, 'solved_words_with_scores', {}))
                     room.previous_csw_only_words = list(room.csw_only_words) if getattr(room, 'csw_only_words', None) else []
                     room.previous_added_words = list(room.added_words) if getattr(room, 'added_words', None) else []
+                    if not room.previous_added_words and room.previous_use_added_words and hasattr(word_validator, 'word_validator'):
+                        room.previous_added_words = [w for w in (room.previous_all_words or []) if word_validator.word_validator.is_added_word(w)]
                 
                 # Update current active counts
                 room.csw_only_words = getattr(room, 'next_round_csw_only_words', [])
@@ -7679,12 +7708,13 @@ class RoomManager:
                         if ('CSW' in str(dict_str).upper() or 'ALL' in str(dict_str).upper()) and hasattr(word_validator, 'word_validator'):
                             word_validator.word_validator.ensure_csw_loaded()
                             rm_ref.csw_only_words = [w for w in w_list if word_validator.word_validator.is_csw_only(w)]
-                        if (use_aw or '+ AW' in str(dict_str).upper()) and hasattr(word_validator, 'word_validator'):
+                        if (use_aw or '+ AW' in str(dict_str).upper() or '+AW' in str(dict_str).upper()) and hasattr(word_validator, 'word_validator'):
                             rm_ref.added_words = [w for w in w_list if word_validator.word_validator.is_added_word(w)]
                     except Exception as tag_err:
                         print(f"[RoomManager] Background word tagging error: {tag_err}")
                         
-                threading.Thread(target=_tag_supplemental_words, args=(room, target_words_list, getattr(room, 'current_dictionary', 'NWL'), getattr(room, 'use_added_words', False)), daemon=True).start()
+                _is_active_aw = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper()) or ('+AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                threading.Thread(target=_tag_supplemental_words, args=(room, target_words_list, getattr(room, 'current_dictionary', 'NWL'), _is_active_aw), daemon=True).start()
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
                 room.board = room.next_round_board
@@ -7732,9 +7762,15 @@ class RoomManager:
                 if getattr(room, 'game_type', None) != 'subanagrams' and room.board and room.all_words and not verify_board_words_consistency(room.board, room.all_words, room.all_words_paths):
                     print(f"[RoomManager] CRITICAL WARNING: Active board and words mismatch detected for {room_id} post-promotion! Auto-healing word list...")
                     _bg = self.board_generator
-                    solved_dict = _bg._solve_board(room.board, dictionary=getattr(room, 'current_dictionary', 'NWL'), min_word_length=display_min, use_added_words=getattr(room, 'use_added_words', False))
+                    _is_heal_aw = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper()) or ('+AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                    solved_dict = _bg._solve_board(room.board, dictionary=getattr(room, 'current_dictionary', 'NWL'), min_word_length=display_min, use_added_words=_is_heal_aw)
                     room.all_words_paths = {w: p for w, p in solved_dict.items() if len(w) >= display_min}
                     room.all_words = set(room.all_words_paths.keys())
+                    if _is_heal_aw and hasattr(word_validator, 'word_validator'):
+                        room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                    if ('CSW' in str(getattr(room, 'current_dictionary', '')).upper()) and hasattr(word_validator, 'word_validator'):
+                        word_validator.word_validator.ensure_csw_loaded()
+                        room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
 
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
                 
@@ -7778,7 +7814,8 @@ class RoomManager:
                             room.bonus_cell = (random.randint(0, len(_b) - 1), random.randint(0, len(_b[0]) - 1))
                         print(f"[RoomManager] Bonus Letter format had no bonus cell for {room_id}; assigned {room.bonus_cell}")
                         try:
-                            _solved = self.board_generator._solve_board(room.board, getattr(room, 'current_dictionary', 'NWL'), (0, 99999), display_min, max_depth=25, store_paths=True, timeout=5.0, bonus_cell=room.bonus_cell)
+                            _is_bl_aw = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper()) or ('+AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                            _solved = self.board_generator._solve_board(room.board, getattr(room, 'current_dictionary', 'NWL'), (0, 99999), display_min, max_depth=25, store_paths=True, timeout=5.0, bonus_cell=room.bonus_cell, use_added_words=_is_bl_aw)
                             if _solved:
                                 _upd = {w: p for w, p in _solved.items() if w in room.all_words_paths}
                                 if len(_upd) == len(room.all_words_paths):

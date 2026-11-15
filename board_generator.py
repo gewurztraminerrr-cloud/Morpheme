@@ -5428,20 +5428,19 @@ class BoardGenerator:
     ):
         """Find all valid words on the board using high-speed node-based DFS traversal."""
         d_upper = str(dictionary).upper()
+        is_aw_requested = (
+            use_added_words is True
+            or "+ AW" in d_upper
+            or "+AW" in d_upper
+            or d_upper in ["AW", "ADDED_WORDS", "ALL"]
+            or (use_added_words is None and bool(use_added_words_ctx.get()))
+        )
         if "+ AW" in d_upper or "+AW" in d_upper:
             d_upper = d_upper.split("+")[0].strip()
-            if use_added_words is None:
-                use_added_words = True
+        val_ctx = is_aw_requested
         from word_validator import word_validator
-        
-        if use_added_words is None:
-            val_ctx = use_added_words_ctx.get()
-            if val_ctx is None:
-                val_ctx = False
-        else:
-            val_ctx = use_added_words
 
-        if val_ctx and d_upper in ["NWL", "CSW"]:
+        if is_aw_requested and d_upper in ["NWL", "CSW"]:
             # Recurse and combine
             base_words = self._solve_board(board, d_upper, word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell, use_added_words=False)
             added_words = self._solve_board(board, "_ONLY_ADDED_", word_count_range, min_word_length, max_depth, store_paths, timeout, must_include, bonus_cell, use_added_words=False)
