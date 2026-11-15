@@ -8903,10 +8903,30 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         box-sizing: border-box !important;
     }
 
+    /* On mobile devices in game rooms, hide top menu bar completely to shift everything up and eliminate black gap */
+    body.play-active .top-menu-bar,
+    body:has(#page-play.active) .top-menu-bar {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+    }
+    body.play-active .top-menu-spacer,
+    body:has(#page-play.active) .top-menu-spacer {
+        display: none !important;
+        height: 0 !important;
+    }
+
     #page-play.active {
+        height: 100vh !important;
+        height: 100dvh !important;
         min-height: 100vh !important;
         min-height: 100dvh !important;
-        overflow-y: visible !important;
+        max-height: 100vh !important;
+        max-height: 100dvh !important;
+        overflow-y: hidden !important;
         overflow-x: hidden !important;
         padding: 0 !important;
         margin: 0 auto !important;
@@ -8957,7 +8977,7 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         overflow-x: hidden !important;
         overflow-y: auto !important;
         height: 100% !important;
-        padding: 10px 0 0 0 !important;
+        padding: 4px 0 0 0 !important;
         margin: 0 !important;
         gap: 2px !important;
         row-gap: 2px !important;
@@ -9062,8 +9082,8 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 5px 12px 6px 12px !important;
-        margin-top: 2px !important;
+        padding: 2px 12px 4px 12px !important;
+        margin-top: 0 !important;
         margin-bottom: 2px !important;
         border-radius: 0 !important;
         height: auto !important;
@@ -9122,6 +9142,11 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     .spinner-set-label {
         display: block !important;
         font-size: 0.705rem !important;
+        margin-top: 0 !important;
+        margin-bottom: 2px !important;
+    }
+    #mobile-leave-room-btn {
+        display: inline-block !important;
     }
     .play-header .timer-display,
     .board-panel .timer-display {

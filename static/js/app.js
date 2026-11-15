@@ -2580,21 +2580,19 @@ window.showPage = showPage;
     document.body.classList.toggle('login-active', pageId === 'page-login');
     const isMobileDevice = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (pageId === 'page-play' && isMobileDevice) {
-        const hideHeaderOnMobile = () => {
+        const alignPlayTop = () => {
+            window.scrollTo(0, 0);
+            if (document.documentElement) document.documentElement.scrollTop = 0;
+            if (document.body) document.body.scrollTop = 0;
             if (typeof window.hideGameRoomTopMenu === 'function') {
                 window.hideGameRoomTopMenu(true);
-            } else {
-                const header = document.querySelector('.header');
-                const sep = document.querySelector('.separator');
-                const headerH = (header ? header.offsetHeight : 0) + (sep ? sep.offsetHeight : 0);
-                if (headerH > 0) window.scrollTo(0, headerH);
             }
         };
-        hideHeaderOnMobile();
-        requestAnimationFrame(hideHeaderOnMobile);
-        setTimeout(hideHeaderOnMobile, 50);
-        setTimeout(hideHeaderOnMobile, 150);
-        setTimeout(hideHeaderOnMobile, 300);
+        alignPlayTop();
+        requestAnimationFrame(alignPlayTop);
+        setTimeout(alignPlayTop, 50);
+        setTimeout(alignPlayTop, 150);
+        setTimeout(alignPlayTop, 300);
     } else {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
