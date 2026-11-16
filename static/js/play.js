@@ -7549,23 +7549,14 @@ function updateTripleMusicState(remaining) {
     // Previous round was Triple if recorded in memory or passed by state
     const wasTriplePrevious = isTripleFormat(state.previous_board_format || window._lastActiveRoundFormat || (isIntermission ? state.current_board_format : '')) || !!window._tripleMusicActiveRound;
 
-    // Upcoming round is Triple if revealed in spinner_params, next_round_format, displayedParams, or current format
+    // Upcoming round format during intermission comes strictly from the revealed spinner/upcoming params
+    // (Never from state.current_board_format, which holds previous_board_format during intermission!)
     const sp = state.spinner_params || {};
-    const upcomingCandidates = [
-        state.next_round_format,
-        sp.board_format,
-        (window._displayedParams && window._displayedParams.fmt) ? window._displayedParams.fmt : null,
-        state.current_board_format
-    ];
-    let isUpcomingTriple = false;
-    for (const fmt of upcomingCandidates) {
-        if (fmt && isTripleFormat(fmt)) {
-            isUpcomingTriple = true;
-            break;
-        }
-    }
+    const authoritativeUpcomingFormat = (window._displayedParams && window._displayedParams.fmt) || sp.board_format || state.next_round_format || '';
+    const isUpcomingTriple = isTripleFormat(authoritativeUpcomingFormat);
 
-    const isActiveTriple = isActive && (isTripleFormat(state.current_board_format) || !!window._tripleMusicActiveRound || isUpcomingTriple);
+    const activeFormat = state.current_board_format || sp.board_format || '';
+    const isActiveTriple = isActive && isTripleFormat(activeFormat);
 
     const safePlay = () => {
         if (!audio.paused) return;
@@ -7634,9 +7625,10 @@ function updateTripleMusicState(remaining) {
             }
             audio.volume = 0.0;
             window._tripleMusicActiveRound = false;
+            window._lastActiveRoundFormat = null;
         } else if (remainingSec <= 10.0) {
             // "When the Format is Triple, begin playing the music at 0:10 time during intermission"
-            if (isUpcomingTriple || window._tripleMusicActiveRound) {
+            if (isUpcomingTriple) {
                 window._tripleMusicActiveRound = true;
                 audio.volume = 1.0;
                 if (audio.paused) {
