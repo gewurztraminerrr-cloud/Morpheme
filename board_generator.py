@@ -491,7 +491,8 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
             if str(params.get('board_format')).upper().strip() != str(board_format).upper().strip(): continue
             if int(params.get('min_word_length', 3)) != int(min_word_length): continue
             if word_count_range and str(params.get('word_count_range', '')).strip() != str(word_count_range).strip(): continue
-            if bonus_word_len and int(params.get('bonus_word_len', 0) or 0) != int(bonus_word_len): continue
+            cached_bw_l = int(params.get('bonus_word_len', 0) or 0)
+            if bonus_word_len and cached_bw_l > 0 and cached_bw_l != int(bonus_word_len): continue
             if difficulty and _normalize_difficulty_base(params.get('difficulty')) != _normalize_difficulty_base(difficulty): continue
             matched_row = row
             break
@@ -539,10 +540,18 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                     
                 ratio = data.get("ratio", 0.0)
                 final_bonus_word = data.get("final_bonus_word", "")
-                if bonus_word_len and final_bonus_word and len(final_bonus_word) != int(bonus_word_len):
-                    exact_cands = [w for w in all_words if len(w) == int(bonus_word_len) and not w.upper().endswith(('ING', 'INGS'))]
-                    if exact_cands:
-                        final_bonus_word = random.choice(exact_cands).upper()
+                if bonus_word_len:
+                    target_bw_int = int(bonus_word_len)
+                    if not final_bonus_word or len(final_bonus_word) != target_bw_int or final_bonus_word not in all_words or final_bonus_word.upper().endswith(('ING', 'INGS')):
+                        exact_cands = [w for w in all_words if len(w) == target_bw_int and not w.upper().endswith(('ING', 'INGS'))]
+                        if exact_cands:
+                            final_bonus_word = random.choice(exact_cands).upper()
+                        else:
+                            print(f"[BoardGen] Discarding compatible cached board for {dimensions}: no valid {target_bw_int}L bonus word on board")
+                            try: conn.close()
+                            except: pass
+                            conn = None
+                            return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
                 
                 params_obj = json.loads(matched_row['param_key'])
                 print(f"[BoardGen] Serving COMPATIBLE CACHED board: {matched_row['param_key'][:120]}...")

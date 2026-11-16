@@ -4220,24 +4220,31 @@ class RoomManager:
                         pre_pop = None
                         if room.is_solo and getattr(room, 'initial_solo_params', None):
                             isp = room.initial_solo_params
-                            s_dict = isp.get('dictionary', 'NWL')
-                            s_fmt = isp.get('board_format', 'Normal')
-                            s_min_len = int(isp.get('min_word_length', 3))
-                            s_use_aw = False
+                            s_sp = room.build_solo_spinner_params()
+                            s_dict = s_sp.get('dictionary', 'NWL')
+                            s_fmt = s_sp.get('board_format', 'Normal')
+                            s_min_len = int(s_sp.get('min_word_length', 3))
+                            s_use_aw = bool(s_sp.get('use_added_words', False))
                             if '+ AW' in str(s_dict) or '+AW' in str(s_dict) or s_dict == 'AW':
                                 s_use_aw = True
                                 s_dict = str(s_dict).replace('+ AW', '').replace('+AW', '').strip()
                                 if s_dict == 'AW': s_dict = 'NWL'
-                            s_bw_len = int(isp.get('bonus_word_length', 8)) if str(isp.get('bonus_word_length', '')).isdigit() else 8
+                            s_bw_len = int(s_sp.get('bonus_word_length', 8) or 8)
+                            s_diff = SpinnerSet.strip_difficulty_pct(s_sp.get('difficulty', 'Medium'))
                             
-                            pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw, bonus_word_len=s_bw_len)
+                            pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw, bonus_word_len=s_bw_len, difficulty=s_diff)
                             if not pre_pop:
                                 try:
-                                    s_diff = isp.get('difficulty', 'Medium')
-                                    s_wc = isp.get('word_count_range', '100-200')
+                                    s_wc = s_sp.get('word_count_range', '100-200')
+                                    s_target_bw = self._get_bonus_word(
+                                        length=s_bw_len,
+                                        dictionary=s_dict,
+                                        alternating=('checkerboard' in str(s_fmt).lower()),
+                                        difficulty=s_diff
+                                    )
                                     e_res = self.board_generator.generate_board(
                                         dimensions=room.board_dimensions,
-                                        bonus_word=None,
+                                        bonus_word=s_target_bw,
                                         word_count_range=s_wc,
                                         board_format=s_fmt,
                                         dictionary=s_dict,
@@ -4248,7 +4255,7 @@ class RoomManager:
                                     )
                                     if e_res:
                                         g_b, g_w, g_c, g_f, g_p, g_r, g_bw = e_res[0], e_res[1], e_res[2], e_res[3], e_res[4], e_res[5], e_res[6]
-                                        g_params = e_res[8] if len(e_res) > 8 else isp
+                                        g_params = e_res[8] if len(e_res) > 8 else s_sp
                                         pre_pop = (g_b, g_w, g_c, g_f, g_p, g_r, g_bw, g_params)
                                 except Exception as e_sgen:
                                     print(f"[RoomManager] Solo emergency generate error: {e_sgen}")
@@ -4293,14 +4300,25 @@ class RoomManager:
                             wc_lbl = SpinnerSet.get_factchecked_wc_range(wc_cnt, use_added_words=raw_aw, dictionary=raw_dict)
 
                             # Construct spinner params ONCE from exact board parameters
+                            _create_diff_lbl = r_params.get('difficulty', 'Medium')
+                            _target_bw_create = len(r_bonus_word) if r_bonus_word else 8
+                            if room.is_solo and getattr(room, 'initial_solo_params', None):
+                                _solo_d_c = room.initial_solo_params.get('difficulty', 'random')
+                                if _solo_d_c and str(_solo_d_c).lower() != 'random':
+                                    _create_diff_lbl = SpinnerSet.format_difficulty_with_pct(SpinnerSet.strip_difficulty_pct(_solo_d_c), r_ratio)
+                                if 's_bw_len' in locals():
+                                    _target_bw_create = s_bw_len
+                            elif 'sp_kick' in locals() and isinstance(sp_kick, dict):
+                                _target_bw_create = int(sp_kick.get('bonus_word_length', 8) or 8)
+
                             room.spinner_params = {
                                 'dictionary': raw_dict,
                                 'board_format': r_fmt or 'Normal',
                                 'min_word_length': board_min_l,
                                 'word_count_range': wc_lbl,
-                                'difficulty': r_params.get('difficulty', 'Medium'),
+                                'difficulty': _create_diff_lbl,
                                 'use_added_words': raw_aw,
-                                'bonus_word_length': len(r_bonus_word) if r_bonus_word else 8,
+                                'bonus_word_length': _target_bw_create,
                                 'board_dimensions': room.board_dimensions,
                                 'time_limit': room.time_limit,
                                 'generated_at': time.time(),
@@ -4317,15 +4335,21 @@ class RoomManager:
                             room.use_added_words = room.spinner_params.get('use_added_words', raw_aw)
 
                             bw_candidate = r_bonus_word
-                            if not bw_candidate or bw_candidate not in room.all_words or str(bw_candidate).strip().upper() in ['', 'NONE'] or str(bw_candidate).upper().endswith('ING') or str(bw_candidate).upper().endswith('INGS'):
-                                cand_list = [w for w in (room.all_words or []) if len(w) >= 6 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                            if not bw_candidate or bw_candidate not in room.all_words or str(bw_candidate).strip().upper() in ['', 'NONE'] or str(bw_candidate).upper().endswith('ING') or str(bw_candidate).upper().endswith('INGS') or len(str(bw_candidate).strip()) != _target_bw_create:
+                                cand_list = [w for w in (room.all_words or []) if len(w) == _target_bw_create and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                                if not cand_list:
+                                    cand_list = [w for w in (room.all_words or []) if 6 <= len(w) <= 10 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                                    if cand_list:
+                                        cand_list.sort(key=lambda w: abs(len(w) - _target_bw_create))
+                                        _closest_l = len(cand_list[0])
+                                        cand_list = [w for w in cand_list if len(w) == _closest_l]
                                 if not cand_list:
                                     cand_list = [w for w in (room.all_words or []) if not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
                                 if cand_list:
                                     import random
                                     bw_candidate = random.choice(list(cand_list)).upper()
                                 else:
-                                    bw_candidate = self._get_bonus_word(length=8, dictionary=raw_dict)
+                                    bw_candidate = self._get_bonus_word(length=max(6, _target_bw_create), dictionary=raw_dict)
 
                             room.bonus_word = str(bw_candidate or '').upper().strip()
                             room.previous_bonus_word = room.bonus_word
@@ -5102,16 +5126,27 @@ class RoomManager:
                 if getattr(room, 'is_solo', False):
                     target_fmt = room.spinner_params.get('board_format', 'Normal')
                     target_dict_raw = room.spinner_params.get('dictionary', 'NWL')
+                    target_bw_len = int(room.spinner_params.get('bonus_word_length', 8) or 8)
+                    target_diff_solo = room.spinner_params.get('difficulty', 'Medium')
                     from board_generator import pop_compatible_cached_board
                     solo_pop = pop_compatible_cached_board(
                         room.board_dimensions,
                         target_dict_raw,
                         target_fmt,
                         room.spinner_params.get('min_word_length', 3),
-                        use_aw_flag
+                        use_aw_flag,
+                        bonus_word_len=target_bw_len,
+                        difficulty=target_diff_solo
                     )
                     if not solo_pop and str(target_fmt).lower() == 'normal':
-                        solo_pop = pop_any_cached_board(room.board_dimensions, min_word_length=m_len, target_format='Normal', dictionary=target_dict_raw, use_added_words=use_aw_flag)
+                        solo_pop = pop_compatible_cached_board(
+                            room.board_dimensions,
+                            target_dict_raw,
+                            target_fmt,
+                            room.spinner_params.get('min_word_length', 3),
+                            use_aw_flag,
+                            difficulty=target_diff_solo
+                        )
                     
                     if solo_pop:
                         if len(solo_pop) >= 9:
@@ -5128,11 +5163,18 @@ class RoomManager:
                             if _rep and _rw:
                                 swords, spaths = _rw, _rp
 
-                        swords_filtered = [w for w in swords if len(w) >= m_len]
-                        spaths_filtered = {w: p for w, p in (spaths or {}).items() if len(w) >= m_len}
-                        if len(swords_filtered) >= 10:
-                            print(f"[RoomManager] INSTANT Solo cached board popped for room {room_id} in 1ms! (format={target_fmt})")
-                            res = (sboard, swords_filtered, sbonus_cell, target_fmt, spaths_filtered, sratio, sbonus_word)
+                        if solo_pop:
+                            swords_filtered = [w for w in swords if len(w) >= m_len]
+                            spaths_filtered = {w: p for w, p in (spaths or {}).items() if len(w) >= m_len}
+                            if not sbonus_word or len(sbonus_word) != target_bw_len or sbonus_word not in swords_filtered or sbonus_word.upper().endswith(('ING', 'INGS')):
+                                _exact_bw_s = [w for w in swords_filtered if len(w) == target_bw_len and not w.upper().endswith(('ING', 'INGS'))]
+                                if _exact_bw_s:
+                                    sbonus_word = random.choice(_exact_bw_s).upper()
+                                else:
+                                    sbonus_word = None
+                            if len(swords_filtered) >= 10 and sbonus_word and len(sbonus_word) == target_bw_len:
+                                print(f"[RoomManager] INSTANT Solo cached board popped for room {room_id} in 1ms! (format={target_fmt}, bonus={sbonus_word})")
+                                res = (sboard, swords_filtered, sbonus_cell, target_fmt, spaths_filtered, sratio, sbonus_word)
 
                 cached_res = None
                 if not res:
@@ -5207,20 +5249,20 @@ class RoomManager:
                             # The embedded bonus_word was verified to exist on the board during generation.
                             # Only re-roll if the embedded word is absent or not in all_words.
                             _cached_bw = final_bonus_word
-                            if _cached_bw and len(_cached_bw) >= m_len and _cached_bw in all_words_filtered:
+                            _target_bw_len = int(room.spinner_params.get('bonus_word_length', 8) or 8)
+                            if _cached_bw and len(_cached_bw) == _target_bw_len and _cached_bw in all_words_filtered and not _cached_bw.upper().endswith(('ING', 'INGS')):
                                 bonus_word = _cached_bw
                                 room.bonus_word = bonus_word
                             else:
-                                # Embedded bonus word not found in filtered set — re-roll from actual words on board
-                                _bw_candidates = [w for w in all_words_filtered if len(w) == room.spinner_params.get('bonus_word_length', 8)]
+                                # Embedded bonus word does not match target length — pick matching length word from board
+                                _bw_candidates = [w for w in all_words_filtered if len(w) == _target_bw_len and not w.upper().endswith(('ING', 'INGS'))]
                                 if not _bw_candidates:
                                     _bw_len = max(m_len, min(len(w) for w in all_words_filtered) if all_words_filtered else 6)
                                     _bw_candidates = [w for w in all_words_filtered if len(w) == _bw_len]
                                 if _bw_candidates:
-                                    # Using global random module
                                     bonus_word = random.choice(_bw_candidates)
                                     room.bonus_word = bonus_word
-                                    print(f"[RoomManager] Embedded bonus word '{_cached_bw}' not in board words; re-rolled to '{bonus_word}'")
+                                    print(f"[RoomManager] Embedded bonus word '{_cached_bw}' re-selected to match {_target_bw_len}L: '{bonus_word}'")
 
                             res = (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, bonus_word)
                             break
@@ -5404,8 +5446,22 @@ class RoomManager:
                 if len(room.board_fingerprint_history) > 10:
                     room.board_fingerprint_history = room.board_fingerprint_history[-10:]
 
-            if final_bonus_word:
+            _target_bw_sr = int(room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
+            if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                _solo_bw_c = room.initial_solo_params.get('bonus_word_length', 'random')
+                if _solo_bw_c and str(_solo_bw_c).lower() not in ['random', '0', 'none', 'null', 'nan']:
+                    try:
+                        _target_bw_sr = int(_solo_bw_c)
+                    except Exception:
+                        pass
+            if final_bonus_word and len(final_bonus_word) == _target_bw_sr and final_bonus_word in room.all_words and not final_bonus_word.upper().endswith(('ING', 'INGS')):
                 room.bonus_word = final_bonus_word
+            else:
+                _sr_bw_cands = [w for w in room.all_words if len(w) == _target_bw_sr and not w.upper().endswith(('ING', 'INGS'))]
+                if _sr_bw_cands:
+                    room.bonus_word = random.choice(_sr_bw_cands).upper()
+                elif final_bonus_word and final_bonus_word in room.all_words:
+                    room.bonus_word = final_bonus_word
             if room.bonus_word:
                 actual_bw_len = len(room.bonus_word)
                 if isinstance(room.spinner_params, dict):
@@ -5879,11 +5935,19 @@ class RoomManager:
                                             min_accept = max(50, min_accept)
                                             
                                         if actual_cnt >= min_accept:
-                                            is_aw_eff = new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper()
-                                            actual_wc_range_exact = SpinnerSet.get_factchecked_wc_range(actual_cnt, use_added_words=is_aw_eff, dictionary=new_params.get('dictionary', 'NWL'))
-                                            new_params['word_count_range'] = actual_wc_range_exact
-                                            cached_board_data = (board, fw_filtered, bonus_cell, board_format_ret, {w: p for w, p in all_words_dict.items() if len(w) >= f_min_l}, ratio, final_bonus_word, new_params)
-                                            print(f"[RoomManager] Solo exact cache hit for key: {exact_key[:80]}...")
+                                            target_bw_exact = int(new_params.get('bonus_word_length', 8) or 8)
+                                            if not final_bonus_word or len(final_bonus_word) != target_bw_exact or final_bonus_word not in fw_filtered or final_bonus_word.upper().endswith(('ING', 'INGS')):
+                                                exact_bw_cands = [w for w in fw_filtered if len(w) == target_bw_exact and not w.upper().endswith(('ING', 'INGS'))]
+                                                if exact_bw_cands:
+                                                    final_bonus_word = random.choice(exact_bw_cands).upper()
+                                                else:
+                                                    final_bonus_word = None
+                                            if final_bonus_word:
+                                                is_aw_eff = new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper()
+                                                actual_wc_range_exact = SpinnerSet.get_factchecked_wc_range(actual_cnt, use_added_words=is_aw_eff, dictionary=new_params.get('dictionary', 'NWL'))
+                                                new_params['word_count_range'] = actual_wc_range_exact
+                                                cached_board_data = (board, fw_filtered, bonus_cell, board_format_ret, {w: p for w, p in all_words_dict.items() if len(w) >= f_min_l}, ratio, final_bonus_word, new_params)
+                                                print(f"[RoomManager] Solo exact cache hit for key: {exact_key[:80]}...")
                         except Exception as e:
                             print(f"[RoomManager] Error querying solo exact cache: {e}")
                             
@@ -5893,7 +5957,7 @@ class RoomManager:
                         fmt_val = new_params.get('board_format', 'Normal')
                         use_aw_val = new_params.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
                         m_len = new_params.get('min_word_length', 3)
-                        bw_len = new_params.get('bonus_word_length', 8)
+                        bw_len = int(new_params.get('bonus_word_length', 8) or 8)
                         target_sp_range = new_params.get('word_count_range')
                         target_diff_base = SpinnerSet.strip_difficulty_pct(new_params.get('difficulty', 'Medium'))
 
@@ -5914,6 +5978,13 @@ class RoomManager:
                             fw_filt = [w for w in c_w if len(w) >= m_len]
                             actual_wc = len(fw_filt)
                             if is_board_count_valid(actual_wc, target_sp_range):
+                                if not c_bw or len(c_bw) != bw_len or c_bw not in fw_filt or c_bw.upper().endswith(('ING', 'INGS')):
+                                    _c_bw_cands = [w for w in fw_filt if len(w) == bw_len and not w.upper().endswith(('ING', 'INGS'))]
+                                    if _c_bw_cands:
+                                        c_bw = random.choice(_c_bw_cands).upper()
+                                    else:
+                                        print(f"[generate_spinner_params] Candidate cached board lacked {bw_len}L bonus word. Discarding.")
+                                        continue
                                 fp_filt = {w: p for w, p in c_p.items() if w in fw_filt}
                                 actual_wc_range = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val, dictionary=dict_val)
                                 new_params['word_count_range'] = actual_wc_range
@@ -5943,6 +6014,18 @@ class RoomManager:
                             if _solo_d and str(_solo_d).lower() != 'random':
                                 final_diff_label = SpinnerSet.strip_difficulty_pct(_solo_d)
                         new_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(final_diff_label, ratio)
+                        target_bw_l = int(new_params.get('bonus_word_length', 8) or 8)
+                        if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                            _solo_bw = room.initial_solo_params.get('bonus_word_length', 'random')
+                            if _solo_bw and str(_solo_bw).lower() not in ['random', '0', 'none', 'null', 'nan']:
+                                try:
+                                    target_bw_l = int(_solo_bw)
+                                except Exception:
+                                    pass
+                        if not final_bonus_word or len(final_bonus_word) != target_bw_l or final_bonus_word not in all_words or final_bonus_word.upper().endswith(('ING', 'INGS')):
+                            _bw_cands = [w for w in all_words if len(w) == target_bw_l and not w.upper().endswith(('ING', 'INGS'))]
+                            if _bw_cands:
+                                final_bonus_word = random.choice(_bw_cands).upper()
                         if final_bonus_word:
                             new_params['bonus_word_length'] = len(final_bonus_word)
                         
@@ -6716,6 +6799,10 @@ class RoomManager:
                                     room.frozen_revealed_params['min_word_length'] = params['min_word_length']
 
                         _use_word = _bonus_word or bonus_word
+                        if not _use_word or len(_use_word) != bw_l or _use_word not in _words or _use_word.upper().endswith(('ING', 'INGS')):
+                            _bw_cands = [w for w in _words if len(w) == bw_l and not w.upper().endswith(('ING', 'INGS'))]
+                            if _bw_cands:
+                                _use_word = random.choice(_bw_cands).upper()
                         if _use_word:
                             params['bonus_word_length'] = len(_use_word)
                             if room.next_spinner_params:
@@ -6910,14 +6997,21 @@ class RoomManager:
 
                     # LOCAL PREPARATION: Calculate all derived metrics without touching target_room yet
                     # Update word to the ACTUAL embedded word if different (MANDATORY consistency)
-                    if final_bonus_word and len(final_bonus_word) >= 6:
+                    if final_bonus_word and len(final_bonus_word) == bw_l and final_bonus_word in all_words and not final_bonus_word.upper().endswith(('ING', 'INGS')):
                         bonus_word = final_bonus_word
                     else:
-                        scorable = [w for w in all_words if len(w) >= 6]
-                        if scorable:
-                            bonus_word = sorted(scorable, key=len, reverse=True)[0]
+                        exact_bw_cands = [w for w in all_words if len(w) == bw_l and not w.upper().endswith(('ING', 'INGS'))]
+                        if exact_bw_cands:
+                            bonus_word = random.choice(exact_bw_cands).upper()
+                        elif final_bonus_word and len(final_bonus_word) >= 6 and final_bonus_word in all_words:
+                            bonus_word = final_bonus_word
                         else:
-                            bonus_word = self._get_bonus_word(length=8, dictionary=search_dict)
+                            scorable = [w for w in all_words if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS'))]
+                            if scorable:
+                                scorable.sort(key=lambda w: abs(len(w) - bw_l))
+                                bonus_word = scorable[0]
+                            else:
+                                bonus_word = self._get_bonus_word(length=bw_l, dictionary=search_dict)
                     
                     if bonus_word:
                         params['bonus_word_length'] = len(bonus_word)
@@ -7338,10 +7432,21 @@ class RoomManager:
                         room.next_round_bonus_cell = _fc
                         room.next_round_bonus = _fbw or ''
                         room.next_round_word_paths = _fp_filtered
-                        bw_l_val = room.spinner_params.get('bonus_word_length', 8) if isinstance(room.spinner_params, dict) else 8
+                        bw_l_val = int(room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
+                        if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                            _s_bw_v = room.initial_solo_params.get('bonus_word_length', 'random')
+                            if _s_bw_v and str(_s_bw_v).lower() not in ['random', '0', 'none', 'null', 'nan']:
+                                try:
+                                    bw_l_val = int(_s_bw_v)
+                                except Exception:
+                                    pass
                         dict_val = room.spinner_params.get('dictionary', 'NWL') if isinstance(room.spinner_params, dict) else 'NWL'
-                        if not _fbw or str(_fbw).upper() == 'NONE':
-                            _fbw = self._get_bonus_word(length=bw_l_val, dictionary=dict_val)
+                        if not _fbw or str(_fbw).upper() == 'NONE' or len(str(_fbw).strip()) != bw_l_val or _fbw not in _fw_filtered or str(_fbw).upper().endswith(('ING', 'INGS')):
+                            _fbw_cands = [w for w in _fw_filtered if len(w) == bw_l_val and not w.upper().endswith(('ING', 'INGS'))]
+                            if _fbw_cands:
+                                _fbw = random.choice(_fbw_cands).upper()
+                            else:
+                                _fbw = self._get_bonus_word(length=bw_l_val, dictionary=dict_val)
                         room.next_round_bonus = _fbw
                         room.next_round_format = _ff
                         room.next_round_uniqueness = _fr
@@ -7816,13 +7921,24 @@ class RoomManager:
                 # Save to DB will occur at the end of promotion after all parameters are finalized
                 
                 current_bw = getattr(room, 'next_round_bonus', '')
-                bw_l = room.spinner_params.get('bonus_word_length', 8) if isinstance(room.spinner_params, dict) else 8
+                bw_l = int(room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
+                if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                    _solo_bw_l = room.initial_solo_params.get('bonus_word_length', 'random')
+                    if _solo_bw_l and str(_solo_bw_l).lower() not in ['random', '0', 'none', 'null', 'nan']:
+                        try:
+                            bw_l = int(_solo_bw_l)
+                        except Exception:
+                            pass
                 dict_val = room.spinner_params.get('dictionary', 'NWL') if isinstance(room.spinner_params, dict) else 'NWL'
                 target_words = room.next_round_words or room.all_words or []
-                if not current_bw or current_bw not in target_words or str(current_bw).strip().upper() in ['', 'NONE'] or str(current_bw).upper().endswith('ING') or str(current_bw).upper().endswith('INGS') or len(str(current_bw).strip()) < 6:
+                if not current_bw or current_bw not in target_words or str(current_bw).strip().upper() in ['', 'NONE'] or str(current_bw).upper().endswith('ING') or str(current_bw).upper().endswith('INGS') or len(str(current_bw).strip()) != bw_l:
                     candidates = [w for w in target_words if len(w) == bw_l and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
                     if not candidates:
                         candidates = [w for w in target_words if 6 <= len(w) <= 10 and not w.upper().endswith('ING') and not w.upper().endswith('INGS')]
+                        if candidates:
+                            candidates.sort(key=lambda w: abs(len(w) - bw_l))
+                            closest_len = len(candidates[0])
+                            candidates = [w for w in candidates if len(w) == closest_len]
                     if candidates:
                         # Using global random module
                         current_bw = random.choice(list(candidates)).upper()
@@ -8303,12 +8419,26 @@ class RoomManager:
                 room.complete_words = list(room.all_words)
                 
                 bw_candidate = r_bonus_word
-                if not bw_candidate or bw_candidate not in room.all_words:
-                    cand_list = [w for w in (room.all_words or []) if len(w) >= 6 and not str(w).upper().endswith('ING')]
+                _fib_bw_l = int(room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(getattr(room, 'spinner_params', None), dict) else 8
+                if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                    _s_fib_bw = room.initial_solo_params.get('bonus_word_length', 'random')
+                    if _s_fib_bw and str(_s_fib_bw).lower() not in ['random', '0', 'none', 'null', 'nan']:
+                        try:
+                            _fib_bw_l = int(_s_fib_bw)
+                        except Exception:
+                            pass
+                if not bw_candidate or bw_candidate not in room.all_words or len(str(bw_candidate).strip()) != _fib_bw_l or str(bw_candidate).upper().endswith(('ING', 'INGS')):
+                    cand_list = [w for w in (room.all_words or []) if len(w) == _fib_bw_l and not str(w).upper().endswith(('ING', 'INGS'))]
+                    if not cand_list:
+                        cand_list = [w for w in (room.all_words or []) if 6 <= len(w) <= 10 and not str(w).upper().endswith(('ING', 'INGS'))]
+                        if cand_list:
+                            cand_list.sort(key=lambda w: abs(len(w) - _fib_bw_l))
+                            _cl = len(cand_list[0])
+                            cand_list = [w for w in cand_list if len(w) == _cl]
                     if cand_list:
                         bw_candidate = random.choice(list(cand_list)).upper()
                     else:
-                        bw_candidate = self._get_bonus_word(length=8, dictionary=raw_dict)
+                        bw_candidate = self._get_bonus_word(length=max(6, _fib_bw_l), dictionary=raw_dict)
 
                 room.bonus_word = str(bw_candidate or '').upper().strip()
                 room.previous_bonus_word = room.bonus_word
