@@ -7780,63 +7780,29 @@ def get_room_state(room_id):
                 room_manager.force_instant_board(room_id)
         elif room.state == 'intermission' and room.time_limit < 7200:
             now_t = time.time()
-            if getattr(room, 'is_solo', False):
-                is_wake_up = (request.args.get('wake_up') == '1')
-                req_p = room.get_player(uid) if uid else None
-                user_idle = (now_t - getattr(req_p, '_last_seen_before_update', now_t)) if req_p else 0
-                user_was_away = is_wake_up or (user_idle >= 20.0)
-                if user_was_away or room.time_remaining <= 0:
-                    is_stale_start = getattr(room, 'starting_round', False) and (now_t - getattr(room, '_round_start_init_time', 0) > 3.0)
-                    if is_stale_start or not getattr(room, 'starting_round', False):
-                        room.starting_round = False
-                        try:
-                            room_manager.start_next_round(room.room_id)
-                        except Exception as _snr_err:
-                            print(f"[get_room_state] Error fast-forwarding intermission in solo room: {_snr_err}")
-                            room_manager.force_instant_board(room_id)
-                else:
-                    room.check_and_update_state()
-            else:
-                # Multiplayer room: NEVER fast-forward intermission while time remains!
-                # Returning players sync cleanly to the current countdown.
-                if room.time_remaining <= 0:
-                    is_stale_start = getattr(room, 'starting_round', False) and (now_t - getattr(room, '_round_start_init_time', 0) > 3.0)
-                    if is_stale_start or not getattr(room, 'starting_round', False):
-                        room.starting_round = False
-                        try:
-                            room_manager.start_next_round(room.room_id)
-                        except Exception as _snr_err:
-                            print(f"[get_room_state] Error starting next round on intermission expiry: {_snr_err}")
-                else:
-                    room.check_and_update_state()
-        elif room.state == 'active' and room.time_limit < 7200:
-            now_t = time.time()
-            if getattr(room, 'is_solo', False):
-                is_wake_up = (request.args.get('wake_up') == '1')
-                req_p = room.get_player(uid) if uid else None
-                user_idle = (now_t - getattr(req_p, '_last_seen_before_update', now_t)) if req_p else 0
-                user_was_away = is_wake_up or (user_idle >= 20.0)
-                if room.time_remaining <= 0 and user_was_away:
-                    room.check_and_update_state()
+            # NEVER fast-forward intermission while time remains (in both Solo and Multiplayer rooms)!
+            # Returning players sync cleanly to the current intermission countdown.
+            if room.time_remaining <= 0:
+                is_stale_start = getattr(room, 'starting_round', False) and (now_t - getattr(room, '_round_start_init_time', 0) > 3.0)
+                if is_stale_start or not getattr(room, 'starting_round', False):
                     room.starting_round = False
                     try:
                         room_manager.start_next_round(room.room_id)
                     except Exception as _snr_err:
-                        print(f"[get_room_state] Error fast-forwarding solo active round: {_snr_err}")
-                        room_manager.force_instant_board(room_id)
-                else:
-                    room.check_and_update_state()
+                        print(f"[get_room_state] Error starting next round on intermission expiry: {_snr_err}")
             else:
-                # Multiplayer room: NEVER replace or skip active rounds on return.
-                # Let check_and_update_state() transition to intermission naturally when round expires.
                 room.check_and_update_state()
+        elif room.state == 'active' and room.time_limit < 7200:
+            # NEVER replace or skip intermission when an active round expires.
+            # Let check_and_update_state() transition to intermission naturally when round expires.
+            room.check_and_update_state()
         else:
             room.check_and_update_state()
         room_manager.check_6x8_rescue(room)
 
         # Safeguard: if room is active but has no board/letters, force instant board immediately!
         has_letters = bool(room.board and len(room.board) > 0 and any(any(c and str(c).strip() for c in row) for row in room.board))
-        if room.state == 'active' and not has_letters:
+        if room.state == 'active' and not has_letters and not getattr(room, 'starting_round', False):
             print(f"[get_room_state] Room {room_id} is active but has empty board. Force-loading instant board now...")
             room_manager.force_instant_board(room_id)
 
@@ -15716,6 +15682,8 @@ def create_solo_match():
             'use_added_words': use_aw_flag
         }
         room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, board_dimensions, is_24h_room)
+        if parameters.get('difficulty') and str(parameters.get('difficulty')).lower() != 'random':
+            room.spinner_params['difficulty'] = SpinnerSet.strip_difficulty_pct(parameters.get('difficulty'))
         room.use_added_words = use_aw_flag
     
     # Cleanup only if NOT in this room
@@ -15775,6 +15743,9 @@ def create_solo_match():
         threading.Thread(target=room_manager.pre_generate_next_round, args=(room_id,), daemon=True).start()
     else:
         print(f"[app.py] Dispatching round start to background thread for instant solo room entry: {room_id}")
+        room.state = 'loading'
+        room.starting_round = True
+        room._round_start_init_time = time.time()
         threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True).start()
     
     print(f"[app.py] Solo match creation complete. Returning success to client instantly.")

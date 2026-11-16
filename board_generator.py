@@ -539,6 +539,21 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                     all_words_dict[w] = [tuple(coord) for coord in path]
                     
                 ratio = data.get("ratio", 0.0)
+                if difficulty:
+                    try:
+                        dims_p = str(dimensions).lower().split('x')
+                        d_cnt = int(dims_p[0]) if len(dims_p) == 3 else 1
+                        r_cnt = int(dims_p[1] if len(dims_p) == 3 else dims_p[0]) if len(dims_p) >= 2 else 4
+                        c_cnt = int(dims_p[2] if len(dims_p) == 3 else dims_p[1]) if len(dims_p) >= 2 else 4
+                        achieved_cached_diff = BoardGenerator().get_difficulty_label(ratio, r_cnt, c_cnt, d_target, depth=d_cnt, min_word_length=min_l_int)
+                        if _normalize_difficulty_base(achieved_cached_diff) != _normalize_difficulty_base(difficulty):
+                            print(f"[BoardGen] Discarding compatible cached board for {dimensions}: ratio {ratio:.3f} is '{achieved_cached_diff}', expected '{_normalize_difficulty_base(difficulty)}'")
+                            try: conn.close()
+                            except: pass
+                            conn = None
+                            return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
+                    except Exception as _diff_chk_err:
+                        print(f"[BoardGen] Warning checking cached difficulty: {_diff_chk_err}")
                 final_bonus_word = data.get("final_bonus_word", "")
                 if bonus_word_len:
                     target_bw_int = int(bonus_word_len)
@@ -2772,7 +2787,7 @@ class BoardGenerator:
                     # AW rounds prioritize high word counts (300-400+) and density; bypass uniqueness checks
                     is_compliant = (min_words <= count <= max_words) and (count >= 300)
                 else:
-                    max_strict = 3 if (min_word_length and int(min_word_length) >= 6) else 4
+                    max_strict = 15 if (min_word_length and int(min_word_length) >= 6) else 40
                     if attempts > max_strict:
                         # Prioritize word count range compliance over exact uniqueness range targets if we are struggling
                         is_compliant = (min_words <= count <= max_words)

@@ -1684,12 +1684,13 @@ class GameRoom:
         # round_start_time=0 in waiting state makes state_elapsed huge (now - 0),
         # which causes 'spinner' and 'search' milestones to trigger on every tick/poll,
         # generating board after board and triggering start_next_round repeatedly.
-        if self.state == 'waiting':
-            all_p = [p for p in self.players + self.spectators if not getattr(p, 'is_ai', False)]
-            humans = [p for p in all_p if (now - getattr(p, 'last_active', 0)) < 120.0]
-            if len(humans) > 0:
-                print(f"[get_next_round_milestone] Unpausing waiting room {self.room_id} cleanly via check_and_update_state().")
-                self.check_and_update_state()
+        if self.state in ['waiting', 'loading']:
+            if self.state == 'waiting':
+                all_p = [p for p in self.players + self.spectators if not getattr(p, 'is_ai', False)]
+                humans = [p for p in all_p if (now - getattr(p, 'last_active', 0)) < 120.0]
+                if len(humans) > 0:
+                    print(f"[get_next_round_milestone] Unpausing waiting room {self.room_id} cleanly via check_and_update_state().")
+                    self.check_and_update_state()
             return None
         
         # stuck watchdog: check if intermission is stuck for > 10s at 0:00:00 (timer at 0 and state == intermission)
@@ -3267,7 +3268,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 if not use_added_words:
                     cache_candidates.append((floor_l, r_item, 'Normal', base_dict, False))
         
-        diff_order = [difficulty] + [d for d in ['Hard', 'Medium', 'Easy'] if d != difficulty] if difficulty else ['Medium', 'Easy', 'Hard']
+        norm_target_diff = SpinnerSet.strip_difficulty_pct(difficulty) if difficulty else None
+        diff_order = [norm_target_diff] if norm_target_diff else ['Medium', 'Easy', 'Hard']
         for (cml, ctr, cfmt, cdict, caw) in cache_candidates:
             for cdiff in diff_order:
                 try:
@@ -3275,9 +3277,16 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     cached = pop_cached_board(cache_key)
                     if cached and len(cached) >= 7:
                         cboard, cwords, cbonus_cell, cfmt_ret, cpaths, cratio, cbonus_word = cached[:7]
-                        if difficulty == 'Hard' and cratio < 0.35:
-                            print(f"[get_emergency_fallback_board] Rejecting cached board with low ratio {cratio} for Hard difficulty target")
-                            continue
+                        if norm_target_diff and not is_aw:
+                            if norm_target_diff == 'Hard' and cratio < 0.35:
+                                print(f"[get_emergency_fallback_board] Rejecting cached board with low ratio {cratio} for Hard difficulty target")
+                                continue
+                            elif norm_target_diff == 'Easy' and cratio > 0.25:
+                                print(f"[get_emergency_fallback_board] Rejecting cached board with high ratio {cratio} for Easy difficulty target")
+                                continue
+                            elif norm_target_diff == 'Medium' and (cratio <= 0.25 or cratio >= 0.35):
+                                print(f"[get_emergency_fallback_board] Rejecting cached board with ratio {cratio} outside Medium target")
+                                continue
                         if cwords and len(cwords) >= 20:
                             print(f"[get_emergency_fallback_board] INSTANT CACHE HIT: min={cml}, range={ctr}, fmt={cfmt}, dict={cdict} → {len(cwords)} words")
                             # Kick off background refill for the popped key
@@ -3331,7 +3340,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 dictionary,
                 board_format,
                 min_word_length,
-                use_added_words
+                use_added_words,
+                difficulty=norm_target_diff
             )
             if relaxed_res:
                 board, words, bonus_cell, updated_format, paths, ratio, bonus_word, params = relaxed_res
@@ -3575,9 +3585,9 @@ class RoomManager:
                         now_t = time.time()
                         active_humans = [p for p in all_humans if (now_t - getattr(p, 'last_active', 0)) < 120.0]
                         if len(active_humans) == 0 and not is_daily:
-                            # NEVER pause or wipe a room during an active round or intermission!
-                            # Let both active play and intermission run cleanly to completion.
-                            if room.state in ['active', 'intermission']:
+                            # NEVER pause or wipe a room during an active round, intermission, or initial loading!
+                            # Let active play, intermission, and round start run cleanly to completion.
+                            if room.state in ['active', 'intermission', 'loading'] or getattr(room, 'starting_round', False):
                                 pass
                             elif room.state != 'waiting':
                                 print(f"[Heartbeat] Pausing inactive room {room_id} (0 active humans for >120s). Setting state to 'waiting'.")
@@ -4250,7 +4260,8 @@ class RoomManager:
                                         dictionary=s_dict,
                                         min_word_length=s_min_len,
                                         difficulty=s_diff,
-                                        is_emergency=True,
+                                        is_emergency=False,
+                                        timeout=25.0,
                                         use_added_words=s_use_aw
                                     )
                                     if e_res:
@@ -4397,10 +4408,11 @@ class RoomManager:
                     else:
                         if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                             room.spinner_params = room.build_solo_spinner_params()
+                            room.state = 'loading'
                         else:
                             room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
-                        room.state = 'intermission'
-                        room.intermission_start_time = time.time()
+                            room.state = 'intermission'
+                            room.intermission_start_time = time.time()
                         if room_id.startswith('pub_') and not is_24h:
                              threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
 
@@ -5217,7 +5229,8 @@ class RoomManager:
                             room.spinner_params['board_format'],
                             room.spinner_params.get('min_word_length', 3),
                             use_aw_flag,
-                            bonus_word_len=len(bonus_word) if bonus_word else None
+                            bonus_word_len=len(bonus_word) if bonus_word else None,
+                            difficulty=room.spinner_params.get('difficulty', 'Medium')
                         )
                         if not relaxed_res:
                             break
@@ -5274,7 +5287,8 @@ class RoomManager:
                     res = get_emergency_fallback_board(
                         room.board_dimensions, room.spinner_params.get('board_format', 'Normal'), room.time_limit,
                         dictionary=room.spinner_params.get('dictionary', 'NWL'), use_added_words=use_aw_flag,
-                        target_range=room.spinner_params.get('word_count_range', '100-200'), min_word_length=m_len, difficulty='Medium'
+                        target_range=room.spinner_params.get('word_count_range', '100-200'), min_word_length=m_len,
+                        difficulty=room.spinner_params.get('difficulty', 'Medium')
                     )
                 
                 board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = res[:7]
@@ -5315,6 +5329,16 @@ class RoomManager:
                     _bad = []
                     if _decl_rng and not is_board_count_valid(_cnt0, _decl_rng):
                         _bad.append(f"count {_cnt0} not in {_decl_rng}")
+                    if not use_aw_flag:
+                        _decl_diff0 = SpinnerSet.strip_difficulty_pct(_sp0.get('difficulty', 'Medium'))
+                        _dims0 = room.board_dimensions.split('x')
+                        _d0 = int(_dims0[0]) if len(_dims0) == 3 else 1
+                        _r0 = int(_dims0[1] if len(_dims0) == 3 else _dims0[0])
+                        _c0 = int(_dims0[2] if len(_dims0) == 3 else _dims0[1])
+                        _base_d0 = str(_sp0.get('dictionary', 'NWL')).replace('+ AW', '').replace('+AW', '').strip() or 'NWL'
+                        _actual_diff0 = self.board_generator.get_difficulty_label(u_ratio, _r0, _c0, _base_d0, depth=_d0, min_word_length=m_len)
+                        if _actual_diff0 != _decl_diff0:
+                            _bad.append(f"difficulty {_actual_diff0} != {_decl_diff0}")
                     if 'either' in _decl_low and not _has_eo:
                         _bad.append("missing Either/Or tile")
                     if 'either' not in _decl_low and _has_eo:
@@ -8238,7 +8262,7 @@ class RoomManager:
                 _wait = _target_start - time.time()
                 if 0 < _wait <= 2.0:
                     time.sleep(_wait)
-                room.round_start_time = _target_start if _wait > 0 else time.time()
+                room.round_start_time = time.time()
                 room.state = 'active'
                 if room.time_limit >= 7200:
                     if not hasattr(room, 'evicted_users') or room.evicted_users is None:
