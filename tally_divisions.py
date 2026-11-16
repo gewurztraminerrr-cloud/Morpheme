@@ -317,27 +317,29 @@ def get_word_division_info(word: str) -> dict:
     # "If no one has played a game, all the words in the tally file are at 0: there is simply no 'division'
     # to categorize the words based on difficulty... all words of a particular letter length are valued the same"
     if max_count <= 0:
+        # Every word is at 0 finds, so every word defaults to the maximum division.
         return {
             'word': raw_word,
             'length': length,
             'count': find_count,
             'max_count': 0,
             'has_divisions': True,
-            'division': 1,
+            'division': k_divisions,
             'max_divisions': k_divisions,
             'base_points': base_pts,
-            'points': base_pts,
+            'points': max_pts,
             'max_points': max_pts,
-            'division_str': f"Division 1 of {k_divisions} ({base_pts} of {max_pts} pts)"
+            'division_str': f"Division {k_divisions} of {k_divisions} ({max_pts} of {max_pts} pts)"
         }
 
     # Calculate division based on find count range:
     # Division 1 = Most commonly found / Default for unplayed words (base + 0 pts)
     # Division K = Rarest words with low find counts (base + (K-1) pts)
-    if find_count <= 0 or find_count >= max_count:
-        # Default to Division 1 per user instruction:
-        # "Default to 1, not 5. Let TESTING grow over time so that, probably being the
-        # one of the most commonly found, it simply stays at the first division (5 pts)"
+    if find_count <= 0:
+        # Words found 0 times default to the MAXIMUM (rarest) division (e.g. Div 5 for 7L words).
+        division = k_divisions
+    elif find_count >= max_count:
+        # The most commonly found word(s) sit in Division 1.
         division = 1
     else:
         # Distance from top divided by total span, mapped to 1..K
@@ -484,7 +486,7 @@ def get_division_examples() -> dict:
                     high = int(max_c * (k_divs - d + 1) / float(k_divs))
                     rng_str = f"{low} – {high} finds"
             else:
-                rng_str = "0 finds (initial)"
+                rng_str = "0 finds (default: maximum division)" if d == k_divs else "—"
 
             divisions_data[str(d)] = {
                 'division': d,
