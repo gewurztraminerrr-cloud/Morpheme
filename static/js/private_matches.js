@@ -652,8 +652,16 @@
                 window.currentRoomId = data.room_id;
                 localStorage.setItem('last_joined_room', data.room_id);
                 window.isSpectatorMode = false; // Guarantee active player mode for Solo matches
-                if (window.navigateToPage) {
+                if (typeof window.clearGameUIAndCache === 'function') {
+                    window.clearGameUIAndCache();
+                }
+                if (typeof window.showPage === 'function') {
+                    window.showPage('page-play');
+                } else if (window.navigateToPage) {
                     window.navigateToPage('play');
+                }
+                if (typeof window.switchPlayPanel === 'function') {
+                    window.switchPlayPanel('board', false);
                 }
                 if (window.startGamePolling) {
                     window.startGamePolling();

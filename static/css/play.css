@@ -2004,15 +2004,19 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     grid-template-columns: none !important;
     grid-template-rows: none !important;
-    grid-column: 1 / -1 !important;
-    grid-row: 1 / -1 !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 240px !important;
+    min-height: 0 !important;
     height: auto !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 1 !important;
+    overflow: hidden !important;
     padding: 16px 8px !important;
     background: transparent !important;
     border: none !important;
@@ -2035,11 +2039,14 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
-    grid-column: 1 / -1 !important;
-    grid-row: 1 / -1 !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
     width: 100% !important;
     max-width: min(94%, 640px) !important;
-    min-height: 200px;
+    min-height: 160px;
+    height: auto !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
     color: var(--text-primary);
     background: rgba(10, 15, 30, 0.85);
     border: 2px solid rgba(var(--accent-color-rgb, 0, 230, 118), 0.2);
@@ -2174,22 +2181,30 @@ body.is-subanagrams .timer-display #transpose-board-btn {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: center !important;
+        justify-content: flex-start !important;
         grid-template-columns: none !important;
         grid-template-rows: none !important;
-        grid-column: 1 / -1 !important;
-        grid-row: 1 / -1 !important;
+        grid-column: auto !important;
+        grid-row: auto !important;
         width: calc(100% - 24px) !important;
         max-width: 480px !important;
         padding: 0 !important;
-        min-height: 160px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        z-index: 1 !important;
+        overflow: hidden !important;
         margin: 8px auto 12px auto !important;
         float: none !important;
         box-sizing: border-box !important;
     }
     .loading-container { 
         padding: 16px 14px !important; 
-        min-height: 150px !important; 
+        min-height: 140px !important; 
+        height: auto !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
         max-width: 100% !important; 
         width: 100% !important; 
         margin: 0 auto !important; 
@@ -11472,11 +11487,11 @@ body.theme-white .m-scroller-thumb.dragging {
         gap: 6px !important;
     }
 
-    .board-panel .game-board:not(.game-board-loading):not(.is-subanagrams-board):not(.split-notepads-container),
-    .board-panel.full-bleed-mobile .game-board:not(.game-board-loading):not(.is-subanagrams-board):not(.split-notepads-container),
-    #game-board:not(.split-notepads-container):not(.game-board-loading):not(.is-subanagrams-board),
-    .board-panel #game-board:not(.split-notepads-container):not(.is-subanagrams-board),
-    .board-panel .game-board:not(.split-notepads-container):not(.is-subanagrams-board) {
+    .board-panel .game-board:not(.game-board-loading):not(:has(.loading-container)):not(.is-subanagrams-board):not(.split-notepads-container),
+    .board-panel.full-bleed-mobile .game-board:not(.game-board-loading):not(:has(.loading-container)):not(.is-subanagrams-board):not(.split-notepads-container),
+    #game-board:not(.split-notepads-container):not(.game-board-loading):not(:has(.loading-container)):not(.is-subanagrams-board),
+    .board-panel #game-board:not(.split-notepads-container):not(.game-board-loading):not(:has(.loading-container)):not(.is-subanagrams-board),
+    .board-panel .game-board:not(.split-notepads-container):not(.game-board-loading):not(:has(.loading-container)):not(.is-subanagrams-board) {
         width: max-content !important;
         max-width: 100vw !important;
         padding: 0 !important;
@@ -17579,7 +17594,19 @@ body.is-mobile #page-settings .theme-selector-grid {
 /* ============================================================
    DEFINITIVE GAME BOARD LOADING CARD CENTERING OVERRIDES
    Guarantees the loading card is always full-width & centered
+   and strictly confined below the Spinner Set & Timer
    ============================================================ */
+.board-panel .play-header,
+.board-panel .timer-display,
+.board-panel.full-bleed-mobile .play-header,
+.board-panel.full-bleed-mobile .timer-display {
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 5 !important;
+}
+
+.board-panel #game-board.game-board-loading:not(.split-notepads-container):not(.is-subanagrams-board),
+.board-panel.full-bleed-mobile #game-board.game-board-loading:not(.split-notepads-container):not(.is-subanagrams-board),
 .board-panel #game-board.game-board-loading,
 .board-panel.full-bleed-mobile #game-board.game-board-loading,
 #game-board.game-board-loading,
@@ -17587,15 +17614,19 @@ body.is-mobile #page-settings .theme-selector-grid {
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     grid-template-columns: none !important;
     grid-template-rows: none !important;
-    grid-column: 1 / -1 !important;
-    grid-row: 1 / -1 !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
     width: 100% !important;
     max-width: 640px !important;
-    min-height: 180px !important;
+    min-height: 0 !important;
     height: auto !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 1 !important;
+    overflow: hidden !important;
     padding: 0 !important;
     background: transparent !important;
     border: none !important;
@@ -17612,9 +17643,14 @@ body.is-mobile #page-settings .theme-selector-grid {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
     width: 100% !important;
     max-width: min(94%, 640px) !important;
-    min-height: 180px !important;
+    min-height: 160px !important;
+    height: auto !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
     margin: 0 auto !important;
     padding: 24px 28px !important;
     box-sizing: border-box !important;
@@ -17622,13 +17658,28 @@ body.is-mobile #page-settings .theme-selector-grid {
 }
 
 @media (max-width: 992px) {
+    .board-panel #game-board.game-board-loading:not(.split-notepads-container):not(.is-subanagrams-board),
+    .board-panel.full-bleed-mobile #game-board.game-board-loading:not(.split-notepads-container):not(.is-subanagrams-board),
     .board-panel #game-board.game-board-loading,
     .board-panel.full-bleed-mobile #game-board.game-board-loading,
     #game-board.game-board-loading,
     .game-board-loading {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        grid-template-columns: none !important;
+        grid-template-rows: none !important;
+        grid-column: auto !important;
+        grid-row: auto !important;
         width: calc(100% - 24px) !important;
         max-width: 480px !important;
-        min-height: 160px !important;
+        min-height: 0 !important;
+        height: auto !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
+        z-index: 1 !important;
+        overflow: hidden !important;
         margin: 8px auto 12px auto !important;
         padding: 0 !important;
         box-sizing: border-box !important;
@@ -17638,7 +17689,10 @@ body.is-mobile #page-settings .theme-selector-grid {
     #game-board.game-board-loading .loading-container,
     .loading-container {
         padding: 16px 14px !important;
-        min-height: 150px !important;
+        min-height: 140px !important;
+        height: auto !important;
+        flex-shrink: 0 !important;
+        position: relative !important;
         max-width: 100% !important;
         width: 100% !important;
         margin: 0 auto !important;
@@ -17646,13 +17700,28 @@ body.is-mobile #page-settings .theme-selector-grid {
     }
 }
 
+body.is-mobile .board-panel #game-board.game-board-loading:not(.split-notepads-container):not(.is-subanagrams-board),
+body.is-mobile .board-panel.full-bleed-mobile #game-board.game-board-loading:not(.split-notepads-container):not(.is-subanagrams-board),
 body.is-mobile .board-panel #game-board.game-board-loading,
 body.is-mobile .board-panel.full-bleed-mobile #game-board.game-board-loading,
 body.is-mobile #game-board.game-board-loading,
 body.is-mobile .game-board-loading {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    grid-template-columns: none !important;
+    grid-template-rows: none !important;
+    grid-column: auto !important;
+    grid-row: auto !important;
     width: calc(100% - 24px) !important;
     max-width: 480px !important;
-    min-height: 160px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 1 !important;
+    overflow: hidden !important;
     margin: 8px auto 12px auto !important;
     padding: 0 !important;
     box-sizing: border-box !important;
@@ -17663,7 +17732,10 @@ body.is-mobile .board-panel.full-bleed-mobile #game-board.game-board-loading .lo
 body.is-mobile #game-board.game-board-loading .loading-container,
 body.is-mobile .loading-container {
     padding: 16px 14px !important;
-    min-height: 150px !important;
+    min-height: 140px !important;
+    height: auto !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
     max-width: 100% !important;
     width: 100% !important;
     margin: 0 auto !important;

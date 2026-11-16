@@ -15692,18 +15692,31 @@ def create_solo_match():
     elif getattr(room, 'next_round_bonus', None):
         initial_bw_len = len(room.next_round_bonus)
 
-    dict_display = f"{dict_name} + AW" if use_aw_flag else dict_name
-    room.spinner_params = {
-        'dictionary': dict_display,
-        'min_word_length': min_word_len,
-        'bonus_word_length': initial_bw_len,
-        'board_format': board_format,
-        'difficulty': target_difficulty,
-        'word_count_range': wc_range,
-        'use_added_words': use_aw_flag
-    }
-    room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, board_dimensions, is_24h_room)
-    room.use_added_words = use_aw_flag
+    # Check if create_room already kickstarted Round 1 with an authentic board
+    has_kickstarted_board = False
+    if getattr(room, 'board', None) and getattr(room, 'all_words', None) and getattr(room, 'state', '') == 'active':
+        try:
+            b_grid = room.board
+            if isinstance(b_grid[0], list) and b_grid[0] and isinstance(b_grid[0][0], list):
+                has_kickstarted_board = any(any(str(c).strip() for c in r) for f in b_grid for r in f)
+            else:
+                has_kickstarted_board = any(any(str(c).strip() for c in r) for r in b_grid)
+        except Exception:
+            has_kickstarted_board = False
+
+    if not has_kickstarted_board:
+        dict_display = f"{dict_name} + AW" if use_aw_flag else dict_name
+        room.spinner_params = {
+            'dictionary': dict_display,
+            'min_word_length': min_word_len,
+            'bonus_word_length': initial_bw_len,
+            'board_format': board_format,
+            'difficulty': target_difficulty,
+            'word_count_range': wc_range,
+            'use_added_words': use_aw_flag
+        }
+        room.spinner_params = SpinnerSet.sanitize_params(room.spinner_params, board_dimensions, is_24h_room)
+        room.use_added_words = use_aw_flag
     
     # Cleanup only if NOT in this room
     cleanup_user_rooms(session['user_id'], exclude_room_id=room_id)
@@ -15756,9 +15769,13 @@ def create_solo_match():
 
     # USER DIRECTIVE: Dispatch board generation to background thread and return room_id INSTANTLY (0ms delay)
     # The user enters the room immediately, and the board loads smoothly inside the room view!
-    print(f"[app.py] Dispatching round start to background thread for instant solo room entry: {room_id}")
     import threading
-    threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True).start()
+    if has_kickstarted_board:
+        print(f"[app.py] Solo room {room_id} already kickstarted with board in create_room; pre-generating next round.")
+        threading.Thread(target=room_manager.pre_generate_next_round, args=(room_id,), daemon=True).start()
+    else:
+        print(f"[app.py] Dispatching round start to background thread for instant solo room entry: {room_id}")
+        threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True).start()
     
     print(f"[app.py] Solo match creation complete. Returning success to client instantly.")
     return jsonify({'success': True, 'room_id': room_id})

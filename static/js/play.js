@@ -1416,23 +1416,29 @@ function ensureLoadingCardStyles() {
     const isMobile = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '') || document.body.classList.contains('is-mobile');
     if (boardEl) {
         boardEl.className = 'game-board-loading';
-        boardEl.style.display = 'flex';
-        boardEl.style.flexDirection = 'column';
-        boardEl.style.alignItems = 'center';
-        boardEl.style.justifyContent = 'center';
-        boardEl.style.gridTemplateColumns = 'none';
-        boardEl.style.gridTemplateRows = 'none';
-        boardEl.style.removeProperty('grid-template-columns');
-        boardEl.style.removeProperty('grid-template-rows');
         boardEl.style.removeProperty('--board-cols');
         boardEl.style.removeProperty('--board-rows');
-        boardEl.style.width = isMobile ? 'calc(100% - 24px)' : '100%';
-        boardEl.style.maxWidth = isMobile ? '480px' : '640px';
-        boardEl.style.margin = isMobile ? '8px auto 12px auto' : '12px auto';
-        boardEl.style.padding = '0';
-        boardEl.style.background = 'transparent';
-        boardEl.style.border = 'none';
-        boardEl.style.boxSizing = 'border-box';
+        boardEl.style.setProperty('display', 'flex', 'important');
+        boardEl.style.setProperty('flex-direction', 'column', 'important');
+        boardEl.style.setProperty('align-items', 'center', 'important');
+        boardEl.style.setProperty('justify-content', 'flex-start', 'important');
+        boardEl.style.setProperty('grid-template-columns', 'none', 'important');
+        boardEl.style.setProperty('grid-template-rows', 'none', 'important');
+        boardEl.style.setProperty('grid-column', 'auto', 'important');
+        boardEl.style.setProperty('grid-row', 'auto', 'important');
+        boardEl.style.setProperty('width', isMobile ? 'calc(100% - 24px)' : '100%', 'important');
+        boardEl.style.setProperty('max-width', isMobile ? '480px' : '640px', 'important');
+        boardEl.style.setProperty('height', 'auto', 'important');
+        boardEl.style.setProperty('min-height', '0', 'important');
+        boardEl.style.setProperty('flex-shrink', '0', 'important');
+        boardEl.style.setProperty('position', 'relative', 'important');
+        boardEl.style.setProperty('z-index', '1', 'important');
+        boardEl.style.setProperty('overflow', 'hidden', 'important');
+        boardEl.style.setProperty('margin', isMobile ? '8px auto 12px auto' : '12px auto', 'important');
+        boardEl.style.setProperty('padding', '0', 'important');
+        boardEl.style.setProperty('background', 'transparent', 'important');
+        boardEl.style.setProperty('border', 'none', 'important');
+        boardEl.style.setProperty('box-sizing', 'border-box', 'important');
     }
     const boardPanel = boardEl ? boardEl.closest('.board-panel') : null;
     if (boardPanel) {
@@ -7874,9 +7880,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                 <div class="glow-spinner"></div>
                 <div class="glow-title">${loadingMsg}</div>
                 <div id="board-loading-status" class="status-ticker">[PROCESSING] ${statuses[0]}</div>
-                <div class="why-text">
-                    Morpheme solves and calibrates every board in real-time. We run hundreds of simulations in the background to guarantee your target word count, board difficulty, and letter distribution.
-                </div>
+                <div class="why-text">Preparing your Morpheme game board</div>
                 <div id="board-loading-actions" class="loading-watchdog-actions">
                     <button type="button" class="btn-instant-board" id="btn-instant-board" onclick="window.fetchInstantBoard()">⚡ Load Instant Board</button>
                     <button type="button" class="btn-instant-lobby" onclick="window.bailoutToLobby()">← Return to Lobby</button>
@@ -7915,6 +7919,12 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     lastRenderedUserTranspose = isUserTransposed;
 
     boardEl.className = isSubanagrams ? 'game-board is-subanagrams-board' : 'game-board';
+    [
+        'display', 'flex-direction', 'align-items', 'justify-content',
+        'grid-template-columns', 'grid-template-rows', 'grid-column', 'grid-row',
+        'width', 'max-width', 'height', 'min-height', 'flex-shrink',
+        'position', 'z-index', 'overflow', 'margin', 'padding', 'background', 'border'
+    ].forEach(prop => boardEl.style.removeProperty(prop));
     if (isSubanagrams) {
         boardEl.style.display = 'flex';
         boardEl.style.flexDirection = 'row';
@@ -8153,6 +8163,10 @@ function checkBoardOverflow() {
     const boardPanel = document.querySelector('.board-panel');
     const boardEl = document.getElementById('game-board');
     if (!boardPanel || !boardEl) return;
+
+    if (boardEl.classList.contains('game-board-loading') || boardEl.querySelector('.loading-container')) {
+        return;
+    }
 
     if ((window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams')) {
         boardEl.classList.add('is-subanagrams-board');
