@@ -6981,10 +6981,12 @@ class RoomManager:
                     # CSW and AW word tagging
                     display_min = _sb_min_len
                     filtered_all = [w for w in (all_words or []) if len(w) >= display_min]
-                    if str(search_dict).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                    if 'CSW' in str(search_dict).upper():
                         word_validator.word_validator.ensure_csw_loaded()
-                    csw_words = [w for w in filtered_all if word_validator.word_validator.is_csw_only(w)]
-                    aw_words = [w for w in filtered_all if word_validator.word_validator.is_added_word(w)]
+                        csw_words = [w for w in filtered_all if word_validator.word_validator.is_csw_only(w)]
+                    else:
+                        csw_words = []
+                    aw_words = [w for w in filtered_all if word_validator.word_validator.is_added_word(w)] if use_aw_flag else []
 
                     # ATOMIC STAGING PROMOTION: Set board and ALL metadata together under state lock
                     with target_room._state_lock:
@@ -7642,9 +7644,11 @@ class RoomManager:
                         room.initialize_density(e_board, e_paths, e_fmt, is_staging=True)
                         
                         if hasattr(word_validator, 'word_validator'):
-                            if str(getattr(room, 'current_dictionary', 'NWL')).upper() in ['CSW', 'AW', 'ALL', 'ADDED_WORDS']:
+                            if 'CSW' in str(getattr(room, 'current_dictionary', 'NWL')).upper():
                                 word_validator.word_validator.ensure_csw_loaded()
-                            room.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
+                                room.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
+                            else:
+                                room.next_round_csw_only_words = []
                             room.next_round_added_words = [w for w in e_words if word_validator.word_validator.is_added_word(w)]
                         else:
                             room.next_round_csw_only_words = []

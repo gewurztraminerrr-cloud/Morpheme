@@ -286,6 +286,11 @@ class WordValidator:
                     new_added_words = new_added_words - self.long_words
                 if getattr(self, 'csw_loaded', False) and self.csw_words:
                     new_added_words = new_added_words - self.csw_words
+                else:
+                    csw_path = os.path.join(base_dir, 'dictionaries', 'CSW.txt')
+                    if os.path.exists(csw_path):
+                        with open(csw_path, 'r') as cf:
+                            new_added_words = new_added_words - {line.strip().upper() for line in cf if line.strip()}
 
                 new_added_words_list = [w for w in new_added_words_list if w in new_added_words]
                 for w in new_added_words_list:
@@ -436,13 +441,18 @@ class WordValidator:
             self.full_csw_set = self.csw_words | self.long_words
 
     def _filter_added_words(self):
-        """Filter out standard words from added_words set to keep it clean and fast"""
+        """Filter out standard words from added_words set and added_trie to keep them clean and fast"""
+        before = set(self.added_words)
         if self.nwl_words:
             self.added_words = self.added_words - self.nwl_words
         if self.long_words:
             self.added_words = self.added_words - self.long_words
         if getattr(self, 'csw_loaded', False) and self.csw_words:
             self.added_words = self.added_words - self.csw_words
+        removed = before - self.added_words
+        if removed and hasattr(self, 'added_trie') and self.added_trie:
+            for w in removed:
+                self._remove_from_trie(self.added_trie, w)
 
     def load_dictionary(self, dict_name, use_added_words=None):
         """Return the pre-calculated full set for the given dictionary."""
