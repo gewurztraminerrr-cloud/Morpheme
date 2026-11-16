@@ -1848,6 +1848,82 @@ class GameRoom:
             
         return None
 
+    def build_solo_spinner_params(self):
+        """Resolve next round parameters for a Solo room, preserving all non-random initial_solo_params."""
+        isp = getattr(self, 'initial_solo_params', None) or {}
+        is_24h = (self.time_limit >= 7200)
+        dict_choice = isp.get('dictionary', 'random')
+        min_len_raw = isp.get('min_word_length', 'random')
+        if min_len_raw == 'random' or not min_len_raw:
+            min_word_len = SpinnerSet._spin_min_word_length(self.board_dimensions)
+        else:
+            try:
+                min_word_len = int(min_len_raw)
+            except Exception:
+                min_word_len = SpinnerSet.get_allowed_min_lengths(self.board_dimensions)[0]
+
+        bonus_len_choice = isp.get('bonus_word_length', 'random')
+        if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) in ['0', 'None', 'null', 'nan']:
+            bonus_word_len = random.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
+        else:
+            try:
+                bonus_word_len = int(bonus_len_choice)
+            except Exception:
+                bonus_word_len = 8
+
+        board_fmt = isp.get('board_format', 'random')
+        difficulty_choice = isp.get('difficulty', 'random')
+        wc_choice = isp.get('word_count_range', 'random')
+
+        if not dict_choice or dict_choice == 'random':
+            dictionary = SpinnerSet._spin_dictionary()
+        else:
+            dictionary = dict_choice
+
+        use_aw = False
+        if dictionary and ('+ AW' in str(dictionary) or '+AW' in str(dictionary)):
+            use_aw = True
+            dictionary = str(dictionary).replace('+ AW', '').replace('+AW', '').strip()
+        elif dictionary == 'AW':
+            use_aw = True
+            dictionary = 'NWL'
+
+        if not difficulty_choice or str(difficulty_choice).lower() == 'random':
+            difficulty = SpinnerSet._spin_difficulty(self.board_dimensions, min_word_len)
+        else:
+            difficulty = SpinnerSet.strip_difficulty_pct(difficulty_choice)
+
+        if not wc_choice or wc_choice == 'random':
+            wc_range = SpinnerSet._spin_word_count(dictionary, min_word_len, difficulty, self.board_dimensions, use_added_words=use_aw)
+        else:
+            wc_range = wc_choice
+
+        if use_aw and wc_range in ['50-100', '100-200', '200-300']:
+            wc_range = '300-400'
+
+        if not board_fmt or board_fmt == 'random':
+            resolved_board_format = SpinnerSet._spin_board_format(is_24h=is_24h, dimensions=self.board_dimensions, previous_params=getattr(self, 'spinner_params', None))
+        else:
+            resolved_board_format = board_fmt
+
+        dict_display = f"{dictionary} + AW" if use_aw else dictionary
+        res = {
+            'min_word_length': min_word_len,
+            'difficulty': difficulty,
+            'word_count_range': wc_range,
+            'dictionary': dict_display,
+            'board_format': resolved_board_format,
+            'bonus_word_length': bonus_word_len,
+            'use_added_words': use_aw,
+            'board_dimensions': self.board_dimensions,
+            'time_limit': self.time_limit,
+            'generated_at': time.time()
+        }
+        res = SpinnerSet.sanitize_params(res, self.board_dimensions, is_24h)
+        if difficulty_choice and str(difficulty_choice).lower() != 'random':
+            res['difficulty'] = SpinnerSet.strip_difficulty_pct(difficulty_choice)
+        return res
+
     def ensure_next_board_ready(self):
         """Ensure that self.next_round_board is populated immediately."""
         if getattr(self, 'next_round_board', None):
@@ -1876,17 +1952,21 @@ class GameRoom:
         from board_generator import pop_compatible_cached_board
         target_params = getattr(self, 'next_spinner_params', None)
         if not target_params:
-            target_params = SpinnerSet.generate_params(
-                self.board_dimensions,
-                is_24h=(self.time_limit >= 7200),
-                previous_params=getattr(self, 'spinner_params', None)
-            )
+            if getattr(self, 'is_solo', False) and getattr(self, 'initial_solo_params', None):
+                target_params = self.build_solo_spinner_params()
+            else:
+                target_params = SpinnerSet.generate_params(
+                    self.board_dimensions,
+                    is_24h=(self.time_limit >= 7200),
+                    previous_params=getattr(self, 'spinner_params', None)
+                )
             self.next_spinner_params = dict(target_params)
         dict_val = target_params.get('dictionary', 'NWL')
         fmt_val = target_params.get('board_format', 'Normal')
         min_l_val = target_params.get('min_word_length', 3)
         use_aw_val = target_params.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
         bonus_word_len = target_params.get('bonus_word_length')
+        diff_val = target_params.get('difficulty')
         fallback = None
         for _ in range(10):
             candidate = pop_compatible_cached_board(
@@ -1895,7 +1975,8 @@ class GameRoom:
                 fmt_val,
                 min_l_val,
                 use_aw_val,
-                bonus_word_len=bonus_word_len
+                bonus_word_len=bonus_word_len,
+                difficulty=diff_val
             )
             if not candidate:
                 break
@@ -4284,12 +4365,16 @@ class RoomManager:
 
                             threading.Thread(target=refine_kickstart_scores, daemon=True).start()
                             
-                            # Proactive background search for Round 2
-                            room.spinner_params_generated = True
-                            threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
+                            # Proactive background search for Round 2 (skip for solo since create_solo_match runs start_round immediately)
+                            if not getattr(room, 'is_solo', False):
+                                room.spinner_params_generated = True
+                                threading.Thread(target=self.start_board_search, args=(room_id,), daemon=True).start()
                             print(f"[RoomManager] {room_id} kickstarted ACTIVE in single-pass with truthful board & params.")
                     else:
-                        room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
+                        if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                            room.spinner_params = room.build_solo_spinner_params()
+                        else:
+                            room.spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split)
                         room.state = 'intermission'
                         room.intermission_start_time = time.time()
                         if room_id.startswith('pub_') and not is_24h:
@@ -5339,6 +5424,10 @@ class RoomManager:
             r_num = int(dims[1] if len(dims) == 3 else dims[0])
             c_num = int(dims[2] if len(dims) == 3 else dims[1])
             achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, room.spinner_params.get('dictionary', 'NWL'), depth=d_num, board=room.board, target_difficulty=room.spinner_params.get('difficulty'), min_word_length=room.spinner_params.get('min_word_length', 3))
+            if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                _solo_d = room.initial_solo_params.get('difficulty', 'random')
+                if _solo_d and str(_solo_d).lower() != 'random':
+                    achieved_diff = SpinnerSet.strip_difficulty_pct(_solo_d)
             room.current_difficulty = f"{achieved_diff} ({int(u_ratio * 100)}%)"
             if not getattr(room, '_spinner_params_locked', False):
                 room.spinner_params['difficulty'] = room.current_difficulty
@@ -5670,6 +5759,10 @@ class RoomManager:
                 is_already_staged_for_round = getattr(room, 'spinner_params_generated', False) and bool(getattr(room, 'next_spinner_params', None))
                 if is_already_staged_for_round:
                     new_params = dict(room.next_spinner_params)
+                    if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                        _solo_d = room.initial_solo_params.get('difficulty', 'random')
+                        if _solo_d and str(_solo_d).lower() != 'random':
+                            new_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(_solo_d, new_params.get('uniqueness') or getattr(room, 'next_round_uniqueness', None))
                     if room.game_type == 'subanagrams' and getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
                         staged_seq_len = len(room.next_round_board[0]) if (isinstance(room.next_round_board[0], list)) else len(room.next_round_board)
                         has_full_w = any(len(w) == staged_seq_len for w in room.next_round_words)
@@ -5698,83 +5791,7 @@ class RoomManager:
                     if room.game_type == 'subanagrams':
                         new_params = SpinnerSet.generate_subanagrams_params(previous_params=room.spinner_params)
                     elif getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
-                        initial_solo_params = room.initial_solo_params
-                        dict_choice = initial_solo_params.get('dictionary', 'random')
-                        min_len_raw = initial_solo_params.get('min_word_length', 3)
-                        if min_len_raw == 'random' or not min_len_raw:
-                            dims_str = str(room.board_dimensions).lower()
-                            if '4x4' in dims_str: min_word_len = random.choices([3, 4, 5], weights=[25, 50, 25])[0]
-                            elif '4x6' in dims_str: min_word_len = random.choices([4, 5, 6], weights=[25, 50, 25])[0]
-                            elif '5x7' in dims_str: min_word_len = random.choices([5, 6, 7], weights=[25, 50, 25])[0]
-                            else: min_word_len = random.choices([6, 7, 8], weights=[25, 50, 25])[0]
-                        else:
-                            try:
-                                min_word_len = int(min_len_raw)
-                            except Exception:
-                                min_word_len = 3
-                        
-                        # Safe-parse bonus word length: spin if random (equal weights for 6-10)
-                        bonus_len_choice = initial_solo_params.get('bonus_word_length', 'random')
-                        if bonus_len_choice == 'random' or not bonus_len_choice or str(bonus_len_choice) == '0':
-                            bonus_word_len = random.choices([6, 7, 8, 9, 10], weights=[20, 20, 20, 20, 20])[0]
-                        else:
-                            try:
-                                bonus_word_len = int(bonus_len_choice)
-                            except:
-                                bonus_word_len = 8
-
-                        board_fmt = initial_solo_params.get('board_format', 'Normal')
-                        difficulty_choice = initial_solo_params.get('difficulty', 'random')
-                        wc_choice = initial_solo_params.get('word_count_range', 'random')
-                        
-                        # 1. Resolve Dictionary
-                        if dict_choice == 'random':
-                            dictionary = SpinnerSet._spin_dictionary()
-                        else:
-                            dictionary = dict_choice
-                            
-                        # Extract + AW from dictionary name
-                        use_aw = False
-                        if dictionary and ('+ AW' in str(dictionary) or '+AW' in str(dictionary)):
-                            use_aw = True
-                            dictionary = str(dictionary).replace('+ AW', '').replace('+AW', '').strip()
-                        elif dictionary == 'AW':
-                            use_aw = True
-                            dictionary = 'NWL'
-                            
-                        # 2. Resolve Difficulty
-                        if difficulty_choice == 'random':
-                            difficulty = SpinnerSet._spin_difficulty(room.board_dimensions, min_word_len)
-                        else:
-                            difficulty = difficulty_choice
-                            
-                        # 3. Resolve Word Count Range
-                        if wc_choice == 'random':
-                            wc_range = SpinnerSet._spin_word_count(dictionary, min_word_len, difficulty, room.board_dimensions, use_added_words=use_aw)
-                        else:
-                            wc_range = wc_choice
-                        
-                        if use_aw and wc_range in ['50-100', '100-200', '200-300']:
-                            wc_range = '300-400'
-                            
-                        # 4. Resolve Board Format
-                        if board_fmt == 'random':
-                            resolved_board_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=room.board_dimensions, previous_params=room.spinner_params)
-                        else:
-                            resolved_board_format = board_fmt
-
-                        dict_display = f"{dictionary} + AW" if use_aw else dictionary
-                        new_params = {
-                            'min_word_length': min_word_len,
-                            'difficulty': difficulty,
-                            'word_count_range': wc_range,
-                            'dictionary': dict_display,
-                            'board_format': resolved_board_format,
-                            'bonus_word_length': bonus_word_len,
-                            'use_added_words': use_aw,
-                            'generated_at': time.time()
-                        }
-                        new_params = SpinnerSet.sanitize_params(new_params, room.board_dimensions, is_24h)
+                        new_params = room.build_solo_spinner_params()
                     else:
                         new_params = SpinnerSet.generate_params(
                             room.board_dimensions, 
@@ -5833,47 +5850,42 @@ class RoomManager:
                                     elif '5x7' in room.board_dimensions: grid_floor = 5
                                     elif '6x8' in room.board_dimensions or '3x3x3' in room.board_dimensions: grid_floor = 6
                                     f_min_l = max(grid_floor, int(f_min_l) if f_min_l is not None else 3)
-                                    # FIX: Write the floored min_length back into new_params so that
-                                    # frozen_revealed_params and active_params at round start use the
-                                    # SAME min_word_length that staging used for filtering.
-                                    # Without this, staging filters with min_length=6 but the round
-                                    # starts with min_length=5, causing more words to survive and the
-                                    # label to flip (e.g. staged '100-200' → round plays '200-300').
-                                    new_params['min_word_length'] = f_min_l
-                                    
-                                    fw_filtered = [w for w in all_words if len(w) >= f_min_l]
-                                    actual_cnt = len(fw_filtered)
-                                    
-                                    f_wc = new_params.get('word_count_range', '100-200')
-                                    min_accept = 50
-                                    try:
-                                        min_accept = int(str(f_wc).split('-')[0])
-                                    except:
-                                        if '50' in str(f_wc): min_accept = 50
-                                        elif '100' in str(f_wc): min_accept = 100
-                                        elif '200' in str(f_wc): min_accept = 200
-                                        elif '300' in str(f_wc): min_accept = 300
-                                        elif '400' in str(f_wc): min_accept = 400
-                                        elif '500' in str(f_wc): min_accept = 500
-                                    
-                                    is_aw_effective = new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper()
-                                    if is_aw_effective:
-                                        min_accept = max(300, min_accept)
-                                    else:
-                                        min_accept = max(50, min_accept)
+                                    dims_parts_ex = str(room.board_dimensions).lower().split('x')
+                                    r_ex = int(dims_parts_ex[0]) if len(dims_parts_ex) >= 2 else 4
+                                    c_ex = int(dims_parts_ex[1]) if len(dims_parts_ex) >= 2 else 4
+                                    achieved_ex_diff = self.board_generator.get_difficulty_label(ratio, rows=r_ex, cols=c_ex, dictionary=new_params.get('dictionary', 'NWL'), min_word_length=f_min_l)
+                                    target_ex_diff = SpinnerSet.strip_difficulty_pct(new_params.get('difficulty', 'Medium'))
+                                    if achieved_ex_diff == target_ex_diff:
+                                        new_params['min_word_length'] = f_min_l
+                                        fw_filtered = [w for w in all_words if len(w) >= f_min_l]
+                                        actual_cnt = len(fw_filtered)
                                         
-                                    if actual_cnt >= min_accept:
-                                        # FIX: Update new_params word_count_range with ACTUAL count (not target)
-                                        # so frozen_revealed_params and the Spinner Set show the real board size.
-                                        is_aw_eff = new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper()
-                                        actual_wc_range_exact = SpinnerSet.get_factchecked_wc_range(actual_cnt, use_added_words=is_aw_eff, dictionary=new_params.get('dictionary', 'NWL'))
-                                        new_params['word_count_range'] = actual_wc_range_exact
-                                        cached_board_data = (board, fw_filtered, bonus_cell, board_format_ret, {w: p for w, p in all_words_dict.items() if len(w) >= f_min_l}, ratio, final_bonus_word, new_params)
-                                        print(f"[RoomManager] Solo exact cache hit for key: {exact_key[:80]}...")
+                                        f_wc = new_params.get('word_count_range', '100-200')
+                                        min_accept = 50
+                                        try:
+                                            min_accept = int(str(f_wc).split('-')[0])
+                                        except:
+                                            if '50' in str(f_wc): min_accept = 50
+                                            elif '100' in str(f_wc): min_accept = 100
+                                            elif '200' in str(f_wc): min_accept = 200
+                                            elif '300' in str(f_wc): min_accept = 300
+                                            elif '400' in str(f_wc): min_accept = 400
+                                            elif '500' in str(f_wc): min_accept = 500
+                                        
+                                        is_aw_effective = new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper()
+                                        if is_aw_effective:
+                                            min_accept = max(300, min_accept)
+                                        else:
+                                            min_accept = max(50, min_accept)
+                                            
+                                        if actual_cnt >= min_accept:
+                                            is_aw_eff = new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper()
+                                            actual_wc_range_exact = SpinnerSet.get_factchecked_wc_range(actual_cnt, use_added_words=is_aw_eff, dictionary=new_params.get('dictionary', 'NWL'))
+                                            new_params['word_count_range'] = actual_wc_range_exact
+                                            cached_board_data = (board, fw_filtered, bonus_cell, board_format_ret, {w: p for w, p in all_words_dict.items() if len(w) >= f_min_l}, ratio, final_bonus_word, new_params)
+                                            print(f"[RoomManager] Solo exact cache hit for key: {exact_key[:80]}...")
                         except Exception as e:
                             print(f"[RoomManager] Error querying solo exact cache: {e}")
-                            
-
                             
                     if not cached_board_data:
                         from board_generator import pop_compatible_cached_board, pop_any_cached_board
@@ -5883,16 +5895,19 @@ class RoomManager:
                         m_len = new_params.get('min_word_length', 3)
                         bw_len = new_params.get('bonus_word_length', 8)
                         target_sp_range = new_params.get('word_count_range')
+                        target_diff_base = SpinnerSet.strip_difficulty_pct(new_params.get('difficulty', 'Medium'))
 
                         for _ in range(10):
                             candidate = pop_compatible_cached_board(
-                                room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bw_len
+                                room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bw_len, difficulty=target_diff_base
                             )
                             if not candidate:
                                 break
                             c_b, c_w, c_c, c_f, c_p, c_r, c_bw, c_params = candidate
-                            target_diff_base = SpinnerSet.strip_difficulty_pct(new_params.get('difficulty', 'Medium'))
-                            cand_diff_base = SpinnerSet.strip_difficulty_pct(c_params.get('difficulty', 'Medium')) if c_params else 'Medium'
+                            dims_parts_c = str(room.board_dimensions).lower().split('x')
+                            r_c = int(dims_parts_c[0]) if len(dims_parts_c) >= 2 else 4
+                            c_c_num = int(dims_parts_c[1]) if len(dims_parts_c) >= 2 else 4
+                            cand_diff_base = self.board_generator.get_difficulty_label(c_r, rows=r_c, cols=c_c_num, dictionary=dict_val, min_word_length=m_len)
                             if target_diff_base != cand_diff_base:
                                 print(f"[generate_spinner_params] Candidate cached board difficulty '{cand_diff_base}' != target '{target_diff_base}'. Discarding.")
                                 continue
@@ -5922,7 +5937,12 @@ class RoomManager:
                         dims_parts = str(room.board_dimensions).lower().split('x')
                         r_cnt = int(dims_parts[0]) if len(dims_parts) >= 2 else 4
                         c_cnt = int(dims_parts[1]) if len(dims_parts) >= 2 else 4
-                        new_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(self.board_generator.get_difficulty_label(ratio, rows=r_cnt, cols=c_cnt, dictionary=new_params.get('dictionary', 'NWL'), min_word_length=new_params.get('min_word_length', 3)), ratio)
+                        final_diff_label = self.board_generator.get_difficulty_label(ratio, rows=r_cnt, cols=c_cnt, dictionary=new_params.get('dictionary', 'NWL'), min_word_length=new_params.get('min_word_length', 3))
+                        if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                            _solo_d = room.initial_solo_params.get('difficulty', 'random')
+                            if _solo_d and str(_solo_d).lower() != 'random':
+                                final_diff_label = SpinnerSet.strip_difficulty_pct(_solo_d)
+                        new_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(final_diff_label, ratio)
                         if final_bonus_word:
                             new_params['bonus_word_length'] = len(final_bonus_word)
                         
@@ -6505,11 +6525,18 @@ class RoomManager:
 
             params = getattr(room, 'next_spinner_params', None)
             if not params:
-                is_24h = room.time_limit >= 7200
-                is_split = (room.game_type == 'split')
-                room.next_spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split, previous_params=getattr(room, 'spinner_params', None))
+                if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                    room.next_spinner_params = room.build_solo_spinner_params()
+                else:
+                    is_24h = room.time_limit >= 7200
+                    is_split = (room.game_type == 'split')
+                    room.next_spinner_params = SpinnerSet.generate_params(room.board_dimensions, is_24h, is_split, previous_params=getattr(room, 'spinner_params', None))
                 params = room.next_spinner_params
             params = SpinnerSet.sanitize_params(params, room.board_dimensions, room.time_limit >= 7200)
+            if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                _solo_d = room.initial_solo_params.get('difficulty', 'random')
+                if _solo_d and str(_solo_d).lower() != 'random':
+                    params['difficulty'] = SpinnerSet.format_difficulty_with_pct(_solo_d)
             room.next_spinner_params = params
             launched_generated_at = params.get('generated_at') if params else None
             
@@ -6976,6 +7003,10 @@ class RoomManager:
                     rows = int(b_dims[1] if len(b_dims) == 3 else b_dims[0])
                     cols = int(b_dims[2] if len(b_dims) == 3 else b_dims[1])
                     achieved_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val, board=board, target_difficulty=target_room.next_spinner_params.get('difficulty') if getattr(target_room, 'next_spinner_params', None) else None, min_word_length=_sb_min_len)
+                    if getattr(target_room, 'is_solo', False) and getattr(target_room, 'initial_solo_params', None):
+                        _solo_d = target_room.initial_solo_params.get('difficulty', 'random')
+                        if _solo_d and str(_solo_d).lower() != 'random':
+                            achieved_diff = SpinnerSet.strip_difficulty_pct(_solo_d)
                     achieved_diff = SpinnerSet.format_difficulty_with_pct(achieved_diff, u_ratio)
 
                     # CSW and AW word tagging
@@ -7502,6 +7533,10 @@ class RoomManager:
                 # It will be computed from the actual board word count at the accuracy enforcement
                 # step below (real_wc). Setting it prematurely here to the target value causes a
                 # brief flash of the wrong label if a heartbeat fires before real_wc is ready.
+                if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                    _solo_d = room.initial_solo_params.get('difficulty', 'random')
+                    if _solo_d and str(_solo_d).lower() != 'random':
+                        active_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(_solo_d, active_params.get('uniqueness') or getattr(room, 'next_round_uniqueness', None))
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
                 room.current_dictionary = active_params.get('dictionary', 'NWL')
                 room.use_added_words = bool(active_params.get('use_added_words', False)) or ('+ AW' in str(room.current_dictionary).upper()) or ('+AW' in str(room.current_dictionary).upper()) or (str(room.current_dictionary).upper() in ['AW', 'ADDED_WORDS'])

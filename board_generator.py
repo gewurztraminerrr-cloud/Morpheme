@@ -716,10 +716,14 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                 normalized_diff = _normalize_difficulty_base(difficulty)
                         
                 if achieved_diff != normalized_diff:
-                    print(f"[BoardGen] [Refill] Achieved difficulty '{achieved_diff}' differs from target '{normalized_diff}' (ratio={ratio:.4f}). Saving anyway to optimize CPU and fill cache instantly.")
-                
-                # Reset attempts counter on successful database insertion
-                attempts = 0
+                    print(f"[BoardGen] [Refill] Achieved difficulty '{achieved_diff}' differs from target '{normalized_diff}' (ratio={ratio:.4f}). Saving under '{achieved_diff}' key instead.")
+                    insert_key_str = serialize_param_key(
+                        dimensions, '', word_count_range, dictionary, board_format, min_word_length, achieved_diff, use_added_words=use_aw_val
+                    )
+                else:
+                    insert_key_str = param_key_str
+                    # Reset attempts counter on successful target match
+                    attempts = 0
                 
                 if normalized_diff in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                     protected_positions = None
@@ -769,7 +773,7 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     with get_db() as conn:
                         conn.execute(
                             "INSERT OR IGNORE INTO pregenerated_boards (param_key, board_json, created_at, board_hash) VALUES (?, ?, ?, ?);",
-                            (param_key_str, json.dumps(board_data), time.time(), board_hash)
+                            (insert_key_str, json.dumps(board_data), time.time(), board_hash)
                         )
                 except Exception as e:
                     print(f"[BoardGen] [Refill] Error inserting to DB: {e}")
