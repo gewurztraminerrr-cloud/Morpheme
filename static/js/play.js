@@ -439,14 +439,26 @@ const unlockAudio = () => {
     window.updateIntermissionBellSource();
     if (window.intermissionBellAudio) {
         try {
+            window.intermissionBellAudio.muted = true;
+            window.intermissionBellAudio.volume = 0;
             const p = window.intermissionBellAudio.play();
             if (p !== undefined) {
                 p.then(() => {
                     window.intermissionBellAudio.pause();
                     window.intermissionBellAudio.currentTime = 0;
-                }).catch(() => {});
+                    window.intermissionBellAudio.muted = false;
+                    window.intermissionBellAudio.volume = 1.0;
+                }).catch(() => {
+                    window.intermissionBellAudio.muted = false;
+                    window.intermissionBellAudio.volume = 1.0;
+                });
             }
-        } catch (_) {}
+        } catch (_) {
+            try {
+                window.intermissionBellAudio.muted = false;
+                window.intermissionBellAudio.volume = 1.0;
+            } catch (_) {}
+        }
     }
     if (typeof BoardAudio !== 'undefined') {
         BoardAudio.init();
@@ -7099,6 +7111,8 @@ function playIntermissionBell(bellType) {
                     audio.src = expectedSrc;
                     try { audio.load(); } catch (_) {}
                 }
+                audio.muted = false;
+                audio.volume = 1.0;
                 audio.currentTime = 0;
                 const playPromise = audio.play();
                 if (playPromise !== undefined) {
