@@ -11750,7 +11750,7 @@ body.flash-blue::after,
         display: flex !important;
         justify-content: space-between;
         align-items: center;
-        padding: 10px 15px !important;
+        padding: 0 !important;
         background: rgba(var(--text-primary-rgb), 0.15) !important;
         backdrop-filter: blur(10px) !important;
         border-top: 1px solid rgba(var(--text-primary-rgb), 0.15) !important;
@@ -11781,10 +11781,10 @@ body.flash-blue::after,
     }
 
     .mobile-nav-indicators .nav-arrow {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-weight: 500;
+        display: flex !important;
+        align-items: center !important;
+        gap: 5px !important;
+        font-weight: 500 !important;
         background: transparent !important;
         background-color: transparent !important;
         border: none !important;
@@ -11794,12 +11794,28 @@ body.flash-blue::after,
         font-family: inherit;
         font-size: inherit;
         cursor: pointer;
-        padding: 0;
+        padding: 0 15px !important;
+        height: 100% !important;
+        width: 50% !important;
+        max-width: 50% !important;
+        flex: 0 0 50% !important;
+        box-sizing: border-box !important;
         -webkit-tap-highlight-color: transparent !important;
         -webkit-touch-callout: none !important;
         -webkit-user-select: none !important;
         user-select: none !important;
         touch-action: manipulation !important;
+    }
+
+    .mobile-nav-indicators .nav-left {
+        justify-content: flex-start !important;
+        margin-right: auto !important;
+    }
+
+    .mobile-nav-indicators .nav-right {
+        justify-content: flex-end !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
     }
 
     .mobile-nav-indicators .nav-arrow:hover,
@@ -11812,11 +11828,6 @@ body.flash-blue::after,
         box-shadow: none !important;
         color: inherit !important;
         -webkit-tap-highlight-color: transparent !important;
-    }
-
-    .mobile-nav-indicators .nav-right {
-        margin-left: auto; /* Push to right if only one */
-        margin-right: 0 !important;
     }
 }
 

@@ -150,6 +150,28 @@ window._restorePlayPanel = function() {
     }
 })();
 
+// Mobile Bottom Grey Navigator: allow clicking entire left or right half to slide when applicable
+(function _setupMobileNavIndicatorHalves() {
+    document.addEventListener('click', (e) => {
+        const navBar = e.target.closest('.mobile-nav-indicators');
+        if (!navBar) return;
+        // If the click directly hit a button or an element inside a button, let the button execute
+        if (e.target.closest('.nav-arrow')) return;
+
+        const rect = navBar.getBoundingClientRect();
+        if (!rect.width) return;
+
+        const isLeftHalf = (e.clientX - rect.left) < (rect.width / 2);
+        if (isLeftHalf) {
+            const leftBtn = navBar.querySelector('.nav-left');
+            if (leftBtn) leftBtn.click();
+        } else {
+            const rightBtn = navBar.querySelector('.nav-right');
+            if (rightBtn) rightBtn.click();
+        }
+    });
+})();
+
 // Mobile Carousel Swipe Protection:
 // Prevents text inputs (#word-input, #chat-input) from accidentally stealing focus and opening
 // the virtual keyboard (which causes Android 2s blackouts) when the user is simply swiping across windows.
