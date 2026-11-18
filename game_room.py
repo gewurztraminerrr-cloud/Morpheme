@@ -1022,12 +1022,14 @@ class GameRoom:
         """Submit word for player"""
         now = time.time()
         # BUZZER-BEATER GRACE PERIOD: Allow in-flight submissions sent at the final second of the round
-        # that arrive within 1.5s of intermission start to be validated and credited to the completed round.
+        # that arrive within 3.0s of intermission start to be validated and credited to the completed round.
         is_grace_period = (
             self.state == 'intermission' and 
             getattr(self, 'intermission_start_time', 0) > 0 and 
-            (now - self.intermission_start_time) <= 1.5
+            (now - self.intermission_start_time) <= 3.0
         )
+        if is_grace_period:
+            print(f"[GameRoom] Buzzer-beater submission accepted during grace period for user {user_id} in {self.room_id}: '{word}' (offset: {now - self.intermission_start_time:.3f}s)")
         if self.state != 'active' and not is_grace_period:
             return False, "Round is not active", 0, None
             
@@ -1955,6 +1957,7 @@ class GameRoom:
             res = generate_subanagrams_board_and_words(p)
             if res:
                 b_board, b_words, b_bonus, fparams = res
+                from scoring import calculate_word_score
                 self.next_round_board = b_board
                 self.next_round_words = b_words
                 self.next_round_word_paths = {w: [] for w in b_words}
@@ -1962,6 +1965,11 @@ class GameRoom:
                 self.next_round_format = fparams.get('board_format', 'Word Guaranteed')
                 self.next_round_spinner_params = fparams
                 self.next_spinner_params = fparams
+                self.next_round_word_scores = {
+                    w: calculate_word_score(w, b_bonus, board_format='Normal', return_details=True)
+                    for w in b_words
+                }
+                self.next_round_total_words_count = len(b_words)
                 self.spinner_params_generated = True
             return
         from board_generator import pop_compatible_cached_board
@@ -2308,22 +2316,30 @@ class GameRoom:
                 # OPTIMIZATION: Calculate fast length-based scores instantly to avoid transition delay, and refine in background thread!
                 if not getattr(self, 'solved_words_with_scores', None) or not self.solved_words_with_scores:
                     print(f"[GameRoom] Transitioning {self.room_id}: computing missing solved_words_with_scores.")
-                    fast_scores = {}
-                    eval_board = self.board or getattr(self, 'previous_board', None)
-                    eval_fmt = self.current_board_format or getattr(self, 'previous_board_format', 'Normal')
-                    for word in (self.all_words or []):
-                        path_v = _get_word_path(self.all_words_paths, word)
-                        fast_scores[word] = calculate_word_score(
-                            word, 
-                            self.bonus_word, 
-                            board_format=eval_fmt,
-                            bonus_cell=self.bonus_cell,
-                            board=eval_board,
-                            path=path_v,
-                            return_details=True,
-                            strict_path=True
-                        )
-                    self.solved_words_with_scores = fast_scores
+                    if getattr(self, 'game_type', None) == 'subanagrams':
+                        from scoring import calculate_word_score
+                        bw = getattr(self, 'bonus_word', None)
+                        self.solved_words_with_scores = {
+                            w: calculate_word_score(w, bw, board_format='Normal', return_details=True)
+                            for w in (self.all_words or [])
+                        }
+                    else:
+                        fast_scores = {}
+                        eval_board = self.board or getattr(self, 'previous_board', None)
+                        eval_fmt = self.current_board_format or getattr(self, 'previous_board_format', 'Normal')
+                        for word in (self.all_words or []):
+                            path_v = _get_word_path(self.all_words_paths, word)
+                            fast_scores[word] = calculate_word_score(
+                                word, 
+                                self.bonus_word, 
+                                board_format=eval_fmt,
+                                bonus_cell=self.bonus_cell,
+                                board=eval_board,
+                                path=path_v,
+                                return_details=True,
+                                strict_path=True
+                            )
+                        self.solved_words_with_scores = fast_scores
 
                 # Snapshot board and words for intermission (Detailed Scoring Preservation)
                 if self.game_type == '3d' or (self.board and len(self.board) == 6 and isinstance(self.board[0], list) and isinstance(self.board[0][0], list)):
@@ -5898,6 +5914,82 @@ class RoomManager:
         try:
             is_24h = (room.time_limit >= 7200)
             is_split = (room.game_type == 'split')
+
+            if room.game_type == 'subanagrams':
+                need_generate = False
+                heal_needed = False
+                sp_to_use = None
+
+                with room._state_lock:
+                    is_staged = getattr(room, 'spinner_params_generated', False) and bool(getattr(room, 'next_spinner_params', None))
+                    if is_staged:
+                        sp_to_use = dict(room.next_spinner_params)
+                        if getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
+                            staged_seq_len = len(room.next_round_board[0]) if (isinstance(room.next_round_board[0], list)) else len(room.next_round_board)
+                            has_full_w = any(len(w) == staged_seq_len for w in room.next_round_words)
+                            is_word_mode = (sp_to_use.get('board_format') == 'Word Guaranteed' or sp_to_use.get('mode') == 'word')
+                            if is_word_mode:
+                                sp_to_use['board_format'] = 'Word Guaranteed'
+                                sp_to_use['mode'] = 'word'
+                                room.next_round_format = 'Word Guaranteed'
+                                if not has_full_w:
+                                    heal_needed = True
+                            else:
+                                sp_to_use['board_format'] = 'Totally Random'
+                                sp_to_use['mode'] = 'random'
+                                room.next_round_format = 'Totally Random'
+                        print(f"[RoomManager] Using EXISTING staged params for room {room_id} (Lock-protected)")
+                    else:
+                        need_generate = True
+                        sp_to_use = SpinnerSet.generate_subanagrams_params(previous_params=room.spinner_params)
+                        sp_to_use['board_dimensions'] = room.board_dimensions
+                        sp_to_use['time_limit'] = room.time_limit
+
+                # CRITICAL LOCK-CONTENTION FIX: Run Subanagrams board generation and scoring
+                # completely outside room._state_lock so incoming player word submissions never stall or timeout.
+                if need_generate or heal_needed:
+                    from subanagrams_generator import generate_subanagrams_board_and_words
+                    from scoring import calculate_word_score
+                    res = generate_subanagrams_board_and_words(sp_to_use)
+                    if res:
+                        nb, nw, nbw, nparams = res
+                        nscores = {
+                            w: calculate_word_score(w, nbw, board_format='Normal', return_details=True)
+                            for w in nw
+                        }
+                        with room._state_lock:
+                            room.next_round_board = nb
+                            room.next_round_words = nw
+                            room.next_round_word_paths = {w: [] for w in nw}
+                            room.next_round_bonus = nbw
+                            room.next_round_bonus_cell = None
+                            room.next_round_format = nparams.get('board_format', 'Word Guaranteed')
+                            room.next_round_spinner_params = nparams
+                            room.next_spinner_params = nparams
+                            room.next_round_min_length = nparams.get('min_word_length', 3)
+                            room.next_round_total_words_count = len(nw)
+                            room.next_round_word_scores = nscores
+                            room.spinner_params_generated = True
+                            room.spinner_params_loading = False
+                            sp_to_use = nparams
+                    else:
+                        with room._state_lock:
+                            room.next_spinner_params = sp_to_use
+                            room.spinner_params_generated = True
+                            room.spinner_params_loading = False
+                else:
+                    with room._state_lock:
+                        room.spinner_params_loading = False
+
+                if reveal:
+                    import copy
+                    with room._state_lock:
+                        room.spinner_params = dict(sp_to_use)
+                        room.frozen_revealed_params = copy.deepcopy(sp_to_use)
+                        room.spinner_params_revealed = True
+                        room.was_revealed_this_intermission = True
+                        room._spinner_params_locked = True
+                return True
             
             with room._state_lock:
                 # Atomic check: only reuse existing params if they were already generated for this specific upcoming round
@@ -5908,34 +6000,10 @@ class RoomManager:
                         _solo_d = room.initial_solo_params.get('difficulty', 'random')
                         if _solo_d and str(_solo_d).lower() != 'random':
                             new_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(_solo_d, new_params.get('uniqueness') or getattr(room, 'next_round_uniqueness', None))
-                    if room.game_type == 'subanagrams' and getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
-                        staged_seq_len = len(room.next_round_board[0]) if (isinstance(room.next_round_board[0], list)) else len(room.next_round_board)
-                        has_full_w = any(len(w) == staged_seq_len for w in room.next_round_words)
-                        is_word_mode = (new_params.get('board_format') == 'Word Guaranteed' or new_params.get('mode') == 'word')
-                        if is_word_mode:
-                            new_params['board_format'] = 'Word Guaranteed'
-                            new_params['mode'] = 'word'
-                            room.next_round_format = 'Word Guaranteed'
-                            if not has_full_w:
-                                from subanagrams_generator import generate_subanagrams_board_and_words
-                                heal_res = generate_subanagrams_board_and_words(new_params)
-                                if heal_res:
-                                    hb, hw, hbw, hp = heal_res
-                                    room.next_round_board = hb
-                                    room.next_round_words = hw
-                                    room.next_round_word_paths = {w: [] for w in hw}
-                                    room.next_round_bonus = hbw
-                                    room.next_round_total_words_count = len(hw)
-                        else:
-                            new_params['board_format'] = 'Totally Random'
-                            new_params['mode'] = 'random'
-                            room.next_round_format = 'Totally Random'
                     print(f"[RoomManager] Using EXISTING staged params for room {room_id} (Lock-protected)")
                 else:
                     # Generate new parameters
-                    if room.game_type == 'subanagrams':
-                        new_params = SpinnerSet.generate_subanagrams_params(previous_params=room.spinner_params)
-                    elif getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                    if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                         new_params = room.build_solo_spinner_params()
                     else:
                         new_params = SpinnerSet.generate_params(
@@ -5947,37 +6015,6 @@ class RoomManager:
                     # Metadata: Ensure dimensions and time limits are included for the reveal animation
                     new_params['board_dimensions'] = room.board_dimensions
                     new_params['time_limit'] = room.time_limit
-
-                    if room.game_type == 'subanagrams':
-                        from subanagrams_generator import generate_subanagrams_board_and_words
-                        res = generate_subanagrams_board_and_words(new_params)
-                        if res:
-                            nb, nw, nbw, nparams = res
-                            room.next_round_board = nb
-                            room.next_round_words = nw
-                            room.next_round_word_paths = {w: [] for w in nw}
-                            room.next_round_bonus = nbw
-                            room.next_round_bonus_cell = None
-                            room.next_round_format = nparams.get('board_format', 'Word Guaranteed')
-                            room.next_round_spinner_params = nparams
-                            room.next_spinner_params = nparams
-                            room.next_round_min_length = nparams.get('min_word_length', 3)
-                            room.next_round_total_words_count = len(nw)
-                            room.spinner_params_generated = True
-                            room.spinner_params_loading = False
-                            new_params = nparams
-                        else:
-                            room.next_spinner_params = new_params
-                            room.spinner_params_generated = True
-                            room.spinner_params_loading = False
-                        if reveal:
-                            import copy
-                            room.spinner_params = dict(new_params)
-                            room.frozen_revealed_params = copy.deepcopy(new_params)
-                            room.spinner_params_revealed = True
-                            room.was_revealed_this_intermission = True
-                            room._spinner_params_locked = True
-                        return True
                     
                     # Attempt to find a pregenerated board in the cache matching new_params
                     from board_generator import pop_any_cached_board, pop_cached_board, serialize_param_key, refill_board_cache_bg, BoardGenerator
@@ -6682,15 +6719,20 @@ class RoomManager:
                         res = generate_subanagrams_board_and_words(p)
                         if res:
                             b_board, b_words, b_bonus, fparams = res
+                            is_word_mode = (p.get('mode') == 'word' or p.get('board_format') == 'Word Guaranteed')
+                            final_fmt = 'Word Guaranteed' if is_word_mode else 'Totally Random'
+                            fparams['board_format'] = final_fmt
+                            fparams['mode'] = 'word' if is_word_mode else 'random'
+                            from scoring import calculate_word_score
+                            b_scores = {
+                                w: calculate_word_score(w, b_bonus, board_format='Normal', return_details=True)
+                                for w in b_words
+                            }
                             with room._state_lock:
                                 room.next_round_board = b_board
                                 room.next_round_words = b_words
                                 room.next_round_word_paths = {w: [] for w in b_words}
                                 room.next_round_bonus = b_bonus
-                                is_word_mode = (p.get('mode') == 'word' or p.get('board_format') == 'Word Guaranteed')
-                                final_fmt = 'Word Guaranteed' if is_word_mode else 'Totally Random'
-                                fparams['board_format'] = final_fmt
-                                fparams['mode'] = 'word' if is_word_mode else 'random'
                                 room.next_round_format = final_fmt
                                 room.next_round_bonus_cell = None
                                 room.next_round_uniqueness = 0.0
@@ -6700,11 +6742,7 @@ class RoomManager:
                                 room.next_round_min_length = fparams.get('min_word_length', 3)
                                 if not getattr(room, 'frozen_revealed_params', None):
                                     room.frozen_revealed_params = dict(fparams)
-                                from scoring import calculate_word_score
-                                room.next_round_word_scores = {
-                                    w: calculate_word_score(w, b_bonus, board_format='Normal', return_details=True)
-                                    for w in b_words
-                                }
+                                room.next_round_word_scores = b_scores
                                 room.next_round_total_words_count = len(b_words)
                                 room.solving_complete = True
                                 room.board_search_loading = False
@@ -7813,7 +7851,11 @@ class RoomManager:
                             room.next_round_format = sp.get('board_format', 'Word Guaranteed')
                             room.next_round_bonus_cell = None
                             room.next_round_uniqueness = 0.0
-                            room.next_round_word_scores = {}
+                            from scoring import calculate_word_score
+                            room.next_round_word_scores = {
+                                w: calculate_word_score(w, b_bonus, board_format='Normal', return_details=True)
+                                for w in b_words
+                            }
                             if isinstance(room.spinner_params, dict) and isinstance(fparams, dict):
                                 room.spinner_params.update(fparams)
                                 room.spinner_params['board_format'] = sp.get('board_format', 'Word Guaranteed')
@@ -8035,6 +8077,13 @@ class RoomManager:
                         room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
 
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
+                if getattr(room, 'game_type', None) == 'subanagrams' and (not room.solved_words_with_scores or len(room.solved_words_with_scores) == 0):
+                    from scoring import calculate_word_score
+                    bw = getattr(room, 'bonus_word', None) or getattr(room, 'next_round_bonus', None)
+                    room.solved_words_with_scores = {
+                        w: calculate_word_score(w, bw, board_format='Normal', return_details=True)
+                        for w in (room.all_words or [])
+                    }
                 
                 # Save to DB will occur at the end of promotion after all parameters are finalized
                 

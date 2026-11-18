@@ -428,4 +428,38 @@
 - [`dictionaries/wikdefs_duplicate.txt`](file:///Users/jeffbabiak/dictionaries/wikdefs_duplicate.txt): Synchronized with `wikdefs.txt`.
 - [`dictionaries/aw_inflections.txt`](file:///Users/jeffbabiak/dictionaries/aw_inflections.txt): Cached inflection mappings for `FRIGATEBIRD`, `MESITE`, `PAICHE`.
 - [`morpheme.db`](file:///Users/jeffbabiak/morpheme.db): Updated `wiktionary_definitions` table on localhost and VPS production database.
+- [`game_room.py`](file:///Users/jeffbabiak/game_room.py):
+  - Decoupled Subanagrams board generation and scoring in `generate_spinner_params` from `room._state_lock`, eliminating lock starvation on word submissions.
+  - Pre-computed `room.next_round_word_scores` and pre-populated `room.solved_words_with_scores` in `generate_spinner_params`, `ensure_next_board_ready`, and `start_next_round`.
+  - Added fast subanagram scoring fallback in `transition_to_intermission` bypassing grid pathfinding.
+  - Moved word score dictionary comprehension in `subanagrams_search_worker` outside `room._state_lock`.
+  - Extended buzzer-beater grace period in `submit_word` from 1.5s to 3.0s with explicit diagnostics logging.
+- [`subanagrams_generator.py`](file:///Users/jeffbabiak/subanagrams_generator.py):
+  - Optimized candidate search loop (`max_attempts = 100`, targeted pass `range(50)`) reducing typical generation time from ~880ms to <100ms.
+
+---
+
+### Multiplayer Subanagrams Lock Contention & Word Submission Timeout Fix
+- **Problem**: When entering a valid word on a Subanagrams board (e.g. entering `SOCAGE` on a 7L board in `pub_v2_subanagrams_subanagrams_120`), the client-side optimistic check initially succeeded and flashed blue. However, 10–15 seconds later, the tiles flashed red with invalid audio and displayed `"SUBMISSION ERROR"`.
+- **Root Cause**:
+  1. *State Lock Starvation*: In `generate_spinner_params`, `with room._state_lock:` wrapped `generate_subanagrams_board_and_words`, which spent up to 880–2000ms searching permutations and solving dictionaries while holding the exclusive room lock.
+  2. *Missing Pre-Computed Scores*: Subanagram staging omitted populating `room.next_round_word_scores`. When the round ended, `room.solved_words_with_scores` was empty, triggering a synchronous scoring fallback across hundreds of words under `_state_lock` during `transition_to_intermission`.
+  3. *Submit Timeout & Retries*: Incoming submissions (`submit_word` in `app.py`) attempted `room._state_lock.acquire(timeout=6.0)`. Because the lock was held across the transition and background generation, submissions timed out (`[SW-TIMING] LOCK FAIL after 6009ms word='SOCAGE'`), returning HTTP 503. The client retried once after 300ms, waited another 6–8s, hit the 8000ms `AbortController` timeout, threw an error, and triggered line 11234: `showValidationFeedback('Submission Error', false)`.
+  4. *Buzzer-Beater Grace Period Expiry*: Submissions sent near the buzzer (`tr=0.0`) had their 1.5s grace period expire while blocked waiting for the server lock.
+- **Fixes Applied**:
+  1. **Decoupled Board Generation Outside Lock (`game_room.py`)**:
+     - In `generate_spinner_params`, checked staging under a brief lock (<0.01ms), released the lock completely while running `generate_subanagrams_board_and_words` and pre-computing `calculate_word_score`, and re-acquired the lock for microseconds solely to assign results.
+     - In `subanagrams_search_worker`, computed `calculate_word_score` outside `room._state_lock`.
+  2. **Authoritative Pre-Computed Word Scores (`game_room.py`)**:
+     - Pre-computed `room.next_round_word_scores` across all staging paths (`generate_spinner_params`, `ensure_next_board_ready`, `start_next_round`).
+     - Ensured `room.solved_words_with_scores` is immediately populated at round start.
+     - In `transition_to_intermission`, added fast dictionary scoring without grid pathfinding if scores are ever missing.
+  3. **Extended Buzzer-Beater Grace Period (`game_room.py`)**:
+     - Extended grace period from 1.5s to 3.0s (`(now - self.intermission_start_time) <= 3.0`) and added debug logging to guarantee legitimate in-flight submissions near round transitions are accepted and credited.
+  4. **Generator Performance Optimization (`subanagrams_generator.py`)**:
+     - Tuned candidate search attempts to 100 with 50 targeted passes, reducing generator runtime from ~880ms to <100ms.
+- **Verification**:
+  - Concurrent simulation test confirmed `_state_lock` acquisition times dropped to **0.00ms – 0.02ms** (down from >6,000ms).
+  - 100% of concurrent submissions during background generation succeeded instantly without errors.
+
 

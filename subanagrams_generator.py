@@ -232,7 +232,7 @@ def generate_subanagrams_board_and_words(params):
     elif target_range == '300-400': target_mid = 350
     elif target_range == '500+': target_mid = 550
 
-    max_attempts = 300
+    max_attempts = 100
     for attempt in range(max_attempts):
         if mode == 'word' and candidates_by_len:
             # Word Guaranteed: Pick an authentic dictionary word of exact length seq_len and shuffle
@@ -279,7 +279,7 @@ def generate_subanagrams_board_and_words(params):
 
     # If best candidate has < 50 words or not in range, do fast targeted passes
     if not best_results or len(best_results) < 50 or not is_count_in_range(len(best_results), target_range):
-        for _ in range(200):
+        for _ in range(50):
             if mode == 'word' and candidates_by_len:
                 chosen_word = random.choice(candidates_by_len)
                 letters = list(chosen_word)
