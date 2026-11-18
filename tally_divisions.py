@@ -108,45 +108,74 @@ def get_max_count_by_length(length: int) -> int:
     get_word_stats()
     return _STATS_MAX_BY_LEN.get(length, 0)
 
-def sync_word_stats_from_db(db_path: str = None) -> int:
+def sync_word_stats_from_db(db_path: str = None, tally_log_path: str = None) -> int:
     """
-    Ensure word_stats.json accurately reflects all finds in round_history.
-    Any word found in registered round_history is guaranteed to have at least that count in word_stats.json.
+    Ensure word_stats.json accurately reflects all finds from both word_tally.log
+    (runtime round tallies across all rooms/guests) and round_history in morpheme.db
+    (registered user match scorecards). Any word found in either source is guaranteed
+    to have at least that count in word_stats.json.
     Returns the number of words updated.
     """
     import sqlite3
     global _STATS_CACHE, _STATS_MTIME, _STATS_MAX_BY_LEN
     if not db_path:
         db_path = os.path.join(BASE_DIR, 'morpheme.db')
-    if not os.path.exists(db_path) or not os.path.exists(STATS_PATH):
+    if not tally_log_path:
+        tally_log_path = os.path.join(BASE_DIR, 'word_tally.log')
+    if not os.path.exists(STATS_PATH):
+        return 0
+
+    target_counts = {}
+
+    # 1. Read persistent runtime round tallies from word_tally.log
+    if os.path.exists(tally_log_path):
+        try:
+            with open(tally_log_path, 'r', encoding='utf-8') as tf:
+                for line in tf:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        entry = json.loads(line)
+                        for w, c in entry.get('tally', {}).items():
+                            if w and isinstance(c, (int, float)):
+                                w_up = str(w).strip().upper()
+                                target_counts[w_up] = target_counts.get(w_up, 0) + int(c)
+                    except Exception:
+                        pass
+        except Exception as e:
+            print(f"[TallyDivisions] Warning reading word_tally.log: {e}")
+
+    # 2. Read registered user scorecards from round_history
+    if os.path.exists(db_path):
+        try:
+            conn = sqlite3.connect(db_path, timeout=30)
+            c = conn.cursor()
+            c.execute("SELECT words_json FROM round_history WHERE words_json IS NOT NULL AND words_json != ''")
+            for r in c.fetchall():
+                try:
+                    w_list = json.loads(r[0])
+                    if isinstance(w_list, list):
+                        found_set = set()
+                        for w in w_list:
+                            if isinstance(w, str) and w:
+                                found_set.add(w.strip().upper())
+                            elif isinstance(w, dict) and w.get('word'):
+                                found_set.add(str(w['word']).strip().upper())
+                        for word in found_set:
+                            target_counts[word] = max(target_counts.get(word, 0), 1)
+                except Exception:
+                    pass
+            conn.close()
+        except Exception as e:
+            print(f"[TallyDivisions] Warning reading round_history: {e}")
+
+    if not target_counts:
         return 0
 
     try:
-        conn = sqlite3.connect(db_path, timeout=30)
-        c = conn.cursor()
-        c.execute("SELECT words_json FROM round_history WHERE words_json IS NOT NULL AND words_json != ''")
-        db_counts = {}
-        for r in c.fetchall():
-            try:
-                w_list = json.loads(r[0])
-                if isinstance(w_list, list):
-                    found_set = set()
-                    for w in w_list:
-                        if isinstance(w, str) and w:
-                            found_set.add(w.upper())
-                        elif isinstance(w, dict) and w.get('word'):
-                            found_set.add(w['word'].upper())
-                    for word in found_set:
-                        db_counts[word] = db_counts.get(word, 0) + 1
-            except Exception:
-                pass
-        conn.close()
-
-        if not db_counts:
-            return 0
-
         # Read current stats with file lock
-        with open(STATS_PATH, 'r+') as f:
+        with open(STATS_PATH, 'r+', encoding='utf-8') as f:
             fcntl.flock(f, fcntl.LOCK_EX)
             try:
                 stats = json.load(f)
@@ -154,7 +183,7 @@ def sync_word_stats_from_db(db_path: str = None) -> int:
                 stats = {}
 
             updated = 0
-            for w, cnt in db_counts.items():
+            for w, cnt in target_counts.items():
                 if cnt > stats.get(w, 0):
                     stats[w] = cnt
                     updated += 1
@@ -175,11 +204,11 @@ def sync_word_stats_from_db(db_path: str = None) -> int:
                         if c > max_counts.get(l, 0):
                             max_counts[l] = int(c)
                 _STATS_MAX_BY_LEN = max_counts
-                print(f"[TallyDivisions] Synchronized {updated} words from round_history into word_stats.json.")
+                print(f"[TallyDivisions] Synchronized {updated} words from word_tally.log and round_history into word_stats.json.")
             fcntl.flock(f, fcntl.LOCK_UN)
             return updated
     except Exception as e:
-        print(f"[TallyDivisions] Error syncing word stats from DB: {e}")
+        print(f"[TallyDivisions] Error syncing word stats: {e}")
         return 0
 
 # Configuration storage & retrieval
