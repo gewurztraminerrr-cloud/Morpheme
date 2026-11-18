@@ -12438,6 +12438,16 @@ window.setupReverseDictionaryTool = function() {
         });
     }
 
+    const scrollArea = document.getElementById('reverse-dict-table-scroll');
+    if (scrollArea && !scrollArea._reverseDictScrollAttached) {
+        scrollArea._reverseDictScrollAttached = true;
+        scrollArea.addEventListener('scroll', () => {
+            if (scrollArea.scrollTop + scrollArea.clientHeight >= scrollArea.scrollHeight - 400) {
+                window.renderReverseDictNextChunk();
+            }
+        }, { passive: true });
+    }
+
     if (typeof initCustomScrollbarForElement === 'function') {
         initCustomScrollbarForElement('reverse-dict-table-scroll', 'reverse-dict-scrollbar-track', 'reverse-dict-scrollbar-thumb');
     }
@@ -12453,28 +12463,43 @@ window.resetReverseDictLengthOptions = function() {
     lengthSelect.innerHTML = html;
 };
 
-window.updateReverseDictLengthOptions = function(results, preservedVal) {
+window.updateReverseDictLengthOptions = function(results, preservedVal, serverLengthCounts, totalCount) {
     const lengthSelect = document.getElementById('reverse-dict-length');
     if (!lengthSelect) return;
 
-    if (!Array.isArray(results) || results.length === 0) {
+    let counts = {};
+    let total = 0;
+
+    if (serverLengthCounts && typeof serverLengthCounts === 'object') {
+        counts = serverLengthCounts;
+        total = totalCount || 0;
+        if (total === 0) {
+            for (const k in counts) total += counts[k];
+        }
+    } else {
+        if (!Array.isArray(results) || results.length === 0) {
+            window.resetReverseDictLengthOptions();
+            lengthSelect.value = 'all';
+            return;
+        }
+        for (let i = 0; i < results.length; i++) {
+            const item = results[i];
+            const len = item.len || (item.word ? item.word.length : 0);
+            if (len > 0) {
+                counts[len] = (counts[len] || 0) + 1;
+                total++;
+            }
+        }
+    }
+
+    const sortedLengths = Object.keys(counts).map(n => parseInt(n, 10)).sort((a, b) => a - b);
+    if (sortedLengths.length === 0) {
         window.resetReverseDictLengthOptions();
         lengthSelect.value = 'all';
         return;
     }
 
-    const counts = {};
-    for (let i = 0; i < results.length; i++) {
-        const item = results[i];
-        const len = item.len || (item.word ? item.word.length : 0);
-        if (len > 0) {
-            counts[len] = (counts[len] || 0) + 1;
-        }
-    }
-
-    const sortedLengths = Object.keys(counts).map(n => parseInt(n, 10)).sort((a, b) => a - b);
-
-    let html = `<option value="all">All Lengths (${results.length.toLocaleString()})</option>`;
+    let html = `<option value="all">All Lengths (${total.toLocaleString()})</option>`;
     for (let i = 0; i < sortedLengths.length; i++) {
         const len = sortedLengths[i];
         html += `<option value="${len}">${len} Letters (${counts[len].toLocaleString()})</option>`;
@@ -12517,8 +12542,13 @@ window.clearReverseDictInput = function() {
     const scrollArea = document.getElementById('reverse-dict-table-scroll');
 
     window._reverseDictAllResults = null;
+    window._reverseDictFilteredList = [];
+    window._reverseDictRenderedIndex = 0;
     window._reverseDictLastQuery = '';
     window._reverseDictLastMode = 'similar';
+    window._reverseDictLastDict = 'all';
+    window._reverseDictTotalCount = 0;
+    window._reverseDictLengthCounts = null;
     window._reverseDictMatchedTerms = [];
     window._reverseDictHighlightRegex = null;
 
@@ -12607,73 +12637,31 @@ window.highlightKeywordsInDefinition = function(defn, query, mode, matchedTerms,
     }
 };
 
-window.applyReverseDictLengthFilter = function() {
-    const lengthSelect = document.getElementById('reverse-dict-length');
-    const countText = document.getElementById('reverse-dict-count-text');
-    const table = document.getElementById('reverse-dict-table');
-    const tbody = document.getElementById('reverse-dict-table-body');
-    const placeholder = document.getElementById('reverse-dict-placeholder');
-    const scrollArea = document.getElementById('reverse-dict-table-scroll');
+window._reverseDictChunkSize = 80;
+window._reverseDictRenderedIndex = 0;
+window._reverseDictFilteredList = [];
 
-    const allResults = window._reverseDictAllResults;
+window.renderReverseDictNextChunk = function() {
+    const tbody = document.getElementById('reverse-dict-table-body');
+    const scrollArea = document.getElementById('reverse-dict-table-scroll');
+    const list = window._reverseDictFilteredList;
+    if (!tbody || !Array.isArray(list) || window._reverseDictRenderedIndex >= list.length) {
+        return;
+    }
+
+    const start = window._reverseDictRenderedIndex;
+    const chunkSize = window._reverseDictChunkSize || 80;
+    const end = Math.min(start + chunkSize, list.length);
+    window._reverseDictRenderedIndex = end;
+
     const query = window._reverseDictLastQuery || '';
     const mode = window._reverseDictLastMode || 'similar';
     const matchedTerms = window._reverseDictMatchedTerms || [];
     const highlightRegex = window._reverseDictHighlightRegex || window.buildReverseDictHighlightRegex(query, matchedTerms);
 
-    if (!Array.isArray(allResults) || allResults.length === 0) {
-        return;
-    }
-
-    const selectedLength = lengthSelect ? lengthSelect.value : 'all';
-    let filtered = allResults;
-    if (selectedLength !== 'all') {
-        const targetLen = parseInt(selectedLength, 10);
-        filtered = allResults.filter(item => (item.len || (item.word ? item.word.length : 0)) === targetLen);
-    }
-    filtered = filtered.slice().sort((a, b) => {
-        const lenA = a.len || (a.word ? a.word.length : 0);
-        const lenB = b.len || (b.word ? b.word.length : 0);
-        if (lenA !== lenB) return lenA - lenB;
-        return String(a.word || '').localeCompare(String(b.word || ''));
-    });
-
-    if (filtered.length === 0) {
-        if (countText) {
-            countText.innerHTML = `No words of length <strong style="color: #38bdf8;">${selectedLength}</strong> found for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${allResults.length.toLocaleString()} total)</span>`;
-        }
-        if (table) table.style.display = 'none';
-        if (tbody) tbody.innerHTML = '';
-        if (placeholder) {
-            placeholder.style.display = 'flex';
-            placeholder.innerHTML = `
-                <div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>
-                <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">No Words with ${selectedLength} Letters</div>
-                <div style="font-size: 0.85rem; color: var(--muted-text); max-width: 440px; line-height: 1.45;">
-                    None of the ${allResults.length.toLocaleString()} matching words have exactly ${selectedLength} letters. Select another length or choose <strong>All Lengths</strong>.
-                </div>
-            `;
-        }
-        if (scrollArea && typeof scrollArea._updateCustomScrollbar === 'function') {
-            scrollArea.scrollTop = 0;
-            scrollArea._updateCustomScrollbar();
-        }
-        return;
-    }
-
-    // Update status counter
-    if (countText) {
-        if (selectedLength === 'all') {
-            countText.innerHTML = `Found <strong style="color: #38bdf8;">${allResults.length.toLocaleString()}</strong> word${allResults.length === 1 ? '' : 's'} for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>`;
-        } else {
-            countText.innerHTML = `Found <strong style="color: #38bdf8;">${filtered.length.toLocaleString()}</strong> word${filtered.length === 1 ? '' : 's'} (${selectedLength} letters) for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${allResults.length.toLocaleString()} total)</span>`;
-        }
-    }
-
-    // Render table rows
     let rowsHtml = '';
-    for (let i = 0; i < filtered.length; i++) {
-        const item = filtered[i];
+    for (let i = start; i < end; i++) {
+        const item = list[i];
         const word = item.word || '';
         const safeJsWord = escapeHtml(word).replace(/'/g, "\\'");
         const escapedWord = escapeHtml(word);
@@ -12702,9 +12690,122 @@ window.applyReverseDictLengthFilter = function() {
         `;
     }
 
-    if (tbody) tbody.innerHTML = rowsHtml;
+    if (start === 0) {
+        tbody.innerHTML = rowsHtml;
+    } else {
+        tbody.insertAdjacentHTML('beforeend', rowsHtml);
+    }
+
+    if (scrollArea && typeof scrollArea._updateCustomScrollbar === 'function') {
+        scrollArea._updateCustomScrollbar();
+    }
+};
+
+window.applyReverseDictLengthFilter = async function() {
+    const lengthSelect = document.getElementById('reverse-dict-length');
+    const countText = document.getElementById('reverse-dict-count-text');
+    const table = document.getElementById('reverse-dict-table');
+    const tbody = document.getElementById('reverse-dict-table-body');
+    const placeholder = document.getElementById('reverse-dict-placeholder');
+    const scrollArea = document.getElementById('reverse-dict-table-scroll');
+
+    const allResults = window._reverseDictAllResults;
+    const query = window._reverseDictLastQuery || '';
+    const mode = window._reverseDictLastMode || 'similar';
+    const dictFilter = window._reverseDictLastDict || 'all';
+    const totalServerCount = window._reverseDictTotalCount || (allResults ? allResults.length : 0);
+    const lengthCounts = window._reverseDictLengthCounts || {};
+
+    if (!Array.isArray(allResults) || allResults.length === 0) {
+        return;
+    }
+
+    const selectedLength = lengthSelect ? lengthSelect.value : 'all';
+
+    // If a specific length was selected, check if we need to fetch all results for this specific length from server
+    if (selectedLength !== 'all') {
+        const targetLen = parseInt(selectedLength, 10);
+        const expectedCount = lengthCounts[targetLen] || 0;
+        const localMatches = allResults.filter(item => (item.len || (item.word ? item.word.length : 0)) === targetLen);
+
+        // If server has more matches for this length than we have in our top-2500 local slice
+        if (expectedCount > localMatches.length && totalServerCount > allResults.length) {
+            try {
+                if (countText) {
+                    countText.innerHTML = `<span class="reverse-dict-searching-spinner" style="display:inline-block; vertical-align:middle; margin-right:6px;"></span> Loading all ${expectedCount.toLocaleString()} words (${targetLen} letters)...`;
+                }
+                const url = `/api/tools/reverse-dictionary?query=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}&dict=${encodeURIComponent(dictFilter)}&len=${targetLen}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                if (res.ok && data.results) {
+                    window._reverseDictFilteredList = data.results.slice().sort((a, b) => String(a.word || '').localeCompare(String(b.word || '')));
+                    window._reverseDictRenderedIndex = 0;
+
+                    if (countText) {
+                        countText.innerHTML = `Found <strong style="color: #38bdf8;">${window._reverseDictFilteredList.length.toLocaleString()}</strong> word${window._reverseDictFilteredList.length === 1 ? '' : 's'} (${targetLen} letters) for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${totalServerCount.toLocaleString()} total)</span>`;
+                    }
+                    if (placeholder) placeholder.style.display = 'none';
+                    if (table) table.style.display = 'table';
+                    window.renderReverseDictNextChunk();
+                    if (scrollArea) scrollArea.scrollTop = 0;
+                    return;
+                }
+            } catch (e) {
+                console.warn('[ReverseDictionary] Error fetching length-specific results:', e);
+            }
+        }
+
+        window._reverseDictFilteredList = localMatches.slice().sort((a, b) => String(a.word || '').localeCompare(String(b.word || '')));
+    } else {
+        window._reverseDictFilteredList = allResults.slice().sort((a, b) => {
+            const lenA = a.len || (a.word ? a.word.length : 0);
+            const lenB = b.len || (b.word ? b.word.length : 0);
+            if (lenA !== lenB) return lenA - lenB;
+            return String(a.word || '').localeCompare(String(b.word || ''));
+        });
+    }
+
+    const filtered = window._reverseDictFilteredList;
+
+    if (filtered.length === 0) {
+        if (countText) {
+            countText.innerHTML = `No words of length <strong style="color: #38bdf8;">${selectedLength}</strong> found for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${totalServerCount.toLocaleString()} total)</span>`;
+        }
+        if (table) table.style.display = 'none';
+        if (tbody) tbody.innerHTML = '';
+        if (placeholder) {
+            placeholder.style.display = 'flex';
+            placeholder.innerHTML = `
+                <div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>
+                <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">No Words with ${selectedLength} Letters</div>
+                <div style="font-size: 0.85rem; color: var(--muted-text); max-width: 440px; line-height: 1.45;">
+                    None of the ${totalServerCount.toLocaleString()} matching words have exactly ${selectedLength} letters. Select another length or choose <strong>All Lengths</strong>.
+                </div>
+            `;
+        }
+        if (scrollArea && typeof scrollArea._updateCustomScrollbar === 'function') {
+            scrollArea.scrollTop = 0;
+            scrollArea._updateCustomScrollbar();
+        }
+        return;
+    }
+
+    // Update status counter
+    if (countText) {
+        if (selectedLength === 'all') {
+            const cappedNote = totalServerCount > allResults.length ? ` <span style="color: var(--muted-text); font-size: 0.85em;">(showing top ${allResults.length.toLocaleString()}; pick a letter length above to explore all)</span>` : '';
+            countText.innerHTML = `Found <strong style="color: #38bdf8;">${totalServerCount.toLocaleString()}</strong> word${totalServerCount === 1 ? '' : 's'} for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>${cappedNote}`;
+        } else {
+            const displayCount = (lengthCounts && lengthCounts[selectedLength]) ? lengthCounts[selectedLength] : filtered.length;
+            countText.innerHTML = `Found <strong style="color: #38bdf8;">${displayCount.toLocaleString()}</strong> word${displayCount === 1 ? '' : 's'} (${selectedLength} letters) for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${totalServerCount.toLocaleString()} total)</span>`;
+        }
+    }
+
     if (placeholder) placeholder.style.display = 'none';
     if (table) table.style.display = 'table';
+
+    window._reverseDictRenderedIndex = 0;
+    window.renderReverseDictNextChunk();
 
     if (scrollArea) {
         scrollArea.scrollTop = 0;
@@ -12765,10 +12866,14 @@ window.performReverseDictSearch = async function() {
         const count = data.count || 0;
         const results = data.results || [];
         const matchedTerms = data.matched_terms || [];
+        const lengthCounts = data.length_counts || {};
 
         window._reverseDictAllResults = results;
         window._reverseDictLastQuery = query;
         window._reverseDictLastMode = mode;
+        window._reverseDictLastDict = dictFilter;
+        window._reverseDictTotalCount = count;
+        window._reverseDictLengthCounts = lengthCounts;
         window._reverseDictMatchedTerms = matchedTerms;
         window._reverseDictHighlightRegex = window.buildReverseDictHighlightRegex(query, matchedTerms);
 
@@ -12802,7 +12907,7 @@ window.performReverseDictSearch = async function() {
         }
 
         // Dynamically update length selector options with counts for each letter length
-        window.updateReverseDictLengthOptions(results, preservedLength);
+        window.updateReverseDictLengthOptions(results, preservedLength, lengthCounts, count);
 
         // Apply length filtering and render table
         window.applyReverseDictLengthFilter();

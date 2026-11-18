@@ -16,7 +16,7 @@ import threading
 import uuid
 import gzip
 import io
-from collections import Counter
+from collections import Counter, defaultdict
 import datetime
 import math
 from zoneinfo import ZoneInfo
@@ -11688,6 +11688,13 @@ def warm_up_server_resources():
         except Exception as e:
             print(f"[Warmup] Error pre-computing undefined words: {e}")
 
+        # 5b. Pre-build Reverse Dictionary inverted index
+        print("[Warmup] Pre-building Reverse Dictionary inverted index...")
+        try:
+            get_reverse_dict_data()
+        except Exception as e:
+            print(f"[Warmup] Error pre-building reverse dict index: {e}")
+
         # 6. Priming Tools endpoint routes
         with app.app_context():
             client = app.test_client()
@@ -11697,6 +11704,7 @@ def warm_up_server_resources():
             client.post('/api/tools/sequence', json={'sequence': 'WORD', 'dictionary': 'NWL'})
             client.post('/api/tools/subanagrams', json={'input': 'TESTING', 'dictionary': 'NWL'})
             client.post('/api/tools/combo', json={'search_term': 'TEST', 'dictionary': 'NWL'})
+            client.get('/api/tools/reverse-dictionary?query=test&mode=similar')
             
         STARTUP_WARMUP_COMPLETE = True
         print("[Warmup] Comprehensive Tools & Mods warming completed successfully!")
@@ -12815,7 +12823,7 @@ def tools_subanagrams():
         custom_words = sorted(list(set(w.strip().upper() for w in raw_custom if isinstance(w, str) and w.strip())))
         if not custom_words:
             return jsonify({'error': 'Your "Words to Work on" list is empty. Add words to your list first!'}), 400
-        from collections import Counter
+        from collections import Counter, defaultdict
         input_counter = Counter(clean_input)
         input_len = len(clean_input)
         results = []
@@ -12836,7 +12844,7 @@ def tools_subanagrams():
     if not dictionary:
         return jsonify({'error': f'Dictionary {dict_name} not found'}), 404
         
-    from collections import Counter
+    from collections import Counter, defaultdict
     input_counter = Counter(clean_input)
     input_len = len(clean_input)
     
@@ -12963,7 +12971,7 @@ def tools_subanagrams_random():
                 random.shuffle(letters_list)
             shuffled_letters = "".join(letters_list)
 
-        from collections import Counter
+        from collections import Counter, defaultdict
         input_counter = Counter(shuffled_letters)
         input_len = len(shuffled_letters)
         results = []
@@ -13041,7 +13049,7 @@ def tools_subanagrams_random():
             random.shuffle(letters_list)
         shuffled_letters = "".join(letters_list)
     
-    from collections import Counter
+    from collections import Counter, defaultdict
     input_counter = Counter(shuffled_letters)
     input_len = len(shuffled_letters)
     
@@ -13258,6 +13266,7 @@ def tools_unscramble_random():
 # ==========================================
 
 _REVERSE_DICT_SEARCH_LIST = None
+_REVERSE_DICT_INDEX = None
 _REVERSE_DICT_LOCK = threading.Lock()
 
 COMPOSITE_CONCEPTS = {
@@ -13289,17 +13298,34 @@ COMPOSITE_CONCEPTS = {
     'kitten': {'young', 'cat'},
 }
 
-def get_reverse_dict_search_list():
-    global _REVERSE_DICT_SEARCH_LIST, DEFINITIONS_CACHE
-    if _REVERSE_DICT_SEARCH_LIST is not None:
-        return _REVERSE_DICT_SEARCH_LIST
+def get_reverse_dict_data():
+    global _REVERSE_DICT_SEARCH_LIST, _REVERSE_DICT_INDEX, DEFINITIONS_CACHE
+    if _REVERSE_DICT_SEARCH_LIST is not None and _REVERSE_DICT_INDEX is not None:
+        return _REVERSE_DICT_SEARCH_LIST, _REVERSE_DICT_INDEX
     with _REVERSE_DICT_LOCK:
-        if _REVERSE_DICT_SEARCH_LIST is not None:
-            return _REVERSE_DICT_SEARCH_LIST
+        if _REVERSE_DICT_SEARCH_LIST is not None and _REVERSE_DICT_INDEX is not None:
+            return _REVERSE_DICT_SEARCH_LIST, _REVERSE_DICT_INDEX
         if not DEFINITIONS_CACHE:
             load_definitions()
-        _REVERSE_DICT_SEARCH_LIST = [(w, d, d.lower()) for w, d in (DEFINITIONS_CACHE or {}).items()]
-        return _REVERSE_DICT_SEARCH_LIST
+        search_list = []
+        import collections
+        index = collections.defaultdict(list)
+        idx = 0
+        token_pat = re.compile(r'[a-z0-9]+')
+        for w, d in (DEFINITIONS_CACHE or {}).items():
+            d_low = d.lower()
+            search_list.append((w, d, d_low))
+            toks = set(token_pat.findall(d_low))
+            for tok in toks:
+                index[tok].append(idx)
+            idx += 1
+        _REVERSE_DICT_SEARCH_LIST = search_list
+        _REVERSE_DICT_INDEX = index
+        return _REVERSE_DICT_SEARCH_LIST, _REVERSE_DICT_INDEX
+
+def get_reverse_dict_search_list():
+    s_list, _ = get_reverse_dict_data()
+    return s_list
 
 _REVERSE_DICT_VARIANTS_CACHE = {}
 _REVERSE_DICT_SYNS_CACHE = {}
@@ -13350,7 +13376,7 @@ def expand_morphological_variants(word):
     return res
 
 def get_concept_synonyms(word):
-    """Extract synonyms, hyponyms, and related concept terms using WordNet."""
+    """Extract direct synonyms, hypernyms, and immediate high-affinity concept terms using WordNet."""
     w = word.lower().strip()
     if not w:
         return set()
@@ -13361,52 +13387,51 @@ def get_concept_synonyms(word):
     syns = set(base_variants)
     try:
         from nltk.corpus import wordnet as wn
-        target_synsets = set(wn.synsets(w))
+        target_synsets = wn.synsets(w)
         if not target_synsets:
             for v in base_variants:
-                target_synsets = set(wn.synsets(v))
+                target_synsets = wn.synsets(v)
                 if target_synsets:
                     break
 
-        # Expand direct lemmas & link related synsets of direct synonyms
-        for s in list(target_synsets):
+        noise_words = {
+            'set', 'actor', 'being', 'complex', 'state', 'unit', 'make', 'part', 'thing', 
+            'one', 'take', 'put', 'found', 'works', 'still', 'mint', 'mill', 'crop', 
+            'form', 'kind', 'type', 'group', 'member', 'point', 'hand', 'place', 'line',
+            'action', 'process', 'person', 'entity', 'artifact', 'object', 'matter', 'substance'
+        }
+
+        # 1. Direct lemmas of the target word's synsets
+        for s in target_synsets:
             for l in s.lemmas():
                 name = l.name().replace('_', ' ').lower()
-                if ' ' not in name and len(name) >= 2:
-                    syns.update(expand_morphological_variants(name))
-                # For direct synonyms of w (e.g. 'bird' alongside 'fowl' in bird.n.02),
-                # include top synsets so broad sister concepts link together
-                if name != w and ' ' not in name and len(name) >= 3:
-                    for s2 in wn.synsets(name)[:2]:
-                        target_synsets.add(s2)
+                if ' ' not in name and len(name) >= 3 and name not in noise_words:
+                    syns.add(name)
 
             if s.pos() in ('a', 's'):
                 for sim in s.similar_tos():
                     for sl in sim.lemmas():
                         sname = sl.name().replace('_', ' ').lower()
-                        if ' ' not in sname and len(sname) >= 2:
-                            syns.update(expand_morphological_variants(sname))
+                        if ' ' not in sname and len(sname) >= 3 and sname not in noise_words:
+                            syns.add(sname)
 
-        # For noun concepts, recursively expand taxonomic hyponyms up to depth 6
-        # so categories like bird/fowl include peacock, eagle, hawk, seabird, etc.
-        for s in list(target_synsets):
-            if s.pos() == 'n':
-                try:
-                    for hyp in s.closure(lambda ss: ss.hyponyms(), depth=6):
-                        for hl in hyp.lemmas():
-                            hname = hl.name().replace('_', ' ').lower()
-                            if ' ' not in hname and len(hname) >= 2:
-                                syns.update(expand_morphological_variants(hname))
-                except Exception:
-                    for hyp in s.hyponyms():
-                        for hl in hyp.lemmas():
-                            hname = hl.name().replace('_', ' ').lower()
-                            if ' ' not in hname and len(hname) >= 2:
-                                syns.update(expand_morphological_variants(hname))
+            # 2. For noun concepts, expand immediate direct hyponyms only (depth 1)
+            elif s.pos() == 'n':
+                for hyp in s.hyponyms():
+                    for hl in hyp.lemmas():
+                        hname = hl.name().replace('_', ' ').lower()
+                        if ' ' not in hname and len(hname) >= 3 and hname not in noise_words:
+                            syns.add(hname)
     except Exception:
         pass
-    _REVERSE_DICT_SYNS_CACHE[w] = syns
-    return syns
+
+    # Morphological inflections of the top concept terms (up to 40 primary terms to prevent explosion)
+    res = set()
+    for t in sorted(syns, key=lambda x: (x != w, len(x)))[:40]:
+        res.update(expand_morphological_variants(t))
+
+    _REVERSE_DICT_SYNS_CACHE[w] = res
+    return res
 
 @app.route('/api/tools/reverse-dictionary', methods=['GET', 'POST'])
 def tools_reverse_dictionary():
@@ -13424,7 +13449,7 @@ def tools_reverse_dictionary():
 
     query = (query or '').strip()
     if not query:
-        return jsonify({'error': 'No query provided', 'results': [], 'count': 0}), 400
+        return jsonify({'error': 'No query provided', 'results': [], 'count': 0, 'length_counts': {}}), 400
 
     dict_filter = (dict_name or 'all').upper().strip()
 
@@ -13435,15 +13460,14 @@ def tools_reverse_dictionary():
         except (ValueError, TypeError):
             pass
 
-    search_list = get_reverse_dict_search_list()
+    search_list, index = get_reverse_dict_data()
     words = re.findall(r'[a-zA-Z0-9]+', query.lower())
     if not words:
-        return jsonify({'query': query, 'mode': mode, 'dictionary': dict_name, 'results': [], 'count': 0})
+        return jsonify({'query': query, 'mode': mode, 'dictionary': dict_name, 'results': [], 'count': 0, 'length_counts': {}})
 
     # Token variant groups
     token_variants = []
     token_stem_sets = []
-    token_patterns = []
     for w in words:
         if mode == 'exact':
             v_set = expand_morphological_variants(w)
@@ -13453,9 +13477,35 @@ def tools_reverse_dictionary():
             v_set = {w}
         token_variants.append(v_set)
         token_stem_sets.append(v_set)
-        escaped = [re.escape(v) for v in v_set if len(v) >= 2]
-        if escaped:
-            token_patterns.append(re.compile(r'\b(?:' + '|'.join(escaped) + r')\b'))
+
+    # Multi-word composite concepts handling (e.g. 'mean old woman')
+    is_multi_word = len(words) > 1
+    req_concepts = set(words)
+    relevant_comp_patterns = []
+    if is_multi_word and mode == 'similar':
+        for comp_term, covered in COMPOSITE_CONCEPTS.items():
+            inter = covered.intersection(req_concepts)
+            if inter:
+                relevant_comp_patterns.append((comp_term, inter))
+
+    # Fast inverted index candidate lookup (super-fast set union / intersection)
+    token_candidate_sets = []
+    for v_set in token_stem_sets:
+        cands = set()
+        for term in v_set:
+            cands.update(index.get(term, []))
+        token_candidate_sets.append(cands)
+
+    if token_candidate_sets:
+        matched_indices = set.intersection(*token_candidate_sets)
+    else:
+        matched_indices = set()
+
+    # Include composite concept matches if applicable
+    if relevant_comp_patterns:
+        for comp_term, cov in relevant_comp_patterns:
+            for idx in index.get(comp_term, []):
+                matched_indices.add(idx)
 
     # Dictionary validator caches
     word_validator.ensure_csw_loaded()
@@ -13469,67 +13519,17 @@ def tools_reverse_dictionary():
     csw_dict_set = csw_dict.get('set', set()) if csw_dict else set()
 
     exact_phrase = query.lower()
-    exact_pattern = re.compile(r'\b' + re.escape(exact_phrase) + r'\b') if len(words) > 1 else None
-
-    # Identify any multi-word composite concepts
-    is_multi_word = len(words) > 1
-    req_concepts = set(words)
-    relevant_comp_patterns = []
-    if is_multi_word and mode == 'similar':
-        for comp_term, covered in COMPOSITE_CONCEPTS.items():
-            inter = covered.intersection(req_concepts)
-            if inter:
-                relevant_comp_patterns.append((comp_term, inter, re.compile(r'\b' + re.escape(comp_term) + r'\b')))
-
-    import string
-    use_token_set_match = any(len(s) > 30 for s in token_stem_sets)
-    trans_table = str.maketrans({c: ' ' for c in string.punctuation}) if use_token_set_match else None
 
     used_highlight_terms = set(words)
     for w in words:
         used_highlight_terms.update(expand_morphological_variants(w))
 
     matches = []
-    for word, defn, d_low in search_list:
-        if target_length and len(word) != target_length:
-            continue
-        matched = True
-        matched_in_entry = set()
-        
-        # Check standard token matching
-        if use_token_set_match:
-            d_tokens = set(d_low.translate(trans_table).split())
-            for stem_set in token_stem_sets:
-                inter = d_tokens & stem_set
-                if not inter:
-                    matched = False
-                    break
-                matched_in_entry.update(inter)
-        else:
-            for stem_set, pattern in zip(token_stem_sets, token_patterns):
-                if not any(s in d_low for s in stem_set) or not pattern.search(d_low):
-                    matched = False
-                    break
-                for s in stem_set:
-                    if s in d_low:
-                        matched_in_entry.add(s)
-        
-        # Multi-word composite fallback (e.g. 'virago' covers 'mean' + 'woman' for 'mean old woman')
-        if not matched and relevant_comp_patterns:
-            if any(comp in d_low for comp, _, _ in relevant_comp_patterns):
-                satisfied = set()
-                for idx, w in enumerate(words):
-                    if any(s in d_low for s in token_stem_sets[idx]) and token_patterns[idx].search(d_low):
-                        satisfied.add(w)
-                for comp, cov, pat in relevant_comp_patterns:
-                    if comp in d_low and pat.search(d_low):
-                        satisfied.update(cov)
-                        matched_in_entry.add(comp)
-                if req_concepts.issubset(satisfied):
-                    matched = True
+    length_counts = {}
 
-        if not matched:
-            continue
+    for idx in matched_indices:
+        word, defn, d_low = search_list[idx]
+        w_len = len(word)
 
         # Check dictionary membership
         in_nwl = word in nwl_set or word in long_set or word in nwl_dict_set
@@ -13543,43 +13543,62 @@ def tools_reverse_dictionary():
         if dict_filter in ('AW', 'ADDED_WORDS') and not in_aw:
             continue
 
-        if matched_in_entry:
-            used_highlight_terms.update(matched_in_entry)
+        # Tally total length counts across all valid matches
+        length_counts[w_len] = length_counts.get(w_len, 0) + 1
+
+        if target_length and w_len != target_length:
+            continue
 
         lists = []
         if in_nwl: lists.append('NWL')
         if in_csw: lists.append('CSW')
         if in_aw: lists.append('AW')
 
-        # Score calculation for ranking
+        # Score calculation for ranking:
+        # 4 = exact multi-word phrase in definition
+        # 3 = all query words directly present in definition
+        # 2 = any query word directly present in definition
+        # 1 = related concept / synonym match
         score = 1
-        if exact_pattern and exact_pattern.search(d_low):
+        if is_multi_word and exact_phrase in d_low:
             score = 4
         elif all(w in d_low for w in words):
             score = 3
         elif any(w in d_low for w in words):
             score = 2
 
+        matched_terms_in_d = {t for t in used_highlight_terms if t in d_low}
+        if matched_terms_in_d:
+            used_highlight_terms.update(matched_terms_in_d)
+
         matches.append({
             'word': word,
-            'len': len(word),
+            'len': w_len,
             'definition': defn,
             'lists': lists,
             'score': score
         })
 
-    # Sort: shortest word lengths first across all results, then strictly alphabetical within each length
-    matches.sort(key=lambda x: (x['len'], x['word']))
+    # Sort matches:
+    # If a specific length is requested: sort by score desc, then word asc
+    # If all lengths: sort by length asc, then score desc, then word asc
+    if target_length:
+        matches.sort(key=lambda x: (-x['score'], x['word']))
+    else:
+        matches.sort(key=lambda x: (x['len'], -x['score'], x['word']))
 
     terms_set = set(words)
     for s in token_variants:
         terms_set.update(s)
     if is_multi_word and mode == 'similar':
         terms_set.update(COMPOSITE_CONCEPTS.keys())
-    
+
     final_highlight_terms = set(used_highlight_terms)
     final_highlight_terms.update(terms_set)
     matched_terms = [t for t in sorted(final_highlight_terms, key=lambda x: -len(x)) if len(t) >= 2]
+
+    # Deliver up to 2,500 highest-relevance results in payload for instant transmission
+    capped_matches = matches[:2500]
 
     return jsonify({
         'query': query,
@@ -13587,7 +13606,8 @@ def tools_reverse_dictionary():
         'dictionary': dict_name,
         'length': length_filter or 'all',
         'count': len(matches),
-        'results': matches,
+        'length_counts': length_counts,
+        'results': capped_matches,
         'matched_terms': matched_terms
     })
 
