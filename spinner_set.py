@@ -242,7 +242,10 @@ class SpinnerSet:
 
         wc_range = p.get('word_count_range')
 
-        if is_24h:
+        if p.get('_exact_wc_calculated') or p.get('_lock_word_count_range'):
+            # Pre-calculated from an actual solved board — preserve the exact truthful range!
+            wc_range = p.get('word_count_range') or '100-200'
+        elif is_24h:
             p['board_format'] = 'Valued Letters'
             wc_range = '300-400'
             p['use_added_words'] = False
@@ -251,15 +254,9 @@ class SpinnerSet:
             if min_word_length >= 7:
                 min_word_length = floor_len
         elif is_aw_effective:
-            # + AW dictionaries MUST ALWAYS be 300-400, 400-500, or 500+ (never 50-100, 100-200, or 200-300)
+            # + AW dictionaries target high counts when spinning random params
             if wc_range not in ['300-400', '400-500', '500+']:
                 wc_range = _rng.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-        elif p.get('_exact_wc_calculated') or p.get('_lock_word_count_range'):
-            # Pre-calculated from an actual solved board for standard dictionary
-            if wc_range == '400-500':
-                wc_range = '300-400'
-            elif wc_range == '50-100' and min_word_length not in low_wc_allowed_mins:
-                wc_range = '100-200'
         else:
             # Standard NWL and CSW dictionaries:
             # Maximum normal range is 300-400 (NEVER 400-500), plus 1% chance of 500+.
@@ -515,12 +512,7 @@ class SpinnerSet:
 
     @staticmethod
     def get_factchecked_wc_range(count, use_added_words=False, dictionary=None):
-        """Map actual word count to the exact truthful range bucket.
-           For '+ AW' dictionaries (CSW + AW, NWL + AW, AW):
-             Range is strictly restricted to '300-400', '400-500', or '500+'.
-             Word counts below 300 MUST floor to '300-400'. '200-300', '100-200', and '50-100'
-             are NEVER permitted for any Added Words round.
-           For standard dictionaries (CSW, NWL):
+        """Map actual word count to the exact truthful range bucket:
              - 500+ words -> '500+'
              - 400 - 499 words -> '400-500'
              - 300 - 399 words -> '300-400'
@@ -532,21 +524,6 @@ class SpinnerSet:
             count = int(count)
         except (ValueError, TypeError):
             count = 0
-
-        d_str = str(dictionary or '').upper()
-        is_aw = (
-            bool(use_added_words)
-            or ('+ AW' in d_str)
-            or ('+AW' in d_str)
-            or (d_str in ['AW', 'ADDED_WORDS'])
-        ) and (d_str != 'SUBANAGRAMS')
-
-        if is_aw:
-            if count >= 500:
-                return '500+'
-            if count >= 400:
-                return '400-500'
-            return '300-400'
 
         if count >= 500:
             return '500+'

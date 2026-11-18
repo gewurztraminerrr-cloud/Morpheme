@@ -306,6 +306,21 @@
 
 ---
 
+### Spinner Set Accurate Word Count Range Alignment (150 Words vs "300-400" Header Fix)
+- **Problem**: In game rooms (such as Accumulative 5x7 with Min 6L and Dict `CSW + AW` shown in `wrongwordcount1.jpg`, `wrongwordcount2.jpg`, and `wrongwordcount3.jpg`), the Spinner Set header showed `Words: 300-400`, but only 150 words were present on the board (`100-200` range).
+- **Root Cause**:
+  1. *Artificial Added Words Floor in `get_factchecked_wc_range`*: In `spinner_set.py:544-549`, `SpinnerSet.get_factchecked_wc_range` had an artificial clamp: `if is_aw: if count >= 500: return '500+'; if count >= 400: return '400-500'; return '300-400'`. Whenever `CSW + AW`, `NWL + AW`, or `AW` was enabled, any board word count below 400 (even 150 or 75 words on sparse or high-min-length boards) was forcibly mapped to `'300-400'`.
+  2. *Sanitization Override in `sanitize_params`*: In `spinner_set.py:253`, `elif is_aw_effective:` was evaluated before `_exact_wc_calculated`, overwriting fact-checked board ranges to `['300-400', '400-500', '500+']`.
+  3. *Client-Side Display Fallback*: `static/js/play.js:6544` displayed `state.current_word_count_range` without verifying whether the active board's authoritative word count contradicted the header range string.
+- **Fixes Applied**:
+  - **`spinner_set.py`**:
+    - Removed the artificial Added Words floor from `SpinnerSet.get_factchecked_wc_range`. Word count ranges strictly and truthfully map to their mathematical buckets (`50-100`, `100-200`, `200-300`, `300-400`, `400-500`, `500+`) regardless of dictionary.
+    - In `sanitize_params`, moved `p.get('_exact_wc_calculated') or p.get('_lock_word_count_range')` ahead of `is_aw_effective` to ensure solved boards retain their factual word count ranges.
+  - **`static/js/play.js`**:
+    - Added an active-round Truthful Range Guard in `updateParameters`: if `!isIntermission` and the authoritative word count contradicts the server's range string (e.g. board has 150 words but range says `300-400`), the client immediately re-aligns `factWordRange` to the truthful bucket (`100-200`).
+
+---
+
 ## 2. Commit & Deployment Details
 - **Latest Commit ID**: `3d6aac38f97e2f5b5c97f8045e0aa06c138d6df8` (short: `3d6aac38`)
 - **Previous Commits**: `65c4cd6021fb68afe8b48672488d777f0419461b`, `6c0754b46fc9678b667b0eb6aec05f414b385602`, `a41872a020389edc6b7d5f67c0125c9935c3644e`, `a406cd5e1b61ace30014dfba46920220140fa184`, `658ba7632823cd934e51219a2026bc71a029e65f`

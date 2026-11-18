@@ -6549,6 +6549,40 @@ function updateParameters(state) {
     } else {
         rawWordRange = String(rawWordRange).replace(',', '-');
     }
+
+    // Truthful Range Guard: If this is an active round and we have an authoritative word count,
+    // verify that rawWordRange actually encompasses the board's real word count.
+    // If there is a contradiction (e.g., board has 150 words but rawWordRange is '300-400'),
+    // align rawWordRange to the true bucket so players never see contradictory headers.
+    if (!isIntermission) {
+        const boardWordCount = (state.all_words && Array.isArray(state.all_words) && state.all_words.length > 0)
+            ? state.all_words.length
+            : ((typeof state.total_words_count === 'number' && state.total_words_count > 0) ? state.total_words_count : 0);
+        if (boardWordCount > 0) {
+            let isContradictory = false;
+            if (rawWordRange.includes('-')) {
+                const parts = rawWordRange.split('-');
+                const minR = parseInt(parts[0], 10);
+                const maxR = parseInt(parts[1], 10);
+                if (!isNaN(minR) && !isNaN(maxR) && (boardWordCount < minR || boardWordCount > maxR)) {
+                    isContradictory = true;
+                }
+            } else if (rawWordRange.includes('+')) {
+                const minR = parseInt(rawWordRange.replace('+', ''), 10);
+                if (!isNaN(minR) && boardWordCount < minR) {
+                    isContradictory = true;
+                }
+            }
+            if (isContradictory) {
+                if (boardWordCount >= 500) rawWordRange = '500+';
+                else if (boardWordCount >= 400) rawWordRange = '400-500';
+                else if (boardWordCount >= 300) rawWordRange = '300-400';
+                else if (boardWordCount >= 200) rawWordRange = '200-300';
+                else if (boardWordCount >= 100) rawWordRange = '100-200';
+                else rawWordRange = '50-100';
+            }
+        }
+    }
     const factWordRange = rawWordRange;
     
     let factUniq = 0;
