@@ -10380,6 +10380,50 @@ function calculateWordScoreLocally(word, path) {
     return score;
 }
 
+window._eitherOrWordCache = {};
+
+async function resolveEitherOrCandidate(possibleWords, preferredWord = null, dictionary = null) {
+    if (!possibleWords || possibleWords.length === 0) return null;
+    if (possibleWords.length === 1) return possibleWords[0];
+
+    const cleanPref = preferredWord ? preferredWord.replace(/\[|\]|\//g, '').toUpperCase().trim() : null;
+    const dict = dictionary || (window.lastGameState && (window.lastGameState.current_dictionary || (window.lastGameState.spinner_params && window.lastGameState.spinner_params.dictionary))) || 'NWL';
+    const cacheKey = possibleWords.slice().sort().join('|') + `:${dict}`;
+
+    if (window._eitherOrWordCache && window._eitherOrWordCache[cacheKey]) {
+        const cached = window._eitherOrWordCache[cacheKey];
+        if (cleanPref && cached.includes(cleanPref)) return cleanPref;
+        if (cached.length > 0) return cached[0];
+    }
+
+    try {
+        const useAw = (window.lastGameState && window.lastGameState.use_added_words !== undefined) ? window.lastGameState.use_added_words : true;
+        const res = await fetch('/api/resolve_either_or', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                candidates: possibleWords,
+                dictionary: dict,
+                use_added_words: useAw
+            })
+        });
+        if (res.ok) {
+            const data = await res.json();
+            if (data && data.valid_words && Array.isArray(data.valid_words)) {
+                window._eitherOrWordCache = window._eitherOrWordCache || {};
+                window._eitherOrWordCache[cacheKey] = data.valid_words;
+                if (cleanPref && data.valid_words.includes(cleanPref)) return cleanPref;
+                if (data.valid_words.length > 0) return data.valid_words[0];
+            } else if (data && data.valid_word) {
+                return data.valid_word;
+            }
+        }
+    } catch (e) {
+        console.warn('[play.js] Error resolving Either/Or candidate:', e);
+    }
+    return cleanPref || possibleWords[0];
+}
+
 let _lastSubmitWord = '';
 let _lastSubmitTime = 0;
 
@@ -10531,6 +10575,15 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                 word = submittedClean;
             } else if (validOptions.length >= 1) {
                 word = validOptions[0];
+            } else if (possibleWords.length > 1) {
+                const resolved = await resolveEitherOrCandidate(possibleWords, submittedClean);
+                if (resolved) {
+                    word = resolved;
+                } else if (possibleWords.some(w => w.toUpperCase() === submittedClean)) {
+                    word = submittedClean;
+                } else if (possibleWords.length > 0) {
+                    word = possibleWords[0];
+                }
             } else if (possibleWords.some(w => w.toUpperCase() === submittedClean)) {
                 word = submittedClean;
             } else if (possibleWords.length > 0) {
@@ -13614,6 +13667,15 @@ async function handleTournamentWord(word, path = null) {
                 resolvedWord = submittedClean;
             } else if (validOptions.length >= 1) {
                 resolvedWord = validOptions[0];
+            } else if (possibleWords.length > 1) {
+                const resolved = await resolveEitherOrCandidate(possibleWords, submittedClean, window.tournamentParams ? window.tournamentParams.dictionary : null);
+                if (resolved) {
+                    resolvedWord = resolved;
+                } else if (possibleWords.some(w => w.toUpperCase() === submittedClean)) {
+                    resolvedWord = submittedClean;
+                } else if (possibleWords.length > 0) {
+                    resolvedWord = possibleWords[0];
+                }
             } else if (possibleWords.some(w => w.toUpperCase() === submittedClean)) {
                 resolvedWord = submittedClean;
             } else if (possibleWords.length > 0) {
@@ -14112,6 +14174,15 @@ async function handlePrivateMatchWord(word, path = null) {
                 resolvedWord = submittedClean;
             } else if (validOptions.length >= 1) {
                 resolvedWord = validOptions[0];
+            } else if (possibleWords.length > 1) {
+                const resolved = await resolveEitherOrCandidate(possibleWords, submittedClean, privateMatchParams ? privateMatchParams.dictionary : null);
+                if (resolved) {
+                    resolvedWord = resolved;
+                } else if (possibleWords.some(w => w.toUpperCase() === submittedClean)) {
+                    resolvedWord = submittedClean;
+                } else if (possibleWords.length > 0) {
+                    resolvedWord = possibleWords[0];
+                }
             } else if (possibleWords.some(w => w.toUpperCase() === submittedClean)) {
                 resolvedWord = submittedClean;
             } else if (possibleWords.length > 0) {

@@ -13217,6 +13217,32 @@ def tools_validate_word():
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return resp
 
+@app.route('/api/resolve_either_or', methods=['POST'])
+def api_resolve_either_or():
+    data = request.json or {}
+    candidates = data.get('candidates', [])
+    dict_name = data.get('dictionary', 'NWL')
+    use_aw = data.get('use_added_words', True)
+
+    word_validator.ensure_csw_loaded()
+    valid_words = []
+
+    for c in candidates:
+        if not c:
+            continue
+        c_clean = str(c).replace('[', '').replace(']', '').replace('/', '').strip().upper()
+        if not c_clean:
+            continue
+        if word_validator.is_valid_word(c_clean, dict_name, use_added_words=use_aw):
+            valid_words.append(c_clean)
+        elif word_validator.is_valid_word_authoritative(c_clean) or word_validator.is_added_word(c_clean):
+            valid_words.append(c_clean)
+
+    return jsonify({
+        'valid_words': valid_words,
+        'valid_word': valid_words[0] if valid_words else (candidates[0] if candidates else None)
+    })
+
 @app.route('/api/tools/unscramble/random', methods=['GET'])
 def tools_unscramble_random():
     import random
