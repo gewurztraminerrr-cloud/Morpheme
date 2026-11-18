@@ -1221,7 +1221,7 @@ body.theme-white .work-on-badge-aw,
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
-    z-index: 100010 !important;
+    z-index: 2147483647 !important;
     background: rgba(0, 0, 0, 0.82) !important;
     backdrop-filter: blur(8px) !important;
     display: flex;
@@ -17956,7 +17956,7 @@ body.is-mobile .loading-container {
 /* --- Tool Word Definition Popover --- */
 .tool-def-popover {
     position: fixed;
-    z-index: 2147483647 !important;
+    z-index: 2147483600 !important;
     width: 360px;
     max-width: calc(100vw - 16px);
     max-height: calc(100vh - 24px);

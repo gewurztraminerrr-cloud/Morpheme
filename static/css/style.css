@@ -1305,7 +1305,7 @@ body:not(.is-mobile) .tool-word-badges-row,
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
-    z-index: 100010 !important;
+    z-index: 2147483647 !important;
     background: rgba(0, 0, 0, 0.82) !important;
     backdrop-filter: blur(8px) !important;
     display: flex;

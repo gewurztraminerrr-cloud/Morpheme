@@ -11697,7 +11697,7 @@ window.showWordDefinitionPopup = async function (word, event) {
             const p = document.getElementById('tool-word-def-popover');
             if (p && p.classList.contains('active')) {
                 if (Date.now() - (p._openedAt || 0) < 180) return;
-                if (!p.contains(e.target) && !e.target.closest('.clickable-word-link') && !e.target.closest('.full-list-item') && !e.target.closest('.notepad-word-line') && !e.target.closest('.notepad-scroll-btn')) {
+                if (!p.contains(e.target) && !e.target.closest('#wikipedia-article-modal') && !e.target.closest('.clickable-word-link') && !e.target.closest('.full-list-item') && !e.target.closest('.notepad-word-line') && !e.target.closest('.notepad-scroll-btn')) {
                     window.hideWordDefinitionPopup();
                 }
             }
@@ -11705,6 +11705,10 @@ window.showWordDefinitionPopup = async function (word, event) {
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
+                const wikiModal = document.getElementById('wikipedia-article-modal');
+                if (wikiModal && !wikiModal.classList.contains('hidden') && wikiModal.style.display !== 'none') {
+                    return; // Let Wikipedia modal close first
+                }
                 window.hideWordDefinitionPopup();
             }
         });
