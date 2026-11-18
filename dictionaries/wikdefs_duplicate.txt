@@ -207648,6 +207648,7 @@ ECHIOIDININS	plural of echioidinin ((organic chemistry) The chromene derivative 
 ECHISTATIN	(biochemistry) A particular disintegrin.
 ECHISTATINS	plural of echistatin ((biochemistry) A particular disintegrin.)
 ECHITAMINE	ditaine
+ECHITES	A genus of flowering plants in the family Apocynaceae, first described as a genus in 1756.
 ECHITESES	plural of echites (a genus of flowering plants in the family Apocynaceae, first described as a genus in 1756 [n -S])
 ECHIUM	(botany) Any member of the genus Echium of flowering plants.
 ECHIUMS	plural of echium
@@ -577730,7 +577731,7 @@ RAMPIKES	plural of rampike
 RAMPING	A steady change in value.
 RAMPINGLY	With rage or violence.
 RAMPINGS	plural of ramping
-RAMPION	A species of bellflower with roots and leaves formerly used in salads, Campanula rapunculus.
+RAMPION	A European biennial bellflower (Campanula rapunculus) in the family Campanulaceae, cultivated for its edible roots and salad leaves.
 RAMPIONS	plural of rampion
 RAMPIRE	(archaic) A rampart.
 RAMPIRED	simple past and past participle of rampire

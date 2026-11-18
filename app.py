@@ -10424,6 +10424,10 @@ def lookup_definition_image(word):
 # meaning of the word rather than a proper noun (e.g. books, cities, bands, people).
 # ---------------------------------------------------------------------------
 WIKI_COMMON_NOUN_OVERRIDES = {
+    'ECHITES': ('Echites', 'https://en.wikipedia.org/wiki/Echites'),
+    'ECHITESES': ('Echites', 'https://en.wikipedia.org/wiki/Echites'),
+    'RAMPION': ('Rampion', 'https://en.wikipedia.org/wiki/Campanula_rapunculus'),
+    'RAMPIONS': ('Rampion', 'https://en.wikipedia.org/wiki/Campanula_rapunculus'),
     'ANDESYTE': ('Andesite', 'https://en.wikipedia.org/wiki/Andesite'),
     'ANDESYTES': ('Andesite', 'https://en.wikipedia.org/wiki/Andesite'),
     'ANDESITE': ('Andesite', 'https://en.wikipedia.org/wiki/Andesite'),
@@ -10842,23 +10846,29 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
                 lemma = cand_p
 
     if not lemma:
-        try:
-            from nltk.corpus import wordnet as wn
-            m = wn.morphy(w_lower, wn.NOUN)
-            if m:
-                lemma = m
-        except Exception:
-            pass
+        is_plural_def = bool(re.search(r'\b(?:plural|diminutive)\s+(?:of|for|form)\b', combined_text, re.IGNORECASE))
+        if is_plural_def:
+            try:
+                from nltk.corpus import wordnet as wn
+                m = wn.morphy(w_lower, wn.NOUN)
+                if m and m != w_lower:
+                    lemma = m
+            except Exception:
+                pass
+
+        if not lemma and is_plural_def:
+            cand = None
+            if w_lower.endswith('ies') and len(w_lower) > 4:
+                cand = w_lower[:-3] + 'y'
+            elif w_lower.endswith(('ses', 'xes', 'zes', 'ches', 'shes')) and len(w_lower) > 4:
+                cand = w_lower[:-2]
+            elif w_lower.endswith('s') and not w_lower.endswith('ss') and len(w_lower) > 3:
+                cand = w_lower[:-1]
+            if cand and isinstance(DEFINITIONS_CACHE, dict) and cand.upper() in DEFINITIONS_CACHE:
+                lemma = cand
 
     if not lemma:
-        if w_lower.endswith('ies') and len(w_lower) > 4:
-            lemma = w_lower[:-3] + 'y'
-        elif w_lower.endswith(('ses', 'xes', 'zes', 'ches', 'shes')) and len(w_lower) > 4:
-            lemma = w_lower[:-2]
-        elif w_lower.endswith('s') and not w_lower.endswith('ss') and len(w_lower) > 3:
-            lemma = w_lower[:-1]
-        else:
-            lemma = w_lower
+        lemma = w_lower
 
     title = lemma.capitalize()
     return resolve_wiki_common_noun(word, combined_text, lemma)
@@ -10950,8 +10960,13 @@ def get_wikipedia_summary():
 
     # 2. Check if an override gives a specific common noun article
     lookup_title = title
-    if target_word in WIKI_COMMON_NOUN_OVERRIDES and WIKI_COMMON_NOUN_OVERRIDES[target_word][0]:
-        lookup_title = WIKI_COMMON_NOUN_OVERRIDES[target_word][0]
+    override_slug = None
+    if target_word in WIKI_COMMON_NOUN_OVERRIDES:
+        ov_title, ov_url = WIKI_COMMON_NOUN_OVERRIDES[target_word]
+        if ov_title:
+            lookup_title = ov_title
+        if ov_url and '/wiki/' in ov_url:
+            override_slug = ov_url.split('/wiki/')[-1]
 
     def_text, _ = lookup_word_definition_and_pronunciation(target_word)
     def_lower = (def_text or '').lower()
@@ -10969,7 +10984,7 @@ def get_wikipedia_summary():
             if candidate_head != target_word.lower() and len(candidate_head) > 2:
                 ref_cand = candidate_head
 
-    safe_title = urllib.parse.quote(lookup_title.replace(' ', '_'), safe='')
+    safe_title = override_slug if override_slug else urllib.parse.quote(lookup_title.replace(' ', '_'), safe='')
     result = {
         'title': lookup_title,
         'description': '',
@@ -10986,13 +11001,21 @@ def get_wikipedia_summary():
         req = urllib.request.Request(summary_url, headers=headers)
         with urllib.request.urlopen(req, timeout=3.5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
-            result['title'] = data.get('title') or lookup_title
+            if override_slug and data.get('title') and lookup_title.lower() != data.get('title', '').lower():
+                result['title'] = f"{lookup_title} ({data.get('title')})"
+            else:
+                result['title'] = data.get('title') or lookup_title
             result['description'] = data.get('description') or ''
             result['extract'] = data.get('extract') or ''
             result['url'] = data.get('content_urls', {}).get('desktop', {}).get('page') or result['url']
             if data.get('thumbnail'):
                 result['thumbnail'] = data.get('thumbnail', {}).get('source')
-            if data.get('type') == 'disambiguation' or (result['description'].lower() == 'topics referred to by the same term'):
+            desc_l = (result['description'] or '').lower()
+            if (data.get('type') == 'disambiguation' 
+                or 'topics referred to' in desc_l 
+                or 'index of plants' in desc_l 
+                or 'set index' in desc_l 
+                or 'list of plants with the same common name' in desc_l):
                 result['is_disambiguation'] = True
     except Exception:
         # Fallback to ref_cand if safe_title 404s
