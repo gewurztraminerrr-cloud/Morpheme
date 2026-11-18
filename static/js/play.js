@@ -5874,36 +5874,52 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const filterContainer = document.getElementById('length-filter-container');
     const filterDropdown = document.getElementById('length-filter-dropdown');
     const dictDropdown = document.getElementById('dictionary-filter-dropdown');
-    const sortBtn = document.getElementById('all-words-sort-btn');
 
     if (filterContainer) {
         filterContainer.style.display = 'flex';
+    }
+
+    // Calculate dictionary counts for all words in the round
+    const countTotal = cleanWords.length;
+    let countCswOnly = 0;
+    let countNwl = 0;
+    let countAw = 0;
+    for (let i = 0; i < cleanWords.length; i++) {
+        const wUpper = cleanWords[i].wordUpper;
+        const isAW = (addedSet && addedSet.has(wUpper)) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wUpper));
+        if (isAW) {
+            countAw++;
+        } else if (cswOnlySet && cswOnlySet.has(wUpper)) {
+            countCswOnly++;
+        } else {
+            countNwl++;
+        }
     }
 
     // Configure and populate dictionary filter dropdown
     let dictOptions = [];
     if (isCSW && useAW) {
         dictOptions = [
-            { value: 'all', label: 'CSW + AW' },
-            { value: 'CSW_ONLY', label: 'CSW Only' },
-            { value: 'NWL', label: 'NWL' },
-            { value: 'AW', label: 'AW' }
+            { value: 'all', label: `CSW + AW (${countTotal})` },
+            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnly})` },
+            { value: 'NWL', label: `NWL (${countNwl})` },
+            { value: 'AW', label: `AW (${countAw})` }
         ];
     } else if (isCSW) {
         dictOptions = [
-            { value: 'all', label: 'CSW' },
-            { value: 'NWL', label: 'NWL' },
-            { value: 'CSW_ONLY', label: 'CSW Only' }
+            { value: 'all', label: `CSW (${countTotal})` },
+            { value: 'NWL', label: `NWL (${countNwl})` },
+            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnly})` }
         ];
     } else if (useAW) {
         dictOptions = [
-            { value: 'all', label: 'NWL + AW' },
-            { value: 'NWL', label: 'NWL' },
-            { value: 'AW', label: 'AW' }
+            { value: 'all', label: `NWL + AW (${countTotal})` },
+            { value: 'NWL', label: `NWL (${countNwl})` },
+            { value: 'AW', label: `AW (${countAw})` }
         ];
     } else {
         dictOptions = [
-            { value: 'all', label: 'NWL' }
+            { value: 'all', label: `NWL (${countTotal})` }
         ];
     }
 
@@ -5997,21 +6013,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         }
     }
 
-    if (sortBtn) {
-        window.allWordsSortMode = window.allWordsSortMode || 'length';
-        sortBtn.textContent = (window.allWordsSortMode === 'points') ? 'Letter Length' : 'Point Value';
-        if (!sortBtn.dataset.listenerAdded) {
-            sortBtn.addEventListener('click', () => {
-                window.allWordsSortMode = (window.allWordsSortMode === 'points') ? 'length' : 'points';
-                sortBtn.textContent = (window.allWordsSortMode === 'points') ? 'Letter Length' : 'Point Value';
-                updateIntermissionRenderKey();
-                if (window.lastDisplayAllWordsArgs) {
-                    displayAllWords(...window.lastDisplayAllWordsArgs);
-                }
-            });
-            sortBtn.dataset.listenerAdded = 'true';
-        }
-    }
+    window.allWordsSortMode = 'length';
 
     // Filter by length
     const selectedLength = window.selectedAllWordsLength || 'all';
