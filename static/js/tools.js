@@ -3534,9 +3534,12 @@ async function renderProfile(user) {
         if (w.timestamp) {
             dateStr = typeof window.formatAppDate === 'function' ? window.formatAppDate(w.timestamp, true) : String(w.timestamp);
         }
+        const safeWord = String(w.word || '').replace(/'/g, "\\'");
         return `
         <div class="history-grid-item" onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'})" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr; gap:8px; padding: 10px 15px; background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.08); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 620px;">
-            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">${w.word}</div>
+            <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">
+                <span class="clickable-word-link" onclick="event.stopPropagation(); if(window.lookupWord){window.lookupWord('${safeWord}', event);}else if(window.showWordDefinitionPopup){window.showWordDefinitionPopup('${safeWord}', event);}" title="Click to view definition for ${w.word}">${w.word}</span>
+            </div>
             <div style="font-weight: 800; color: #d97706; font-size: 0.9rem;">${w.points} <small style="font-size: 0.6rem; opacity: 0.7;">PTS</small></div>
             <div style="color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-size: 0.8rem; font-weight: 700;">${w.length || w.word.length} <small style="font-size: 0.6rem; opacity: 0.7;">LETTERS</small></div>
             <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
@@ -5446,12 +5449,15 @@ function renderRoomAchievementsData(data, reqSeq, card, previousScroll, isOpenin
             const sortedByPoints = [...stats.best_words].sort((a, b) => b.points - a.points);
             tableWords.innerHTML = sortedByPoints.map(w => {
                 const date = new Date(w.timestamp);
+                const safeWord = String(w.word || '').replace(/'/g, "\\'");
                 return `
                 <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); cursor: pointer; transition: background 0.2s;" 
                     onmouseenter="this.style.background='rgba(var(--text-primary-rgb), 0.04)'" 
                     onmouseleave="this.style.background='transparent'" 
                     onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'});">
-                    <td style="padding: 10px 15px; font-weight: 800; color: var(--text-primary); text-transform: uppercase;">${w.word}</td>
+                    <td style="padding: 10px 15px; font-weight: 800; color: var(--text-primary); text-transform: uppercase;">
+                        <span class="clickable-word-link" onclick="event.stopPropagation(); if(window.lookupWord){window.lookupWord('${safeWord}', event);}else if(window.showWordDefinitionPopup){window.showWordDefinitionPopup('${safeWord}', event);}" title="Click to view definition for ${w.word}">${w.word}</span>
+                    </td>
                     <td style="padding: 10px 15px; font-weight: 700; color: #d97706;">${w.points}</td>
                     <td style="padding: 10px 15px; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));">${w.word.length}</td>
                     <td style="padding: 10px 15px; font-size: 0.75rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6));">${dateToShort(date)}</td>
@@ -11814,7 +11820,7 @@ window.showWordDefinitionPopup = async function (word, event) {
 
     // Smart Positioning
     popover.style.display = 'flex';
-    popover.style.setProperty('z-index', '2147483647', 'important');
+    popover.style.setProperty('z-index', '2147483600', 'important');
 
     if (target && typeof target.getBoundingClientRect === 'function') {
         const rect = target.getBoundingClientRect();
