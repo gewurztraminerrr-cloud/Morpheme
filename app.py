@@ -4503,22 +4503,41 @@ def init_db():
         conn.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_rh_id ON word_finds(round_history_id)')
         conn.commit()
 
-        # Link historical round_history records where available
+        # Link historical round_history records accurately where available
         try:
+            # 1. Clear round_history_id if pointing to a round that does NOT contain the word
             conn.execute('''
-                UPDATE word_finds 
-                SET round_history_id = (
-                    SELECT rh.id FROM round_history rh 
-                    WHERE rh.user_id = word_finds.user_id 
-                      AND rh.room_id = word_finds.room_id 
-                      AND rh.round_number = word_finds.round_number
-                    LIMIT 1
-                )
-                WHERE round_history_id IS NULL
+                UPDATE word_finds
+                SET round_history_id = NULL
+                WHERE round_history_id IS NOT NULL
+                  AND round_history_id NOT IN (
+                      SELECT rh.id FROM round_history rh
+                      WHERE rh.words_json LIKE '%' || word_finds.word || '%'
+                  )
             ''')
             conn.commit()
-        except Exception:
-            pass
+
+            # 2. For unlinked word_finds rows, find matching round_history
+            unlinked_rows = conn.execute('''
+                SELECT wf.id, wf.user_id, wf.room_id, wf.round_number, wf.word
+                FROM word_finds wf
+                WHERE wf.round_history_id IS NULL
+            ''').fetchall()
+            if unlinked_rows:
+                updates = []
+                for wf_id, uid, rid, rnum, w_term in unlinked_rows:
+                    m = conn.execute('''
+                        SELECT id FROM round_history
+                        WHERE user_id = ? AND room_id = ? AND round_number = ? AND words_json LIKE ?
+                        ORDER BY id DESC LIMIT 1
+                    ''', (uid, rid, rnum, f'%"{w_term}"%')).fetchone()
+                    if m:
+                        updates.append((m[0], wf_id))
+                if updates:
+                    conn.executemany('UPDATE word_finds SET round_history_id = ? WHERE id = ?', updates)
+                    conn.commit()
+        except Exception as rh_link_err:
+            print(f"[init_db] Notice linking round_history to word_finds: {rh_link_err}")
 
         # Automatic comprehensive backfill of historical words if word_finds is sparse
         total_wf = conn.execute("SELECT COUNT(*) FROM word_finds").fetchone()[0]
@@ -4741,10 +4760,10 @@ def _get_word_finds(word):
         try:
             wf_cursor = conn.execute("""
                 SELECT wf.timestamp, u.username, u.country_flag, wf.room_id, wf.round_number,
-                       COALESCE(wf.round_history_id, rh.id) AS game_id
+                       CASE WHEN rh.words_json LIKE '%' || wf.word || '%' THEN wf.round_history_id ELSE NULL END AS game_id
                 FROM word_finds wf
                 JOIN users u ON wf.user_id = u.id
-                LEFT JOIN round_history rh ON wf.user_id = rh.user_id AND wf.room_id = rh.room_id AND wf.round_number = rh.round_number
+                LEFT JOIN round_history rh ON wf.round_history_id = rh.id
                 WHERE wf.word = ?
             """, (word,))
             for row in wf_cursor.fetchall():
@@ -4945,9 +4964,13 @@ def _get_word_finds(word):
                 prev_dt, prev_idx = user_last_ts[uname]
                 if abs((curr_dt - prev_dt).total_seconds()) <= 120:
                     is_dupe = True
-                    # If current item has game_id and previous didn't, upgrade previous
-                    if f.get('game_id') and not unique_finds[prev_idx].get('game_id'):
-                        unique_finds[prev_idx] = f
+                    # If current item has game_id, upgrade previous item
+                    if f.get('game_id'):
+                        unique_finds[prev_idx]['game_id'] = f['game_id']
+                        if f.get('room_id'):
+                            unique_finds[prev_idx]['room_id'] = f['room_id']
+                        if f.get('round_number'):
+                            unique_finds[prev_idx]['round_number'] = f['round_number']
             if not is_dupe:
                 user_last_ts[uname] = (curr_dt, len(unique_finds))
         except Exception:
@@ -13424,6 +13447,7 @@ def get_round_replay():
     round_number = request.args.get('round_number')
     username = request.args.get('username')
     timestamp = request.args.get('timestamp')
+    word = request.args.get('word')
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
@@ -13433,6 +13457,53 @@ def get_round_replay():
         if game_id and str(game_id).isdigit():
             cur.execute("SELECT * FROM round_history WHERE id = ?", (int(game_id),))
             row = cur.fetchone()
+            if row and word and word.strip().upper() not in (row['words_json'] or '').upper():
+                row = None
+
+        if not row and word:
+            clean_word = word.strip().upper()
+            w_pattern = f'%"{clean_word}"%'
+            if username and room_id and round_number:
+                cur.execute("""
+                    SELECT rh.* 
+                    FROM round_history rh
+                    JOIN users u ON rh.user_id = u.id
+                    WHERE rh.words_json LIKE ? AND rh.room_id = ? AND rh.round_number = ? AND u.username = ? COLLATE NOCASE
+                    ORDER BY rh.id DESC LIMIT 1
+                """, (w_pattern, room_id, int(round_number), username))
+                row = cur.fetchone()
+            if not row and username and room_id:
+                cur.execute("""
+                    SELECT rh.* 
+                    FROM round_history rh
+                    JOIN users u ON rh.user_id = u.id
+                    WHERE rh.words_json LIKE ? AND rh.room_id = ? AND u.username = ? COLLATE NOCASE
+                    ORDER BY rh.id DESC LIMIT 1
+                """, (w_pattern, room_id, username))
+                row = cur.fetchone()
+            if not row and username:
+                cur.execute("""
+                    SELECT rh.* 
+                    FROM round_history rh
+                    JOIN users u ON rh.user_id = u.id
+                    WHERE rh.words_json LIKE ? AND u.username = ? COLLATE NOCASE
+                    ORDER BY rh.id DESC LIMIT 1
+                """, (w_pattern, username))
+                row = cur.fetchone()
+            if not row and room_id:
+                cur.execute("""
+                    SELECT * FROM round_history 
+                    WHERE words_json LIKE ? AND room_id = ?
+                    ORDER BY id DESC LIMIT 1
+                """, (w_pattern, room_id))
+                row = cur.fetchone()
+            if not row:
+                cur.execute("""
+                    SELECT * FROM round_history 
+                    WHERE words_json LIKE ?
+                    ORDER BY id DESC LIMIT 1
+                """, (w_pattern,))
+                row = cur.fetchone()
 
         if not row and room_id and round_number:
             if username:

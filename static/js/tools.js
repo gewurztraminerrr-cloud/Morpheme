@@ -3790,12 +3790,22 @@ function findWordPathOnCube(word, board) {
 }
 
 // Global function to review a round (Legitimacy Walkthrough)
-window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false, gameId = null, timestamp = null) {
-    console.log(`Reviewing Round ${roundNum} from Room ${roomId} (GameID: ${gameId}, Timestamp: ${timestamp})`);
+window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false, gameId = null, timestamp = null, word = null, username = null) {
+    console.log(`Reviewing Round ${roundNum} from Room ${roomId} (GameID: ${gameId}, Timestamp: ${timestamp}, Word: ${word}, User: ${username})`);
 
     // 1. Find Round Data
     let rounds = window.lastRenderedRounds || [];
     let round = null;
+
+    // Helper to check if a round candidate actually contains the word
+    const roundContainsWord = (r, w) => {
+        if (!r || !w) return true;
+        const target = String(w).trim().toUpperCase();
+        return (r.words || []).some(item => {
+            const str = (typeof item === 'string' ? item : (item.word || '')).toUpperCase();
+            return str === target;
+        });
+    };
 
     // PRIORITY: Tournament explicitly set replay
     if (roomId && String(roomId).startsWith('tournament_') && window.lastTournamentReplay && window.lastTournamentReplay.room_id === roomId && window.lastTournamentReplay.round_number == roundNum) {
@@ -3805,12 +3815,15 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
     // A) If an exact gameId is provided, use it to find the precise profile round.
     if (!round && gameId) {
         round = rounds.find(r => r.game_id == gameId);
+        if (round && word && !roundContainsWord(round, word)) {
+            round = null;
+        }
     }
 
     // B) Prefer Lobby History when no gameId — it is definitively from the CURRENT session.
     //    Profile rounds are matched only by room_id+round_number and can span multiple sessions
     //    of the same room, returning stale data from a previous game.
-    if (!round && window.lastGameState && window.lastGameState.winners_history && window.lastGameState.room_id === roomId) {
+    if (!round && !gameId && window.lastGameState && window.lastGameState.winners_history && window.lastGameState.room_id === roomId) {
         let foundInLobby = null;
         if (timestamp) {
             foundInLobby = window.lastGameState.winners_history.find(h => h.round == roundNum && Math.abs((h.timestamp || 0) - timestamp) < 5000);
@@ -3846,13 +3859,16 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
                 game_type: foundInLobby.game_type || 'accumulative',
                 words: wordsForReplay
             };
+            if (round && word && !roundContainsWord(round, word)) {
+                round = null;
+            }
         }
     }
 
     // C) Fallback to Profile/Recent Rounds (cross-session, matched by room_id+round_number).
-    //    Only used when lobby data isn't available (e.g., viewing history from profile page).
-    if (!round) {
-        round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
+    //    Only used when lobby data isn't available and NO specific gameId was requested.
+    if (!round && !gameId) {
+        round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum && (!word || roundContainsWord(r, word)));
     }
 
     if (!round) {
@@ -3863,6 +3879,8 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
             if (roomId) params.append('room_id', roomId);
             if (roundNum) params.append('round_number', roundNum);
             if (timestamp) params.append('timestamp', timestamp);
+            if (word) params.append('word', word);
+            if (username) params.append('username', username);
             const resp = await fetch(`/api/round-replay?${params.toString()}`);
             if (resp.ok) {
                 const data = await resp.json();
@@ -10785,9 +10803,10 @@ async function runFindCountSearch() {
                 const roundNum = item.round_number || '';
                 const gameId = item.game_id || '';
                 const safeTimestamp = (item.timestamp || '').replace(/"/g, '&quot;');
+                const safeWord = (data.word || '').replace(/"/g, '&quot;');
 
                 return `
-                    <tr class="finder-row" data-index="${index}" data-username="${safeUsername}" data-room-id="${safeRoomId}" data-round-number="${roundNum}" data-game-id="${gameId}" data-timestamp="${safeTimestamp}" title="Click row to watch Round Replay" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
+                    <tr class="finder-row" data-index="${index}" data-username="${safeUsername}" data-room-id="${safeRoomId}" data-round-number="${roundNum}" data-game-id="${gameId}" data-timestamp="${safeTimestamp}" data-word="${safeWord}" title="Click row to watch Round Replay" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
                         <td style="padding: 12px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
                             <div style="display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">
                                 <span class="finder-username-link" data-username="${safeUsername}" title="View ${safeUsername}'s mini-profile" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: underline; color: inherit;">
@@ -10836,9 +10855,10 @@ async function runFindCountSearch() {
                     const rNum = row.dataset.roundNumber;
                     const gId = row.dataset.gameId;
                     const ts = row.dataset.timestamp;
+                    const targetWord = row.dataset.word;
 
                     if (typeof window.watchRoundHistory === 'function') {
-                        window.watchRoundHistory(rId, rNum, false, gId, ts);
+                        window.watchRoundHistory(rId, rNum, false, gId, ts, targetWord, uname);
                     } else {
                         alert("Replay viewer context not loaded.");
                     }
