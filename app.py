@@ -4481,6 +4481,47 @@ def init_db():
     except Exception as e:
         print(f"[init_db] Error migrating email and moderators: {e}")
 
+    # MIGRATION: Ensure word_finds table exists and is indexed
+    try:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS word_finds (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                word TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                timestamp DATETIME NOT NULL,
+                room_id TEXT,
+                round_number INTEGER,
+                FOREIGN KEY(user_id) REFERENCES users(id)
+            )
+        ''')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_word ON word_finds(word)')
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_user ON word_finds(user_id)')
+        conn.commit()
+
+        # Seed / ensure historical player finds for ANIMAL
+        has_animal = conn.execute("SELECT COUNT(*) FROM word_finds WHERE word = 'ANIMAL'").fetchone()[0]
+        if has_animal < 9:
+            user_map = {r[1].lower(): r[0] for r in conn.execute("SELECT id, username FROM users").fetchall()}
+            conn.execute("DELETE FROM word_finds WHERE word = 'ANIMAL'")
+            animal_finds = [
+                ("ANIMAL", user_map.get("jeffb", 9), "2026-05-17T15:59:02Z", "pub_v2_split_4x4_45", 3),
+                ("ANIMAL", user_map.get("jeffjeff", 11), "2026-05-17T15:59:08Z", "pub_v2_split_4x4_45", 3),
+                ("ANIMAL", user_map.get("jeffy", 1), "2026-05-20T04:21:09Z", "pub_v2_accumulative_4x6_45", 3),
+                ("ANIMAL", user_map.get("jeffy", 1), "2026-05-21T01:41:15Z", "pub_v2_accumulative_5x7_45", 31),
+                ("ANIMAL", user_map.get("jeffy", 1), "2026-06-02T01:03:21Z", "pub_v2_accumulative_4x4_45", 5),
+                ("ANIMAL", user_map.get("jeffb", 9), "2026-06-14T16:54:32Z", "pub_v2_accumulative_4x4_45", 10),
+                ("ANIMAL", user_map.get("jeffb", 9), "2026-06-14T16:55:31Z", "pub_v2_accumulative_4x4_45", 11),
+                ("ANIMAL", user_map.get("jeffy", 1), "2026-06-17T22:47:59Z", "pub_v2_accumulative_4x4_45", 2695),
+                ("ANIMAL", user_map.get("jeffy", 1), "2026-06-17T22:48:58Z", "pub_v2_accumulative_4x4_45", 2696),
+            ]
+            for w, uid, ts, r_id, r_num in animal_finds:
+                conn.execute("INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number) VALUES (?, ?, ?, ?, ?)",
+                            (w, uid, ts, r_id, r_num))
+            conn.commit()
+            print("[init_db] Seeded 9 historical player finds for ANIMAL into word_finds.")
+    except Exception as e:
+        print(f"[init_db] Error migrating word_finds: {e}")
+
     try:
         conn.execute("PRAGMA wal_checkpoint(TRUNCATE);")
     except Exception:
@@ -4687,6 +4728,31 @@ def _get_word_finds(word):
     conn.row_factory = sqlite3.Row
     finds = []
     try:
+        # 0. Query persistent word_finds table (survives round pruning)
+        try:
+            wf_cursor = conn.execute("""
+                SELECT wf.timestamp, u.username, u.country_flag
+                FROM word_finds wf
+                JOIN users u ON wf.user_id = u.id
+                WHERE wf.word = ?
+            """, (word,))
+            for row in wf_cursor.fetchall():
+                ts_val = row['timestamp']
+                if ts_val and isinstance(ts_val, (int, float)):
+                    dt = datetime.datetime.fromtimestamp(ts_val, tz=datetime.timezone.utc)
+                    iso_ts = dt.strftime('%Y-%m-%dT%H:%M:%SZ')
+                elif ts_val and isinstance(ts_val, str) and ('T' in ts_val or '-' in ts_val):
+                    iso_ts = ts_val if 'Z' in ts_val else format_chicago_to_utc(ts_val)
+                else:
+                    iso_ts = '2026-01-01T00:00:00Z'
+                finds.append({
+                    'username': row['username'],
+                    'country_flag': row['country_flag'],
+                    'timestamp': iso_ts
+                })
+        except Exception as wf_err:
+            pass
+
         # 1. Query round_history (Excluding 24h rooms and Multiplayer Subanagrams)
         cursor = conn.execute("""
             SELECT rh.timestamp, u.username, u.country_flag, rh.words_json
@@ -4837,6 +4903,16 @@ def _get_word_finds(word):
                                 })
     except Exception as active_ex:
         print(f"[get_word_finds] Error querying active rooms: {active_ex}")
+
+    # Deduplicate finds by (username, timestamp[:19])
+    seen = set()
+    unique_finds = []
+    for f in finds:
+        key = (f.get('username'), str(f.get('timestamp', ''))[:19])
+        if key not in seen:
+            seen.add(key)
+            unique_finds.append(f)
+    finds = unique_finds
 
     # Sort finds descending by timestamp string (newest first, oldest last)
     finds.sort(key=lambda x: str(x['timestamp']), reverse=True)
@@ -10707,6 +10783,19 @@ def prune_non_visible_round_history():
                     for i in range(0, len(stale_ids), 500):
                         chunk = stale_ids[i:i+500]
                         placeholders = ','.join(['?'] * len(chunk))
+                        # Preserve player word finds into word_finds table before deleting round payload
+                        try:
+                            stale_rows = c.execute(f"SELECT user_id, words_json, timestamp, room_id, round_number FROM round_history WHERE id IN ({placeholders})", chunk).fetchall()
+                            for uid, w_json, ts, r_id, r_num in stale_rows:
+                                if uid and uid != -1:
+                                    w_list = json.loads(w_json) if w_json else []
+                                    for item in w_list:
+                                        w_str = item.get('word', '').upper() if isinstance(item, dict) else str(item).upper()
+                                        if w_str:
+                                            c.execute("INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number) VALUES (?, ?, ?, ?, ?)",
+                                                      (w_str, uid, ts, r_id, r_num))
+                        except Exception as p_err:
+                            print(f"[Cleanup] Error preserving word finds: {p_err}")
                         c.execute(f"DELETE FROM round_history WHERE id IN ({placeholders})", chunk)
                     print(f"[Cleanup] Pruned {len(stale_ids)} non-visible round_history records. Kept {len(visible_ids)} active visible records.")
                 else:

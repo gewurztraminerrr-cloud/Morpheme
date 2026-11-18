@@ -10754,7 +10754,7 @@ async function runFindCountSearch() {
         }
         
         if (data.recent && data.recent.length > 0) {
-            tableBody.innerHTML = data.recent.map(item => {
+            let rowsHtml = data.recent.map(item => {
                 const formattedDate = typeof window.formatAppDate === 'function' ? window.formatAppDate(item.timestamp, true) : item.timestamp;
                 
                 const flagHtml = window.getFlagHtml ? window.getFlagHtml(item.country_flag) : (item.country_flag || '');
@@ -10769,6 +10769,19 @@ async function runFindCountSearch() {
                     </tr>
                 `;
             }).join('');
+
+            if (data.count > data.recent.length) {
+                const diff = data.count - data.recent.length;
+                rowsHtml += `
+                    <tr>
+                        <td colspan="2" style="padding: 10px 12px; text-align: center; color: var(--muted-text); font-size: 0.85rem; border-top: 1px dashed rgba(var(--text-primary-rgb), 0.1);">
+                            * ${diff} additional ${diff === 1 ? 'find' : 'finds'} occurred in guest or unregistered rounds.
+                        </td>
+                    </tr>
+                `;
+            }
+
+            tableBody.innerHTML = rowsHtml;
             
             // Add click events to rows
             tableBody.querySelectorAll('.finder-row').forEach(row => {
@@ -10789,7 +10802,7 @@ async function runFindCountSearch() {
             tableBody.innerHTML = `
                 <tr>
                     <td colspan="2" style="padding: 20px; text-align: center; color: var(--muted-text);">
-                        All ${data.count} ${data.count === 1 ? 'find' : 'finds'} occurred in guest or unrecorded public rounds.
+                        All ${data.count} ${data.count === 1 ? 'find' : 'finds'} occurred in guest or unregistered rounds.
                     </td>
                 </tr>
             `;

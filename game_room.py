@@ -8769,6 +8769,19 @@ class RoomManager:
                         solutions_payload, paths_payload
                     ))
 
+                    # Also persist player word finds into lightweight word_finds table for Find Count
+                    if u_id != -1 and u_name != 'System':
+                        try:
+                            for entry in words_data:
+                                w_text = entry.get('word', '').upper() if isinstance(entry, dict) else str(entry).upper()
+                                if w_text:
+                                    conn.execute('''
+                                        INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number)
+                                        VALUES (?, ?, ?, ?, ?)
+                                    ''', (w_text, u_id, timestamp, room.room_id, target_round))
+                        except Exception:
+                            pass
+
                     if room.time_limit >= 7200 and u_id != -1 and u_name != 'System' and u_score > 0:
                         canonical_id = f"24h_{room.board_dimensions}"
                         conn.execute('''
