@@ -24188,16 +24188,62 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
 /* ==========================================================================
    Word Chart in Tools
    ========================================================================== */
+#tool-word-chart .word-chart-table-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    display: block !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.12);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(var(--text-primary-rgb), 0.3) rgba(var(--text-primary-rgb), 0.06) !important;
+}
+
+#tool-word-chart .word-chart-table-container::-webkit-scrollbar {
+    height: 7px !important;
+    display: block !important;
+    -webkit-appearance: none !important;
+}
+
+#tool-word-chart .word-chart-table-container::-webkit-scrollbar-track {
+    background: rgba(var(--text-primary-rgb), 0.06) !important;
+    border-radius: 4px !important;
+}
+
+#tool-word-chart .word-chart-table-container::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-primary-rgb), 0.28) !important;
+    border-radius: 4px !important;
+}
+
 #tool-word-chart .word-chart-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.84rem;
 }
 
+/* Point Values & Divisions Table: 7 columns, ensure minimum width so all columns display cleanly with horizontal scrolling */
+#tool-word-chart #wc-points-table {
+    min-width: 820px !important;
+    width: 100% !important;
+}
+
+/* Dictionary Word Counts Table: 6 columns */
+#tool-word-chart #wc-dicts-table {
+    min-width: 580px !important;
+    width: 100% !important;
+}
+
 #tool-word-chart .word-chart-table th,
 #tool-word-chart .word-chart-table td {
-    padding: 10px 12px;
+    padding: 10px 14px;
     border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.08);
+    white-space: nowrap !important;
 }
 
 #tool-word-chart .word-chart-table tbody tr:hover {
