@@ -10755,11 +10755,11 @@ async function runFindCountSearch() {
             let divisionBadgeHtml = '';
             if (data.has_divisions || (data.length && data.length >= 5)) {
                 const divStr = data.division_str || `Division ${data.division || 1} of ${data.max_divisions || 1} (${data.points || data.base_points || 0} of ${data.max_points || 0} pts)`;
-                divisionBadgeHtml = ` <span class="find-count-division-badge" style="display: inline-block; margin-left: 8px; padding: 3px 10px; font-size: 0.85rem; font-weight: 700; border-radius: 6px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.4); color: #38bdf8; vertical-align: middle;">${divStr}</span>`;
+                divisionBadgeHtml = `<span class="find-count-division-badge">${divStr}</span>`;
             }
 
             if (data.is_valid) {
-                summaryEl.innerHTML = `The word "${wordLink}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began in 2026.${divisionBadgeHtml}`;
+                summaryEl.innerHTML = `The word "${wordLink}" has been found ${data.count} ${data.count === 1 ? 'time' : 'times'} since Morpheme began in 2026. ${divisionBadgeHtml}`;
             } else {
                 let html = `<span style="color: #ff6b6b; font-weight: 700;">⚠️ "${wordLink}" is not a valid word in Morpheme's dictionaries.</span>`;
                 if (data.count > 0) {
@@ -10784,18 +10784,18 @@ async function runFindCountSearch() {
 
                 return `
                     <tr class="finder-row" data-index="${index}" data-username="${safeUsername}" data-room-id="${safeRoomId}" data-round-number="${roundNum}" data-game-id="${gameId}" data-timestamp="${safeTimestamp}" title="Click row to watch Round Replay" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
-                        <td style="padding: 12px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
+                        <td style="padding: 10px 10px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
                             <div style="display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">
                                 <span class="finder-username-link" data-username="${safeUsername}" title="View ${safeUsername}'s mini-profile" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: underline; color: inherit;">
                                     ${flagHtml} <span style="font-weight: 600;">${safeUsername}</span>
                                 </span>
                             </div>
                         </td>
-                        <td style="padding: 12px; color: var(--muted-text); white-space: nowrap;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
-                                <span>${formattedDate}</span>
-                                <span class="finder-replay-btn" title="Watch Round Replay" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.78rem; font-weight: 600; border-radius: 6px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; cursor: pointer; transition: all 0.15s ease;">
-                                    <span style="font-size: 0.7rem;">▶</span> Replay
+                        <td style="padding: 10px 10px; color: var(--muted-text); white-space: nowrap;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap; white-space: nowrap;">
+                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">${formattedDate}</span>
+                                <span class="finder-replay-btn" title="Watch Round Replay">
+                                    <span style="font-size: 0.7rem; line-height: 1;">▶</span><span>Replay</span>
                                 </span>
                             </div>
                         </td>
