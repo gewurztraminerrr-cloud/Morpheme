@@ -3872,7 +3872,21 @@ async function _doUpdateGameState(incomingState = null) {
             }
 
             let html = '<table id="remaining-words-table">';
-            const minLen = state.current_min_length || 3;
+            let minLen = state.current_min_length || 3;
+            const wordList = state.all_words || state.previous_all_words;
+            if (wordList) {
+                const wordsArr = Array.isArray(wordList) ? wordList : Object.keys(wordList);
+                if (wordsArr.length > 0) {
+                    let actualShortest = 999;
+                    for (let idx = 0; idx < wordsArr.length; idx++) {
+                        const w = wordsArr[idx];
+                        if (w && w.length < actualShortest) actualShortest = w.length;
+                    }
+                    if (actualShortest < 999 && actualShortest > minLen) {
+                        minLen = actualShortest;
+                    }
+                }
+            }
             for (let i = minLen; i <= 30; i++) {
                 const total = totalByLenMap[i] || 0;
                 const found = foundByLenMap[i] || 0;
@@ -6530,7 +6544,20 @@ function updateParameters(state) {
     }
     const factDiff = useSp ? (sp.difficulty || state.current_difficulty || 'Medium') : (state.current_difficulty || 'Medium');
     const factBonus = (!isIntermission && state.bonus_word) ? state.bonus_word.length : (useSp ? (sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0) : ((state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0));
-    const factMinLen = (!isIntermission && state.current_min_length) ? state.current_min_length : (useSp ? (sp.min_word_length || state.current_min_length || 3) : (state.current_min_length || 3));
+    let factMinLen = (!isIntermission && state.current_min_length) ? state.current_min_length : (useSp ? (sp.min_word_length || state.current_min_length || 3) : (state.current_min_length || 3));
+    if (!isIntermission && state.all_words) {
+        const wordsArr = Array.isArray(state.all_words) ? state.all_words : Object.keys(state.all_words);
+        if (wordsArr.length > 0) {
+            let actualShortest = 999;
+            for (let idx = 0; idx < wordsArr.length; idx++) {
+                const w = wordsArr[idx];
+                if (w && w.length < actualShortest) actualShortest = w.length;
+            }
+            if (actualShortest < 999 && actualShortest > factMinLen) {
+                factMinLen = actualShortest;
+            }
+        }
+    }
     const rawDict = (!isIntermission && state.current_dictionary)
         ? state.current_dictionary
         : (useSp ? (sp.dictionary || state.current_dictionary || 'NWL') : (state.current_dictionary || 'NWL'));

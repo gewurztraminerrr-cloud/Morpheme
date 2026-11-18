@@ -321,6 +321,21 @@
 
 ---
 
+### Spinner Set & Remaining Table Truthful Min Word Length Alignment (Opening Round 1 "Min: 5L" with 0 5LWs Fix)
+- **Problem**: In opening Round 1 of game rooms (both Solo and Public rooms, e.g. Accumulative 4x6 45s shown in `fives1.jpg` and `fives2.jpg`), the Spinner Set displayed `Min: 5L` and the Remaining tab showed `5LW: 0 + 0 = 0`, even though the shortest word on the board was 6 letters (165 6-letter words). Every subsequent round after Round 1 was correct.
+- **Root Cause**:
+  1. *Opening Round Cached Board Parameter Drift*: In `create_room` (`game_room.py:4317-4385`), `board_min_l` was read from cached parameters (`r_params.get('min_word_length', 3)`). When a cached board was popped with target `min_word_length = 5`, `create_room` filtered `room.all_words` with `len(w) >= 5`. On this board, no 5-letter words existed (shortest word was 6 letters). `create_room` set `room.current_min_length = board_min_l` (5) and `room.spinner_params['min_word_length'] = board_min_l` (5) without aligning to `min(len(w) for w in room.all_words)`. In contrast, `start_next_round` (lines 8100–8128) and `start_round` (lines 5431–5459) DID align `min_word_length` to `actual_shortest`, which explains why the discrepancy only occurred on Round 1 upon opening a room.
+  2. *Secondary Board Assignment Paths*: In `_apply_kickstart_results` (`game_room.py:4488`), `_apply_pregenerated_board` (`game_room.py:2129`), `check_6x8_rescue` (`game_room.py:6496`), and `force_instant_board` (`game_room.py:8496`), minimum length was also assigned from requested parameters without checking `min(len(w) for w in board_words)`.
+  3. *Client-Side Remaining Table & Header Fallback*: In `static/js/play.js:3875`, `remaining-words-table` looped starting at `state.current_min_length || 3`. If `current_min_length` was 5 but the shortest word on the board was 6, it printed a redundant `5LW: 0 + 0 = 0 (0%)` row. In addition, `updateParameters` displayed `state.current_min_length` directly without validating against `state.all_words`.
+- **Fixes Applied**:
+  - **`game_room.py`**:
+    - In `create_room`, `_apply_kickstart_results`, `_apply_pregenerated_board`, `check_6x8_rescue`, and `force_instant_board`, added strict alignment: if `actual_shortest = min(len(w) for w in words) > min_word_length`, automatically update `board_min_l = actual_shortest`, `room.current_min_length = actual_shortest`, and `room.spinner_params['min_word_length'] = actual_shortest`.
+  - **`static/js/play.js`**:
+    - In `remaining-words-table` generation, guarded `minLen` against `actualShortest` from `state.all_words` (or `state.previous_all_words`) so the table never renders empty `0 + 0 = 0` rows for word lengths shorter than the board's shortest word.
+    - In `updateParameters`, added an active-round guard so `factMinLen` is clamped to `actualShortest` of `state.all_words`, ensuring 100% truthfulness in the Spinner Set display under all network conditions.
+
+---
+
 ## 2. Commit & Deployment Details
 - **Latest Commit ID**: `3d6aac38f97e2f5b5c97f8045e0aa06c138d6df8` (short: `3d6aac38`)
 - **Previous Commits**: `65c4cd6021fb68afe8b48672488d777f0419461b`, `6c0754b46fc9678b667b0eb6aec05f414b385602`, `a41872a020389edc6b7d5f67c0125c9935c3644e`, `a406cd5e1b61ace30014dfba46920220140fa184`, `658ba7632823cd934e51219a2026bc71a029e65f`

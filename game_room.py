@@ -2126,7 +2126,12 @@ class GameRoom:
             self.spinner_params['dictionary'] = orig_dict or e_params.get('dictionary', 'NWL')
             self.spinner_params['difficulty'] = e_params.get('difficulty', 'Medium')
             self.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
-            self.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
+            _pre_min = e_params.get('min_word_length', 3)
+            if e_words:
+                _act_min = min(len(w) for w in e_words)
+                if _act_min > _pre_min:
+                    _pre_min = _act_min
+            self.spinner_params['min_word_length'] = _pre_min
             self.spinner_params['use_added_words'] = source_sp.get('use_added_words', e_params.get('use_added_words', False))
             self.spinner_params['bonus_word_length'] = len(e_bonus_word) if e_bonus_word else e_params.get('bonus_word_len', 6)
             if e_tr:
@@ -4327,6 +4332,13 @@ class RoomManager:
                             room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
                             room.all_words = set(room.all_words_paths.keys())
 
+                            # Guarantee factual min_word_length: Align to actual shortest word on this board
+                            if room.all_words:
+                                actual_shortest = min(len(w) for w in room.all_words)
+                                if actual_shortest > board_min_l:
+                                    print(f"[RoomManager] create_room aligned min_word_length from {board_min_l} to factual {actual_shortest}.")
+                                    board_min_l = actual_shortest
+
                             # Derive truthful word count range label
                             wc_cnt = len(room.all_words)
                             wc_lbl = SpinnerSet.get_factchecked_wc_range(wc_cnt, use_added_words=raw_aw, dictionary=raw_dict)
@@ -4360,6 +4372,7 @@ class RoomManager:
                             wc_lbl = room.spinner_params.get('word_count_range', wc_lbl)
 
                             room.current_min_length = board_min_l
+                            room.current_difficulty = _create_diff_lbl
                             room.current_board_format = r_fmt or 'Normal'
                             room.current_word_count_range = wc_lbl
                             room.current_dictionary = room.spinner_params.get('dictionary', raw_dict)
@@ -4385,9 +4398,11 @@ class RoomManager:
 
                             room.bonus_word = str(bw_candidate or '').upper().strip()
                             room.previous_bonus_word = room.bonus_word
-                            # CRITICAL: Always keep spinner_params bonus_word_length and word_count_range strictly synchronized with the actual board!
+                            # CRITICAL: Always keep spinner_params bonus_word_length, min_word_length, and word_count_range strictly synchronized with the actual board!
                             room.spinner_params['bonus_word_length'] = len(room.bonus_word)
                             room.spinner_params['word_count_range'] = wc_lbl
+                            room.spinner_params['min_word_length'] = board_min_l
+                            room.current_min_length = board_min_l
                             import copy
                             room.frozen_revealed_params = copy.deepcopy(room.spinner_params)
                             room.board = r_board
@@ -4480,6 +4495,14 @@ class RoomManager:
                 actual_shortest = min(len(w) for w in e_words)
                 room.spinner_params['min_word_length'] = actual_shortest
                 m_len = actual_shortest
+
+        # Guarantee factual min_word_length: Align to actual shortest word on this board
+        if e_words:
+            actual_shortest = min(len(w) for w in e_words)
+            if actual_shortest > m_len:
+                print(f"[RoomManager] _apply_kickstart_results aligned min_word_length from {m_len} to factual {actual_shortest}.")
+                m_len = actual_shortest
+                room.spinner_params['min_word_length'] = actual_shortest
 
         room.current_min_length = m_len
         room.current_board_format = 'Valued Letters' if is_24h else (e_params.get('board_format') if e_params else e_fmt)
@@ -6470,7 +6493,12 @@ class RoomManager:
                         room.spinner_params['difficulty'] = cparams.get('difficulty') or (room.spinner_params.get('difficulty') if room.spinner_params else 'Medium')
                         room.spinner_params['word_count_range'] = wc_label
                         room.spinner_params['board_format'] = cfmt or (room.spinner_params.get('board_format') if room.spinner_params else 'Normal')
-                        room.spinner_params['min_word_length'] = cparams.get('min_word_length') or (room.spinner_params.get('min_word_length') if room.spinner_params else 3)
+                        _res_min = cparams.get('min_word_length') or (room.spinner_params.get('min_word_length') if room.spinner_params else 3)
+                        if cwords:
+                            _act_min = min(len(w) for w in cwords)
+                            if _act_min > _res_min:
+                                _res_min = _act_min
+                        room.spinner_params['min_word_length'] = _res_min
                         room.spinner_params['use_added_words'] = use_aw_val
                         room.spinner_params['bonus_word_length'] = cparams.get('bonus_word_len', len(cbonus_word) if cbonus_word else 6)
                         
@@ -7822,15 +7850,21 @@ class RoomManager:
                             clean_fd = str(final_dict).replace('+ AW', '').replace('+AW', '').strip()
                             final_dict = f"{clean_fd} + AW" if final_aw else clean_fd
 
+                            _e_min = e_params.get('min_word_length', 3)
+                            if e_words:
+                                _act_s = min(len(w) for w in e_words)
+                                if _act_s > _e_min:
+                                    _e_min = _act_s
+
                             room.spinner_params['dictionary'] = final_dict
                             room.spinner_params['board_format'] = e_params.get('board_format', 'Normal')
-                            room.spinner_params['min_word_length'] = e_params.get('min_word_length', 3)
+                            room.spinner_params['min_word_length'] = _e_min
                             room.spinner_params['use_added_words'] = final_aw
                             room.spinner_params['bonus_word_length'] = len(e_bonus_word) if e_bonus_word else e_params.get('bonus_word_len', 6)
                             
                             room.current_dictionary = final_dict
                             room.current_board_format = e_params.get('board_format', 'Normal')
-                            room.current_min_length = e_params.get('min_word_length', 3)
+                            room.current_min_length = _e_min
                             room.use_added_words = final_aw
                         
                         room.next_round_board = e_board
@@ -8477,6 +8511,11 @@ class RoomManager:
                 room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and _val.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
                 room.all_words = set(room.all_words_paths.keys())
                 room.complete_words = list(room.all_words)
+                if room.all_words:
+                    actual_shortest = min(len(w) for w in room.all_words)
+                    if actual_shortest > board_min_l:
+                        print(f"[RoomManager] force_instant_board aligned min_word_length from {board_min_l} to factual {actual_shortest}.")
+                        board_min_l = actual_shortest
                 
                 bw_candidate = r_bonus_word
                 _fib_bw_l = int(room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(getattr(room, 'spinner_params', None), dict) else 8
