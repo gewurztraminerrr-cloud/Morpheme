@@ -12852,6 +12852,8 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
         box-sizing: border-box !important;
         width: 100% !important;
         max-width: 100% !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
     }
 
     #tool-find-count .combo-control-panel {
@@ -12953,6 +12955,7 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
         overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
+        border-radius: 12px !important;
     }
 
     #seq-list-results table,
@@ -16101,6 +16104,8 @@ body.theme-white .find-count-word-link:hover,
         max-width: 100% !important;
         box-sizing: border-box !important;
         margin-bottom: 12px !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
     }
 
     #page-tools #tool-lists .combo-control-panel .input-row,
@@ -16190,6 +16195,7 @@ body.theme-white .find-count-word-link:hover,
         padding: 0 !important;
         padding-bottom: 10px !important;
         box-sizing: border-box !important;
+        border-radius: 12px !important;
     }
 
     #tool-lists .list-column {
@@ -16200,6 +16206,12 @@ body.theme-white .find-count-word-link:hover,
         margin: 0 !important;
         box-sizing: border-box !important;
         overflow: hidden !important;
+        border-radius: 12px !important;
+    }
+
+    #tool-lists .list-column h3 {
+        border-top-left-radius: 12px !important;
+        border-top-right-radius: 12px !important;
     }
 
     #tool-lists .list-scroll-area-wrapper {

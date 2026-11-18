@@ -542,12 +542,15 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
 [class*="theme-light-"] .combo-control-panel {
     background: rgba(0, 0, 0, 0.04) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 12px !important;
+    overflow: hidden;
 }
 
 /* ==========================================================================
    Tools: All Content Panels & Control Panels for White Layouts on Desktop/Laptop Only
    ========================================================================== */
 @media (min-width: 901px) {
+    /* 1. Rounded Card Panels on Desktop/Laptop for White Layouts */
     body:not(.is-mobile).theme-white #page-tools .combo-control-panel,
     body:not(.is-mobile)[class*="theme-white"] #page-tools .combo-control-panel,
     body.is-desktop.theme-white #page-tools .combo-control-panel,
@@ -573,15 +576,10 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     body.is-desktop.theme-white #page-tools .wotd-container,
     body.is-desktop[class*="theme-white"] #page-tools .wotd-container,
 
-    body:not(.is-mobile).theme-white #page-tools .combo-results-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools .combo-results-container,
-    body.is-desktop.theme-white #page-tools .combo-results-container,
-    body.is-desktop[class*="theme-white"] #page-tools .combo-results-container,
-
-    body:not(.is-mobile).theme-white #page-tools #combo-results,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools #combo-results,
-    body.is-desktop.theme-white #page-tools #combo-results,
-    body.is-desktop[class*="theme-white"] #page-tools #combo-results,
+    body:not(.is-mobile).theme-white #page-tools .combo-unified-panel,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .combo-unified-panel,
+    body.is-desktop.theme-white #page-tools .combo-unified-panel,
+    body.is-desktop[class*="theme-white"] #page-tools .combo-unified-panel,
 
     body:not(.is-mobile).theme-white #page-tools #tool-combo .result-section,
     body:not(.is-mobile)[class*="theme-white"] #page-tools #tool-combo .result-section,
@@ -598,40 +596,20 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     body.is-desktop.theme-white #page-tools .seq-results-container,
     body.is-desktop[class*="theme-white"] #page-tools .seq-results-container,
 
-    body:not(.is-mobile).theme-white #page-tools #seq-results-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools #seq-results-container,
-    body.is-desktop.theme-white #page-tools #seq-results-container,
-    body.is-desktop[class*="theme-white"] #page-tools #seq-results-container,
-
     body:not(.is-mobile).theme-white #page-tools .subanagrams-game-area,
     body:not(.is-mobile)[class*="theme-white"] #page-tools .subanagrams-game-area,
     body.is-desktop.theme-white #page-tools .subanagrams-game-area,
     body.is-desktop[class*="theme-white"] #page-tools .subanagrams-game-area,
-
-    body:not(.is-mobile).theme-white #page-tools #sub-results-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools #sub-results-container,
-    body.is-desktop.theme-white #page-tools #sub-results-container,
-    body.is-desktop[class*="theme-white"] #page-tools #sub-results-container,
 
     body:not(.is-mobile).theme-white #page-tools .sub-practice-interactive-container,
     body:not(.is-mobile)[class*="theme-white"] #page-tools .sub-practice-interactive-container,
     body.is-desktop.theme-white #page-tools .sub-practice-interactive-container,
     body.is-desktop[class*="theme-white"] #page-tools .sub-practice-interactive-container,
 
-    body:not(.is-mobile).theme-white #page-tools .lists-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools .lists-container,
-    body.is-desktop.theme-white #page-tools .lists-container,
-    body.is-desktop[class*="theme-white"] #page-tools .lists-container,
-
     body:not(.is-mobile).theme-white #page-tools .list-column,
     body:not(.is-mobile)[class*="theme-white"] #page-tools .list-column,
     body.is-desktop.theme-white #page-tools .list-column,
     body.is-desktop[class*="theme-white"] #page-tools .list-column,
-
-    body:not(.is-mobile).theme-white #page-tools .list-scroll-area,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools .list-scroll-area,
-    body.is-desktop.theme-white #page-tools .list-scroll-area,
-    body.is-desktop[class*="theme-white"] #page-tools .list-scroll-area,
 
     body:not(.is-mobile).theme-white #page-tools .unscramble-game-area,
     body:not(.is-mobile)[class*="theme-white"] #page-tools .unscramble-game-area,
@@ -653,20 +631,10 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     body.is-desktop.theme-white #page-tools .history-table-wrapper,
     body.is-desktop[class*="theme-white"] #page-tools .history-table-wrapper,
 
-    body:not(.is-mobile).theme-white #page-tools #find-count-results-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools #find-count-results-container,
-    body.is-desktop.theme-white #page-tools #find-count-results-container,
-    body.is-desktop[class*="theme-white"] #page-tools #find-count-results-container,
-
     body:not(.is-mobile).theme-white #page-tools #timer-display-container,
     body:not(.is-mobile)[class*="theme-white"] #page-tools #timer-display-container,
     body.is-desktop.theme-white #page-tools #timer-display-container,
     body.is-desktop[class*="theme-white"] #page-tools #timer-display-container,
-
-    body:not(.is-mobile).theme-white #page-tools .new-users-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools .new-users-container,
-    body.is-desktop.theme-white #page-tools .new-users-container,
-    body.is-desktop[class*="theme-white"] #page-tools .new-users-container,
 
     body:not(.is-mobile).theme-white #page-tools .new-users-table-container,
     body:not(.is-mobile)[class*="theme-white"] #page-tools .new-users-table-container,
@@ -689,8 +657,68 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     body.is-desktop[class*="theme-white"] #page-tools .store-item {
         background: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
         color: var(--text-primary) !important;
+    }
+
+    /* 2. Transparent Layout Containers (Prevent Sharp Backgrounds/Borders in White Layouts) */
+    body:not(.is-mobile).theme-white #page-tools .lists-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .lists-container,
+    body.is-desktop.theme-white #page-tools .lists-container,
+    body.is-desktop[class*="theme-white"] #page-tools .lists-container,
+
+    body:not(.is-mobile).theme-white #page-tools .list-scroll-area,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .list-scroll-area,
+    body.is-desktop.theme-white #page-tools .list-scroll-area,
+    body.is-desktop[class*="theme-white"] #page-tools .list-scroll-area,
+
+    body:not(.is-mobile).theme-white #page-tools .combo-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .combo-results-container,
+    body.is-desktop.theme-white #page-tools .combo-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools .combo-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools #combo-results,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #combo-results,
+    body.is-desktop.theme-white #page-tools #combo-results,
+    body.is-desktop[class*="theme-white"] #page-tools #combo-results,
+
+    body:not(.is-mobile).theme-white #page-tools #seq-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #seq-results-container,
+    body.is-desktop.theme-white #page-tools #seq-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools #seq-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools #sub-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #sub-results-container,
+    body.is-desktop.theme-white #page-tools #sub-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools #sub-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools #find-count-results-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools #find-count-results-container,
+    body.is-desktop.theme-white #page-tools #find-count-results-container,
+    body.is-desktop[class*="theme-white"] #page-tools #find-count-results-container,
+
+    body:not(.is-mobile).theme-white #page-tools .new-users-container,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .new-users-container,
+    body.is-desktop.theme-white #page-tools .new-users-container,
+    body.is-desktop[class*="theme-white"] #page-tools .new-users-container {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 12px !important;
+    }
+
+    /* 3. Rounded Header within List Column */
+    body:not(.is-mobile).theme-white #page-tools .list-column h3,
+    body:not(.is-mobile)[class*="theme-white"] #page-tools .list-column h3,
+    body.is-desktop.theme-white #page-tools .list-column h3,
+    body.is-desktop[class*="theme-white"] #page-tools .list-column h3 {
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        color: #0f172a !important;
+        border-top-left-radius: 12px !important;
+        border-top-right-radius: 12px !important;
     }
 
     /* Polished High-Contrast Details on White Layouts for Tools on Desktop/Laptop */
@@ -792,18 +820,31 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     }
 }
 [class*="theme-light-"] .subanagrams-game-area,
-[class*="theme-light-"] .seq-results-container,
-[class*="theme-light-"] #sub-results-container,
-[class*="theme-light-"] #seq-results-container,
 [class*="theme-light-"] .random-word-container,
 [class*="theme-light-"] .wotd-container,
-[class*="theme-light-"] .combo-results-container,
-[class*="theme-light-"] .lists-container,
-[class*="theme-light-"] .list-column,
-[class*="theme-light-"] .list-scroll-area {
+[class*="theme-light-"] .list-column {
     background: rgba(0, 0, 0, 0.04) !important;
-    border-color: rgba(0, 0, 0, 0.12) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
     color: var(--text-primary) !important;
+}
+
+[class*="theme-light-"] .list-column h3 {
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+}
+
+[class*="theme-light-"] .lists-container,
+[class*="theme-light-"] .list-scroll-area,
+[class*="theme-light-"] .combo-results-container,
+[class*="theme-light-"] #combo-results,
+[class*="theme-light-"] #sub-results-container,
+[class*="theme-light-"] #seq-results-container,
+[class*="theme-light-"] #find-count-results-container {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 /* Base Combo Checker Main Tabs */

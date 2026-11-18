@@ -3464,6 +3464,8 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
     body[class*="theme-light-"] #mobile-panel-rooms,
     body[class*="theme-light-"] .active-rooms-panel {
         border: 1px solid #000000 !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
     }
 
     /* Default color layout on laptops/desktops: razor-thin (1px) border surrounding the ACTIVE ROOMS panel */
@@ -3484,8 +3486,18 @@ body.is-mobile #mobile-panel-rooms .mobile-lobby-spacer {
     }
 
     [class*="theme-white"] .active-rooms-controls-row .create-room-panel,
-    [class*="theme-white"] .active-rooms-panel .create-room-panel {
+    [class*="theme-white"] .active-rooms-panel .create-room-panel,
+    [class*="theme-light-"] .active-rooms-controls-row .create-room-panel,
+    [class*="theme-light-"] .active-rooms-panel .create-room-panel {
         border: 2px solid rgba(var(--text-primary-rgb), 0.55) !important;
+        border-radius: 10px !important;
+    }
+
+    [class*="theme-white"] .active-rooms-panel #selected-game-info,
+    [class*="theme-white"] #mobile-panel-rooms #selected-game-info,
+    [class*="theme-light-"] .active-rooms-panel #selected-game-info,
+    [class*="theme-light-"] #mobile-panel-rooms #selected-game-info {
+        border-radius: 10px !important;
     }
 }
 
