@@ -53,19 +53,26 @@ def deduplicate_word_tallies(base_dir=None):
         
         is_dupe = False
         if clean_entries:
-            # Check against the last entry in the same room
-            for prev in reversed(clean_entries[-5:]):
+            curr_tally = entry.get('tally', {})
+            # Check against recent clean entries in the same room
+            for prev in reversed(clean_entries[-20:]):
                 if prev.get('room_id') == entry.get('room_id'):
-                    if prev.get('tally') == entry.get('tally') and entry.get('tally'):
-                        try:
-                            t_curr = datetime.datetime.fromisoformat(entry['timestamp'])
-                            t_prev = datetime.datetime.fromisoformat(prev['timestamp'])
-                            diff = abs((t_curr - t_prev).total_seconds())
-                            if diff <= 120:
+                    try:
+                        t_curr = datetime.datetime.fromisoformat(entry['timestamp'])
+                        t_prev = datetime.datetime.fromisoformat(prev['timestamp'])
+                        diff = abs((t_curr - t_prev).total_seconds())
+                        if diff <= 120:
+                            prev_tally = prev.get('tally', {})
+                            # 1. Exact match duplicate
+                            if prev_tally == curr_tally and curr_tally:
                                 is_dupe = True
                                 break
-                        except Exception:
-                            pass
+                            # 2. Subset duplicate (un-cleared words re-tallied in next round)
+                            if curr_tally and prev_tally and all(w in prev_tally and curr_tally[w] <= prev_tally[w] for w in curr_tally):
+                                is_dupe = True
+                                break
+                    except Exception:
+                        pass
                     break
         
         if is_dupe:
@@ -130,7 +137,7 @@ def deduplicate_word_tallies(base_dir=None):
 
         # --- 4. Verify target words ---
         print("\n=== Verification ===")
-        for test_w in ['SHARKLIKE', 'ANIMAL', 'LAMINA', 'REMISSION', 'POLITESSE', 'CRATERED']:
+        for test_w in ['FLARE', 'SHARKLIKE', 'ANIMAL', 'LAMINA', 'REMISSION', 'POLITESSE', 'CRATERED']:
             info = td.get_word_division_info(test_w)
             wf_rows = c.execute("""
                 SELECT wf.timestamp, u.username, u.country_flag, wf.room_id, wf.round_number
