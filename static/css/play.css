@@ -1729,6 +1729,15 @@ body[class*="theme-light-"] .board-panel.low-time-warning {
     display: inline-block;
 }
 
+.timer-value.low-time-warning,
+.board-panel.low-time-warning .timer-value,
+[class*="theme-white"] .timer-value.low-time-warning,
+[class*="theme-white"] .board-panel.low-time-warning .timer-value,
+[class*="theme-light-"] .timer-value.low-time-warning,
+[class*="theme-light-"] .board-panel.low-time-warning .timer-value {
+    color: #ef4444 !important;
+}
+
 .timer-controls-group {
     display: inline-flex !important;
     flex-direction: row !important;

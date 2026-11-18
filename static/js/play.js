@@ -1547,6 +1547,17 @@ function clearGameUIAndCache() {
     selectedPlayerUsername = null;
     playersFilterMode = 'everyone';
     document.body.classList.remove('hide-player-filter-buttons');
+
+    const timerVal = document.getElementById('timer-value');
+    if (timerVal) {
+        timerVal.classList.remove('low-time-warning');
+        timerVal.style.removeProperty('color');
+        timerVal.style.color = '';
+    }
+    const boardPanelEl = document.getElementById('play-panel-board') || document.querySelector('.board-panel');
+    if (boardPanelEl) boardPanelEl.classList.remove('low-time-warning');
+    const headerEl = document.querySelector('.play-header');
+    if (headerEl) headerEl.classList.remove('low-time-warning');
     
     // 2. Reset DOM elements to clean placeholders
     document.querySelectorAll('.tab-content').forEach(tc => {
@@ -1674,6 +1685,9 @@ function setTimerWaitingState(isWaiting) {
     const timerLabel = document.querySelector('.timer-label');
     if (isWaiting) {
         if (timerVal) {
+            timerVal.classList.remove('low-time-warning');
+            timerVal.style.removeProperty('color');
+            timerVal.style.color = '';
             if (!timerVal.innerHTML.includes('WAIT')) {
                 timerVal.innerHTML = 'WAIT<span class="wait-dot">.</span><span class="wait-dot">.</span><span class="wait-dot">.</span>';
                 
@@ -7027,6 +7041,14 @@ function syncTimerWithServer(state, tBefore = null, tAfter = null) {
         if (cachedTimerValueEl) {
             cachedTimerValueEl.textContent = disp;
             cachedTimerValueEl.style.fontVariantNumeric = 'tabular-nums';
+            if (secs <= 10 && secs > 0) {
+                cachedTimerValueEl.classList.add('low-time-warning');
+                cachedTimerValueEl.style.setProperty('color', '#ef4444', 'important');
+            } else {
+                cachedTimerValueEl.classList.remove('low-time-warning');
+                cachedTimerValueEl.style.removeProperty('color');
+                cachedTimerValueEl.style.color = '';
+            }
         }
         const timerLabel = document.querySelector('.timer-label');
         if (timerLabel) {
@@ -7484,9 +7506,12 @@ function updateLocalTimer() {
             setTimerWaitingState(false);
 
             // Low time visual for text (User Request)
-            if (remaining <= 10 && remaining > 0) {
-                cachedTimerValueEl.style.color = '#ef4444';
+            if ((remaining <= 10 || seconds <= 10) && seconds > 0) {
+                cachedTimerValueEl.classList.add('low-time-warning');
+                cachedTimerValueEl.style.setProperty('color', '#ef4444', 'important');
             } else {
+                cachedTimerValueEl.classList.remove('low-time-warning');
+                cachedTimerValueEl.style.removeProperty('color');
                 cachedTimerValueEl.style.color = '';
             }
         }
@@ -7499,7 +7524,7 @@ function updateLocalTimer() {
     }
     if (cachedBoardPanelEl) {
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
-        if (remaining <= 10 && remaining > 0 && currentState === 'active') {
+        if ((remaining <= 10 || seconds <= 10) && seconds > 0 && currentState === 'active') {
             cachedBoardPanelEl.classList.add('low-time-warning');
             if (headerEl && (window.innerWidth <= 992 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
                 headerEl.classList.add('low-time-warning');
@@ -7818,8 +7843,11 @@ function updateSpecialMatchTimer(seconds) {
 
         // Low time visual for text (red at <= 10s)
         if (seconds <= 10 && seconds > 0) {
-            timerEl.style.color = '#ef4444';
+            timerEl.classList.add('low-time-warning');
+            timerEl.style.setProperty('color', '#ef4444', 'important');
         } else {
+            timerEl.classList.remove('low-time-warning');
+            timerEl.style.removeProperty('color');
             timerEl.style.color = '';
         }
     }
@@ -14104,19 +14132,13 @@ window.initPrivateMatchPlay = function () {
 function startPrivateMatchTimer(endTime) {
     if (timerInterval) clearInterval(timerInterval);
 
-    const timerEl = document.getElementById('timer-value');
     console.log('[play.js] Starting private match timer for endTime:', endTime);
 
     // Update immediately to prevent initial visual delay of 1s
     const updateImmediate = () => {
         const now = Date.now() / 1000;
-        const remaining = Math.max(0, Math.floor(endTime - now));
-        const mins = Math.floor(remaining / 60);
-        const secs = remaining % 60;
-        if (timerEl) {
-            timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-            setTimerWaitingState(false);
-        }
+        const remaining = Math.max(0, Math.ceil(endTime - now));
+        updateSpecialMatchTimer(remaining);
         return remaining;
     };
 

@@ -336,6 +336,25 @@
 
 ---
 
+### Solo Mode Low Time Timer Text Red Color (`<= 10s`)
+- **Problem**: When playing Solo mode, the timer text failed to turn red when the time remaining was $\le$ 10 seconds, in contrast to public rooms where the timer text visibly turns red at $\le$ 10 seconds.
+- **Root Cause**:
+  1. *Private Match Timer Loop*: In `startPrivateMatchTimer` (`static/js/play.js:14104`), the countdown loop manually updated `timerEl.textContent = ...` without ever setting `timerEl.style.color = '#ef4444'` or invoking `updateSpecialMatchTimer(remaining)`.
+  2. *Strict Sub-second Boundary Condition in `updateLocalTimer`*: In `updateLocalTimer` (`static/js/play.js:7487`), the condition was strictly `remaining <= 10 && remaining > 0`. Because the display is driven by `seconds = Math.ceil(remaining)`, when the timer showed `0:10` (e.g. `remaining` was `10.05`), `remaining <= 10` evaluated to `false`, leaving the timer text uncolored until dropping below `10.00`.
+  3. *Light & White Theme CSS Specificity Override*: In `static/css/style.css:1660`, `[class*="theme-white"] .timer-value` and `[class*="theme-light-"] .timer-value` declared `color: #000 !important;`. Setting an inline style `style.color = '#ef4444'` without `!important` was completely overridden in light/white layouts.
+  4. *Missing Server-Sync Coloring*: `syncTimerWithServer` updated `#timer-value` text without reapplying `#ef4444` when `secs <= 10`.
+- **Fixes Applied**:
+  - **`static/js/play.js`**:
+    - Connected `startPrivateMatchTimer` directly to `updateSpecialMatchTimer(remaining)`, ensuring private match turns and solo sessions use the unified low-time text styling and board panel warning pulse.
+    - Updated `updateSpecialMatchTimer`, `updateLocalTimer`, and `syncTimerWithServer` to check `(remaining <= 10 || seconds <= 10) && seconds > 0`.
+    - Applied `.low-time-warning` class and `style.setProperty('color', '#ef4444', 'important')` on `#timer-value` during low-time, cleanly clearing them when waiting or when timer $> 10$s.
+    - Added timer cleanup in `clearGameUIAndCache` and `setTimerWaitingState`.
+  - **`static/css/play.css` & `static/css/style.css`**:
+    - Added `.timer-value.low-time-warning` rules with `color: #ef4444 !important;` across all themes and light/white theme classes.
+    - Scoped `[class*="theme-white"] .timer-value:not(.low-time-warning)` and `[class*="theme-light-"] .timer-value:not(.low-time-warning)` so the black text override never blocks the red low-time warning.
+
+---
+
 ## 2. Commit & Deployment Details
 - **Latest Commit ID**: `3d6aac38f97e2f5b5c97f8045e0aa06c138d6df8` (short: `3d6aac38`)
 - **Previous Commits**: `65c4cd6021fb68afe8b48672488d777f0419461b`, `6c0754b46fc9678b667b0eb6aec05f414b385602`, `a41872a020389edc6b7d5f67c0125c9935c3644e`, `a406cd5e1b61ace30014dfba46920220140fa184`, `658ba7632823cd934e51219a2026bc71a029e65f`

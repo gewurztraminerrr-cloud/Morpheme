@@ -1655,11 +1655,20 @@ body:not(.is-mobile) .tool-word-badges-row,
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-[class*="theme-white"] .timer-value,
-[class*="theme-light-"] .timer-value {
+[class*="theme-white"] .timer-value:not(.low-time-warning),
+[class*="theme-light-"] .timer-value:not(.low-time-warning) {
     color: #000 !important;
     /* Pure black for maximum readability in bright settings */
     text-shadow: none;
+}
+
+.timer-value.low-time-warning,
+.board-panel.low-time-warning .timer-value,
+[class*="theme-white"] .timer-value.low-time-warning,
+[class*="theme-white"] .board-panel.low-time-warning .timer-value,
+[class*="theme-light-"] .timer-value.low-time-warning,
+[class*="theme-light-"] .board-panel.low-time-warning .timer-value {
+    color: #ef4444 !important;
 }
 
 /* Tournament Visibility for Light Themes */
