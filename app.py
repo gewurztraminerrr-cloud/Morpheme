@@ -13597,9 +13597,6 @@ def tools_reverse_dictionary():
     final_highlight_terms.update(terms_set)
     matched_terms = [t for t in sorted(final_highlight_terms, key=lambda x: -len(x)) if len(t) >= 2]
 
-    # Deliver up to 2,500 highest-relevance results in payload for instant transmission
-    capped_matches = matches[:2500]
-
     return jsonify({
         'query': query,
         'mode': mode,
@@ -13607,7 +13604,7 @@ def tools_reverse_dictionary():
         'length': length_filter or 'all',
         'count': len(matches),
         'length_counts': length_counts,
-        'results': capped_matches,
+        'results': matches,
         'matched_terms': matched_terms
     })
 

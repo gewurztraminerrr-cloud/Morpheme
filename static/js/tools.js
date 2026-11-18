@@ -12701,7 +12701,7 @@ window.renderReverseDictNextChunk = function() {
     }
 };
 
-window.applyReverseDictLengthFilter = async function() {
+window.applyReverseDictLengthFilter = function() {
     const lengthSelect = document.getElementById('reverse-dict-length');
     const countText = document.getElementById('reverse-dict-count-text');
     const table = document.getElementById('reverse-dict-table');
@@ -12711,9 +12711,7 @@ window.applyReverseDictLengthFilter = async function() {
 
     const allResults = window._reverseDictAllResults;
     const query = window._reverseDictLastQuery || '';
-    const mode = window._reverseDictLastMode || 'similar';
-    const dictFilter = window._reverseDictLastDict || 'all';
-    const totalServerCount = window._reverseDictTotalCount || (allResults ? allResults.length : 0);
+    const totalCount = window._reverseDictTotalCount || (allResults ? allResults.length : 0);
     const lengthCounts = window._reverseDictLengthCounts || {};
 
     if (!Array.isArray(allResults) || allResults.length === 0) {
@@ -12722,40 +12720,10 @@ window.applyReverseDictLengthFilter = async function() {
 
     const selectedLength = lengthSelect ? lengthSelect.value : 'all';
 
-    // If a specific length was selected, check if we need to fetch all results for this specific length from server
     if (selectedLength !== 'all') {
         const targetLen = parseInt(selectedLength, 10);
-        const expectedCount = lengthCounts[targetLen] || 0;
-        const localMatches = allResults.filter(item => (item.len || (item.word ? item.word.length : 0)) === targetLen);
-
-        // If server has more matches for this length than we have in our top-2500 local slice
-        if (expectedCount > localMatches.length && totalServerCount > allResults.length) {
-            try {
-                if (countText) {
-                    countText.innerHTML = `<span class="reverse-dict-searching-spinner" style="display:inline-block; vertical-align:middle; margin-right:6px;"></span> Loading all ${expectedCount.toLocaleString()} words (${targetLen} letters)...`;
-                }
-                const url = `/api/tools/reverse-dictionary?query=${encodeURIComponent(query)}&mode=${encodeURIComponent(mode)}&dict=${encodeURIComponent(dictFilter)}&len=${targetLen}`;
-                const res = await fetch(url);
-                const data = await res.json();
-                if (res.ok && data.results) {
-                    window._reverseDictFilteredList = data.results.slice().sort((a, b) => String(a.word || '').localeCompare(String(b.word || '')));
-                    window._reverseDictRenderedIndex = 0;
-
-                    if (countText) {
-                        countText.innerHTML = `Found <strong style="color: #38bdf8;">${window._reverseDictFilteredList.length.toLocaleString()}</strong> word${window._reverseDictFilteredList.length === 1 ? '' : 's'} (${targetLen} letters) for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${totalServerCount.toLocaleString()} total)</span>`;
-                    }
-                    if (placeholder) placeholder.style.display = 'none';
-                    if (table) table.style.display = 'table';
-                    window.renderReverseDictNextChunk();
-                    if (scrollArea) scrollArea.scrollTop = 0;
-                    return;
-                }
-            } catch (e) {
-                console.warn('[ReverseDictionary] Error fetching length-specific results:', e);
-            }
-        }
-
-        window._reverseDictFilteredList = localMatches.slice().sort((a, b) => String(a.word || '').localeCompare(String(b.word || '')));
+        window._reverseDictFilteredList = allResults.filter(item => (item.len || (item.word ? item.word.length : 0)) === targetLen)
+            .sort((a, b) => String(a.word || '').localeCompare(String(b.word || '')));
     } else {
         window._reverseDictFilteredList = allResults.slice().sort((a, b) => {
             const lenA = a.len || (a.word ? a.word.length : 0);
@@ -12769,7 +12737,7 @@ window.applyReverseDictLengthFilter = async function() {
 
     if (filtered.length === 0) {
         if (countText) {
-            countText.innerHTML = `No words of length <strong style="color: #38bdf8;">${selectedLength}</strong> found for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${totalServerCount.toLocaleString()} total)</span>`;
+            countText.innerHTML = `No words of length <strong style="color: #38bdf8;">${selectedLength}</strong> found for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${totalCount.toLocaleString()} total)</span>`;
         }
         if (table) table.style.display = 'none';
         if (tbody) tbody.innerHTML = '';
@@ -12779,7 +12747,7 @@ window.applyReverseDictLengthFilter = async function() {
                 <div style="font-size: 2rem; margin-bottom: 8px;">🔍</div>
                 <div style="font-size: 1rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px;">No Words with ${selectedLength} Letters</div>
                 <div style="font-size: 0.85rem; color: var(--muted-text); max-width: 440px; line-height: 1.45;">
-                    None of the ${totalServerCount.toLocaleString()} matching words have exactly ${selectedLength} letters. Select another length or choose <strong>All Lengths</strong>.
+                    None of the ${totalCount.toLocaleString()} matching words have exactly ${selectedLength} letters. Select another length or choose <strong>All Lengths</strong>.
                 </div>
             `;
         }
@@ -12793,11 +12761,9 @@ window.applyReverseDictLengthFilter = async function() {
     // Update status counter
     if (countText) {
         if (selectedLength === 'all') {
-            const cappedNote = totalServerCount > allResults.length ? ` <span style="color: var(--muted-text); font-size: 0.85em;">(showing top ${allResults.length.toLocaleString()}; pick a letter length above to explore all)</span>` : '';
-            countText.innerHTML = `Found <strong style="color: #38bdf8;">${totalServerCount.toLocaleString()}</strong> word${totalServerCount === 1 ? '' : 's'} for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>${cappedNote}`;
+            countText.innerHTML = `Found <strong style="color: #38bdf8;">${totalCount.toLocaleString()}</strong> word${totalCount === 1 ? '' : 's'} for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong>`;
         } else {
-            const displayCount = (lengthCounts && lengthCounts[selectedLength]) ? lengthCounts[selectedLength] : filtered.length;
-            countText.innerHTML = `Found <strong style="color: #38bdf8;">${displayCount.toLocaleString()}</strong> word${displayCount === 1 ? '' : 's'} (${selectedLength} letters) for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${totalServerCount.toLocaleString()} total)</span>`;
+            countText.innerHTML = `Found <strong style="color: #38bdf8;">${filtered.length.toLocaleString()}</strong> word${filtered.length === 1 ? '' : 's'} (${selectedLength} letters) for <strong style="color: var(--text-primary);">&ldquo;${escapeHtml(query)}&rdquo;</strong> <span style="color: var(--muted-text); font-size: 0.85em;">(${totalCount.toLocaleString()} total)</span>`;
         }
     }
 
