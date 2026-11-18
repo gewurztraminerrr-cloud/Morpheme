@@ -498,7 +498,9 @@ const unlockAudio = () => {
             if (!tripleMusic.src || !tripleMusic.src.includes('/music/triple.mp3')) {
                 tripleMusic.src = tripleMusic.getAttribute('data-src') || '/music/triple.mp3';
             }
-            tripleMusic.load();
+            if (tripleMusic.paused && tripleMusic.currentTime === 0) {
+                tripleMusic.load();
+            }
         } catch (e) {}
     }
     ['click', 'touchstart', 'pointerdown', 'keydown'].forEach(evt => {
@@ -1511,6 +1513,7 @@ function clearGameUIAndCache() {
         tripleMusic.pause();
     }
     window._tripleMusicActiveRound = false;
+    window._tripleMusicSessionActive = false;
     if (typeof BoardAudio !== 'undefined' && typeof BoardAudio.suspend === 'function') {
         BoardAudio.suspend();
     }
@@ -2232,6 +2235,10 @@ async function _doUpdateGameState(incomingState = null) {
 
         safelyTransposeState(state);
 
+        // Capture previous state for transition logic BEFORE updating window.lastGameState
+        const previousState = window.lastGameState;
+        window.lastGameState = state;  // Store immediately so timer/music updates see current state!
+
         // Immediate Timer Synchronization:
         // Sync and tick local timer immediately upon receiving authoritative state from server.
         // Guarantees zero-latency countdown resumption and clears any lingering "WAIT..." state
@@ -2282,8 +2289,7 @@ async function _doUpdateGameState(incomingState = null) {
             runBoardProbe();
         }
 
-        // Capture previous state for transition logic (e.g. daily reset kick)
-        const previousState = window.lastGameState;
+        // previousState was already captured before updating window.lastGameState above
         
         // RESILIENCE FIX: If heartbeat response is missing density/counts (common during round start
         // or server-side lag), preserve the previous values to prevent UI flickering/0-point states.
@@ -7549,7 +7555,7 @@ function updateLocalTimer() {
     }
 
     // -- Update Triple Format Music State --
-    updateTripleMusicState(remaining);
+    updateTripleMusicState(remaining, window.lastGameState);
 
     // -- Intermission Vibration Alert (Mobile Devices & Apps at 0:10) & Next Round Bell Logic --
     checkAndTriggerIntermissionAlerts(remaining);
@@ -7561,7 +7567,7 @@ function isTripleFormat(fmt) {
     return str === 'triple' || str.includes('triple');
 }
 
-function updateTripleMusicState(remaining) {
+function updateTripleMusicState(remaining, incomingState = null) {
     const audio = document.getElementById('triple-music');
     if (!audio) return;
 
@@ -7578,10 +7584,12 @@ function updateTripleMusicState(remaining) {
         if (!audio.paused) {
             audio.pause();
         }
+        window._tripleMusicSessionActive = false;
+        window._tripleMusicActiveRound = false;
         return;
     }
 
-    const state = window.lastGameState;
+    const state = incomingState || window.lastGameState;
     if (!state) {
         if (!audio.paused) {
             audio.pause();
@@ -7624,7 +7632,7 @@ function updateTripleMusicState(remaining) {
             p.catch(e => {
                 console.warn('[play.js] Triple music play blocked/deferred:', e);
                 const retryOnGesture = () => {
-                    const st = window.lastGameState;
+                    const st = incomingState || window.lastGameState;
                     if (st && (st.state === 'active' || (st.state === 'intermission' && remaining <= 10.0))) {
                         audio.play().catch(() => {});
                     }
@@ -7641,11 +7649,12 @@ function updateTripleMusicState(remaining) {
 
     if (isActive) {
         // Active Round: "play it all throughout the round" without hiccups or restarting from 0
-        if (isActiveTriple) {
+        if (isActiveTriple || window._tripleMusicSessionActive) {
             window._tripleMusicActiveRound = true;
+            window._tripleMusicSessionActive = true;
             audio.volume = 1.0;
+            // Seamlessly keep playing throughout the round; NEVER restart from beginning!
             if (audio.paused) {
-                // Resume seamlessly from current position; never reset currentTime to 0 at round start!
                 safePlay();
             }
         } else {
@@ -7654,6 +7663,7 @@ function updateTripleMusicState(remaining) {
                 audio.currentTime = 0;
             }
             window._tripleMusicActiveRound = false;
+            window._tripleMusicSessionActive = false;
         }
     } else if (isIntermission) {
         const remainingSec = (typeof remaining === 'number' && !isNaN(remaining))
@@ -7662,7 +7672,7 @@ function updateTripleMusicState(remaining) {
 
         if (remainingSec > 50.0) {
             // "as soon as the round ends, fade the music away until 0:50 during the next intermission, at which point it can no longer be heard."
-            if (wasTriplePrevious) {
+            if (wasTriplePrevious || window._tripleMusicSessionActive) {
                 // Linear fade: 1.0 at >=60.0 down to 0.0 at 50.0
                 const fadeOutVolume = Math.max(0.0, Math.min(1.0, (remainingSec - 50.0) / 10.0));
                 audio.volume = fadeOutVolume;
@@ -7675,6 +7685,7 @@ function updateTripleMusicState(remaining) {
                     audio.currentTime = 0;
                 }
                 window._tripleMusicActiveRound = false;
+                window._tripleMusicSessionActive = false;
             }
         } else if (remainingSec <= 50.0 && remainingSec > 10.0) {
             // "until 0:50 during the next intermission, at which point it can no longer be heard."
@@ -7684,17 +7695,20 @@ function updateTripleMusicState(remaining) {
             }
             audio.volume = 0.0;
             window._tripleMusicActiveRound = false;
+            window._tripleMusicSessionActive = false;
             window._lastActiveRoundFormat = null;
         } else if (remainingSec <= 10.0) {
             // "When the Format is Triple, begin playing the music at 0:10 time during intermission"
             if (isUpcomingTriple) {
                 window._tripleMusicActiveRound = true;
                 audio.volume = 1.0;
-                if (audio.paused) {
-                    // Only start from beginning if starting fresh for the upcoming round
-                    if (audio.currentTime === 0 || audio.ended) {
-                        audio.currentTime = 0;
-                    }
+                if (!window._tripleMusicSessionActive) {
+                    // Only start fresh from beginning when this Triple session begins at 0:10
+                    window._tripleMusicSessionActive = true;
+                    audio.currentTime = 0;
+                    safePlay();
+                } else if (audio.paused) {
+                    // Seamlessly resume without resetting currentTime
                     safePlay();
                 }
             } else {
@@ -7704,14 +7718,24 @@ function updateTripleMusicState(remaining) {
                 }
                 audio.volume = 0.0;
                 window._tripleMusicActiveRound = false;
+                window._tripleMusicSessionActive = false;
             }
         }
     } else {
-        if (!audio.paused) {
-            audio.pause();
-            audio.currentTime = 0;
+        // Transition or waiting states (e.g. 'waiting', 'loading' between intermission and active round)
+        if (window._tripleMusicSessionActive) {
+            audio.volume = 1.0;
+            if (audio.paused) {
+                safePlay();
+            }
+        } else {
+            if (!audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+            window._tripleMusicActiveRound = false;
+            window._tripleMusicSessionActive = false;
         }
-        window._tripleMusicActiveRound = false;
     }
 }
 window.updateTripleMusicState = updateTripleMusicState;
