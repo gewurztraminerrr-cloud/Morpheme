@@ -496,29 +496,41 @@
         let options = [];
         if (val === 'NWL + AW' || val === 'CSW + AW') {
             options = [
+                { value: 'random', text: 'Random (33/33/33)' },
                 { value: '300-400', text: '300-400 (33%)' },
                 { value: '400-500', text: '400-500 (33%)' },
                 { value: '500+', text: '500+ (34%)' }
             ];
         } else {
             options = [
-                { value: 'random', text: 'Random (10/30/30/30)' },
-                { value: '50-100', text: '50-100 (10%)' },
+                { value: 'random', text: 'Random (9/30/30/30/1)' },
+                { value: '50-100', text: '50-100 (9%)' },
                 { value: '100-200', text: '100-200 (30%)' },
                 { value: '200-300', text: '200-300 (30%)' },
-                { value: '300-400', text: '300-400 (30%)' }
+                { value: '300-400', text: '300-400 (30%)' },
+                { value: '500+', text: '500+ (1%)' }
             ];
         }
 
+        const validValues = options.map(opt => opt.value);
+        const isAw = (val === 'NWL + AW' || val === 'CSW + AW');
+        const prevWasAw = (soloDict._prevDict === 'NWL + AW' || soloDict._prevDict === 'CSW + AW');
+        soloDict._prevDict = val;
+
+        let selectedVal = options[0].value;
+        if (currentVal && validValues.includes(currentVal)) {
+            if (isAw && !prevWasAw) {
+                selectedVal = 'random';
+            } else {
+                selectedVal = currentVal;
+            }
+        }
+
         soloRange.innerHTML = options.map(opt =>
-            `<option value="${opt.value}" ${opt.value === currentVal ? 'selected' : ''}>${opt.text}</option>`
+            `<option value="${opt.value}" ${opt.value === selectedVal ? 'selected' : ''}>${opt.text}</option>`
         ).join('');
 
-        // Ensure the selected value is valid for the new options
-        const validValues = options.map(opt => opt.value);
-        if (!validValues.includes(soloRange.value)) {
-            soloRange.value = options[0].value;
-        }
+        soloRange.value = selectedVal;
     }
 
     function renderBots() {
