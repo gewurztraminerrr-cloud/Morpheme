@@ -9415,6 +9415,7 @@ async function runValidationCheck() {
                 }
             });
             badgesEl.style.display = 'flex';
+            badgesEl.style.justifyContent = 'center';
         }
 
         // Handle definition and pronunciation

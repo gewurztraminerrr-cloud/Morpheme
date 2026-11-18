@@ -1148,7 +1148,6 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
 }
 
 .tool-word-badges-row,
-#valid-word-badges,
 #random-word-badges {
     display: flex;
     justify-content: flex-start;
@@ -1164,15 +1163,36 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     overflow-y: visible !important;
 }
 
+#valid-word-badges,
+#tool-is-valid #valid-word-badges {
+    display: flex;
+    justify-content: center !important;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+    margin-bottom: 2px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+}
+
 body.is-desktop .tool-word-badges-row,
 body:not(.is-mobile) .tool-word-badges-row,
 @media (min-width: 901px) {
     .tool-word-badges-row,
-    #valid-word-badges,
     #random-word-badges {
         justify-content: flex-start !important;
         padding-left: 12px !important;
         padding-right: 12px !important;
+    }
+    #valid-word-badges,
+    #tool-is-valid #valid-word-badges {
+        justify-content: center !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
     }
 }
 
