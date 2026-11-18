@@ -3609,6 +3609,9 @@ def get_tally_divisions_examples():
 def get_forum_threads_status():
     if not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
+    limit = request.args.get('limit', 300, type=int)
+    if not limit or limit < 1:
+        limit = 300
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
@@ -3620,7 +3623,7 @@ def get_forum_threads_status():
             cat_id = cat['id']
             cat_name = cat['name']
             count = conn.execute('SELECT COUNT(*) FROM forum_posts WHERE category_id = ?', (cat_id,)).fetchone()[0]
-            prunable = max(0, count - 300)
+            prunable = max(0, count - limit)
             total_threads += count
             total_prunable += prunable
             result.append({
@@ -3628,14 +3631,14 @@ def get_forum_threads_status():
                 'category_name': cat_name,
                 'thread_count': count,
                 'prunable_count': prunable,
-                'keep_count': min(count, 300)
+                'keep_count': min(count, limit)
             })
         return jsonify({
             'success': True,
             'categories': result,
             'total_threads': total_threads,
             'total_prunable': total_prunable,
-            'max_threads_per_category': 300
+            'max_threads_per_category': limit
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -3648,6 +3651,15 @@ def get_forum_threads_status():
 def prune_forum_threads():
     if not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
+    data = request.get_json(silent=True) or {}
+    limit = data.get('limit', 300)
+    try:
+        limit = int(limit)
+    except (ValueError, TypeError):
+        limit = 300
+    if limit < 1:
+        limit = 300
+
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
         categories = conn.execute('SELECT id, name FROM forum_categories ORDER BY id ASC').fetchall()
@@ -3669,8 +3681,8 @@ def prune_forum_threads():
             ''', (cat_id,)).fetchall()
             
             post_count = len(posts)
-            if post_count > 300:
-                prune_ids = [row[0] for row in posts[300:]]
+            if post_count > limit:
+                prune_ids = [row[0] for row in posts[limit:]]
                 pruned_this_cat = len(prune_ids)
                 
                 # Delete associated records in chunks of 500
@@ -3691,7 +3703,7 @@ def prune_forum_threads():
                     'category_name': cat_name,
                     'before_count': post_count,
                     'pruned_count': pruned_this_cat,
-                    'after_count': 300
+                    'after_count': limit
                 })
             else:
                 category_results.append({
@@ -3702,10 +3714,11 @@ def prune_forum_threads():
                     'after_count': post_count
                 })
                 
-        msg = f"Pruning complete. {total_pruned} threads pruned across {len(category_results)} categories." if total_pruned > 0 else "All categories already have 300 or fewer threads. No threads pruned."
+        msg = f"Pruning complete. {total_pruned} threads pruned across {len(category_results)} categories (capped at {limit} active threads per category)." if total_pruned > 0 else f"All categories already have {limit} or fewer threads. No threads pruned."
         return jsonify({
             'success': True,
             'total_pruned': total_pruned,
+            'max_threads_per_category': limit,
             'categories': category_results,
             'message': msg
         })

@@ -2509,15 +2509,29 @@ window.checkRatingAdjAuth = checkRatingAdjAuth;
 // --- FORUM THREAD MAINTENANCE ---
 let _forumMaintenanceData = null;
 
-async function loadForumThreadsStatus() {
+function getForumThreadsKeepLimit() {
+    const input = document.getElementById('forum-thread-keep-limit-input');
+    if (!input) return 300;
+    let val = parseInt(input.value, 10);
+    if (isNaN(val) || val < 1) val = 300;
+    return val;
+}
+
+async function loadForumThreadsStatus(customLimit = null) {
     const listContainer = document.getElementById('forum-categories-list-container');
     const summaryBadge = document.getElementById('forum-total-summary-badge');
     const refreshBtn = document.getElementById('refresh-forum-threads-btn');
+    const pruneBtn = document.getElementById('prune-forum-threads-btn');
 
     if (refreshBtn) refreshBtn.disabled = true;
 
+    const limit = (customLimit !== null && customLimit !== undefined) ? customLimit : getForumThreadsKeepLimit();
+    if (pruneBtn) {
+        pruneBtn.innerHTML = `✂️ Prune Threads to Top ${limit}`;
+    }
+
     try {
-        const response = await fetch('/api/mods/forum/threads_status');
+        const response = await fetch(`/api/mods/forum/threads_status?limit=${limit}`);
         const data = await response.json();
         
         if (!data.success) {
@@ -2529,12 +2543,13 @@ async function loadForumThreadsStatus() {
         }
 
         _forumMaintenanceData = data;
+        const targetLimit = data.max_threads_per_category || limit;
 
         if (summaryBadge) {
             if (data.total_prunable > 0) {
-                summaryBadge.innerHTML = `<span style="color: #ef4444; font-weight: 700;">${data.total_threads} total threads &bull; ${data.total_prunable} exceeding 300 limit</span>`;
+                summaryBadge.innerHTML = `<span style="color: #ef4444; font-weight: 700;">${data.total_threads} total threads &bull; ${data.total_prunable} exceeding ${targetLimit} limit</span>`;
             } else {
-                summaryBadge.innerHTML = `<span style="color: #10b981; font-weight: 700;">${data.total_threads} total threads &bull; All categories ≤ 300</span>`;
+                summaryBadge.innerHTML = `<span style="color: #10b981; font-weight: 700;">${data.total_threads} total threads &bull; All categories ≤ ${targetLimit}</span>`;
             }
         }
 
@@ -2560,7 +2575,7 @@ async function loadForumThreadsStatus() {
                         <div style="flex-shrink: 0;">
                             ${isOverLimit
                                 ? `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">✂️ ${cat.prunable_count} to prune</span>`
-                                : `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">✓ ≤ 300 (${cat.thread_count})</span>`
+                                : `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">✓ ≤ ${targetLimit} (${cat.thread_count})</span>`
                             }
                         </div>
                     </div>
@@ -2578,28 +2593,30 @@ async function loadForumThreadsStatus() {
 
 async function pruneForumThreads() {
     const pruneBtn = document.getElementById('prune-forum-threads-btn');
+    const limit = getForumThreadsKeepLimit();
     const totalPrunable = _forumMaintenanceData ? _forumMaintenanceData.total_prunable : null;
 
-    let confirmMsg = 'Are you sure you want to cut thread counts in each category down to the 300 most recently-replied threads?\n\nThreads exceeding the top 300 most active in each category will be permanently removed along with all replies, reactions, and bookmarks.';
+    let confirmMsg = `Are you sure you want to cut thread counts in each category down to the ${limit} most recently-replied threads?\n\nThreads exceeding the top ${limit} most active in each category will be permanently removed along with all replies, reactions, and bookmarks.`;
     if (totalPrunable !== null && totalPrunable > 0) {
-        confirmMsg = `Are you sure you want to cut thread counts down to the 300 most recently-replied threads?\n\nThis will permanently delete ${totalPrunable} thread(s) exceeding 300 across categories, along with all their replies, reactions, and bookmarks.\n\nThis action cannot be undone.`;
+        confirmMsg = `Are you sure you want to cut thread counts down to the ${limit} most recently-replied threads?\n\nThis will permanently delete ${totalPrunable} thread(s) exceeding ${limit} across categories, along with all their replies, reactions, and bookmarks.\n\nThis action cannot be undone.`;
     } else if (totalPrunable === 0) {
-        confirmMsg = 'All categories currently have 300 or fewer threads.\n\nDo you still want to run the verification and pruning process?';
+        confirmMsg = `All categories currently have ${limit} or fewer threads.\n\nDo you still want to run the verification and pruning process?`;
     }
 
     if (!confirm(confirmMsg)) return;
 
     if (pruneBtn) {
         pruneBtn.disabled = true;
-        pruneBtn.innerHTML = '✂️ Pruning Threads...';
+        pruneBtn.innerHTML = `✂️ Pruning to Top ${limit}...`;
     }
 
-    showModStatus('Pruning threads across all categories...', false, 'forum-prune-status-area');
+    showModStatus(`Pruning threads across all categories (limit: ${limit})...`, false, 'forum-prune-status-area');
 
     try {
         const response = await fetch('/api/mods/forum/prune_threads', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ limit: limit })
         });
         const data = await response.json();
 
@@ -2618,7 +2635,7 @@ async function pruneForumThreads() {
     } finally {
         if (pruneBtn) {
             pruneBtn.disabled = false;
-            pruneBtn.innerHTML = '✂️ Prune Threads (Max 300/Category)';
+            pruneBtn.innerHTML = `✂️ Prune Threads to Top ${limit}`;
         }
     }
 }
@@ -2631,6 +2648,15 @@ function setupForumMaintenanceHandlers() {
     const refreshBtn = document.getElementById('refresh-forum-threads-btn');
     if (refreshBtn) {
         refreshBtn.onclick = () => loadForumThreadsStatus();
+    }
+    const limitInput = document.getElementById('forum-thread-keep-limit-input');
+    if (limitInput) {
+        limitInput.addEventListener('input', () => {
+            const val = getForumThreadsKeepLimit();
+            const btn = document.getElementById('prune-forum-threads-btn');
+            if (btn) btn.innerHTML = `✂️ Prune Threads to Top ${val}`;
+            loadForumThreadsStatus(val);
+        });
     }
 }
 
