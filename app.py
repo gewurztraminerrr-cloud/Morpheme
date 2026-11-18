@@ -4496,7 +4496,29 @@ def init_db():
         ''')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_word ON word_finds(word)')
         conn.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_user ON word_finds(user_id)')
+        try:
+            conn.execute('ALTER TABLE word_finds ADD COLUMN round_history_id INTEGER')
+        except Exception:
+            pass
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_rh_id ON word_finds(round_history_id)')
         conn.commit()
+
+        # Link historical round_history records where available
+        try:
+            conn.execute('''
+                UPDATE word_finds 
+                SET round_history_id = (
+                    SELECT rh.id FROM round_history rh 
+                    WHERE rh.user_id = word_finds.user_id 
+                      AND rh.room_id = word_finds.room_id 
+                      AND rh.round_number = word_finds.round_number
+                    LIMIT 1
+                )
+                WHERE round_history_id IS NULL
+            ''')
+            conn.commit()
+        except Exception:
+            pass
 
         # Automatic comprehensive backfill of historical words if word_finds is sparse
         total_wf = conn.execute("SELECT COUNT(*) FROM word_finds").fetchone()[0]
@@ -4718,9 +4740,11 @@ def _get_word_finds(word):
         # 0. Query persistent word_finds table (survives round pruning)
         try:
             wf_cursor = conn.execute("""
-                SELECT wf.timestamp, u.username, u.country_flag
+                SELECT wf.timestamp, u.username, u.country_flag, wf.room_id, wf.round_number,
+                       COALESCE(wf.round_history_id, rh.id) AS game_id
                 FROM word_finds wf
                 JOIN users u ON wf.user_id = u.id
+                LEFT JOIN round_history rh ON wf.user_id = rh.user_id AND wf.room_id = rh.room_id AND wf.round_number = rh.round_number
                 WHERE wf.word = ?
             """, (word,))
             for row in wf_cursor.fetchall():
@@ -4735,14 +4759,17 @@ def _get_word_finds(word):
                 finds.append({
                     'username': row['username'],
                     'country_flag': row['country_flag'],
-                    'timestamp': iso_ts
+                    'timestamp': iso_ts,
+                    'room_id': row['room_id'],
+                    'round_number': row['round_number'],
+                    'game_id': row['game_id']
                 })
         except Exception as wf_err:
             pass
 
         # 1. Query round_history (Excluding 24h rooms and Multiplayer Subanagrams)
         cursor = conn.execute("""
-            SELECT rh.timestamp, u.username, u.country_flag, rh.words_json
+            SELECT rh.id AS game_id, rh.timestamp, u.username, u.country_flag, rh.words_json, rh.room_id, rh.round_number
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE rh.words_json LIKE ?
@@ -4772,14 +4799,17 @@ def _get_word_finds(word):
                             finds.append({
                                 'username': row['username'],
                                 'country_flag': row['country_flag'],
-                                'timestamp': iso_ts or '2026-01-01T00:00:00Z'
+                                'timestamp': iso_ts or '2026-01-01T00:00:00Z',
+                                'room_id': row['room_id'],
+                                'round_number': row['round_number'],
+                                'game_id': row['game_id']
                             })
             except Exception as ex:
                 print(f"[FindCount] Error parsing round_history row: {ex}")
 
         # 2. Query tournament_scores
         cursor = conn.execute("""
-            SELECT ts.submitted_at, u.username, u.country_flag, ts.submitted_words
+            SELECT ts.submitted_at, u.username, u.country_flag, ts.submitted_words, ts.tournament_id, ts.round_number
             FROM tournament_scores ts
             JOIN users u ON ts.user_id = u.id
             WHERE ts.submitted_words LIKE ?
@@ -4804,14 +4834,17 @@ def _get_word_finds(word):
                             finds.append({
                                 'username': row['username'],
                                 'country_flag': row['country_flag'],
-                                'timestamp': iso_ts or '2026-01-01T00:00:00Z'
+                                'timestamp': iso_ts or '2026-01-01T00:00:00Z',
+                                'room_id': f"tournament_{row['tournament_id']}",
+                                'round_number': row['round_number'],
+                                'game_id': None
                             })
             except Exception as ex:
                 print(f"[FindCount] Error parsing tournament_scores row: {ex}")
 
         # 3. Query private_match_turns
         cursor = conn.execute("""
-            SELECT pmt.submitted_at, u.username, u.country_flag, pmt.submitted_words
+            SELECT pmt.submitted_at, u.username, u.country_flag, pmt.submitted_words, pmt.match_id, pmt.round_number
             FROM private_match_turns pmt
             JOIN users u ON pmt.user_id = u.id
             WHERE pmt.submitted_words LIKE ?
@@ -4836,7 +4869,10 @@ def _get_word_finds(word):
                             finds.append({
                                 'username': row['username'],
                                 'country_flag': row['country_flag'],
-                                'timestamp': iso_ts or '2026-01-01T00:00:00Z'
+                                'timestamp': iso_ts or '2026-01-01T00:00:00Z',
+                                'room_id': f"private_{row['match_id']}",
+                                'round_number': row['round_number'],
+                                'game_id': None
                             })
             except Exception as ex:
                 print(f"[FindCount] Error parsing private_match_turns row: {ex}")
@@ -4886,7 +4922,10 @@ def _get_word_finds(word):
                                 finds.append({
                                     'username': u_name,
                                     'country_flag': c_flag,
-                                    'timestamp': iso_ts or '2026-01-01T00:00:00Z'
+                                    'timestamp': iso_ts or '2026-01-01T00:00:00Z',
+                                    'room_id': str(getattr(room, 'room_id', '')),
+                                    'round_number': getattr(room, 'current_round', 1),
+                                    'game_id': None
                                 })
     except Exception as active_ex:
         print(f"[get_word_finds] Error querying active rooms: {active_ex}")
@@ -4903,11 +4942,14 @@ def _get_word_finds(word):
         try:
             curr_dt = datetime.datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
             if uname in user_last_ts:
-                prev_dt = user_last_ts[uname]
+                prev_dt, prev_idx = user_last_ts[uname]
                 if abs((curr_dt - prev_dt).total_seconds()) <= 120:
                     is_dupe = True
+                    # If current item has game_id and previous didn't, upgrade previous
+                    if f.get('game_id') and not unique_finds[prev_idx].get('game_id'):
+                        unique_finds[prev_idx] = f
             if not is_dupe:
-                user_last_ts[uname] = curr_dt
+                user_last_ts[uname] = (curr_dt, len(unique_finds))
         except Exception:
             key = (uname, ts_str[:19])
             if key in seen:
@@ -10779,6 +10821,10 @@ def prune_non_visible_round_history():
             for r in c.execute("SELECT id FROM round_history WHERE room_id LIKE 'tourn_%'").fetchall():
                 visible_ids.add(r[0])
 
+            # 2g. Preserve rounds referenced by word_finds so their replays remain accessible in Find Count
+            for r in c.execute("SELECT DISTINCT round_history_id FROM word_finds WHERE round_history_id IS NOT NULL").fetchall():
+                visible_ids.add(r[0])
+
             # 3. Purge any round not in visible_ids
             if visible_ids:
                 all_ids = set(r[0] for r in c.execute('SELECT id FROM round_history').fetchall())
@@ -13371,6 +13417,109 @@ def tools_find_count():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/round-replay', methods=['GET'])
+def get_round_replay():
+    game_id = request.args.get('game_id')
+    room_id = request.args.get('room_id')
+    round_number = request.args.get('round_number')
+    username = request.args.get('username')
+    timestamp = request.args.get('timestamp')
+
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        cur = conn.cursor()
+        row = None
+        if game_id and str(game_id).isdigit():
+            cur.execute("SELECT * FROM round_history WHERE id = ?", (int(game_id),))
+            row = cur.fetchone()
+
+        if not row and room_id and round_number:
+            if username:
+                cur.execute("""
+                    SELECT rh.* 
+                    FROM round_history rh
+                    JOIN users u ON rh.user_id = u.id
+                    WHERE rh.room_id = ? AND rh.round_number = ? AND u.username = ? COLLATE NOCASE
+                    ORDER BY rh.id DESC LIMIT 1
+                """, (room_id, int(round_number), username))
+                row = cur.fetchone()
+            if not row:
+                cur.execute("""
+                    SELECT * FROM round_history 
+                    WHERE room_id = ? AND round_number = ?
+                    ORDER BY id DESC LIMIT 1
+                """, (room_id, int(round_number)))
+                row = cur.fetchone()
+
+        # Check in active rooms memory if still not found
+        if not row and room_id:
+            from game_room import room_manager
+            if room_manager and hasattr(room_manager, 'rooms') and room_id in room_manager.rooms:
+                room = room_manager.rooms[room_id]
+                if hasattr(room, 'board') and room.board:
+                    players = list(room.players.values()) if isinstance(room.players, dict) else room.players
+                    target_player = next((p for p in players if getattr(p, 'username', '') == username), None) if username else (players[0] if players else None)
+                    p_words = getattr(target_player, 'submitted_words', []) if target_player else []
+                    p_score = getattr(target_player, 'score', 0) if target_player else 0
+                    return jsonify({
+                        'success': True,
+                        'round': {
+                            'game_id': None,
+                            'room_id': room.room_id,
+                            'game_type': getattr(room, 'game_type', 'accumulative'),
+                            'round_number': getattr(room, 'current_round', 1),
+                            'board': room.board,
+                            'dimensions': getattr(room, 'board_dimensions', f"{len(room.board)}x{len(room.board[0])}"),
+                            'words': p_words,
+                            'total_score': p_score,
+                            'round_start_time': getattr(room, 'round_start_time', 0),
+                            'round_duration': getattr(room, 'time_limit', 60),
+                            'timestamp': getattr(room, 'last_round_timestamp', time.time()),
+                            'board_format': getattr(room, 'board_format', 'Normal'),
+                            'bonus_word': getattr(room, 'bonus_word', None),
+                            'bonus_cell': getattr(room, 'bonus_cell', None)
+                        }
+                    })
+
+        if not row:
+            return jsonify({'success': False, 'error': 'Round replay details not available for this find.'}), 404
+
+        board = json.loads(row['board_json']) if row['board_json'] else []
+        words = json.loads(row['words_json']) if row['words_json'] else []
+        
+        dims = row['board_dimensions']
+        if not dims:
+            if row['game_type'] == '3d':
+                dims = '3x3x3'
+            else:
+                dims = f"{len(board)}x{len(board[0])}" if board and isinstance(board, list) and isinstance(board[0], list) else "4x4"
+
+        round_data = {
+            'game_id': row['id'],
+            'room_id': row['room_id'],
+            'game_type': row['game_type'] or 'accumulative',
+            'round_number': row['round_number'],
+            'board': board,
+            'dimensions': dims,
+            'words': words,
+            'total_score': row['total_score'],
+            'round_start_time': row['round_start_time'],
+            'round_duration': row['round_duration'] or 60,
+            'timestamp': row['timestamp'],
+            'board_format': row['board_format'] or 'Normal',
+            'bonus_word': row['bonus_word'],
+            'bonus_cell': json.loads(row['bonus_cell']) if row['bonus_cell'] else None
+        }
+        return jsonify({'success': True, 'round': round_data})
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 @app.route('/api/tools/new-users', methods=['GET'])
 @app.route('/api/tools/player-stats', methods=['GET'])
 def tools_new_users():
@@ -13420,8 +13569,6 @@ def tools_new_users():
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
-    finally:
-        conn.close()
 
 
 @app.route('/api/tools/random-words', methods=['GET'])

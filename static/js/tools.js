@@ -3786,7 +3786,7 @@ function findWordPathOnCube(word, board) {
 }
 
 // Global function to review a round (Legitimacy Walkthrough)
-window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameId = null, timestamp = null) {
+window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false, gameId = null, timestamp = null) {
     console.log(`Reviewing Round ${roundNum} from Room ${roomId} (GameID: ${gameId}, Timestamp: ${timestamp})`);
 
     // 1. Find Round Data
@@ -3851,11 +3851,30 @@ window.watchRoundHistory = function (roomId, roundNum, isSnapshot = false, gameI
         round = rounds.find(r => r.room_id == roomId && r.round_number == roundNum);
     }
 
-
-
+    if (!round) {
+        // Fetch round details on-demand from server
+        try {
+            const params = new URLSearchParams();
+            if (gameId) params.append('game_id', gameId);
+            if (roomId) params.append('room_id', roomId);
+            if (roundNum) params.append('round_number', roundNum);
+            if (timestamp) params.append('timestamp', timestamp);
+            const resp = await fetch(`/api/round-replay?${params.toString()}`);
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data && data.round) {
+                    round = data.round;
+                    if (!window.lastRenderedRounds) window.lastRenderedRounds = [];
+                    window.lastRenderedRounds.push(round);
+                }
+            }
+        } catch (e) {
+            console.warn("[watchRoundHistory] API fetch failed:", e);
+        }
+    }
 
     if (!round) {
-        alert("Round details not available. This round may have happened before the snapshot system was enabled.");
+        alert("Round details not available for this find. This round occurred before replay data was recorded.");
         return;
     }
 
@@ -10754,18 +10773,32 @@ async function runFindCountSearch() {
         }
         
         if (data.recent && data.recent.length > 0) {
-            let rowsHtml = data.recent.map(item => {
+            let rowsHtml = data.recent.map((item, index) => {
                 const formattedDate = typeof window.formatAppDate === 'function' ? window.formatAppDate(item.timestamp, true) : item.timestamp;
-                
                 const flagHtml = window.getFlagHtml ? window.getFlagHtml(item.country_flag) : (item.country_flag || '');
+                const safeUsername = (item.username || '').replace(/"/g, '&quot;');
+                const safeRoomId = (item.room_id || '').replace(/"/g, '&quot;');
+                const roundNum = item.round_number || '';
+                const gameId = item.game_id || '';
+                const safeTimestamp = (item.timestamp || '').replace(/"/g, '&quot;');
+
                 return `
-                    <tr class="finder-row" data-username="${item.username}" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
+                    <tr class="finder-row" data-index="${index}" data-username="${safeUsername}" data-room-id="${safeRoomId}" data-round-number="${roundNum}" data-game-id="${gameId}" data-timestamp="${safeTimestamp}" title="Click row to watch Round Replay" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
                         <td style="padding: 12px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
                             <div style="display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">
-                                ${flagHtml} <span style="white-space: nowrap; font-weight: 600;">${item.username}</span>
+                                <span class="finder-username-link" data-username="${safeUsername}" title="View ${safeUsername}'s mini-profile" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: underline; color: inherit;">
+                                    ${flagHtml} <span style="font-weight: 600;">${safeUsername}</span>
+                                </span>
                             </div>
                         </td>
-                        <td style="padding: 12px; color: var(--muted-text); white-space: nowrap;">${formattedDate}</td>
+                        <td style="padding: 12px; color: var(--muted-text); white-space: nowrap;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                                <span>${formattedDate}</span>
+                                <span class="finder-replay-btn" title="Watch Round Replay" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.78rem; font-weight: 600; border-radius: 6px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35); color: #38bdf8; cursor: pointer; transition: all 0.15s ease;">
+                                    <span style="font-size: 0.7rem;">▶</span> Replay
+                                </span>
+                            </div>
+                        </td>
                     </tr>
                 `;
             }).join('');
@@ -10785,12 +10818,35 @@ async function runFindCountSearch() {
             
             // Add click events to rows
             tableBody.querySelectorAll('.finder-row').forEach(row => {
+                // 1. Username click links to their mini-profile
+                const userLink = row.querySelector('.finder-username-link');
+                if (userLink) {
+                    userLink.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const uname = userLink.dataset.username || row.dataset.username;
+                        if (uname && uname !== 'System') {
+                            if (typeof window.showMiniProfile === 'function') {
+                                window.showMiniProfile(uname);
+                            }
+                        }
+                    });
+                }
+
+                // 2. Anywhere else on the row opens the Round Replay
                 row.addEventListener('click', () => {
-                    const username = row.dataset.username;
-                    if (username && username !== 'System') {
-                        window.showMiniProfile(username);
+                    const uname = row.dataset.username;
+                    const rId = row.dataset.roomId;
+                    const rNum = row.dataset.roundNumber;
+                    const gId = row.dataset.gameId;
+                    const ts = row.dataset.timestamp;
+
+                    if (typeof window.watchRoundHistory === 'function') {
+                        window.watchRoundHistory(rId, rNum, false, gId, ts);
+                    } else {
+                        alert("Replay viewer context not loaded.");
                     }
                 });
+
                 row.addEventListener('mouseenter', () => {
                     row.style.background = 'rgba(var(--text-primary-rgb), 0.05)';
                 });

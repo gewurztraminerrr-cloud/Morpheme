@@ -8757,7 +8757,7 @@ class RoomManager:
                     if is_first_saved:
                         solutions_saved = True
 
-                    conn.execute('''
+                    cur_rh = conn.execute('''
                         INSERT INTO round_history (user_id, room_id, game_type, round_number, board_json, words_json, total_score, round_start_time, round_duration, timestamp, user_rating, performance_ratio, best_word, best_word_score, board_dimensions, wpm, total_words_avail, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths)
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     ''', (
@@ -8768,6 +8768,7 @@ class RoomManager:
                         actual_bonus_word, json.dumps(room.bonus_cell), board_format,
                         solutions_payload, paths_payload
                     ))
+                    rh_id = cur_rh.lastrowid
 
                     # Also persist player word finds into lightweight word_finds table for Find Count
                     if u_id != -1 and u_name != 'System':
@@ -8776,9 +8777,9 @@ class RoomManager:
                                 w_text = entry.get('word', '').upper() if isinstance(entry, dict) else str(entry).upper()
                                 if w_text:
                                     conn.execute('''
-                                        INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number)
-                                        VALUES (?, ?, ?, ?, ?)
-                                    ''', (w_text, u_id, timestamp, room.room_id, target_round))
+                                        INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number, round_history_id)
+                                        VALUES (?, ?, ?, ?, ?, ?)
+                                    ''', (w_text, u_id, timestamp, room.room_id, target_round, rh_id))
                         except Exception:
                             pass
 
