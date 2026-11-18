@@ -4220,6 +4220,10 @@
                         <div class="tool-btn-title">Player Activity & Stats</div>
                         <div class="tool-btn-desc">Live counts, daily logins & new members</div>
                     </button>
+                    <button class="tool-nav-btn" data-tool="word-chart" onclick="window.showTool('word-chart')">
+                        <div class="tool-btn-title">Word Chart</div>
+                        <div class="tool-btn-desc">Point values & dictionary counts by length</div>
+                    </button>
                     <button class="tool-nav-btn" data-tool="change-account" onclick="window.showTool('change-account')">
                         <div class="tool-btn-title">Change Password/Email</div>
                         <div class="tool-btn-desc">Update your login credentials</div>
@@ -4429,6 +4433,136 @@
                                 </div>
                                 <div class="custom-scrollbar-track" id="new-users-scrollbar-track">
                                     <div class="custom-scrollbar-thumb" id="new-users-scrollbar-thumb"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Word Chart Interface -->
+                    <div id="tool-word-chart" class="tool-pane" style="display: none;">
+                        <div class="tool-header">
+                            <h2>Word Chart</h2>
+                            <p>Point values per letter length with dynamic division designations, and live dictionary word counts.</p>
+                        </div>
+
+                        <!-- Inner Sub-Tabs Navigation -->
+                        <div class="player-stats-subtabs word-chart-subtabs">
+                            <button type="button" class="player-stats-subtab-btn word-chart-subtab-btn active" id="subtab-btn-wc-points" onclick="window.switchWordChartSubtab('points')">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                                    Point Values & Divisions
+                                </span>
+                            </button>
+                            <button type="button" class="player-stats-subtab-btn word-chart-subtab-btn" id="subtab-btn-wc-dicts" onclick="window.switchWordChartSubtab('dicts')">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>
+                                    Dictionary Word Counts
+                                </span>
+                            </button>
+                            <button type="button" class="player-stats-subtab-btn word-chart-subtab-btn" id="subtab-btn-wc-lookup" onclick="window.switchWordChartSubtab('lookup')">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                                    Dynamic Word Lookup
+                                </span>
+                            </button>
+                        </div>
+
+                        <!-- Subtab Pane 1: Point Values & Divisions -->
+                        <div id="subtab-pane-wc-points" class="word-chart-subtab-pane" style="display: block;">
+                            <div class="word-chart-info-banner" style="background: rgba(56, 189, 248, 0.08); border-left: 4px solid #38bdf8; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.84rem; line-height: 1.45;">
+                                <strong>Dynamic Division Point Values:</strong> As player find tallies accumulate over time, words within each letter length are dynamically categorized into rarity divisions. Rare words receive bonus points above their base score, up to the maximum division value.
+                            </div>
+                            <div class="word-chart-table-container list-scroll-area-wrapper" style="overflow-x: auto; border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 8px;">
+                                <table class="word-chart-table" id="wc-points-table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center;">
+                                    <thead>
+                                        <tr style="background: rgba(var(--text-primary-rgb), 0.06); border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.15);">
+                                            <th style="padding: 10px; text-align: left; font-weight: 700;">Length</th>
+                                            <th style="padding: 10px; font-weight: 700;">Base Score</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #38bdf8;">Divisions</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #a78bfa;">Division Points Range</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #f43f5e;">Hard Word Designation</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #10b981;">Bonus Premium</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #34d399;">Total Bonus Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="wc-points-tbody">
+                                        <tr>
+                                            <td colspan="7" style="padding: 20px; opacity: 0.6;">Loading point values & divisions...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.78rem; color: var(--muted-text); line-height: 1.4;">
+                                *Note: When Valued Letters format is active, the Base Score is the sum of the custom tile values of its letters. If a word is chosen as the Bonus Word, its Total Score is its current point value plus its exact letter length.
+                            </div>
+                        </div>
+
+                        <!-- Subtab Pane 2: Dictionary Word Counts -->
+                        <div id="subtab-pane-wc-dicts" class="word-chart-subtab-pane" style="display: none;">
+                            <!-- KPI Cards for Totals -->
+                            <div class="new-users-stats-grid" style="margin-bottom: 16px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));">
+                                <div class="stat-box">
+                                    <span class="stat-num" id="wc-nwl-total" style="color: #60a5fa;">-</span>
+                                    <span class="stat-desc">NWL WORDS</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-num" id="wc-csw-total" style="color: #fbbf24;">-</span>
+                                    <span class="stat-desc">CSW WORDS</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-num" id="wc-aw-total" style="color: #c084fc;">-</span>
+                                    <span class="stat-desc">ADDED WORDS (AW)</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-num" id="wc-long-total" style="color: #f87171;">-</span>
+                                    <span class="stat-desc">16+ SUPPLEMENTARY</span>
+                                </div>
+                                <div class="stat-box">
+                                    <span class="stat-num" id="wc-all-total" style="color: #34d399;">-</span>
+                                    <span class="stat-desc">TOTAL UNIQUE WORDS</span>
+                                </div>
+                            </div>
+
+                            <div class="word-chart-table-container list-scroll-area-wrapper" style="overflow-x: auto; border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 8px;">
+                                <table class="word-chart-table" id="wc-dicts-table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center;">
+                                    <thead>
+                                        <tr style="background: rgba(var(--text-primary-rgb), 0.06); border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.15);">
+                                            <th style="padding: 10px; text-align: left; font-weight: 700;">Length</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #60a5fa;">NWL</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #fbbf24;">CSW</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #c084fc;">AW</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #f87171;">16+ List</th>
+                                            <th style="padding: 10px; font-weight: 700; color: #34d399;">Total (All)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="wc-dicts-tbody">
+                                        <tr>
+                                            <td colspan="6" style="padding: 20px; opacity: 0.6;">Loading live dictionary counts...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Subtab Pane 3: Dynamic Word Lookup & Tally Divisions -->
+                        <div id="subtab-pane-wc-lookup" class="word-chart-subtab-pane" style="display: none;">
+                            <div class="word-chart-search-bar" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+                                <input type="text" id="wc-word-input" placeholder="Enter any word (e.g. OPALITE, PLANT, QUIZZES)..." style="flex: 1 1 200px; height: 38px; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: rgba(var(--text-primary-rgb), 0.04); color: var(--text-primary); font-size: 0.9rem; text-transform: uppercase;">
+                                <button type="button" id="wc-word-search-btn" onclick="window.lookupWordChartWord()" style="height: 38px; padding: 0 18px; border-radius: 8px; background: var(--accent-color, #38bdf8); color: #fff; font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer;">Check Point Value</button>
+                            </div>
+
+                            <!-- Live Lookup Result Card -->
+                            <div id="wc-word-result-card" style="display: none; background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+                                <!-- Injected dynamically via JavaScript -->
+                            </div>
+
+                            <!-- Live Division Examples (5L, 6L, 7L, 8L) -->
+                            <div style="margin-top: 10px;">
+                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                                    <h4 style="margin: 0; font-size: 0.92rem; font-weight: 700; color: var(--text-primary);">Live Rarity Divisions from Tally File</h4>
+                                    <button type="button" onclick="window.loadWordChartTool(true)" style="background: transparent; border: 1px solid rgba(var(--text-primary-rgb), 0.2); color: var(--muted-text); border-radius: 6px; padding: 3px 8px; font-size: 0.75rem; cursor: pointer;">🔄 Refresh Tally Data</button>
+                                </div>
+                                <div id="wc-examples-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+                                    <!-- Injected dynamically via JavaScript -->
                                 </div>
                             </div>
                         </div>
@@ -7359,25 +7493,7 @@
                                 <li><strong>AW (Added Words):</strong> A custom expanded dictionary based on Wiktionary’s open-source word list. It currently contains <strong id="faq-aw-total" style="color: #c084fc;">-</strong> words. AW is heavily modified by removing over 35,000 unwanted entries from Wiktionary's word list because they were obsolete terms, abbreviations, misspellings, or archaic second-person and third-person verb inflections (such as second-person singular simple present/past indicative forms ending in <em>-st</em> and third-person singular simple present indicative forms ending in <em>-eth</em>), and adding valid words that should be in Wiktionary’s list but aren’t (for example: <em>OPALITE</em>). Additionally, modifications to the AW word list included ensuring all nouns that didn’t have an <em>-S</em> or <em>-ES</em> plural on Wiktionary’s list were included as per traditional NWL and CSW word policies. AW strictly contains all words that are not found in CSW (and by extension, not in NWL). If a future official update of CSW or NWL incorporates any word currently in the AW list, those words are automatically removed from AW into the standard dictionaries. Please note that the words kept in AW and their definitions are not perfect. If you spot a word that does not belong in AW or a definition is incorrect, mention it in the designated thread in the Complaints category in the Forum. If you find a word that is not present in AW, CSW, and NWL, but should be (search any word in Is Valid in Tools using “All” word list first: If it’s not a valid word, it is not a word used in Morpheme), mention that in the designated thread in the Suggestions category in the Forum.</li>
                                 <li><strong>16+ List (Supplementary):</strong> A specialized collection of words containing 16 or more letters to support solving on larger grids (5x7, 6x8, and Cubes). It currently has <strong id="faq-long-total" style="color: #f87171;">-</strong> words.</li>
                             </ul>
-                            <p style="margin-top: 15px; margin-bottom: 10px;">Below is the live distribution of word lengths (2 to 16+ letters) currently loaded in each dictionary:</p>
-                            <div class="faq-table-container" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 10px; margin-bottom: 10px; overflow-x: auto;">
-                                <table class="faq-scoring-table" id="faq-dict-stats-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
-                                    <thead>
-                                        <tr style="background: rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.15);">
-                                            <th style="padding: 10px; text-align: left; font-weight: 700;">Length</th>
-                                            <th style="padding: 10px; font-weight: 700; color: #60a5fa;">NWL</th>
-                                            <th style="padding: 10px; font-weight: 700; color: #fbbf24;">CSW</th>
-                                            <th style="padding: 10px; font-weight: 700; color: #c084fc;">AW</th>
-                                            <th style="padding: 10px; font-weight: 700; color: #f87171;">16+ List</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="faq-dict-stats-tbody">
-                                        <tr>
-                                            <td colspan="5" style="padding: 20px; opacity: 0.6;">Loading live dictionary stats...</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                            <p style="margin-top: 15px; line-height: 1.5;">To view the full live distribution of word counts by letter length across all dictionaries, visit the <strong>Word Chart</strong> in the <strong>Tools</strong> tab.</p>
                         </div>
                     </div>
                     <!-- Q_difficulty_differences -->
@@ -7485,102 +7601,8 @@
                     <div class="faq-item" id="faq-bonus-words">
                         <div class="faq-question">How many points do Bonus Words give, and how does length affect the score?</div>
                         <div class="faq-answer">
-                            <p>Every board features a single hidden <strong>Bonus Word</strong>. Uncovering it grants a massive points boost! The score is calculated by taking the word's <strong>base game score</strong> and adding a <strong>Bonus Word Premium equal to the exact letter length</strong> of the word.</p>
-                            <p>Here is the precise, comprehensive points breakdown by word length:</p>
-                            <div class="faq-table-container" style="width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); border: 1px solid rgba(255, 255, 255, 0.1); margin-top: 10px; margin-bottom: 15px;">
-                                <table class="faq-scoring-table" style="width: 100%; border-collapse: collapse;">
-                                    <thead>
-                                        <tr style="background: linear-gradient(135deg, var(--accent-gradient-start, #0284c7), var(--accent-gradient-end, #0ea5e9)); color: white; text-align: left; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.5px;">
-                                            <th style="padding: 10px 15px;">Word Length</th>
-                                            <th style="padding: 10px 15px;">Base Score</th>
-                                            <th style="padding: 10px 15px;">Bonus Premium</th>
-                                            <th style="padding: 10px 15px;">Total Score</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.02);">
-                                            <td style="padding: 10px 15px;"><strong>3 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">1 pt</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+3 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">4 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.01);">
-                                            <td style="padding: 10px 15px;"><strong>4 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">1 pt</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+4 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">5 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.02);">
-                                            <td style="padding: 10px 15px;"><strong>5 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">2 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+5 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">7 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.01);">
-                                            <td style="padding: 10px 15px;"><strong>6 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">3 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+6 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">9 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.02);">
-                                            <td style="padding: 10px 15px;"><strong>7 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">5 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+7 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">12 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.01);">
-                                            <td style="padding: 10px 15px;"><strong>8 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">9 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+8 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">17 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.02);">
-                                            <td style="padding: 10px 15px;"><strong>9 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">13 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+9 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">22 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.01);">
-                                            <td style="padding: 10px 15px;"><strong>10 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">17 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+10 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">27 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.02);">
-                                            <td style="padding: 10px 15px;"><strong>11 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">21 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+11 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">32 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.01);">
-                                            <td style="padding: 10px 15px;"><strong>12 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">25 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+12 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">37 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.02);">
-                                            <td style="padding: 10px 15px;"><strong>13 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">29 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+13 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">42 pts</td>
-                                        </tr>
-                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255,255,255,0.01);">
-                                            <td style="padding: 10px 15px;"><strong>14 Letters</strong></td>
-                                            <td style="padding: 10px 15px;">33 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+14 pts</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">47 pts</td>
-                                        </tr>
-                                        <tr style="background: rgba(255,255,255,0.02);">
-                                            <td style="padding: 10px 15px;"><strong>15+ Letters</strong></td>
-                                            <td style="padding: 10px 15px;">37 pts</td>
-                                            <td style="padding: 10px 15px; color: #10b981;">+Length</td>
-                                            <td style="padding: 10px 15px; font-weight: bold; color: #10b981;">37 + Length (e.g. 52 pts for 15L)</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <p style="font-size: 0.9em; color: var(--muted-text); font-style: italic; margin-bottom: 6px;">*Note: If Valued Letters format is active, the Base Score is the sum of the custom values of its letters instead of the standard base score.</p>
-                            <p style="font-size: 0.9em; color: var(--muted-text); line-height: 1.5;"><strong>Foundation & Rarity Progression:</strong> This table reflects the base scoring foundation. As player find tallies accumulate over time, common and rare words within each letter length will be categorized into 6 distinct rarity segments, distributing additional bonus points (up to a maximum of 6 extra points per length) based on discovery rarity.</p>
+                            <p>Every board features a single hidden <strong>Bonus Word</strong>. Uncovering it grants a massive points boost! The score is calculated by taking the word's <strong>base game score</strong> (or dynamic division point value) and adding a <strong>Bonus Word Premium equal to the exact letter length</strong> of the word (for example, finding an 8-letter bonus word awards its 9 base points + 8 bonus premium = 17 points).</p>
+                            <p style="margin-top: 12px; line-height: 1.5;">To view the complete point values, bonus word scoring, and dynamic division point value designations for every letter length, visit the <strong>Word Chart</strong> in the <strong>Tools</strong> tab.</p>
                         </div>
                     </div>
 

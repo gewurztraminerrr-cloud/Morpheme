@@ -496,6 +496,9 @@ window.showTool = function(toolId) {
     if (toolId === 'new-users') {
         if (typeof window.loadNewUsersTool === 'function') window.loadNewUsersTool();
     }
+    if (toolId === 'word-chart') {
+        if (typeof window.loadWordChartTool === 'function') window.loadWordChartTool();
+    }
     if (toolId === 'change-account') {
         if (typeof loadAccountCredentialsInfo === 'function') loadAccountCredentialsInfo();
     }
@@ -12895,4 +12898,331 @@ window.performReverseDictSearch = async function() {
         if (searchBtn) searchBtn.disabled = false;
     }
 };
+
+/* ==========================================================================
+   WORD CHART TOOL (Points, Divisions & Dictionary Word Counts)
+   ========================================================================== */
+
+window._wordChartData = null;
+window._wordChartLoading = false;
+
+window.switchWordChartSubtab = function(tabKey) {
+    const btnPoints = document.getElementById('subtab-btn-wc-points');
+    const btnDicts = document.getElementById('subtab-btn-wc-dicts');
+    const btnLookup = document.getElementById('subtab-btn-wc-lookup');
+
+    const panePoints = document.getElementById('subtab-pane-wc-points');
+    const paneDicts = document.getElementById('subtab-pane-wc-dicts');
+    const paneLookup = document.getElementById('subtab-pane-wc-lookup');
+
+    if (btnPoints) btnPoints.classList.toggle('active', tabKey === 'points');
+    if (btnDicts) btnDicts.classList.toggle('active', tabKey === 'dicts');
+    if (btnLookup) btnLookup.classList.toggle('active', tabKey === 'lookup');
+
+    if (panePoints) panePoints.style.display = tabKey === 'points' ? 'block' : 'none';
+    if (paneDicts) paneDicts.style.display = tabKey === 'dicts' ? 'block' : 'none';
+    if (paneLookup) paneLookup.style.display = tabKey === 'lookup' ? 'block' : 'none';
+
+    if (tabKey === 'lookup') {
+        const inp = document.getElementById('wc-word-input');
+        if (inp) setTimeout(() => inp.focus(), 60);
+    }
+};
+
+window.loadWordChartTool = async function(forceRefresh = false) {
+    if (window._wordChartData && !forceRefresh) {
+        window.renderWordChartUI(window._wordChartData);
+        return;
+    }
+    if (window._wordChartLoading) return;
+    window._wordChartLoading = true;
+
+    try {
+        const res = await fetch('/api/tools/word-chart');
+        const data = await res.json();
+        if (res.ok && data) {
+            window._wordChartData = data;
+            window.renderWordChartUI(data);
+        }
+    } catch (e) {
+        console.error('[WordChart] Error loading data:', e);
+    } finally {
+        window._wordChartLoading = false;
+    }
+};
+
+window.renderWordChartUI = function(data) {
+    if (!data) return;
+    if (data.points_and_divisions) {
+        window.renderWordChartPoints(data.points_and_divisions);
+    }
+    if (data.dict_totals && data.dict_distributions) {
+        window.renderWordChartDicts(data.dict_totals, data.dict_distributions);
+    }
+    if (data.examples) {
+        window.renderWordChartExamples(data.examples);
+    }
+};
+
+window.renderWordChartPoints = function(pointsList) {
+    const tbody = document.getElementById('wc-points-tbody');
+    if (!tbody || !Array.isArray(pointsList)) return;
+
+    let html = '';
+    pointsList.forEach(item => {
+        const baseScoreStr = typeof item.base_score === 'number' ? `${item.base_score} pt${item.base_score !== 1 ? 's' : ''}` : item.base_score;
+        const numDivsStr = item.num_divisions === 1 ? '1 Division' : `${item.num_divisions} Divisions`;
+
+        let hardBadgeStyle = 'color: #94a3b8; font-weight: 500;';
+        if (item.hard_threshold.includes('All Words')) {
+            hardBadgeStyle = 'color: #f43f5e; font-weight: 700;';
+        } else if (item.hard_threshold.includes('Divisions') || item.hard_threshold.includes('Division 2')) {
+            hardBadgeStyle = 'color: #fb923c; font-weight: 600;';
+        }
+
+        html += `
+            <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.06);">
+                <td style="padding: 9px 12px; text-align: left; font-weight: 700; color: var(--text-primary);">
+                    ${item.length_label}
+                </td>
+                <td style="padding: 9px 12px; font-weight: 600;">
+                    ${baseScoreStr}
+                </td>
+                <td style="padding: 9px 12px; color: #38bdf8; font-weight: 600;">
+                    ${numDivsStr}
+                </td>
+                <td style="padding: 9px 12px; color: #a78bfa; font-weight: 700;">
+                    ${item.division_points_range}
+                </td>
+                <td style="padding: 9px 12px; ${hardBadgeStyle}">
+                    ${item.hard_threshold}
+                </td>
+                <td style="padding: 9px 12px; color: #10b981; font-weight: 600;">
+                    ${item.bonus_premium}
+                </td>
+                <td style="padding: 9px 12px; color: #34d399; font-weight: 700;">
+                    ${item.total_bonus_score}
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+};
+
+window.renderWordChartDicts = function(totals, dists) {
+    const nwlTotalEl = document.getElementById('wc-nwl-total');
+    const cswTotalEl = document.getElementById('wc-csw-total');
+    const awTotalEl = document.getElementById('wc-aw-total');
+    const longTotalEl = document.getElementById('wc-long-total');
+    const allTotalEl = document.getElementById('wc-all-total');
+
+    if (nwlTotalEl) nwlTotalEl.textContent = (totals.nwl || 0).toLocaleString();
+    if (cswTotalEl) cswTotalEl.textContent = (totals.csw || 0).toLocaleString();
+    if (awTotalEl) awTotalEl.textContent = (totals.aw || 0).toLocaleString();
+    if (longTotalEl) longTotalEl.textContent = (totals.long || 0).toLocaleString();
+    if (allTotalEl) allTotalEl.textContent = (totals.all || 0).toLocaleString();
+
+    const tbody = document.getElementById('wc-dicts-tbody');
+    if (!tbody || !dists) return;
+
+    const lengths = [];
+    for (let i = 2; i <= 15; i++) {
+        lengths.push(String(i));
+    }
+    lengths.push('16+');
+
+    let html = '';
+    lengths.forEach(lenKey => {
+        const nwlCnt = (dists.nwl && dists.nwl[lenKey]) || 0;
+        const cswCnt = (dists.csw && dists.csw[lenKey]) || 0;
+        const awCnt = (dists.aw && dists.aw[lenKey]) || 0;
+        const longCnt = (dists.long && dists.long[lenKey]) || 0;
+        const allCnt = (dists.all && dists.all[lenKey]) || 0;
+
+        const lenLabel = lenKey === '16+' ? '16+ Letters' : `${lenKey} Letters`;
+
+        html += `
+            <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.06);">
+                <td style="padding: 8px 12px; text-align: left; font-weight: 600; opacity: 0.85;">${lenLabel}</td>
+                <td style="padding: 8px 12px; font-weight: ${nwlCnt > 0 ? '700' : 'normal'}; color: ${nwlCnt > 0 ? '#60a5fa' : 'inherit'};">${nwlCnt.toLocaleString()}</td>
+                <td style="padding: 8px 12px; font-weight: ${cswCnt > 0 ? '700' : 'normal'}; color: ${cswCnt > 0 ? '#fbbf24' : 'inherit'};">${cswCnt.toLocaleString()}</td>
+                <td style="padding: 8px 12px; font-weight: ${awCnt > 0 ? '700' : 'normal'}; color: ${awCnt > 0 ? '#c084fc' : 'inherit'};">${awCnt.toLocaleString()}</td>
+                <td style="padding: 8px 12px; font-weight: ${longCnt > 0 ? '700' : 'normal'}; color: ${longCnt > 0 ? '#f87171' : 'inherit'};">${longCnt.toLocaleString()}</td>
+                <td style="padding: 8px 12px; font-weight: 700; color: #34d399;">${allCnt.toLocaleString()}</td>
+            </tr>
+        `;
+    });
+
+    // Grand total row
+    html += `
+        <tr style="background: rgba(var(--text-primary-rgb), 0.06); font-weight: 800; border-top: 2px solid rgba(var(--text-primary-rgb), 0.18);">
+            <td style="padding: 10px 12px; text-align: left; color: var(--text-primary);">Total</td>
+            <td style="padding: 10px 12px; color: #60a5fa;">${(totals.nwl || 0).toLocaleString()}</td>
+            <td style="padding: 10px 12px; color: #fbbf24;">${(totals.csw || 0).toLocaleString()}</td>
+            <td style="padding: 10px 12px; color: #c084fc;">${(totals.aw || 0).toLocaleString()}</td>
+            <td style="padding: 10px 12px; color: #f87171;">${(totals.long || 0).toLocaleString()}</td>
+            <td style="padding: 10px 12px; color: #34d399; font-size: 0.95rem;">${(totals.all || 0).toLocaleString()}</td>
+        </tr>
+    `;
+
+    tbody.innerHTML = html;
+};
+
+window.renderWordChartExamples = function(examples) {
+    const container = document.getElementById('wc-examples-container');
+    if (!container || !examples) return;
+
+    let html = '';
+    const lengths = [5, 6, 7, 8];
+    lengths.forEach(len => {
+        const item = examples[String(len)];
+        if (!item) return;
+
+        let divsHtml = '';
+        const divs = item.divisions || {};
+        for (let d = 1; d <= item.max_divisions; d++) {
+            const divData = divs[String(d)];
+            if (!divData) continue;
+
+            const isHard = d >= item.threshold;
+            const wordsList = (divData.words || []).map(w => {
+                const safeW = escapeHtml(w.word || '');
+                return `<span class="wc-word-pill" onclick="window.showWordDefinitionPopup('${safeW}', event)" title="Found ${w.count} times in tally" style="display: inline-block; cursor: pointer; padding: 2px 7px; border-radius: 4px; background: rgba(var(--text-primary-rgb), 0.06); font-size: 0.75rem; font-weight: 600; margin: 2px;">${safeW} <span style="opacity: 0.6; font-size: 0.7em;">(${w.count})</span></span>`;
+            }).join(' ');
+
+            divsHtml += `
+                <div style="background: rgba(var(--text-primary-rgb), 0.02); border: 1px solid rgba(var(--text-primary-rgb), 0.08); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px;">
+                        <span style="font-weight: 700; font-size: 0.8rem; color: ${isHard ? '#fb923c' : '#38bdf8'};">
+                            Division ${d} of ${item.max_divisions} (${divData.points} pts)
+                        </span>
+                        <span style="font-size: 0.72rem; color: var(--muted-text);">
+                            ${escapeHtml(divData.range_str || '')}
+                        </span>
+                    </div>
+                    <div style="line-height: 1.4;">
+                        ${wordsList || '<span style="opacity: 0.5; font-size: 0.75rem;">None recorded yet</span>'}
+                    </div>
+                </div>
+            `;
+        }
+
+        html += `
+            <div style="background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 8px; padding: 12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="font-size: 0.9rem; color: var(--text-primary);">${len} Letters</strong>
+                    <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">Max Finds: ${item.max_count || 0}</span>
+                </div>
+                ${divsHtml}
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+};
+
+window.lookupWordChartWord = async function() {
+    const input = document.getElementById('wc-word-input');
+    const card = document.getElementById('wc-word-result-card');
+    const searchBtn = document.getElementById('wc-word-search-btn');
+
+    const word = input ? input.value.trim().toUpperCase() : '';
+    if (!word) {
+        if (input) input.focus();
+        return;
+    }
+
+    if (searchBtn) searchBtn.disabled = true;
+    if (card) {
+        card.style.display = 'block';
+        card.innerHTML = `<div style="text-align: center; padding: 15px; color: var(--muted-text);"><span class="reverse-dict-searching-spinner" style="display:inline-block; vertical-align:middle; margin-right:6px;"></span> Checking division & points for <strong>${escapeHtml(word)}</strong>...</div>`;
+    }
+
+    try {
+        const res = await fetch(`/api/tools/word-chart/lookup?word=${encodeURIComponent(word)}`);
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+            throw new Error(data.error || 'Word lookup failed');
+        }
+
+        const safeWord = escapeHtml(data.word || word);
+        const safeJsWord = safeWord.replace(/'/g, "\\'");
+        const isHard = Boolean(data.is_hard);
+        const hardBadge = isHard 
+            ? '<span style="background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); border-radius: 12px; padding: 3px 8px; font-size: 0.75rem; font-weight: 700;">Hard Word</span>'
+            : '<span style="background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 12px; padding: 3px 8px; font-size: 0.75rem; font-weight: 600;">Standard</span>';
+
+        const lists = data.lists || [];
+        let badgesHtml = '<div style="display: inline-flex; gap: 4px; vertical-align: middle;">';
+        ['NWL', 'CSW', 'AW'].forEach(dictName => {
+            if (lists.includes(dictName)) {
+                badgesHtml += `<span class="work-on-badge work-on-badge-${dictName.toLowerCase()}">${dictName}</span>`;
+            }
+        });
+        badgesHtml += '</div>';
+
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                <div>
+                    <span class="reverse-dict-word-text" onclick="window.showWordDefinitionPopup('${safeJsWord}', event)" title="Click to view definition" style="font-size: 1.3rem; font-weight: 800; cursor: pointer; color: var(--accent-color, #38bdf8); text-decoration: underline; text-underline-offset: 3px;">
+                        ${safeWord}
+                    </span>
+                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--muted-text); margin-left: 8px;">(${data.length} letters)</span>
+                    <div style="margin-top: 4px;">${badgesHtml}</div>
+                </div>
+                <div style="display: flex; gap: 6px; align-items: center;">
+                    ${hardBadge}
+                </div>
+            </div>
+
+            <!-- Metric Cards Grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px;">
+                <div style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #38bdf8;">${data.points} pts</div>
+                    <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Dynamic Value</div>
+                </div>
+                <div style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #a78bfa;">Div ${data.division} / ${data.max_divisions}</div>
+                    <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Division Status</div>
+                </div>
+                <div style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #fbbf24;">${data.find_count} finds</div>
+                    <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Tally History</div>
+                </div>
+                <div style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #34d399;">${data.bonus_word_points} pts</div>
+                    <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">As Bonus Word</div>
+                </div>
+            </div>
+
+            <div style="font-size: 0.83rem; line-height: 1.5; color: var(--muted-text); background: rgba(var(--text-primary-rgb), 0.02); padding: 8px 12px; border-radius: 6px;">
+                <strong>Division Details:</strong> ${escapeHtml(data.division_str || '')}. Base score: ${data.base_points} pt${data.base_points !== 1 ? 's' : ''}. Maximum for ${data.length}-letter words in tally is ${data.max_count} finds.
+                ${data.definition ? `<div style="margin-top: 6px; color: var(--text-primary); font-style: italic;">&ldquo;${escapeHtml(data.definition)}&rdquo;</div>` : ''}
+            </div>
+        `;
+    } catch (err) {
+        card.innerHTML = `
+            <div style="color: #f43f5e; padding: 10px; text-align: center;">
+                <strong>Error:</strong> ${escapeHtml(err.message || 'Word not found')}
+            </div>
+        `;
+    } finally {
+        if (searchBtn) searchBtn.disabled = false;
+    }
+};
+
+// Event listener initialization for Word Chart tool
+document.addEventListener('DOMContentLoaded', () => {
+    const wcInput = document.getElementById('wc-word-input');
+    if (wcInput) {
+        wcInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.lookupWordChartWord();
+            }
+        });
+    }
+});
 

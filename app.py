@@ -14179,6 +14179,217 @@ def tools_new_users():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/tools/word-chart', methods=['GET'])
+def tools_word_chart():
+    try:
+        import tally_divisions as td
+        from word_validator import word_validator
+        word_validator.ensure_csw_loaded()
+
+        # 1. Total & length distribution per dictionary
+        try:
+            nwl_words = list(word_validator.nwl_words)
+        except RuntimeError:
+            nwl_words = list(word_validator.nwl_words)
+        try:
+            csw_words = list(word_validator.csw_words)
+        except RuntimeError:
+            csw_words = list(word_validator.csw_words)
+        try:
+            aw_words = list(word_validator.added_words)
+        except RuntimeError:
+            aw_words = list(word_validator.added_words)
+        try:
+            long_words = list(word_validator.long_words)
+        except RuntimeError:
+            long_words = list(word_validator.long_words)
+
+        all_unique_set = set(nwl_words) | set(csw_words) | set(aw_words) | set(long_words)
+
+        def get_dist(w_set):
+            dist = {str(i): 0 for i in range(2, 16)}
+            dist["16+"] = 0
+            for w in w_set:
+                l = len(w)
+                if l < 2: continue
+                elif l >= 16: dist["16+"] += 1
+                else: dist[str(l)] += 1
+            return dist
+
+        nwl_dist = get_dist(nwl_words)
+        csw_dist = get_dist(csw_words)
+        aw_dist = get_dist(aw_words)
+        long_dist = get_dist(long_words)
+        all_dist = get_dist(all_unique_set)
+
+        # 2. Points & Divisions by letter length (2 to 16+)
+        points_and_divisions = []
+        td.get_word_stats()
+
+        for length in range(2, 16):
+            base_pts = td.get_base_points(length)
+            num_divs = td.get_num_divisions(length)
+            max_pts = td.get_max_points(length)
+            bonus_premium = length
+            total_bonus = base_pts + bonus_premium if base_pts > 0 else 0
+            max_tally = td.get_max_count_by_length(length)
+
+            if length <= 2:
+                div_range_str = "0 pts"
+                hard_designation = "Standard (0 pts)"
+            elif length <= 4:
+                div_range_str = f"{base_pts} pt"
+                hard_designation = "Standard"
+            else:
+                div_range_str = f"{base_pts} – {max_pts} pts"
+                thresh = td.get_hard_threshold(length)
+                if length >= 9:
+                    hard_designation = "All Words (100% Hard)"
+                elif thresh == num_divs:
+                    hard_designation = f"Division {thresh} (Rarest)"
+                else:
+                    hard_designation = f"Divisions {thresh} – {num_divs}"
+
+            div_list = []
+            if num_divs == 1:
+                div_list.append({
+                    'division': 1,
+                    'points': base_pts,
+                    'label': f"Div 1 ({base_pts} pt{'s' if base_pts != 1 else ''})"
+                })
+            else:
+                for d in range(1, num_divs + 1):
+                    p = base_pts + (d - 1)
+                    div_list.append({
+                        'division': d,
+                        'points': p,
+                        'label': f"Div {d} ({p} pts)"
+                    })
+
+            points_and_divisions.append({
+                'length': str(length),
+                'length_label': f"{length} Letters",
+                'base_score': base_pts,
+                'bonus_premium': f"+{bonus_premium} pts",
+                'total_bonus_score': f"{total_bonus} pts" if base_pts > 0 else "0 pts",
+                'total_bonus_val': total_bonus,
+                'num_divisions': num_divs,
+                'division_points_range': div_range_str,
+                'max_points': max_pts,
+                'hard_threshold': hard_designation,
+                'max_tally_finds': max_tally,
+                'divisions': div_list
+            })
+
+        points_and_divisions.append({
+            'length': '16+',
+            'length_label': '16+ Letters',
+            'base_score': '37+ (4/L)',
+            'bonus_premium': '+Length',
+            'total_bonus_score': '37 + (2 × Length)',
+            'total_bonus_val': 52,
+            'num_divisions': 5,
+            'division_points_range': '37 – 41+ pts',
+            'max_points': '41+ pts',
+            'hard_threshold': 'All Words (100% Hard)',
+            'max_tally_finds': td.get_max_count_by_length(16),
+            'divisions': [
+                {'division': d, 'points': 37 + (d - 1), 'label': f"Div {d} ({37 + (d - 1)}+ pts)"}
+                for d in range(1, 6)
+            ]
+        })
+
+        # 3. Dynamic Word Lookup if requested
+        word_query = (request.args.get('word') or '').strip().upper()
+        lookup_result = None
+        if word_query:
+            div_info = td.get_word_division_info(word_query)
+            is_hard = td.is_word_hard_by_tally(word_query)
+            definition, pronunciation = lookup_word_definition_and_pronunciation(word_query)
+            dict_lists = get_word_dictionaries(word_query)
+            bonus_val = div_info['points'] + len(word_query) if div_info['points'] > 0 else 0
+            lookup_result = {
+                'word': word_query,
+                'length': len(word_query),
+                'find_count': div_info['count'],
+                'max_count': div_info['max_count'],
+                'division': div_info['division'],
+                'max_divisions': div_info['max_divisions'],
+                'division_str': div_info['division_str'],
+                'base_points': div_info['base_points'],
+                'points': div_info['points'],
+                'max_points': div_info['max_points'],
+                'bonus_word_points': bonus_val,
+                'is_hard': is_hard,
+                'definition': definition,
+                'pronunciation': pronunciation,
+                'lists': dict_lists
+            }
+
+        # 4. Division Examples
+        try:
+            examples = td.get_division_examples()
+        except Exception:
+            examples = {}
+
+        return jsonify({
+            'dict_totals': {
+                'nwl': len(nwl_words),
+                'csw': len(csw_words),
+                'aw': len(aw_words),
+                'long': len(long_words),
+                'all': len(all_unique_set)
+            },
+            'dict_distributions': {
+                'nwl': nwl_dist,
+                'csw': csw_dist,
+                'aw': aw_dist,
+                'long': long_dist,
+                'all': all_dist
+            },
+            'points_and_divisions': points_and_divisions,
+            'lookup': lookup_result,
+            'examples': examples
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tools/word-chart/lookup', methods=['GET'])
+def tools_word_chart_lookup():
+    try:
+        word_query = (request.args.get('word') or '').strip().upper()
+        if not word_query:
+            return jsonify({'error': 'Word parameter is required'}), 400
+        import tally_divisions as td
+        div_info = td.get_word_division_info(word_query)
+        is_hard = td.is_word_hard_by_tally(word_query)
+        definition, pronunciation = lookup_word_definition_and_pronunciation(word_query)
+        dict_lists = get_word_dictionaries(word_query)
+        bonus_val = div_info['points'] + len(word_query) if div_info['points'] > 0 else 0
+        return jsonify({
+            'word': word_query,
+            'length': len(word_query),
+            'find_count': div_info['count'],
+            'max_count': div_info['max_count'],
+            'division': div_info['division'],
+            'max_divisions': div_info['max_divisions'],
+            'division_str': div_info['division_str'],
+            'base_points': div_info['base_points'],
+            'points': div_info['points'],
+            'max_points': div_info['max_points'],
+            'bonus_word_points': bonus_val,
+            'is_hard': is_hard,
+            'definition': definition,
+            'pronunciation': pronunciation,
+            'lists': dict_lists
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/tools/random-words', methods=['GET'])
 @login_required
 def tools_random_words():

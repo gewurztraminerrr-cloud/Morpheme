@@ -24185,3 +24185,116 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     animation: vibrationShudder 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both !important;
 }
 
+/* ==========================================================================
+   Word Chart in Tools
+   ========================================================================== */
+#tool-word-chart .word-chart-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+}
+
+#tool-word-chart .word-chart-table th,
+#tool-word-chart .word-chart-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.08);
+}
+
+#tool-word-chart .word-chart-table tbody tr:hover {
+    background: rgba(var(--text-primary-rgb), 0.04);
+}
+
+#tool-word-chart .word-chart-table thead tr {
+    background: rgba(var(--text-primary-rgb), 0.05);
+    border-bottom: 2px solid rgba(var(--text-primary-rgb), 0.15);
+}
+
+#tool-word-chart .word-chart-info-banner {
+    background: rgba(56, 189, 248, 0.08);
+    border-left: 4px solid #38bdf8;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-primary);
+}
+
+#tool-word-chart .word-chart-search-bar input:focus {
+    outline: none;
+    border-color: var(--accent-color, #38bdf8) !important;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}
+
+/* Light & White Theme Overrides for Word Chart */
+body.theme-white #tool-word-chart .word-chart-table,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table,
+[class*="theme-white"] #tool-word-chart .word-chart-table,
+[class*="theme-light-"] #tool-word-chart .word-chart-table {
+    color: #1e293b !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-table thead tr,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr,
+[class*="theme-white"] #tool-word-chart .word-chart-table thead tr,
+[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr {
+    background: #f1f5f9 !important;
+    border-bottom-color: #cbd5e1 !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-table th,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table th,
+[class*="theme-white"] #tool-word-chart .word-chart-table th,
+[class*="theme-light-"] #tool-word-chart .word-chart-table th {
+    color: #0f172a !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-table td,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table td,
+[class*="theme-white"] #tool-word-chart .word-chart-table td,
+[class*="theme-light-"] #tool-word-chart .word-chart-table td {
+    border-bottom-color: #e2e8f0 !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-table tbody tr:hover,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr:hover,
+[class*="theme-white"] #tool-word-chart .word-chart-table tbody tr:hover,
+[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr:hover {
+    background: #f8fafc !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-info-banner,
+body[class*="theme-light-"] #tool-word-chart .word-chart-info-banner,
+[class*="theme-white"] #tool-word-chart .word-chart-info-banner,
+[class*="theme-light-"] #tool-word-chart .word-chart-info-banner {
+    background: #f0f9ff !important;
+    border-left-color: #0284c7 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-search-bar input,
+body[class*="theme-light-"] #tool-word-chart .word-chart-search-bar input,
+[class*="theme-white"] #tool-word-chart .word-chart-search-bar input,
+[class*="theme-light-"] #tool-word-chart .word-chart-search-bar input {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+}
+
+body.theme-white #tool-word-chart #wc-word-result-card,
+body[class*="theme-light-"] #tool-word-chart #wc-word-result-card,
+[class*="theme-white"] #tool-word-chart #wc-word-result-card,
+[class*="theme-light-"] #tool-word-chart #wc-word-result-card {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-table-container,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table-container,
+[class*="theme-white"] #tool-word-chart .word-chart-table-container,
+[class*="theme-light-"] #tool-word-chart .word-chart-table-container {
+    border-color: #e2e8f0 !important;
+}
+
+
