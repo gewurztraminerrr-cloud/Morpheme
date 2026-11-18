@@ -4498,27 +4498,14 @@ def init_db():
         conn.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_user ON word_finds(user_id)')
         conn.commit()
 
-        # Seed / ensure historical player finds for ANIMAL
-        has_animal = conn.execute("SELECT COUNT(*) FROM word_finds WHERE word = 'ANIMAL'").fetchone()[0]
-        if has_animal < 9:
-            user_map = {r[1].lower(): r[0] for r in conn.execute("SELECT id, username FROM users").fetchall()}
-            conn.execute("DELETE FROM word_finds WHERE word = 'ANIMAL'")
-            animal_finds = [
-                ("ANIMAL", user_map.get("jeffb", 9), "2026-05-17T15:59:02Z", "pub_v2_split_4x4_45", 3),
-                ("ANIMAL", user_map.get("jeffjeff", 11), "2026-05-17T15:59:08Z", "pub_v2_split_4x4_45", 3),
-                ("ANIMAL", user_map.get("jeffy", 1), "2026-05-20T04:21:09Z", "pub_v2_accumulative_4x6_45", 3),
-                ("ANIMAL", user_map.get("jeffy", 1), "2026-05-21T01:41:15Z", "pub_v2_accumulative_5x7_45", 31),
-                ("ANIMAL", user_map.get("jeffy", 1), "2026-06-02T01:03:21Z", "pub_v2_accumulative_4x4_45", 5),
-                ("ANIMAL", user_map.get("jeffb", 9), "2026-06-14T16:54:32Z", "pub_v2_accumulative_4x4_45", 10),
-                ("ANIMAL", user_map.get("jeffb", 9), "2026-06-14T16:55:31Z", "pub_v2_accumulative_4x4_45", 11),
-                ("ANIMAL", user_map.get("jeffy", 1), "2026-06-17T22:47:59Z", "pub_v2_accumulative_4x4_45", 2695),
-                ("ANIMAL", user_map.get("jeffy", 1), "2026-06-17T22:48:58Z", "pub_v2_accumulative_4x4_45", 2696),
-            ]
-            for w, uid, ts, r_id, r_num in animal_finds:
-                conn.execute("INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number) VALUES (?, ?, ?, ?, ?)",
-                            (w, uid, ts, r_id, r_num))
-            conn.commit()
-            print("[init_db] Seeded 9 historical player finds for ANIMAL into word_finds.")
+        # Automatic comprehensive backfill of historical words if word_finds is sparse
+        total_wf = conn.execute("SELECT COUNT(*) FROM word_finds").fetchone()[0]
+        if total_wf < 1000:
+            try:
+                from scratch.backfill_all_word_finds import run_backfill
+                run_backfill(os.path.dirname(os.path.abspath(__file__)))
+            except Exception as bf_e:
+                print(f"[init_db] Word finds backfill notice: {bf_e}")
     except Exception as e:
         print(f"[init_db] Error migrating word_finds: {e}")
 
