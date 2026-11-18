@@ -24195,6 +24195,8 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     overflow-y: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-x pan-y !important;
+    overscroll-behavior-x: contain !important;
+    overscroll-behavior: contain !important;
     display: block !important;
     position: relative !important;
     box-sizing: border-box !important;

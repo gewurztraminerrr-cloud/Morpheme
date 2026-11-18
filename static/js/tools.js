@@ -869,13 +869,13 @@ function setupToolsNavigation() {
             if (e.changedTouches.length > 0) {
                 touchStartX = e.changedTouches[0].screenX;
                 touchStartY = e.changedTouches[0].screenY;
-                startedInTable = !!e.target.closest('.horizontal-scroll-container');
+                startedInTable = !!e.target.closest('.horizontal-scroll-container, .word-chart-table-container, #subtab-pane-wc-points, #subtab-pane-wc-dicts, #tool-word-chart, [data-prevent-swipe-back="true"]');
             }
         }, { passive: true });
         
         toolsContent.addEventListener('touchend', (e) => {
-            if (startedInTable || e.target.closest('.horizontal-scroll-container')) {
-                return; // Ignore swipes that start or end inside the scrollable tables
+            if (startedInTable || e.target.closest('.horizontal-scroll-container, .word-chart-table-container, #subtab-pane-wc-points, #subtab-pane-wc-dicts, #tool-word-chart, [data-prevent-swipe-back="true"]')) {
+                return; // Ignore swipes that start or end inside the scrollable tables or Word Chart
             }
             
             const touchEndX = e.changedTouches[0].screenX;
@@ -1271,55 +1271,63 @@ function setupComboChecker() {
     // Prevent horizontal scroll/swipe chaining to the parent .tools-split-layout and enable direct touch dragging across tables
     const containers = [document.getElementById('mp-container'), document.getElementById('lic-container')];
     containers.forEach(container => {
-        if (!container) return;
-
-        let startX = 0;
-        let startY = 0;
-        let startScrollLeft = 0;
-        let isHorizontalSwipe = false;
-        let touchIdentified = false;
-
-        container.addEventListener('touchstart', (e) => {
-            if (e.touches.length > 0) {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-                startScrollLeft = container.scrollLeft;
-                isHorizontalSwipe = false;
-                touchIdentified = false;
-            }
-        }, { passive: true });
-
-        container.addEventListener('touchmove', (e) => {
-            if (e.touches.length > 0) {
-                const currentX = e.touches[0].clientX;
-                const currentY = e.touches[0].clientY;
-                const diffX = startX - currentX;
-                const diffY = Math.abs(currentY - startY);
-
-                if (!touchIdentified) {
-                    if (Math.abs(diffX) > 5 || diffY > 5) {
-                        isHorizontalSwipe = Math.abs(diffX) > diffY;
-                        touchIdentified = true;
-                    }
-                }
-
-                if (isHorizontalSwipe) {
-                    container.scrollLeft = startScrollLeft + diffX;
-                    e.stopPropagation();
-                    if (e.cancelable) e.preventDefault();
-                }
-            }
-        }, { passive: false });
-
-        container.addEventListener('wheel', (e) => {
-            if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-                e.stopPropagation();
-            }
-        }, { passive: true });
+        if (typeof window.attachHorizontalScrollChainingPrevention === 'function') {
+            window.attachHorizontalScrollChainingPrevention(container);
+        }
     });
 
     setupComboExplorer();
 }
+
+// Global Helper: Prevent horizontal scroll/swipe chaining to parent .tools-split-layout
+window.attachHorizontalScrollChainingPrevention = function(container) {
+    if (!container || container._chainingPreventionAttached) return;
+    container._chainingPreventionAttached = true;
+
+    let startX = 0;
+    let startY = 0;
+    let startScrollLeft = 0;
+    let isHorizontalSwipe = false;
+    let touchIdentified = false;
+
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            startScrollLeft = container.scrollLeft;
+            isHorizontalSwipe = false;
+            touchIdentified = false;
+        }
+    }, { passive: true });
+
+    container.addEventListener('touchmove', (e) => {
+        if (e.touches.length > 0) {
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const diffX = startX - currentX;
+            const diffY = Math.abs(currentY - startY);
+
+            if (!touchIdentified) {
+                if (Math.abs(diffX) > 5 || diffY > 5) {
+                    isHorizontalSwipe = Math.abs(diffX) > diffY;
+                    touchIdentified = true;
+                }
+            }
+
+            if (isHorizontalSwipe) {
+                container.scrollLeft = startScrollLeft + diffX;
+                e.stopPropagation();
+                if (e.cancelable) e.preventDefault();
+            }
+        }
+    }, { passive: false });
+
+    container.addEventListener('wheel', (e) => {
+        if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+            e.stopPropagation();
+        }
+    }, { passive: true });
+};
 
 // --- Combo Explorer Logic ---
 
@@ -12962,6 +12970,13 @@ window.renderWordChartUI = function(data) {
     if (data.examples) {
         window.renderWordChartExamples(data.examples);
     }
+
+    // Attach horizontal scroll chaining prevention to Word Chart table containers
+    document.querySelectorAll('#tool-word-chart .word-chart-table-container').forEach(container => {
+        if (typeof window.attachHorizontalScrollChainingPrevention === 'function') {
+            window.attachHorizontalScrollChainingPrevention(container);
+        }
+    });
 };
 
 window.renderWordChartPoints = function(pointsList) {
