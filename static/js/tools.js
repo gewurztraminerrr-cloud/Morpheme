@@ -12970,13 +12970,6 @@ window.renderWordChartUI = function(data) {
     if (data.examples) {
         window.renderWordChartExamples(data.examples);
     }
-
-    // Attach horizontal scroll chaining prevention to Word Chart table containers
-    document.querySelectorAll('#tool-word-chart .word-chart-table-container').forEach(container => {
-        if (typeof window.attachHorizontalScrollChainingPrevention === 'function') {
-            window.attachHorizontalScrollChainingPrevention(container);
-        }
-    });
 };
 
 window.renderWordChartPoints = function(pointsList) {

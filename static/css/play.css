@@ -24192,11 +24192,11 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     width: 100% !important;
     max-width: 100% !important;
     overflow-x: auto !important;
-    overflow-y: hidden !important;
+    overflow-y: visible !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-x pan-y !important;
     overscroll-behavior-x: contain !important;
-    overscroll-behavior: contain !important;
+    overscroll-behavior-y: auto !important;
     display: block !important;
     position: relative !important;
     box-sizing: border-box !important;
