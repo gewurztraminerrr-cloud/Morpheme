@@ -1158,19 +1158,33 @@ class GameRoom:
                     new_words = []
                     for prefix in possible_words:
                         for opt in options:
-                            expanded_opt = 'QU' if opt == 'Q' else opt
-                            new_words.append(prefix + expanded_opt)
+                            opt_u = opt.upper()
+                            if opt_u == 'Q':
+                                new_words.append(prefix + 'QU')
+                                new_words.append(prefix + 'Q')
+                            elif opt_u == 'QU':
+                                new_words.append(prefix + 'QU')
+                            else:
+                                new_words.append(prefix + opt)
                     possible_words = new_words
                 else:
-                    expanded_cell = 'QU' if cell_val == 'Q' else cell_val
-                    for i in range(len(possible_words)):
-                        possible_words[i] += expanded_cell
+                    cell_u = cell_val.upper()
+                    additions = [cell_val]
+                    if cell_u == 'Q':
+                        additions = ['QU', 'Q']
+                    elif cell_u == 'QU':
+                        additions = ['QU']
+                    new_words = []
+                    for prefix in possible_words:
+                        for add in additions:
+                            new_words.append(prefix + add)
+                    possible_words = new_words
             
             if valid_path:
                 # Find which of the possible interpreted words from the path actually exists on the board
                 # USER REQUEST: Use dictionary validation instead of just all_words to match Solo mode!
                 
-                submitted_word_upper = word.upper()
+                submitted_word_upper = word.replace('[', '').replace(']', '').replace('/', '').strip().upper()
                 
                 valid_options = []
                 for w in possible_words:
@@ -1185,7 +1199,7 @@ class GameRoom:
                 elif len(valid_options) >= 1:
                     word = valid_options[0]  # Auto-correct the submission to the valid Either/Or letter
                     matched_word = word
-                elif submitted_word_upper in possible_words:
+                elif any(w.upper() == submitted_word_upper for w in possible_words):
                     word = submitted_word_upper
                 elif len(possible_words) > 0:
                     # Fallback: Use the first possible word if none are valid (prevents outputting "F/U" in word)

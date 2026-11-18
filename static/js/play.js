@@ -10475,14 +10475,33 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                 let newWords = [];
                 for (const prefix of possibleWords) {
                     for (const opt of options) {
-                        newWords.push(prefix + opt);
+                        const optUpper = opt.toUpperCase();
+                        if (optUpper === 'Q') {
+                            newWords.push(prefix + 'QU');
+                            newWords.push(prefix + 'Q');
+                        } else if (optUpper === 'QU') {
+                            newWords.push(prefix + 'QU');
+                        } else {
+                            newWords.push(prefix + opt);
+                        }
                     }
                 }
                 possibleWords = newWords;
             } else {
-                for (let i = 0; i < possibleWords.length; i++) {
-                    possibleWords[i] += cellVal;
+                const cellUpper = cellVal.toUpperCase();
+                let additions = [cellVal];
+                if (cellUpper === 'Q') {
+                    additions = ['QU', 'Q'];
+                } else if (cellUpper === 'QU') {
+                    additions = ['QU'];
                 }
+                let newWords = [];
+                for (const prefix of possibleWords) {
+                    for (const add of additions) {
+                        newWords.push(prefix + add);
+                    }
+                }
+                possibleWords = newWords;
             }
         }
 
@@ -10503,16 +10522,16 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     return wText.toUpperCase() === w.toUpperCase();
                 });
                 if (isVal) {
-                    validOptions.push(w);
+                    validOptions.push(w.toUpperCase());
                 }
             }
 
-            let submittedClean = word.replace(/\//g, '');
+            let submittedClean = word.replace(/\[|\]|\//g, '').toUpperCase();
             if (validOptions.includes(submittedClean)) {
                 word = submittedClean;
             } else if (validOptions.length >= 1) {
                 word = validOptions[0];
-            } else if (possibleWords.includes(submittedClean)) {
+            } else if (possibleWords.some(w => w.toUpperCase() === submittedClean)) {
                 word = submittedClean;
             } else if (possibleWords.length > 0) {
                 word = possibleWords[0];
@@ -12648,19 +12667,25 @@ function getLetterFromPathIndex(path, i, isForDisplay = false) {
     const L = p.letter;
     
     if (isForDisplay && L && L.includes('/')) {
-        return `[${L}]`;
+        const parts = L.split('/').map(part => (part === 'Q' || part === 'QU') ? 'QU' : part);
+        return `[${parts.join('/')}]`;
     }
     
-    const cleanL = (L && L.includes('/')) ? L.split('/')[0] : L;
+    let cleanL = (L && L.includes('/')) ? L.split('/')[0] : L;
+    if (L && L.includes('/')) {
+        const parts = L.split('/');
+        const qPart = parts.find(x => x.toUpperCase() === 'Q' || x.toUpperCase() === 'QU');
+        if (qPart) cleanL = qPart;
+    }
     
-    if (cleanL === 'Q') {
+    if (cleanL === 'Q' || cleanL === 'QU') {
         const prevP = i > 0 ? path[i - 1] : null;
         const nextP = i < path.length - 1 ? path[i + 1] : null;
         
         const prevL = prevP && prevP.letter ? (prevP.letter.includes('/') ? prevP.letter.split('/')[0] : prevP.letter) : null;
         const nextL = nextP && nextP.letter ? (nextP.letter.includes('/') ? nextP.letter.split('/')[0] : nextP.letter) : null;
         
-        if (prevL === 'U' || nextL === 'U') {
+        if (cleanL === 'Q' && (prevL === 'U' || nextL === 'U')) {
             return 'Q';
         }
         return 'QU';
@@ -13530,14 +13555,33 @@ async function handleTournamentWord(word, path = null) {
                 let newWords = [];
                 for (const prefix of possibleWords) {
                     for (const opt of options) {
-                        newWords.push(prefix + opt);
+                        const optUpper = opt.toUpperCase();
+                        if (optUpper === 'Q') {
+                            newWords.push(prefix + 'QU');
+                            newWords.push(prefix + 'Q');
+                        } else if (optUpper === 'QU') {
+                            newWords.push(prefix + 'QU');
+                        } else {
+                            newWords.push(prefix + opt);
+                        }
                     }
                 }
                 possibleWords = newWords;
             } else {
-                for (let i = 0; i < possibleWords.length; i++) {
-                    possibleWords[i] += cellVal;
+                const cellUpper = cellVal.toUpperCase();
+                let additions = [cellVal];
+                if (cellUpper === 'Q') {
+                    additions = ['QU', 'Q'];
+                } else if (cellUpper === 'QU') {
+                    additions = ['QU'];
                 }
+                let newWords = [];
+                for (const prefix of possibleWords) {
+                    for (const add of additions) {
+                        newWords.push(prefix + add);
+                    }
+                }
+                possibleWords = newWords;
             }
         }
 
@@ -13560,17 +13604,17 @@ async function handleTournamentWord(word, path = null) {
                     return wText.toUpperCase() === w.toUpperCase();
                 });
                 if (isVal) {
-                    validOptions.push(w);
+                    validOptions.push(w.toUpperCase());
                 }
             }
 
             // Find which option to select
-            let submittedClean = resolvedWord.replace(/\//g, '');
+            let submittedClean = resolvedWord.replace(/\[|\]|\//g, '').toUpperCase();
             if (validOptions.includes(submittedClean)) {
                 resolvedWord = submittedClean;
             } else if (validOptions.length >= 1) {
                 resolvedWord = validOptions[0];
-            } else if (possibleWords.includes(submittedClean)) {
+            } else if (possibleWords.some(w => w.toUpperCase() === submittedClean)) {
                 resolvedWord = submittedClean;
             } else if (possibleWords.length > 0) {
                 resolvedWord = possibleWords[0];
@@ -14007,14 +14051,33 @@ async function handlePrivateMatchWord(word, path = null) {
                 let newWords = [];
                 for (const prefix of possibleWords) {
                     for (const opt of options) {
-                        newWords.push(prefix + opt);
+                        const optUpper = opt.toUpperCase();
+                        if (optUpper === 'Q') {
+                            newWords.push(prefix + 'QU');
+                            newWords.push(prefix + 'Q');
+                        } else if (optUpper === 'QU') {
+                            newWords.push(prefix + 'QU');
+                        } else {
+                            newWords.push(prefix + opt);
+                        }
                     }
                 }
                 possibleWords = newWords;
             } else {
-                for (let i = 0; i < possibleWords.length; i++) {
-                    possibleWords[i] += cellVal;
+                const cellUpper = cellVal.toUpperCase();
+                let additions = [cellVal];
+                if (cellUpper === 'Q') {
+                    additions = ['QU', 'Q'];
+                } else if (cellUpper === 'QU') {
+                    additions = ['QU'];
                 }
+                let newWords = [];
+                for (const prefix of possibleWords) {
+                    for (const add of additions) {
+                        newWords.push(prefix + add);
+                    }
+                }
+                possibleWords = newWords;
             }
         }
 
@@ -14038,18 +14101,18 @@ async function handlePrivateMatchWord(word, path = null) {
                     return wText.toUpperCase() === w.toUpperCase();
                 });
                 if (isVal) {
-                    validOptions.push(w);
+                    validOptions.push(w.toUpperCase());
                 }
             }
 
             // Find which option to select
             // Check if the submitted word matches one of the valid options (clean version)
-            let submittedClean = resolvedWord.replace(/\//g, '');
+            let submittedClean = resolvedWord.replace(/\[|\]|\//g, '').toUpperCase();
             if (validOptions.includes(submittedClean)) {
                 resolvedWord = submittedClean;
             } else if (validOptions.length >= 1) {
                 resolvedWord = validOptions[0];
-            } else if (possibleWords.includes(submittedClean)) {
+            } else if (possibleWords.some(w => w.toUpperCase() === submittedClean)) {
                 resolvedWord = submittedClean;
             } else if (possibleWords.length > 0) {
                 resolvedWord = possibleWords[0];
