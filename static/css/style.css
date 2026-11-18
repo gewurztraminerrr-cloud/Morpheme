@@ -3913,6 +3913,8 @@ body.theme-white .header {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .mini-profile-section-label {
@@ -3991,16 +3993,59 @@ body.theme-white .header {
     .mini-profile-card {
         padding: 18px !important;
         border-radius: 18px !important;
+        max-height: 94vh !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
     .mini-profile-metadata {
-        grid-template-columns: 1fr !important;
-        gap: 6px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
+        margin-bottom: 16px !important;
+        padding: 0 4px !important;
     }
-    #mini-meta-demographics { order: 1 !important; }
-    #mini-meta-country { order: 2 !important; }
-    #mini-meta-joined { order: 3 !important; }
-    #mini-meta-last-visited { order: 4 !important; }
-    #mini-meta-proof { order: 5 !important; }
+    .mini-meta-item {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .mini-meta-icon {
+        width: 22px !important;
+        height: 22px !important;
+        flex-shrink: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1rem !important;
+        margin: 0 !important;
+    }
+    .mini-meta-text {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        overflow: visible !important;
+        font-size: 0.88rem !important;
+        font-weight: 500 !important;
+        line-height: 1.35 !important;
+        color: var(--text-primary) !important;
+        opacity: 0.9 !important;
+    }
+    #mini-meta-demographics { order: 1 !important; width: 100% !important; }
+    #mini-meta-country { order: 2 !important; width: 100% !important; }
+    #mini-meta-joined { order: 3 !important; width: 100% !important; }
+    #mini-meta-last-visited { order: 4 !important; width: 100% !important; }
+    #mini-meta-forum-posts { order: 5 !important; width: 100% !important; }
+    #mini-meta-proof { order: 6 !important; width: 100% !important; grid-column: span 1 !important; }
     .mini-profile-description {
         max-height: 65px !important;
     }
@@ -4020,8 +4065,74 @@ body.theme-white .header {
     }
 }
 
+/* Explicit mobile device overrides (body.is-mobile) for mini-profile metadata one row at a time */
+body.is-mobile .mini-profile-metadata {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 8px !important;
+}
+
+body.is-mobile .mini-meta-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+}
+
+body.is-mobile .mini-meta-icon {
+    width: 22px !important;
+    height: 22px !important;
+    flex-shrink: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    margin: 0 !important;
+}
+
+body.is-mobile .mini-meta-text {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    display: inline-block !important;
+    visibility: visible !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    overflow: visible !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    line-height: 1.35 !important;
+    color: var(--text-primary) !important;
+    opacity: 0.9 !important;
+}
+
+body.is-mobile #mini-meta-demographics { order: 1 !important; width: 100% !important; }
+body.is-mobile #mini-meta-country { order: 2 !important; width: 100% !important; }
+body.is-mobile #mini-meta-joined { order: 3 !important; width: 100% !important; }
+body.is-mobile #mini-meta-last-visited { order: 4 !important; width: 100% !important; }
+body.is-mobile #mini-meta-forum-posts { order: 5 !important; width: 100% !important; }
+body.is-mobile #mini-meta-proof { order: 6 !important; width: 100% !important; grid-column: span 1 !important; }
+
+body.is-mobile[class*="theme-white"] .mini-meta-text,
+body.is-mobile.theme-white .mini-meta-text,
+body.is-mobile[class*="theme-light-"] .mini-meta-text,
+[class*="theme-white"] .mini-meta-text,
+body.theme-white .mini-meta-text,
+[class*="theme-light-"] .mini-meta-text {
+    color: #111111 !important;
+}
+
+body.is-mobile:not([class*="theme-white"]):not([class*="theme-light-"]) .mini-meta-text {
+    color: #ffffff !important;
+}
+
 /* Responsive overrides for laptop screens and viewports with limited vertical height */
-@media (max-height: 780px) and (min-width: 601px) {
+@media (max-height: 780px) and (min-width: 901px) {
     .mini-profile-card {
         width: 880px !important;
         max-width: min(96vw, 880px) !important;
@@ -9279,15 +9390,52 @@ select option,
         display: none !important;
     }
     .mini-profile-metadata {
-        grid-template-columns: 1fr !important;
-        gap: 6px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: 8px !important;
     }
-    #mini-meta-demographics { order: 1 !important; }
-    #mini-meta-country { order: 2 !important; }
-    #mini-meta-joined { order: 3 !important; }
-    #mini-meta-last-visited { order: 4 !important; }
-    #mini-meta-forum-posts { order: 5 !important; }
-    #mini-meta-proof { order: 6 !important; }
+    .mini-meta-item {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+    }
+    .mini-meta-icon {
+        width: 22px !important;
+        height: 22px !important;
+        flex-shrink: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 1rem !important;
+        margin: 0 !important;
+    }
+    .mini-meta-text {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        white-space: normal !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
+        overflow: visible !important;
+        font-size: 0.88rem !important;
+        font-weight: 500 !important;
+        line-height: 1.35 !important;
+        color: var(--text-primary) !important;
+        opacity: 0.9 !important;
+    }
+    #mini-meta-demographics { order: 1 !important; width: 100% !important; }
+    #mini-meta-country { order: 2 !important; width: 100% !important; }
+    #mini-meta-joined { order: 3 !important; width: 100% !important; }
+    #mini-meta-last-visited { order: 4 !important; width: 100% !important; }
+    #mini-meta-forum-posts { order: 5 !important; width: 100% !important; }
+    #mini-meta-proof { order: 6 !important; width: 100% !important; grid-column: span 1 !important; }
 
     .profile-meta-line {
         display: contents !important;

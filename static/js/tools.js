@@ -2438,6 +2438,10 @@ window.showMiniProfile = async function (username) {
         if (modal) {
             modal.classList.add('forced-show');
             modal.classList.remove('hidden');
+            const card = modal.querySelector('.mini-profile-card');
+            if (card) {
+                card.scrollTop = 0;
+            }
         }
 
     } catch (err) {
