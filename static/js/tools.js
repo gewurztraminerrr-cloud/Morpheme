@@ -10784,21 +10784,14 @@ async function runFindCountSearch() {
 
                 return `
                     <tr class="finder-row" data-index="${index}" data-username="${safeUsername}" data-room-id="${safeRoomId}" data-round-number="${roundNum}" data-game-id="${gameId}" data-timestamp="${safeTimestamp}" title="Click row to watch Round Replay" style="cursor: pointer; border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.05); transition: background 0.2s;">
-                        <td style="padding: 10px 10px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
+                        <td style="padding: 12px; color: var(--accent-color); font-weight: 500; white-space: nowrap; word-break: normal;">
                             <div style="display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">
                                 <span class="finder-username-link" data-username="${safeUsername}" title="View ${safeUsername}'s mini-profile" style="display: inline-flex; align-items: center; gap: 6px; cursor: pointer; text-decoration: underline; color: inherit;">
                                     ${flagHtml} <span style="font-weight: 600;">${safeUsername}</span>
                                 </span>
                             </div>
                         </td>
-                        <td style="padding: 10px 10px; color: var(--muted-text); white-space: nowrap;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: nowrap; white-space: nowrap;">
-                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;">${formattedDate}</span>
-                                <span class="finder-replay-btn" title="Watch Round Replay">
-                                    <span style="font-size: 0.7rem; line-height: 1;">▶</span><span>Replay</span>
-                                </span>
-                            </div>
-                        </td>
+                        <td style="padding: 12px; color: var(--muted-text); white-space: nowrap;">${formattedDate}</td>
                     </tr>
                 `;
             }).join('');

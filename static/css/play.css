@@ -15034,7 +15034,7 @@ body.theme-white .find-count-word-link:hover,
     background: rgba(2, 132, 199, 0.1) !important;
 }
 
-/* Find Count Division Badge & Replay Button Styling */
+/* Find Count Division Badge Styling */
 .find-count-division-badge {
     display: inline-block;
     margin-left: 8px;
@@ -15057,49 +15057,6 @@ body.theme-white .find-count-division-badge,
     color: #0284c7 !important;
 }
 
-.finder-replay-btn {
-    display: inline-flex !important;
-    align-items: center !important;
-    gap: 4px !important;
-    padding: 3px 8px !important;
-    font-size: 0.78rem !important;
-    font-weight: 600 !important;
-    border-radius: 6px !important;
-    background: rgba(56, 189, 248, 0.12) !important;
-    border: 1px solid rgba(56, 189, 248, 0.35) !important;
-    color: #38bdf8 !important;
-    cursor: pointer !important;
-    transition: all 0.15s ease !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
-    word-break: keep-all !important;
-    overflow-wrap: normal !important;
-    hyphens: manual !important;
-    min-width: fit-content !important;
-    line-height: 1.2 !important;
-}
-
-.finder-replay-btn:hover {
-    background: rgba(56, 189, 248, 0.25) !important;
-    border-color: rgba(56, 189, 248, 0.6) !important;
-    color: #7dd3fc !important;
-}
-
-body.theme-white .finder-replay-btn,
-[class*="theme-white"] .finder-replay-btn,
-[class*="theme-light-"] .finder-replay-btn {
-    background: rgba(2, 132, 199, 0.1) !important;
-    border: 1px solid rgba(2, 132, 199, 0.35) !important;
-    color: #0284c7 !important;
-}
-
-body.theme-white .finder-replay-btn:hover,
-[class*="theme-white"] .finder-replay-btn:hover,
-[class*="theme-light-"] .finder-replay-btn:hover {
-    background: rgba(2, 132, 199, 0.2) !important;
-    color: #0369a1 !important;
-}
-
 @media (max-width: 900px) {
     #find-count-summary .find-count-division-badge,
     body.is-mobile #find-count-summary .find-count-division-badge {
@@ -15111,31 +15068,6 @@ body.theme-white .finder-replay-btn:hover,
         max-width: 100% !important;
         text-align: left !important;
         box-sizing: border-box !important;
-    }
-
-    #page-tools #tool-find-count .history-table,
-    body.is-mobile #page-tools #tool-find-count .history-table {
-        min-width: 100% !important;
-        width: 100% !important;
-    }
-
-    #page-tools #tool-find-count .history-table th,
-    #page-tools #tool-find-count .history-table td,
-    body.is-mobile #page-tools #tool-find-count .history-table th,
-    body.is-mobile #page-tools #tool-find-count .history-table td {
-        padding: 8px 8px !important;
-        font-size: 0.82rem !important;
-    }
-
-    #page-tools #tool-find-count .finder-replay-btn,
-    body.is-mobile #page-tools #tool-find-count .finder-replay-btn {
-        white-space: nowrap !important;
-        flex-shrink: 0 !important;
-        word-break: keep-all !important;
-        overflow-wrap: normal !important;
-        padding: 2px 7px !important;
-        font-size: 0.74rem !important;
-        letter-spacing: 0.2px !important;
     }
 }
 
