@@ -428,6 +428,10 @@
 - [`dictionaries/wikdefs_duplicate.txt`](file:///Users/jeffbabiak/dictionaries/wikdefs_duplicate.txt): Synchronized with `wikdefs.txt`.
 - [`dictionaries/aw_inflections.txt`](file:///Users/jeffbabiak/dictionaries/aw_inflections.txt): Cached inflection mappings for `FRIGATEBIRD`, `MESITE`, `PAICHE`.
 - [`morpheme.db`](file:///Users/jeffbabiak/morpheme.db): Updated `wiktionary_definitions` table on localhost and VPS production database.
+- [`static/js/play.js`](file:///Users/jeffbabiak/static/js/play.js):
+  - Removed problematic `keepalive: true` from interactive `submitWord` requests, eliminating background connection stalls and aborted fetch promises on mobile browsers.
+  - Implemented 3-attempt resilient retry loop with active exception handling and 4.5s per-attempt timeout.
+  - Passed `finalPath` to `showValidationFeedback` on submission failure so the specific word's tiles are targeted.
 - [`game_room.py`](file:///Users/jeffbabiak/game_room.py):
   - Decoupled Subanagrams board generation and scoring in `generate_spinner_params` from `room._state_lock`, eliminating lock starvation on word submissions.
   - Pre-computed `room.next_round_word_scores` and pre-populated `room.solved_words_with_scores` in `generate_spinner_params`, `ensure_next_board_ready`, and `start_next_round`.

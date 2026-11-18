@@ -10911,28 +10911,42 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             path: serverPath
         });
 
-        let response;
-        for (let attempt = 0; attempt < 2; attempt++) {
+        let response = null;
+        let lastError = null;
+        for (let attempt = 0; attempt < 3; attempt++) {
             const controller = new AbortController();
-            const fetchTimeout = setTimeout(() => controller.abort(), 8000);
+            const fetchTimeout = setTimeout(() => controller.abort(), 4500);
             try {
                 response = await fetch(`/room/${roomId}/submit_word`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    keepalive: true,
                     signal: controller.signal,
                     body: submitBodyJson
                 });
+            } catch (err) {
+                lastError = err;
+                console.warn(`[play.js] Submit attempt ${attempt + 1} network error for "${word}":`, err);
+                if (attempt < 2) {
+                    await new Promise(r => setTimeout(r, 200));
+                    continue;
+                }
+                throw err;
             } finally {
                 clearTimeout(fetchTimeout);
             }
-            // 503 = server lock busy (board generation in progress). Retry once after 300ms.
-            if (response.status === 503 && attempt === 0) {
-                console.warn(`[play.js] Submit got 503 (server busy) for "${word}" — retrying in 300ms`);
-                await new Promise(r => setTimeout(r, 300));
+            // 503 = server lock busy. Retry up to 2 times after 250ms.
+            if (response && response.status === 503 && attempt < 2) {
+                console.warn(`[play.js] Submit got 503 (server busy) for "${word}" — retrying in 250ms`);
+                await new Promise(r => setTimeout(r, 250));
                 continue;
             }
-            break;
+            if (response && response.ok) {
+                break;
+            }
+        }
+        if (!response || !response.ok) {
+            if (lastError) throw lastError;
+            throw new Error(`HTTP ${response ? response.status : 'error'}`);
         }
         const data = await response.json();
 
@@ -11231,7 +11245,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         }
     } catch (error) {
         console.error('Error submitting word:', error);
-        showValidationFeedback('Submission Error', false);
+        showValidationFeedback('Submission Error', false, false, finalPath, true);
     }
     } finally {
         clearSubmissionVisuals();
