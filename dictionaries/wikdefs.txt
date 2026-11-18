@@ -38523,7 +38523,7 @@ ARANZADA	(historical) A traditional Spanish unit of land area, equivalent to abo
 ARANZADAS	plural of aranzada
 ARAPAHITE	(mineralogy) A dark, fine-grained magnetite basalt mineral.
 ARAPAHITES	plural of arapahite
-ARAPAIMA	Any large, bonytongue fish in the genus Arapaima, native to the Amazon and Essequibo basins of South America.
+ARAPAIMA	A large freshwater food fish of South America, also called pirarucu or paiche (Arapaima gigas).
 ARAPAIMAS	plural of arapaima
 ARAPAIMID	Any fish of the family Arapaimidae
 ARAPAIMIDS	plural of arapaimid
@@ -495893,7 +495893,7 @@ PAHUTUKAWAS	plural of pahutukawa
 PAIBAN	A clapper made from several flat pieces of hardwood or bamboo, used in Chinese music.
 PAIBANS	plural of paiban (A clapper made from several flat pieces of hardwood or bamboo, used in Chinese music.)
 PAICH	Alternative form of pech.
-PAICHE	An arapaima, also called the pirarucu (Arapaima gigas).
+PAICHE	A large freshwater food fish of the Amazon, also called arapaima or pirarucu (Arapaima gigas).
 PAICHES	plural of paiche
 PAID	simple past and past participle of pay
 PAIDAKIA	Greek grilled lambchops
@@ -528816,7 +528816,7 @@ PIRAPUTANGA	The South American fish Brycon hilarii
 PIRAPUTANGAS	plural of piraputanga
 PIRARUBICIN	(pharmacology) A particular drug used in chemotherapy.
 PIRARUBICINS	plural of pirarubicin ((pharmacology) A particular drug used in chemotherapy.)
-PIRARUCU	An arapaima (Arapaima gigas), a large fish of the Amazon.
+PIRARUCU	A large freshwater food fish of South America, also called arapaima or paiche (Arapaima gigas).
 PIRARUCUS	plural of pirarucu
 PIRATABLE	Able to be pirated.
 PIRATE	(crime) A criminal who plunders at sea; commonly attacking merchant vessels, though often pillaging port towns.

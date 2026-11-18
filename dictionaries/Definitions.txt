@@ -39974,7 +39974,7 @@ ARANZADA - (historical) A traditional Spanish unit of land area, equivalent to a
 ARANZADAS - plural of aranzada
 ARAPAHITE - (mineralogy) A dark, fine-grained magnetite basalt mineral.
 ARAPAHITES - plural of arapahite
-ARAPAIMA - (Tupi) a large freshwater food fish of South America, aka pirarucu [n -S]
+ARAPAIMA - (Tupi) a large freshwater food fish of South America, aka pirarucu, paiche (Arapaima gigas) [n -S]
 ARAPAIMAS - ARAPAIMA, (Tupi) a large freshwater food fish of South America, aka pirarucu [n]
 ARAPAIMID - Any fish of the family Arapaimidae
 ARAPAIMIDS - plural of arapaimid
@@ -271210,7 +271210,7 @@ FRIEZINGS - plural of friezing
 FRIEZY - Made of the coarse woollen cloth called frieze.
 FRIG - to potter about [v FRIGGED, FRIGGING, FRIGS] / a refrigerator [n -ES]
 FRIGATE - a class of war vessels intermediate between corvettes and ships of the line [n -S]
-FRIGATEBIRD - Any of five species of bird in the genus Fregata, the only genus in the family Fregatidae.
+FRIGATEBIRD - Any of five species of bird in the genus Fregata, the only genus in the family Fregatidae [n -S]
 FRIGATEBIRDS - plural of frigatebird
 FRIGATES - FRIGATE, a class of war vessels intermediate between corvettes and ships of the line [n]
 FRIGATOON - a small Venetian vessel with a square stern and two masts [n -S]
@@ -419732,7 +419732,7 @@ MESISOL - A kind of organosol containing highly decomposed organic material, wit
 MESISOLS - plural of mesisol
 MESISTELE - A conical plated coupling between the proxistele and the dististele of some homoiosteles.
 MESISTELES - plural of mesistele
-MESITE - Any of three species of bird in the family Mesitornithidae within the order Mesitornithiformes, endemic to Madagascar.
+MESITE - Any of three species of bird in the family Mesitornithidae within the order Mesitornithiformes, endemic to Madagascar [n -S]
 MESITES - plural of mesite
 MESITOATE - Any salt or ester of mesitoic acid.
 MESITOATES - plural of mesitoate
@@ -517643,7 +517643,7 @@ PAHUTUKAWAS - plural of pahutukawa
 PAIBAN - A clapper made from several flat pieces of hardwood or bamboo, used in Chinese music.
 PAIBANS - plural of paiban (A clapper made from several flat pieces of hardwood or bamboo, used in Chinese music.)
 PAICH - Alternative form of pech.
-PAICHE - An arapaima, also called the pirarucu (Arapaima gigas).
+PAICHE - (South America) a large freshwater food fish of the Amazon, aka arapaima, pirarucu (Arapaima gigas) [n -S]
 PAICHES - plural of paiche
 PAID - PAY, to give money in exchange for goods or services [v]
 PAIDAKIA - Greek grilled lambchops
@@ -551866,7 +551866,7 @@ PIRAPUTANGA - The South American fish Brycon hilarii
 PIRAPUTANGAS - plural of piraputanga
 PIRARUBICIN - (pharmacology) A particular drug used in chemotherapy.
 PIRARUBICINS - plural of pirarubicin ((pharmacology) A particular drug used in chemotherapy.)
-PIRARUCU - (Tupi) a large South American fish, aka arapaima [n -S]
+PIRARUCU - (Tupi) a large South American fish, aka arapaima, paiche (Arapaima gigas) [n -S]
 PIRARUCUS - PIRARUCU, (Tupi) a large South American fish, aka arapaima [n]
 PIRATABLE - Able to be pirated.
 PIRATE - a person who, without authority, attempts to capture ships at sea [n -S] / to make illegal copies of e.g. software [v PIRATED, PIRATING, PIRATES]

@@ -10418,214 +10418,30 @@ def lookup_definition_image(word):
             break
     return image_url
 
-_NOUN_DEF_REGEX = re.compile(
-    r'(?:'
-    r'\[(?:[a-z\s,/]*\b)?n(?:oun)?\b|'
-    r'^\s*\((?:noun|proper\s+noun|n\.)\)|'
-    r'\b(?:plural|agent noun|diminutive)\s+(?:of|for)\b|'
-    r'\b(?:plural\s+form|noun)\b|'
-    r'\b(?:someone|anyone|a\s+person|one|those|people)\s+who\b|'
-    r'\b(?:citizen|inhabitant|native|member|resident|ruler|leader|official|follower|supporter|advocate|practitioner)\s+of\b|'
-    r'\b(?:an?\s+(?:[a-z\-]+\s+)*(?:enzyme|protein|hormone|chemical|substance|compound|mineral|metal|alloy|element|acid|alkaloid|polymer|lipid|sugar|vitamin|organism|plant|animal|tree|shrub|flower|bird|fish|insect|reptile|mammal|device|instrument|tool|apparatus|machine|vessel|vehicle|garment|clothing|fabric|structure|building|settlement|town|city|region|shield|armor|armour|weapon|sword|blade|dagger|helm|helmet|buckler|breastplate))\b|'
-    r'\b(?:the\s+)?(?:act|action|process|practice|state|condition|quality|property|study|science|art|doctrine|theory|belief|system)\s+of\b'
-    r')',
-    re.IGNORECASE
-)
-
-_EXPLICIT_NON_NOUN_REGEX = re.compile(
-    r'(?:'
-    r'\[(?:adv|adj|v|prep|conj|interj|pron)\b|'
-    r'^\s*\((?:adjective|adverb|verb|transitive\s+verb|intransitive\s+verb|preposition|conjunction|interjection|pronoun)\b'
-    r')',
-    re.IGNORECASE
-)
-
-_EXPLICIT_NOUN_TAG_REGEX = re.compile(
-    r'(?:'
-    r'\[(?:[a-z\s,/]*\b)?n(?:oun)?\b|'
-    r'^\s*\((?:noun|proper\s+noun|n\.)\)'
-    r')',
-    re.IGNORECASE
-)
-
-_NOUN_SUFFIX_REGEX = re.compile(
-    r'(?:tion|sion|ment|ness|ity|ism|ship|hood|ist|ance|ence)s?$',
-    re.IGNORECASE
-)
-
-_CROSS_REF_POINTER_REGEX = re.compile(
-    r'\b(?:'
-    r'(?:archaic|alternative|alternate|obsolete|variant|historical|dialectal|anglicised|anglicized|british|american|us|uk|rare|former|chiefly\s+[a-z]+)?\s*'
-    r'(?:spelling|form|variant)\s+(?:of|for)|'
-    r'spelling\s+variant\s+of|'
-    r'plural\s+(?:of|for)|'
-    r'singular\s+(?:of|for)|'
-    r'diminutive\s+(?:of|for)|'
-    r'variant\s+of|'
-    r'same\s+as|'
-    r'synonym\s+of|'
-    r'another\s+name\s+for|'
-    r'also\s+(?:called|known\s+as|spelled)|'
-    r'also|'
-    r'see\s+(?:also\s+)?'
-    r')\s+([A-Za-z\-]+)',
-    re.IGNORECASE
-)
-
-def check_is_noun_and_get_wiki(word: str, definition: str):
-    """
-    Check if a word is a noun, and if so, return (is_noun, wiki_url, wiki_title).
-    Ultra-fast (<0.1ms) local calculation with zero external network latency.
-    """
-    if not word:
-        return False, None, None
-    raw = word.strip()
-    w_upper = raw.upper()
-    w_lower = raw.lower()
-    d = definition or ''
-
-    global DEFINITIONS_CACHE
-    raw_def = DEFINITIONS_CACHE.get(w_upper, '') if isinstance(DEFINITIONS_CACHE, dict) else ''
-    combined_text = f"{d} {raw_def}".strip()
-
-    ref_target = None
-    m_ptr = _CROSS_REF_POINTER_REGEX.search(combined_text)
-    if m_ptr:
-        candidate_ref = m_ptr.group(1).lower().strip('-')
-        if candidate_ref != w_lower and len(candidate_ref) > 2:
-            ref_target = candidate_ref
-
-    if not ref_target and raw_def:
-        m_root = re.match(r'^([A-Za-z\-]+),\s*(.*)', raw_def)
-        if m_root:
-            cand_root = m_root.group(1).lower().strip('-')
-            if cand_root != w_lower and len(cand_root) > 2:
-                ref_target = cand_root
-
-    # Follow chained variants up to 3 hops (e.g. A is variant of B, B is spelling of C -> C)
-    if ref_target and isinstance(DEFINITIONS_CACHE, dict):
-        curr_ref = ref_target
-        hops = 0
-        while curr_ref and hops < 3:
-            hops += 1
-            ref_def = DEFINITIONS_CACHE.get(curr_ref.upper(), '')
-            if not ref_def:
-                break
-            m_next = _CROSS_REF_POINTER_REGEX.search(ref_def)
-            if m_next:
-                next_cand = m_next.group(1).lower().strip('-')
-                if next_cand and next_cand != curr_ref and len(next_cand) > 2:
-                    curr_ref = next_cand
-                    continue
-            break
-        if curr_ref:
-            ref_target = curr_ref
-
-    if ref_target and isinstance(DEFINITIONS_CACHE, dict):
-        ref_raw_def = DEFINITIONS_CACHE.get(ref_target.upper(), '')
-        if ref_raw_def:
-            combined_text = f"{combined_text} {ref_raw_def}".strip()
-
-    has_explicit_non_noun = bool(_EXPLICIT_NON_NOUN_REGEX.search(combined_text))
-    has_explicit_noun_tag = bool(_EXPLICIT_NOUN_TAG_REGEX.search(combined_text))
-
-    is_noun = False
-    try:
-        from nltk.corpus import wordnet as wn
-        wn_direct = wn.synsets(w_lower)
-        wn_direct_nouns = wn.synsets(w_lower, pos=wn.NOUN)
-        wn_ref_nouns = wn.synsets(ref_target, pos=wn.NOUN) if ref_target else []
-        wn_ref_all = wn.synsets(ref_target) if ref_target else []
-
-        # 1. WordNet Authority: if WordNet knows the word or its reference target
-        if wn_direct:
-            if wn_direct_nouns:
-                is_noun = True
-            elif wn_ref_nouns:
-                is_noun = True
-            else:
-                # WordNet indexes this word, and it has ZERO noun senses (e.g. VEHEMENT, DIALYSE, DESTROY, QUICKLY)
-                return False, None, None
-        elif ref_target and wn_ref_all:
-            if wn_ref_nouns:
-                is_noun = True
-            else:
-                return False, None, None
-    except Exception:
-        pass
-
-    if not is_noun:
-        # If definition explicitly tags as non-noun and not noun (e.g. (verb), (adjective))
-        if has_explicit_non_noun and not has_explicit_noun_tag:
-            return False, None, None
-
-        # 2. Check semantic noun patterns in definition (e.g. citizen of, digestive enzyme, plural of)
-        if _NOUN_DEF_REGEX.search(combined_text):
-            is_noun = True
-        else:
-            try:
-                from nltk.corpus import wordnet as wn
-                m = wn.morphy(w_lower, wn.NOUN)
-                if m and wn.synsets(m, pos=wn.NOUN):
-                    is_noun = True
-                elif ref_target and wn.synsets(ref_target, pos=wn.NOUN):
-                    is_noun = True
-                elif not has_explicit_non_noun and _NOUN_SUFFIX_REGEX.search(w_lower):
-                    is_noun = True
-            except Exception:
-                if not has_explicit_non_noun and _NOUN_SUFFIX_REGEX.search(w_lower):
-                    is_noun = True
-
-    if not is_noun:
-        return False, None, None
-
-    lemma = None
-    # 1. Variants and alternative spellings directly target the canonical main word
-    if ref_target:
-        lemma = ref_target
-
-    if not lemma and raw_def:
-        m_root = re.match(r'^([A-Za-z\-]+),\s*(.*)', raw_def)
-        if m_root:
-            root_word = m_root.group(1).lower().strip('-')
-            if root_word != w_lower and len(root_word) > 2:
-                lemma = root_word
-
-    if not lemma:
-        m_plural = re.search(r'\b(?:plural|diminutive)\s+(?:of|for)\s+([A-Za-z\-]+)', combined_text, re.IGNORECASE)
-        if m_plural:
-            cand_p = m_plural.group(1).lower().strip('-')
-            if cand_p != w_lower and len(cand_p) > 2:
-                lemma = cand_p
-
-    if not lemma:
-        try:
-            from nltk.corpus import wordnet as wn
-            m = wn.morphy(w_lower, wn.NOUN)
-            if m:
-                lemma = m
-        except Exception:
-            pass
-
-    if not lemma:
-        if w_lower.endswith('ies') and len(w_lower) > 4:
-            lemma = w_lower[:-3] + 'y'
-        elif w_lower.endswith(('ses', 'xes', 'zes', 'ches', 'shes')) and len(w_lower) > 4:
-            lemma = w_lower[:-2]
-        elif w_lower.endswith('s') and not w_lower.endswith('ss') and len(w_lower) > 3:
-            lemma = w_lower[:-1]
-        else:
-            lemma = w_lower
-
-    title = lemma.capitalize()
-    return resolve_wiki_common_noun(word, combined_text, lemma)
-
 # ---------------------------------------------------------------------------
 # WIKIPEDIA COMMON NOUN RESOLUTION & PROPER NOUN FILTER
 # Guarantees that Wikipedia articles referenced in Morpheme explain a common noun
 # meaning of the word rather than a proper noun (e.g. books, cities, bands, people).
 # ---------------------------------------------------------------------------
 WIKI_COMMON_NOUN_OVERRIDES = {
+    'ANDESYTE': ('Andesite', 'https://en.wikipedia.org/wiki/Andesite'),
+    'ANDESYTES': ('Andesite', 'https://en.wikipedia.org/wiki/Andesite'),
+    'ANDESITE': ('Andesite', 'https://en.wikipedia.org/wiki/Andesite'),
+    'ANDESITES': ('Andesite', 'https://en.wikipedia.org/wiki/Andesite'),
+    'CORSELET': ('Corslet', 'https://en.wikipedia.org/wiki/Corslet'),
+    'CORSELETS': ('Corslet', 'https://en.wikipedia.org/wiki/Corslet'),
+    'CORSLET': ('Corslet', 'https://en.wikipedia.org/wiki/Corslet'),
+    'CORSLETS': ('Corslet', 'https://en.wikipedia.org/wiki/Corslet'),
+    'FRIGATEBIRD': ('Frigatebird', 'https://en.wikipedia.org/wiki/Frigatebird'),
+    'FRIGATEBIRDS': ('Frigatebird', 'https://en.wikipedia.org/wiki/Frigatebird'),
+    'MESITE': ('Mesite', 'https://en.wikipedia.org/wiki/Mesite'),
+    'MESITES': ('Mesite', 'https://en.wikipedia.org/wiki/Mesite'),
+    'PAICHE': ('Arapaima', 'https://en.wikipedia.org/wiki/Arapaima'),
+    'PAICHES': ('Arapaima', 'https://en.wikipedia.org/wiki/Arapaima'),
+    'ARAPAIMA': ('Arapaima', 'https://en.wikipedia.org/wiki/Arapaima'),
+    'ARAPAIMAS': ('Arapaima', 'https://en.wikipedia.org/wiki/Arapaima'),
+    'PIRARUCU': ('Arapaima', 'https://en.wikipedia.org/wiki/Arapaima'),
+    'PIRARUCUS': ('Arapaima', 'https://en.wikipedia.org/wiki/Arapaima'),
     'CALYPSO': ('Calypso music', 'https://en.wikipedia.org/wiki/Calypso_music'),
     'FARADAY': ('Faraday constant', 'https://en.wikipedia.org/wiki/Faraday_constant'),
     'TURKEY': ('Turkey (bird)', 'https://en.wikipedia.org/wiki/Turkey_(bird)'),
@@ -10764,8 +10580,8 @@ def resolve_wiki_common_noun(word: str, definition: str = '', lemma: str = None)
         candidates.extend([f'{title} music', f'{title} (music)', f'{title} (genre)'])
     if any(k in def_lower for k in ('electricity', 'coulomb', 'unit', 'physics', 'measure', 'charge')):
         candidates.extend([f'{title} (unit)', f'{title} constant'])
-    if any(k in def_lower for k in ('bird', 'fowl', 'gallinaceous')):
-        candidates.append(f'{title} (bird)')
+    if any(k in def_lower for k in ('bird', 'fowl', 'gallinaceous', 'fregata', 'mesitornithidae')):
+        candidates.extend([f'{title} (bird)', f'{title}'])
     if any(k in def_lower for k in ('horse', 'foal', 'stallion', 'equine')):
         candidates.append(f'{title} (horse)')
     if any(k in def_lower for k in ('sweater', 'garment', 'clothing', 'jacket', 'coat', 'fabric', 'dress')):
@@ -10780,6 +10596,10 @@ def resolve_wiki_common_noun(word: str, definition: str = '', lemma: str = None)
         candidates.extend(['Porcelain', 'Bone china', f'{title} (dishware)'])
     if any(k in def_lower for k in ('chess', 'game piece', 'board game')):
         candidates.extend([f'{title} (chess)', f'{title} (game)'])
+    if any(k in def_lower for k in ('armor', 'armour', 'breastplate', 'cuirass', 'shield', 'weapon', 'sword')):
+        candidates.extend([f'{title} (armor)', f'{title} (armour)'])
+    if any(k in def_lower for k in ('rock', 'stone', 'mineral', 'volcanic', 'geology')):
+        candidates.extend([f'{title} (rock)', f'{title} (mineral)'])
 
     for cand in candidates:
         try:
@@ -10803,6 +10623,245 @@ def resolve_wiki_common_noun(word: str, definition: str = '', lemma: str = None)
     # If network call failed, default to standard fallback without caching false
     ret_url = f'https://en.wikipedia.org/wiki/{urllib.parse.quote(title)}'
     return True, ret_url, title
+
+_NOUN_DEF_REGEX = re.compile(
+    r'(?:'
+    r'\[(?:[a-z\s,/]*\b)?n(?:oun)?\b|'
+    r'^\s*\((?:noun|proper\s+noun|n\.)\)|'
+    r'\b(?:plural|agent noun|diminutive)\s+(?:of|for)\b|'
+    r'\b(?:plural\s+form|noun)\b|'
+    r'\b(?:someone|anyone|a\s+person|one|those|people)\s+who\b|'
+    r'\b(?:citizen|inhabitant|native|member|resident|ruler|leader|official|follower|supporter|advocate|practitioner)\s+of\b|'
+    r'\b(?:(?:an?|any|each|every|one|all|(?:any|one|each)\s+of\s+(?:several|five|four|three|two|[0-9]+)?)\s+(?:[a-z\-]+\s+)*(?:type|kind|species|genus|family|order|breed|variety|group|member|class)\s+of)\b|'
+    r'\b(?:(?:an?|any|each|one)\s+(?:[a-z\-]+\s+)*(?:enzyme|protein|hormone|chemical|substance|compound|mineral|metal|alloy|element|acid|alkaloid|polymer|lipid|sugar|vitamin|organism|plant|animal|tree|shrub|flower|bird|waterbird|seabird|songbird|fish|insect|beetle|reptile|mammal|crustacean|mollusk|device|instrument|tool|apparatus|machine|vessel|vehicle|garment|clothing|fabric|structure|building|settlement|town|city|region|shield|armor|armour|weapon|sword|blade|dagger|helm|helmet|buckler|breastplate|rock|stone|gem|gemstone))\b|'
+    r'\b(?:in\s+the\s+(?:genus|family|order|class)\s+[A-Z][a-z]+)\b|'
+    r'\b(?:the\s+)?(?:act|action|process|practice|state|condition|quality|property|study|science|art|doctrine|theory|belief|system)\s+of\b'
+    r')',
+    re.IGNORECASE
+)
+
+_EXPLICIT_NON_NOUN_REGEX = re.compile(
+    r'(?:'
+    r'\[(?:adv|adj|v|prep|conj|interj|pron)\b|'
+    r'^\s*\((?:adjective|adverb|verb|transitive\s+verb|intransitive\s+verb|preposition|conjunction|interjection|pronoun)\b'
+    r')',
+    re.IGNORECASE
+)
+
+_EXPLICIT_NOUN_TAG_REGEX = re.compile(
+    r'(?:'
+    r'\[(?:[a-z\s,/]*\b)?n(?:oun)?\b|'
+    r'^\s*\((?:noun|proper\s+noun|n\.)\)'
+    r')',
+    re.IGNORECASE
+)
+
+_NOUN_SUFFIX_REGEX = re.compile(
+    r'(?:tion|sion|ment|ness|ity|ism|ship|hood|ist|ance|ence)s?$',
+    re.IGNORECASE
+)
+
+_CROSS_REF_POINTER_REGEX = re.compile(
+    r'\b(?:'
+    r'(?:archaic|alternative|alternate|obsolete|variant|historical|dialectal|anglicised|anglicized|british|american|us|uk|rare|former|chiefly\s+[a-z]+)?\s*'
+    r'(?:spelling|form|variant)\s+(?:of|for)|'
+    r'spelling\s+variant\s+of|'
+    r'plural\s+(?:of|for)|'
+    r'singular\s+(?:of|for)|'
+    r'diminutive\s+(?:of|for)|'
+    r'variant\s+of|'
+    r'same\s+as|'
+    r'synonym\s+of|'
+    r'another\s+name\s+for|'
+    r'also\s+(?:called|known\s+as|spelled)|'
+    r'aka\b|a\.k\.a\.\b|'
+    r'also|'
+    r'see\s+(?:also\s+)?'
+    r')\s+(?:the\s+|a\s+|an\s+)?([A-Za-z\-]+)',
+    re.IGNORECASE
+)
+
+def check_is_noun_and_get_wiki(word: str, definition: str):
+    """
+    Check if a word is a noun, and if so, return (is_noun, wiki_url, wiki_title).
+    Ultra-fast (<0.1ms) local calculation with zero external network latency.
+    """
+    if not word:
+        return False, None, None
+    raw = word.strip()
+    w_upper = raw.upper()
+    w_lower = raw.lower()
+    d = definition or ''
+
+    # Fast path: check explicit overrides upfront
+    if w_upper in WIKI_COMMON_NOUN_OVERRIDES:
+        t, u = WIKI_COMMON_NOUN_OVERRIDES[w_upper]
+        if not t or not u:
+            return False, None, None
+        return True, u, t
+
+    global DEFINITIONS_CACHE
+    raw_def = DEFINITIONS_CACHE.get(w_upper, '') if isinstance(DEFINITIONS_CACHE, dict) else ''
+    combined_text = f"{d} {raw_def}".strip()
+
+    ref_target = None
+    m_ptr = _CROSS_REF_POINTER_REGEX.search(combined_text)
+    if m_ptr:
+        candidate_ref = m_ptr.group(1).lower().strip('-')
+        if candidate_ref != w_lower and len(candidate_ref) > 2:
+            ref_target = candidate_ref
+
+    if not ref_target and raw_def:
+        m_root = re.match(r'^([A-Za-z\-]+),\s*(.*)', raw_def)
+        if m_root:
+            cand_root = m_root.group(1).lower().strip('-')
+            if cand_root != w_lower and len(cand_root) > 2:
+                ref_target = cand_root
+
+    # Definition head pattern: e.g. "An arapaima, also called the pirarucu..."
+    if not ref_target:
+        m_head = re.match(r'^(?:an?|the)\s+([A-Za-z\-]+)(?:,|\s+also|\s+aka|\s+called|\s+\()', combined_text, re.IGNORECASE)
+        if m_head:
+            cand_head = m_head.group(1).lower().strip('-')
+            if cand_head != w_lower and len(cand_head) > 2:
+                ref_target = cand_head
+
+    # If ref_target is in WIKI_COMMON_NOUN_OVERRIDES, return its target
+    if ref_target and ref_target.upper() in WIKI_COMMON_NOUN_OVERRIDES:
+        t, u = WIKI_COMMON_NOUN_OVERRIDES[ref_target.upper()]
+        if t and u:
+            return True, u, t
+
+    # Follow chained variants up to 3 hops (e.g. A is variant of B, B is spelling of C -> C)
+    if ref_target and isinstance(DEFINITIONS_CACHE, dict):
+        curr_ref = ref_target
+        hops = 0
+        while curr_ref and hops < 3:
+            hops += 1
+            ref_def = DEFINITIONS_CACHE.get(curr_ref.upper(), '')
+            if not ref_def:
+                break
+            m_next = _CROSS_REF_POINTER_REGEX.search(ref_def)
+            if m_next:
+                next_cand = m_next.group(1).lower().strip('-')
+                if next_cand and next_cand != curr_ref and len(next_cand) > 2:
+                    curr_ref = next_cand
+                    continue
+            break
+        if curr_ref:
+            ref_target = curr_ref
+
+    if ref_target and isinstance(DEFINITIONS_CACHE, dict):
+        ref_raw_def = DEFINITIONS_CACHE.get(ref_target.upper(), '')
+        if ref_raw_def:
+            combined_text = f"{combined_text} {ref_raw_def}".strip()
+
+    has_explicit_non_noun = bool(_EXPLICIT_NON_NOUN_REGEX.search(combined_text))
+    has_explicit_noun_tag = bool(_EXPLICIT_NOUN_TAG_REGEX.search(combined_text))
+
+    is_noun = False
+    try:
+        from nltk.corpus import wordnet as wn
+        wn_direct = wn.synsets(w_lower)
+        wn_direct_nouns = wn.synsets(w_lower, pos=wn.NOUN)
+        wn_ref_nouns = wn.synsets(ref_target, pos=wn.NOUN) if ref_target else []
+        wn_ref_all = wn.synsets(ref_target) if ref_target else []
+
+        # 1. WordNet Authority: if WordNet knows the word or its reference target
+        if wn_direct:
+            if wn_direct_nouns:
+                is_noun = True
+            elif wn_ref_nouns:
+                is_noun = True
+            else:
+                # WordNet indexes this word, and it has ZERO noun senses (e.g. VEHEMENT, DIALYSE, DESTROY, QUICKLY)
+                return False, None, None
+        elif ref_target and wn_ref_all:
+            if wn_ref_nouns:
+                is_noun = True
+            else:
+                return False, None, None
+    except Exception:
+        pass
+
+    if not is_noun:
+        # If definition explicitly tags as non-noun and not noun (e.g. (verb), (adjective))
+        if has_explicit_non_noun and not has_explicit_noun_tag:
+            return False, None, None
+
+        # 2. Check semantic noun patterns in definition (e.g. citizen of, digestive enzyme, plural of)
+        if _NOUN_DEF_REGEX.search(combined_text):
+            is_noun = True
+        else:
+            try:
+                from nltk.corpus import wordnet as wn
+                m = wn.morphy(w_lower, wn.NOUN)
+                if m and wn.synsets(m, pos=wn.NOUN):
+                    is_noun = True
+                elif ref_target and wn.synsets(ref_target, pos=wn.NOUN):
+                    is_noun = True
+                elif not has_explicit_non_noun and _NOUN_SUFFIX_REGEX.search(w_lower):
+                    is_noun = True
+            except Exception:
+                if not has_explicit_non_noun and _NOUN_SUFFIX_REGEX.search(w_lower):
+                    is_noun = True
+
+    # 3. Symmetrical noun check between singular and plural forms
+    if not is_noun and isinstance(DEFINITIONS_CACHE, dict):
+        if w_lower.endswith('s') and not w_lower.endswith('ss'):
+            sing_cand = w_lower[:-1]
+            sing_def = DEFINITIONS_CACHE.get(sing_cand.upper(), '')
+            if sing_def and (_NOUN_DEF_REGEX.search(sing_def) or _EXPLICIT_NOUN_TAG_REGEX.search(sing_def)):
+                is_noun = True
+        else:
+            plur_cand = w_lower + 's'
+            plur_def = DEFINITIONS_CACHE.get(plur_cand.upper(), '')
+            if plur_def and ('plural of' in plur_def.lower() or _EXPLICIT_NOUN_TAG_REGEX.search(plur_def)):
+                is_noun = True
+
+    if not is_noun:
+        return False, None, None
+
+    lemma = None
+    # 1. Variants and alternative spellings directly target the canonical main word
+    if ref_target:
+        lemma = ref_target
+
+    if not lemma and raw_def:
+        m_root = re.match(r'^([A-Za-z\-]+),\s*(.*)', raw_def)
+        if m_root:
+            root_word = m_root.group(1).lower().strip('-')
+            if root_word != w_lower and len(root_word) > 2:
+                lemma = root_word
+
+    if not lemma:
+        m_plural = re.search(r'\b(?:plural|diminutive)\s+(?:of|for)\s+([A-Za-z\-]+)', combined_text, re.IGNORECASE)
+        if m_plural:
+            cand_p = m_plural.group(1).lower().strip('-')
+            if cand_p != w_lower and len(cand_p) > 2:
+                lemma = cand_p
+
+    if not lemma:
+        try:
+            from nltk.corpus import wordnet as wn
+            m = wn.morphy(w_lower, wn.NOUN)
+            if m:
+                lemma = m
+        except Exception:
+            pass
+
+    if not lemma:
+        if w_lower.endswith('ies') and len(w_lower) > 4:
+            lemma = w_lower[:-3] + 'y'
+        elif w_lower.endswith(('ses', 'xes', 'zes', 'ches', 'shes')) and len(w_lower) > 4:
+            lemma = w_lower[:-2]
+        elif w_lower.endswith('s') and not w_lower.endswith('ss') and len(w_lower) > 3:
+            lemma = w_lower[:-1]
+        else:
+            lemma = w_lower
+
+    title = lemma.capitalize()
+    return resolve_wiki_common_noun(word, combined_text, lemma)
 
 def get_word_dictionaries(word: str) -> list:
     """Returns the list of dictionaries the word belongs to: NWL, CSW, AW."""
@@ -10894,6 +10953,22 @@ def get_wikipedia_summary():
     if target_word in WIKI_COMMON_NOUN_OVERRIDES and WIKI_COMMON_NOUN_OVERRIDES[target_word][0]:
         lookup_title = WIKI_COMMON_NOUN_OVERRIDES[target_word][0]
 
+    def_text, _ = lookup_word_definition_and_pronunciation(target_word)
+    def_lower = (def_text or '').lower()
+
+    ref_cand = None
+    m_ref = _CROSS_REF_POINTER_REGEX.search(def_text or '')
+    if m_ref:
+        candidate_ref = m_ref.group(1).lower().strip('-')
+        if candidate_ref != target_word.lower() and len(candidate_ref) > 2:
+            ref_cand = candidate_ref
+    if not ref_cand:
+        m_head = re.match(r'^(?:an?|the)\s+([A-Za-z\-]+)(?:,|\s+also|\s+aka|\s+called|\s+\()', def_text or '', re.IGNORECASE)
+        if m_head:
+            candidate_head = m_head.group(1).lower().strip('-')
+            if candidate_head != target_word.lower() and len(candidate_head) > 2:
+                ref_cand = candidate_head
+
     safe_title = urllib.parse.quote(lookup_title.replace(' ', '_'), safe='')
     result = {
         'title': lookup_title,
@@ -10920,12 +10995,71 @@ def get_wikipedia_summary():
             if data.get('type') == 'disambiguation' or (result['description'].lower() == 'topics referred to by the same term'):
                 result['is_disambiguation'] = True
     except Exception:
-        pass
+        # Fallback to ref_cand if safe_title 404s
+        if ref_cand and ref_cand.lower() != lookup_title.lower() and len(ref_cand) > 2:
+            try:
+                cand_title = ref_cand.capitalize()
+                fb_safe = urllib.parse.quote(cand_title.replace(' ', '_'), safe='')
+                fb_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{fb_safe}"
+                req = urllib.request.Request(fb_url, headers=headers)
+                with urllib.request.urlopen(req, timeout=3.5) as resp:
+                    data = json.loads(resp.read().decode('utf-8'))
+                    result['title'] = data.get('title') or cand_title
+                    result['description'] = data.get('description') or ''
+                    result['extract'] = data.get('extract') or ''
+                    result['url'] = data.get('content_urls', {}).get('desktop', {}).get('page') or f"https://en.wikipedia.org/wiki/{fb_safe}"
+                    if data.get('thumbnail'):
+                        result['thumbnail'] = data.get('thumbnail', {}).get('source')
+                    if data.get('type') == 'disambiguation' or (result['description'].lower() == 'topics referred to by the same term'):
+                        result['is_disambiguation'] = True
+                    lookup_title = result['title']
+                    safe_title = fb_safe
+            except Exception:
+                pass
 
-    # 3. If the article is a disambiguation page or a proper noun, attempt resolution to common noun
+    # 3. Disambiguation bullet resolution: if result is a disambiguation page, resolve to matching topic bullet
+    if result.get('is_disambiguation'):
+        try:
+            parse_url = f"https://en.wikipedia.org/w/api.php?action=parse&page={safe_title}&prop=text&mobileformat=1&format=json"
+            p_req = urllib.request.Request(parse_url, headers=headers)
+            with urllib.request.urlopen(p_req, timeout=3.5) as p_resp:
+                p_data = json.loads(p_resp.read().decode('utf-8'))
+                html = p_data.get('parse', {}).get('text', {}).get('*', '')
+                if html:
+                    items = re.findall(r'<li>(.*?)</li>', html, re.DOTALL)
+                    words_in_def = set(re.findall(r'[a-zA-Z]{3,}', def_lower))
+                    best_cand_title = None
+                    for item in items:
+                        m_link = re.search(r'<a\s+href="/wiki/([^"#:]+)"[^>]*>([^<]+)</a>', item)
+                        if m_link:
+                            cand_page = urllib.parse.unquote(m_link.group(1)).replace('_', ' ')
+                            cand_text = re.sub(r'<[^>]+>', '', item).lower()
+                            bullet_words = set(re.findall(r'[a-zA-Z]{3,}', cand_text))
+                            matching_kws = words_in_def & bullet_words
+                            meaningful_matches = {w for w in matching_kws if w not in ('the', 'and', 'for', 'with', 'that', 'this', 'from', 'also', 'may', 'refer', 'term')}
+                            if meaningful_matches:
+                                best_cand_title = cand_page
+                                break
+                    if best_cand_title:
+                        best_safe = urllib.parse.quote(best_cand_title.replace(' ', '_'), safe='')
+                        best_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{best_safe}"
+                        b_req = urllib.request.Request(best_url, headers=headers)
+                        with urllib.request.urlopen(b_req, timeout=3.5) as b_resp:
+                            b_data = json.loads(b_resp.read().decode('utf-8'))
+                            if b_data.get('type') != 'disambiguation' and not is_proper_noun(b_data.get('description'), b_data.get('extract')):
+                                result['title'] = b_data.get('title') or best_cand_title
+                                result['description'] = b_data.get('description') or ''
+                                result['extract'] = b_data.get('extract') or ''
+                                result['url'] = b_data.get('content_urls', {}).get('desktop', {}).get('page') or f"https://en.wikipedia.org/wiki/{best_safe}"
+                                result['thumbnail'] = b_data.get('thumbnail', {}).get('source') if b_data.get('thumbnail') else None
+                                result['is_disambiguation'] = False
+                                result['is_proper_only'] = False
+        except Exception:
+            pass
+
+    # 4. If the article is still a disambiguation page or a proper noun, attempt resolution to common noun
     is_prop = is_proper_noun(result.get('description'), result.get('extract'))
     if result.get('is_disambiguation') or is_prop:
-        def_text, _ = lookup_word_definition_and_pronunciation(target_word)
         is_cn, cn_url, cn_title = resolve_wiki_common_noun(target_word, def_text or '', lookup_title.lower())
         if is_cn and cn_title and cn_title.lower() != lookup_title.lower():
             try:
