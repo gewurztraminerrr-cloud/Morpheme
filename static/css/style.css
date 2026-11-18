@@ -10827,6 +10827,10 @@ body.theme-white .full-list-retry-btn,
 }
 
 /* 13. Word Definition Popover for Light Themes (.tool-def-popover) */
+.tool-def-popover {
+    z-index: 2000000 !important;
+}
+
 body.theme-white .tool-def-popover,
 [class*="theme-white"] .tool-def-popover {
     background: #ffffff !important;

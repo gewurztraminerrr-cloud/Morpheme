@@ -4965,9 +4965,13 @@ function fallbackCopy(text, cb) {
         if (loadingEl) loadingEl.style.display = 'flex';
         if (contentEl) contentEl.style.display = 'none';
 
+        if (modal.parentElement !== document.body || document.body.lastElementChild !== modal) {
+            document.body.appendChild(modal);
+        }
         modal.classList.remove('hidden');
         modal.classList.add('forced-show');
         modal.style.display = 'flex';
+        modal.style.setProperty('z-index', '2147483647', 'important');
         window._hasPriorityModal = true;
 
         const cacheKey = cleanTitle.toLowerCase();

@@ -11820,7 +11820,7 @@ window.showWordDefinitionPopup = async function (word, event) {
 
     // Smart Positioning
     popover.style.display = 'flex';
-    popover.style.setProperty('z-index', '2147483600', 'important');
+    popover.style.setProperty('z-index', '2000000', 'important');
 
     if (target && typeof target.getBoundingClientRect === 'function') {
         const rect = target.getBoundingClientRect();

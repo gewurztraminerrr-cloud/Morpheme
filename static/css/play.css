@@ -17956,7 +17956,7 @@ body.is-mobile .loading-container {
 /* --- Tool Word Definition Popover --- */
 .tool-def-popover {
     position: fixed;
-    z-index: 2147483600 !important;
+    z-index: 2000000 !important;
     width: 360px;
     max-width: calc(100vw - 16px);
     max-height: calc(100vh - 24px);
