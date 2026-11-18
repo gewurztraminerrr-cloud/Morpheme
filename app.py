@@ -4891,13 +4891,30 @@ def _get_word_finds(word):
     except Exception as active_ex:
         print(f"[get_word_finds] Error querying active rooms: {active_ex}")
 
-    # Deduplicate finds by (username, timestamp[:19])
+    # Deduplicate finds by username and close timestamp (within 120s from same user)
+    finds.sort(key=lambda x: str(x.get('timestamp', '')))
     seen = set()
+    user_last_ts = {}
     unique_finds = []
     for f in finds:
-        key = (f.get('username'), str(f.get('timestamp', ''))[:19])
-        if key not in seen:
+        uname = f.get('username')
+        ts_str = str(f.get('timestamp', ''))
+        is_dupe = False
+        try:
+            curr_dt = datetime.datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
+            if uname in user_last_ts:
+                prev_dt = user_last_ts[uname]
+                if abs((curr_dt - prev_dt).total_seconds()) <= 120:
+                    is_dupe = True
+            if not is_dupe:
+                user_last_ts[uname] = curr_dt
+        except Exception:
+            key = (uname, ts_str[:19])
+            if key in seen:
+                is_dupe = True
             seen.add(key)
+        
+        if not is_dupe:
             unique_finds.append(f)
     finds = unique_finds
 

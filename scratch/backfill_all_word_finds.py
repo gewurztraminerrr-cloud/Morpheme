@@ -71,15 +71,37 @@ def run_backfill(base_dir=None):
 
     new_inserts = []
 
+    from collections import defaultdict
+    recent_room_finds = defaultdict(list)
+    for row in c.execute('SELECT word, user_id, room_id, timestamp FROM word_finds').fetchall():
+        try:
+            dt = datetime.datetime.fromisoformat(str(row[3]).replace('Z', '+00:00'))
+            recent_room_finds[(row[0], row[1], row[2] or '')].append(dt)
+        except Exception:
+            pass
+
     def add_find(word, uid, ts_val, room_id=None, round_num=None):
         w_up = str(word).strip().upper()
         if len(w_up) < 2 or not uid or uid == -1 or uid not in uid_to_name:
             return
         iso = format_ts(ts_val)
         key = (w_up, uid, iso[:19])
-        if key not in existing_keys:
-            existing_keys.add(key)
-            new_inserts.append((w_up, uid, iso, room_id, round_num))
+        if key in existing_keys:
+            return
+
+        room_key = (w_up, uid, room_id or '')
+        try:
+            curr_dt = datetime.datetime.fromisoformat(iso.replace('Z', '+00:00'))
+            if room_key in recent_room_finds:
+                for prev_dt in recent_room_finds[room_key]:
+                    if abs((curr_dt - prev_dt).total_seconds()) <= 120:
+                        return
+            recent_room_finds[room_key].append(curr_dt)
+        except Exception:
+            pass
+
+        existing_keys.add(key)
+        new_inserts.append((w_up, uid, iso, room_id, round_num))
 
     # --- SOURCE 1: SQLite Databases & Snapshots ---
     candidate_dbs = []
@@ -309,17 +331,13 @@ def run_backfill(base_dir=None):
         ("pub_v2_accumulative_4x4_45", 10, "2026-06-14T16:54:32Z", [
             ("ANIMAL", "jeffb"), ("ANIMALS", "jeffb")
         ]),
-        # June 14, 2026: pub_v2_accumulative_4x4_45 round 11
-        ("pub_v2_accumulative_4x4_45", 11, "2026-06-14T16:55:31Z", [
-            ("ANIMAL", "jeffb"), ("ANIMALS", "jeffb")
-        ]),
         # June 17, 2026: pub_v2_accumulative_4x4_45 round 2695
         ("pub_v2_accumulative_4x4_45", 2695, "2026-06-17T22:47:59Z", [
             ("ANIMAL", "jeffy")
         ]),
-        # June 17, 2026: pub_v2_accumulative_4x4_45 round 2696
-        ("pub_v2_accumulative_4x4_45", 2696, "2026-06-17T22:48:58Z", [
-            ("ANIMAL", "jeffy")
+        # October 26, 2026: pub_v2_accumulative_6x8_45 round 7
+        ("pub_v2_accumulative_6x8_45", 7, "2026-10-26T23:16:38Z", [
+            ("SHARKLIKE", "jeffb")
         ]),
     ]
 

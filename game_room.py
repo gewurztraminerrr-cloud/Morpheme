@@ -2662,7 +2662,7 @@ class GameRoom:
                                 
                                 # Log word tally
                                 player_words = {p['username']: [w['word'] for w in p['submitted_words']] for p in intermission_player_snapshots}
-                                rm.log_word_tally(self, player_words)
+                                rm.log_word_tally(self, player_words, round_num=self.current_round, round_start_time=self.round_start_time)
                             except Exception as db_save_err:
                                 print(f"[GameRoom] Error in immediate database save: {db_save_err}")
 
@@ -8316,7 +8316,7 @@ class RoomManager:
                         )
                         
                         # USER REQUEST: Word Tally logging (CSW words only)
-                        self.log_word_tally(room, ghost_player_words)
+                        self.log_word_tally(room, ghost_player_words, round_num=ghost_round_num, round_start_time=ghost_round_start_time)
                     
                     # Update moderator-only boards or tournament stats if needed
                     # (Standard rooms just move on)
@@ -8817,7 +8817,7 @@ class RoomManager:
             with open(DEBUG_FLOW_PATH, 'a') as f:
                 f.write(f"{debug_log} - FATAL ERROR: {e}\n")
 
-    def log_word_tally(self, room, player_words):
+    def log_word_tally(self, room, player_words, round_num=None, round_start_time=None):
         """
         Tally how many users found each CSW word and log it to a central file.
         Also maintains a global cumulative tally in word_stats.json.
@@ -8827,6 +8827,14 @@ class RoomManager:
             if getattr(room, 'time_limit', 0) >= 7200 or getattr(room, 'game_type', None) in ('subanagrams', '24h') or '24h' in str(getattr(room, 'room_id', '')) or '86400' in str(getattr(room, 'room_id', '')) or getattr(room, 'is_solo', False):
                 print(f"[WordTally] Skipping tally for {getattr(room, 'game_type', 'unknown')} room: {getattr(room, 'room_id', '')}")
                 return
+
+            target_round = round_num if round_num is not None else getattr(room, 'current_round', 0)
+            target_start = round_start_time or getattr(room, 'round_start_time', 0)
+            tally_key = (getattr(room, 'room_id', ''), target_round, target_start)
+            if getattr(room, '_last_tallied_round_key', None) == tally_key:
+                print(f"[WordTally] Room {getattr(room, 'room_id', '')} Round {target_round} already tallied. Skipping duplicate.")
+                return
+            room._last_tallied_round_key = tally_key
 
             import collections
             import json
@@ -8854,7 +8862,7 @@ class RoomManager:
             log_entry = {
                 'timestamp': datetime.datetime.now().isoformat(),
                 'room_id': room.room_id,
-                'round': room.current_round,
+                'round': target_round,
                 'tally': dict(word_counts)
             }
             
