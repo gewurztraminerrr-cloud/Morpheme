@@ -616,6 +616,24 @@
     }
 
     async function startSoloMatch() {
+        if (window._isStartingSoloMatch) {
+            console.warn('[private_matches.js] startSoloMatch already in progress');
+            return;
+        }
+        window._isStartingSoloMatch = true;
+
+        const startSoloBtn = document.getElementById('start-solo-btn');
+        if (startSoloBtn) {
+            startSoloBtn.disabled = true;
+            startSoloBtn.style.opacity = '0.6';
+            startSoloBtn.style.pointerEvents = 'none';
+        }
+
+        // Show loading notice IMMEDIATELY so the user is never stalled
+        if (typeof window.showLoadingOverlay === 'function') {
+            window.showLoadingOverlay('Loading...');
+        }
+
         const getVal = (id, def = 'random') => {
             const el = document.getElementById(id);
             return el ? el.value : def;
@@ -639,6 +657,15 @@
 
         const feasibility = checkBoardConfigFeasibility(params);
         if (!feasibility.feasible) {
+            if (typeof window.hideLoadingOverlay === 'function') {
+                window.hideLoadingOverlay();
+            }
+            window._isStartingSoloMatch = false;
+            if (startSoloBtn) {
+                startSoloBtn.disabled = false;
+                startSoloBtn.style.opacity = '1';
+                startSoloBtn.style.pointerEvents = 'auto';
+            }
             if (window.showAlertModal) {
                 window.showAlertModal(feasibility.title, feasibility.message);
             } else {
@@ -679,6 +706,9 @@
                     window.startGamePolling();
                 }
             } else {
+                if (typeof window.hideLoadingOverlay === 'function') {
+                    window.hideLoadingOverlay();
+                }
                 const title = data.title || 'Configuration Notice';
                 const msg = data.message || data.error || 'Failed to create solo match.';
                 if (window.showAlertModal) {
@@ -688,7 +718,17 @@
                 }
             }
         } catch (e) {
-            console.error(e);
+            console.error('[private_matches.js] Error creating solo match:', e);
+            if (typeof window.hideLoadingOverlay === 'function') {
+                window.hideLoadingOverlay();
+            }
+        } finally {
+            window._isStartingSoloMatch = false;
+            if (startSoloBtn) {
+                startSoloBtn.disabled = false;
+                startSoloBtn.style.opacity = '1';
+                startSoloBtn.style.pointerEvents = 'auto';
+            }
         }
     }
 
@@ -1259,6 +1299,9 @@
         const btn = e.target.closest('#start-solo-btn');
         if (btn) {
             e.preventDefault();
+            if (typeof window.showLoadingOverlay === 'function') {
+                window.showLoadingOverlay('Loading...');
+            }
             console.log('[private_matches.js] Global delegation intercepted Start Solo Match click');
             startSoloMatch();
             return;

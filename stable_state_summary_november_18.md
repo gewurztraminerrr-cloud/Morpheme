@@ -293,6 +293,19 @@
 
 ---
 
+### Start Solo Match Instant Loading Notice
+- **Problem**: When the user pressed "Start Solo Match", there was no immediate visual feedback, causing an apparent stall or frozen UI while the room creation request resolved over the network.
+- **Fixes Applied**:
+  - **`templates/index.html`**:
+    - Added immediate inline click trigger `onclick="if(window.showLoadingOverlay)window.showLoadingOverlay('Loading...');"` to `#start-solo-btn`.
+  - **`static/js/private_matches.js`**:
+    - Invoked `window.showLoadingOverlay('Loading...');` synchronously the instant the button is pressed.
+    - Added re-entrancy prevention guard (`window._isStartingSoloMatch`) and disabled `#start-solo-btn` with reduced opacity to prevent accidental double-clicks.
+    - Added proper error handling to dismiss the loading overlay with `hideLoadingOverlay()` if feasibility checks fail or the server returns an error.
+    - Added automatic dismissal when the initial game state arrives and renders in [`play.js`](file:///Users/jeffbabiak/static/js/play.js#L4254).
+
+---
+
 ## 2. Commit & Deployment Details
 - **Latest Commit ID**: `3d6aac38f97e2f5b5c97f8045e0aa06c138d6df8` (short: `3d6aac38`)
 - **Previous Commits**: `65c4cd6021fb68afe8b48672488d777f0419461b`, `6c0754b46fc9678b667b0eb6aec05f414b385602`, `a41872a020389edc6b7d5f67c0125c9935c3644e`, `a406cd5e1b61ace30014dfba46920220140fa184`, `658ba7632823cd934e51219a2026bc71a029e65f`
