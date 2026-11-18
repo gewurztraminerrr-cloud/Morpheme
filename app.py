@@ -8534,6 +8534,10 @@ def get_room_state(room_id):
                             flat = (flat + list("STARLING"))[:target_l]
                     calc_seq_len = len(flat)
                     board_to_send = [flat]
+                if is_intermission and is_revealed:
+                    sp_obj = getattr(room, 'frozen_revealed_params', None) or getattr(room, 'spinner_params', {}) or {}
+                    if isinstance(sp_obj, dict) and sp_obj.get('sequence_length'):
+                        calc_seq_len = int(sp_obj.get('sequence_length'))
                 if not calc_seq_len or calc_seq_len < 6 or calc_seq_len > 10:
                     calc_seq_len = getattr(room, 'previous_sequence_length', None) if is_intermission else getattr(room, 'sequence_length', None)
                 if not calc_seq_len or calc_seq_len < 6 or calc_seq_len > 10:

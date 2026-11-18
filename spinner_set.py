@@ -466,30 +466,78 @@ class SpinnerSet:
 
     @staticmethod
     def generate_subanagrams_params(previous_params=None):
-        """Generate randomized parameters for Subanagrams (Practice) mode."""
-        sequence_length = _rng.choice([6, 7, 8, 9, 10])
-        # Calibrate min_word_length based on sequence length so >= 50 words is physically achievable
+        """Generate randomized parameters for Subanagrams mode adhering strictly to
+        the Subanagrams Spinner Set Odds window in templates/index.html.
+        
+        Odds Specifications:
+        1. Letters: Sequence Length (20% each):
+           6 Letters (20%) | 7 Letters (20%) | 8 Letters (20%) | 9 Letters (20%) | 10 Letters (20%)
+        2. Min: Minimum Word Length:
+           - 6 Letters: 3L Only (100%)
+           - 7 Letters: 3L (50%) | 4L (50%)
+           - 8, 9, 10 Letters: 3L (33.3%) | 4L (33.3%) | 5L (33.3%)
+        3. Dict: Word Lists (25% each):
+           CSW (25%) | NWL (25%) | CSW + AW (25%) | NWL + AW (25%)
+        4. Words: Target Word Count Range (20% each spun):
+           50-100 words (20%) | 100-200 words (20%) | 200-300 words (20%) | 300-400 words (20%) | 500+ words (20%)
+        5. Format: Sequence Generation:
+           Word Guaranteed (50%) | Totally Random (50%)
+        6. Bonus Word: Secret bonus word chosen at random, length displayed in parameters.
+        """
+        # Joint distribution sampling so marginals are strictly 20% for each Sequence Length
+        # and strictly 20% for each Target Word Count Range, while guaranteeing physical feasibility:
+        joint_choices = [
+            # 6 Letters (total 0.20): 50-100 (0.10), 100-200 (0.10)
+            (6, '50-100', 0.100),
+            (6, '100-200', 0.100),
+            # 7 Letters (total 0.20): 50-100 (0.04), 100-200 (0.04), 200-300 (0.12)
+            (7, '50-100', 0.040),
+            (7, '100-200', 0.040),
+            (7, '200-300', 0.120),
+            # 8 Letters (total 0.20): 50-100 (0.03), 100-200 (0.03), 200-300 (0.04), 300-400 (0.06), 500+ (0.04)
+            (8, '50-100', 0.030),
+            (8, '100-200', 0.030),
+            (8, '200-300', 0.040),
+            (8, '300-400', 0.060),
+            (8, '500+', 0.040),
+            # 9 Letters (total 0.20): 50-100 (0.015), 100-200 (0.015), 200-300 (0.02), 300-400 (0.07), 500+ (0.08)
+            (9, '50-100', 0.015),
+            (9, '100-200', 0.015),
+            (9, '200-300', 0.020),
+            (9, '300-400', 0.070),
+            (9, '500+', 0.080),
+            # 10 Letters (total 0.20): 50-100 (0.015), 100-200 (0.015), 200-300 (0.02), 300-400 (0.07), 500+ (0.08)
+            (10, '50-100', 0.015),
+            (10, '100-200', 0.015),
+            (10, '200-300', 0.020),
+            (10, '300-400', 0.070),
+            (10, '500+', 0.080),
+        ]
+        weights = [c[2] for c in joint_choices]
+        chosen_pair = _rng.choices(joint_choices, weights=weights, k=1)[0]
+        sequence_length, word_count_range = chosen_pair[0], chosen_pair[1]
+
+        # Min word length calibrated strictly per odds modal
         if sequence_length == 6:
             min_word_length = 3
-        elif sequence_length in [7, 8]:
+        elif sequence_length == 7:
             min_word_length = _rng.choice([3, 4])
-        else:
+        elif sequence_length == 8:
+            if word_count_range == '500+':
+                min_word_length = _rng.choice([3, 4])
+            else:
+                min_word_length = _rng.choices([3, 4, 5], weights=[7/24, 7/24, 10/24], k=1)[0]
+        else: # 9, 10 Letters
             min_word_length = _rng.choice([3, 4, 5])
 
+        # Dictionary: 25% each
         dict_choice = _rng.choice(['CSW', 'NWL', 'CSW + AW', 'NWL + AW'])
         use_added_words = ('+ AW' in dict_choice or '+AW' in dict_choice)
         base_dict = dict_choice.replace('+ AW', '').replace('+AW', '').strip()
-        mode = _rng.choice(['word', 'random'])
 
-        # Realistic word count ranges calibrated to sequence length
-        if sequence_length == 6:
-            word_count_range = _rng.choice(['50-100', '100-200'])
-        elif sequence_length == 7:
-            word_count_range = _rng.choice(['50-100', '100-200', '200-300'])
-        elif sequence_length == 8:
-            word_count_range = _rng.choice(['100-200', '200-300', '300-400'])
-        else:  # 9 or 10 letters
-            word_count_range = _rng.choice(['100-200', '200-300', '300-400', '500+'])
+        # Format: 50% Word Guaranteed, 50% Totally Random
+        mode = _rng.choice(['word', 'random'])
+        board_format = 'Word Guaranteed' if mode == 'word' else 'Totally Random'
 
         bonus_len = _rng.choice(range(min_word_length, sequence_length + 1))
 
@@ -502,13 +550,37 @@ class SpinnerSet:
             'base_dictionary': base_dict,
             'use_added_words': use_added_words,
             'mode': mode,
-            'board_format': 'Word Guaranteed' if mode == 'word' else 'Totally Random',
+            'board_format': board_format,
             'word_count_range': word_count_range,
             'difficulty': 'Practice',
             'bonus_word': '',
             'bonus_word_length': bonus_len,
             'generated_at': time.time()
         }
+
+    @staticmethod
+    def get_subanagrams_factchecked_wc_range(count):
+        """Map actual word count to the exact truthful range bucket for Subanagrams:
+             - >= 400 words -> '500+' (top bracket in Subanagrams odds)
+             - 300 - 399 words -> '300-400'
+             - 200 - 299 words -> '200-300'
+             - 100 - 199 words -> '100-200'
+             - < 100 words -> '50-100'
+        """
+        try:
+            count = int(count)
+        except (ValueError, TypeError):
+            count = 0
+
+        if count >= 400:
+            return '500+'
+        if count >= 300:
+            return '300-400'
+        if count >= 200:
+            return '200-300'
+        if count >= 100:
+            return '100-200'
+        return '50-100'
 
     @staticmethod
     def get_factchecked_wc_range(count, use_added_words=False, dictionary=None):

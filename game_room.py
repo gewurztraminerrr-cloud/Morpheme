@@ -3876,6 +3876,8 @@ class RoomManager:
                                             existing_room.current_dictionary = fparams.get('dictionary', 'CSW')
                                             existing_room.use_added_words = fparams.get('use_added_words', False)
                                             existing_room.spinner_params = dict(fparams)
+                                            existing_room.frozen_revealed_params = dict(fparams)
+                                            existing_room.current_word_count_range = fparams.get('word_count_range', '100-200')
                                             existing_room.spinner_params_generated = True
                                             from scoring import calculate_word_score
                                             existing_room.solved_words_with_scores = {
@@ -3883,6 +3885,7 @@ class RoomManager:
                                                 for w in b_words
                                             }
                                             existing_room.total_words_count = len(b_words)
+                                            existing_room.initial_total_words = len(b_words)
                                             existing_room.recalculate_total_points()
                                             existing_room.state = 'active'
                                             existing_room.round_start_time = time.time()
@@ -4234,6 +4237,8 @@ class RoomManager:
                                 room.current_dictionary = fparams.get('dictionary', 'CSW')
                                 room.use_added_words = fparams.get('use_added_words', False)
                                 room.spinner_params = dict(fparams)
+                                room.frozen_revealed_params = dict(fparams)
+                                room.current_word_count_range = fparams.get('word_count_range', '100-200')
                                 room.spinner_params_generated = True
                                 from scoring import calculate_word_score
                                 room.solved_words_with_scores = {
@@ -4241,6 +4246,7 @@ class RoomManager:
                                     for w in b_words
                                 }
                                 room.total_words_count = len(b_words)
+                                room.initial_total_words = len(b_words)
                                 room.recalculate_total_points()
                                 room.state = 'active'
                                 room.round_start_time = time.time()
@@ -5943,9 +5949,27 @@ class RoomManager:
                     new_params['time_limit'] = room.time_limit
 
                     if room.game_type == 'subanagrams':
-                        room.next_spinner_params = new_params
-                        room.spinner_params_generated = True
-                        room.spinner_params_loading = False
+                        from subanagrams_generator import generate_subanagrams_board_and_words
+                        res = generate_subanagrams_board_and_words(new_params)
+                        if res:
+                            nb, nw, nbw, nparams = res
+                            room.next_round_board = nb
+                            room.next_round_words = nw
+                            room.next_round_word_paths = {w: [] for w in nw}
+                            room.next_round_bonus = nbw
+                            room.next_round_bonus_cell = None
+                            room.next_round_format = nparams.get('board_format', 'Word Guaranteed')
+                            room.next_round_spinner_params = nparams
+                            room.next_spinner_params = nparams
+                            room.next_round_min_length = nparams.get('min_word_length', 3)
+                            room.next_round_total_words_count = len(nw)
+                            room.spinner_params_generated = True
+                            room.spinner_params_loading = False
+                            new_params = nparams
+                        else:
+                            room.next_spinner_params = new_params
+                            room.spinner_params_generated = True
+                            room.spinner_params_loading = False
                         if reveal:
                             import copy
                             room.spinner_params = dict(new_params)
@@ -8129,9 +8153,12 @@ class RoomManager:
                 # Word count and range label — AW boards use the same full scale as non-AW.
                 # 319 words on a board is '300-400', aligning header with board count.
                 wc_cnt  = len(room.all_words)
-                real_wc = self._get_factchecked_wc_range(wc_cnt, use_added_words=_use_aw, dictionary=room.current_dictionary)
+                if getattr(room, 'game_type', None) == 'subanagrams':
+                    real_wc = SpinnerSet.get_subanagrams_factchecked_wc_range(wc_cnt)
+                else:
+                    real_wc = self._get_factchecked_wc_range(wc_cnt, use_added_words=_use_aw, dictionary=room.current_dictionary)
 
-                if room.all_words:
+                if room.all_words and getattr(room, 'game_type', None) != 'subanagrams':
                     actual_shortest = min(len(w) for w in room.all_words)
                     if actual_shortest != room.current_min_length:
                         print(f"[RoomManager] start_next_round aligned min_word_length from {room.current_min_length} to factual {actual_shortest}.")
@@ -8460,7 +8487,9 @@ class RoomManager:
                     room.current_min_length = fparams.get('min_word_length', 3)
                     room.current_dictionary = fparams.get('dictionary', 'CSW')
                     room.use_added_words = fparams.get('use_added_words', False)
+                    room.current_word_count_range = fparams.get('word_count_range', '100-200')
                     room.spinner_params = dict(fparams)
+                    room.frozen_revealed_params = dict(fparams)
                     room.spinner_params_generated = True
                     from scoring import calculate_word_score
                     room.solved_words_with_scores = {
@@ -8468,6 +8497,7 @@ class RoomManager:
                         for w in b_words
                     }
                     room.total_words_count = len(b_words)
+                    room.initial_total_words = len(b_words)
                     room.recalculate_total_points()
                     room.state = 'active'
                     return room

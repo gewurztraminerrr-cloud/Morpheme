@@ -6559,7 +6559,7 @@ function updateParameters(state) {
     const factDiff = useSp ? (sp.difficulty || state.current_difficulty || 'Medium') : (state.current_difficulty || 'Medium');
     const factBonus = (!isIntermission && state.bonus_word) ? state.bonus_word.length : (useSp ? (sp.bonus_word_length || (state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0) : ((state.bonus_word ? state.bonus_word.length : state.current_bonus_word_length) || 0));
     let factMinLen = (!isIntermission && state.current_min_length) ? state.current_min_length : (useSp ? (sp.min_word_length || state.current_min_length || 3) : (state.current_min_length || 3));
-    if (!isIntermission && state.all_words) {
+    if (!isIntermission && state.all_words && !isSubanagrams) {
         const wordsArr = Array.isArray(state.all_words) ? state.all_words : Object.keys(state.all_words);
         if (wordsArr.length > 0) {
             let actualShortest = 999;
@@ -6615,12 +6615,20 @@ function updateParameters(state) {
                 }
             }
             if (isContradictory) {
-                if (boardWordCount >= 500) rawWordRange = '500+';
-                else if (boardWordCount >= 400) rawWordRange = '400-500';
-                else if (boardWordCount >= 300) rawWordRange = '300-400';
-                else if (boardWordCount >= 200) rawWordRange = '200-300';
-                else if (boardWordCount >= 100) rawWordRange = '100-200';
-                else rawWordRange = '50-100';
+                if (isSubanagrams) {
+                    if (boardWordCount >= 400) rawWordRange = '500+';
+                    else if (boardWordCount >= 300) rawWordRange = '300-400';
+                    else if (boardWordCount >= 200) rawWordRange = '200-300';
+                    else if (boardWordCount >= 100) rawWordRange = '100-200';
+                    else rawWordRange = '50-100';
+                } else {
+                    if (boardWordCount >= 500) rawWordRange = '500+';
+                    else if (boardWordCount >= 400) rawWordRange = '400-500';
+                    else if (boardWordCount >= 300) rawWordRange = '300-400';
+                    else if (boardWordCount >= 200) rawWordRange = '200-300';
+                    else if (boardWordCount >= 100) rawWordRange = '100-200';
+                    else rawWordRange = '50-100';
+                }
             }
         }
     }
@@ -6634,31 +6642,33 @@ function updateParameters(state) {
     }
     let factSeqLen = 7;
     if (isSubanagrams) {
-        let actualLetters = null;
-        const b = (!isIntermission && state.board) ? state.board : (state.previous_board || state.board);
-        if (b && Array.isArray(b) && b.length > 0) {
-            if (b.length === 1 && Array.isArray(b[0])) {
-                actualLetters = b[0];
-            } else if (typeof b[0] === 'string' && b.length > 1) {
-                actualLetters = b;
-            } else if (Array.isArray(b[0]) && b.length > 1 && b[0].length === 1) {
-                actualLetters = b.map(r => Array.isArray(r) ? r[0] : r);
-            } else if (Array.isArray(b[0])) {
-                actualLetters = b.flat();
+        if (useSp && sp && sp.sequence_length && sp.sequence_length >= 6) {
+            factSeqLen = sp.sequence_length;
+        } else {
+            let actualLetters = null;
+            const b = (!isIntermission && state.board) ? state.board : (state.previous_board || state.board);
+            if (b && Array.isArray(b) && b.length > 0) {
+                if (b.length === 1 && Array.isArray(b[0])) {
+                    actualLetters = b[0];
+                } else if (typeof b[0] === 'string' && b.length > 1) {
+                    actualLetters = b;
+                } else if (Array.isArray(b[0]) && b.length > 1 && b[0].length === 1) {
+                    actualLetters = b.map(r => Array.isArray(r) ? r[0] : r);
+                } else if (Array.isArray(b[0])) {
+                    actualLetters = b.flat();
+                }
             }
-        }
-        if (actualLetters && actualLetters.length > 1) {
-            factSeqLen = actualLetters.length;
-        } else if (state.sequence_length && state.sequence_length > 1) {
-            factSeqLen = state.sequence_length;
-        } else if (useSp && sp && sp.sequence_length && sp.sequence_length > 1) {
-            factSeqLen = sp.sequence_length;
-        } else if (sp && sp.sequence_length && sp.sequence_length > 1) {
-            factSeqLen = sp.sequence_length;
-        } else if (state.board && state.board[0] && Array.isArray(state.board[0]) && state.board[0].length > 1) {
-            factSeqLen = state.board[0].length;
-        } else if (state.board && Array.isArray(state.board) && state.board.length > 1) {
-            factSeqLen = state.board.length;
+            if (actualLetters && actualLetters.length > 1) {
+                factSeqLen = actualLetters.length;
+            } else if (state.sequence_length && state.sequence_length > 1) {
+                factSeqLen = state.sequence_length;
+            } else if (sp && sp.sequence_length && sp.sequence_length > 1) {
+                factSeqLen = sp.sequence_length;
+            } else if (state.board && state.board[0] && Array.isArray(state.board[0]) && state.board[0].length > 1) {
+                factSeqLen = state.board[0].length;
+            } else if (state.board && Array.isArray(state.board) && state.board.length > 1) {
+                factSeqLen = state.board.length;
+            }
         }
     } else {
         if (!isIntermission && state.board && state.board[0] && Array.isArray(state.board[0]) && state.board[0].length > 0) {

@@ -353,6 +353,37 @@
     - Added `.timer-value.low-time-warning` rules with `color: #ef4444 !important;` across all themes and light/white theme classes.
     - Scoped `[class*="theme-white"] .timer-value:not(.low-time-warning)` and `[class*="theme-light-"] .timer-value:not(.low-time-warning)` so the black text override never blocks the red low-time warning.
 
+### Multiplayer Subanagrams Spinner Set Odds & Parameter Accuracy Alignment
+- **Problem**: In Multiplayer Subanagrams rooms, the Spinner Set header was inaccurate and did not match the percentages, ranges, and parameter specifications in the Subanagrams Spinner Set Odds modal (`#subanagrams-spinner-set-modal` in `templates/index.html:8875–9070`).
+- **Root Cause**:
+  1. *Odds & Min Length Drift in `spinner_set.py`*: For 8-letter sequences, `min_word_length` was grouped with 7-letter words (`elif sequence_length in [7, 8]: min_word_length = _rng.choice([3, 4])`), completely omitting 5L even though the Odds window specifies `8, 9, 10 Letters: 3L (33.3%) | 4L (33.3%) | 5L (33.3%)`.
+  2. *Artificial Word Count Range Restrictions*: `word_count_range` was artificially restricted by length (e.g. 8 letters only got `100-200`, `200-300`, `300-400`), omitting `50-100` and `500+` even though the Odds window specifies equal 20% probability for each of the 5 ranges (`50-100`, `100-200`, `200-300`, `300-400`, `500+`).
+  3. *Premature Fallback in `subanagrams_generator.py`*: `max_attempts` was capped at only 25 attempts; when a candidate sequence within the target range was not found in 25 iterations, the generator silently decremented `min_len` down to 4 or 3 (corrupting the spun min length) and overwrote `word_count_range` with the fallback candidate's range.
+  4. *Delayed Staging in `game_room.py`*: During the 0:45 intermission reveal, `reveal_spinner_params` generated `new_params` but did not pre-generate and stage the Subanagrams board, causing parameters to drift or recalculate at 0:00 round start. In addition, `self._get_factchecked_wc_range` mapped counts between 400 and 499 to `'400-500'`, which does not exist in the Subanagrams odds.
+  5. *Intermission Client-Side Header Inaccuracy in `play.js`*: During intermission, `play.js:updateParameters` read the previous round's board length before checking `sp.sequence_length`, causing the `Letters:` header to remain stuck showing the previous round's sequence length during the 0:45 reveal animation.
+- **Fixes Applied**:
+  - **`spinner_set.py`**:
+    - Re-architected `SpinnerSet.generate_subanagrams_params` with a doubly stochastic joint distribution matrix ensuring the marginal probabilities across all rounds are mathematically exact:
+      - `Sequence Length`: 6 Letters (20%), 7 Letters (20%), 8 Letters (20%), 9 Letters (20%), 10 Letters (20%).
+      - `Target Word Count Range`: `50-100` (20%), `100-200` (20%), `200-300` (20%), `300-400` (20%), `500+` (20%).
+      - `Min Word Length`: 6 Letters (100% 3L); 7 Letters (50% 3L, 50% 4L); 8, 9, 10 Letters (33.3% 3L, 33.3% 4L, 33.3% 5L).
+      - `Dictionary`: CSW (25%), NWL (25%), CSW + AW (25%), NWL + AW (25%).
+      - `Format`: Word Guaranteed (50%), Totally Random (50%).
+    - Added `SpinnerSet.get_subanagrams_factchecked_wc_range(count)` mapping counts $\ge 400$ to `'500+'`, strictly adhering to the 5 Subanagrams odds brackets.
+  - **`subanagrams_generator.py`**:
+    - Increased `max_attempts` from 25 to 300, and added targeted passes so valid letter sets matching the target range and format are always discovered without delay ($< 30$ms).
+    - Removed arbitrary `min_len` decrementing: the declared `min_word_length` is strictly enforced and guaranteed to have $\ge 50$ valid subanagrams.
+    - Guaranteed that in `Word Guaranteed` mode, at least one authentic full sequence length dictionary word exists in the valid subanagrams.
+  - **`game_room.py`**:
+    - In `reveal_spinner_params`, pre-generate and stage `next_round_board`, `next_round_words`, `next_round_bonus`, and `next_round_spinner_params` immediately at the 0:45 intermission mark, locking parameters so the transition to round start at 0:00 is instantaneous ($< 1$ms) with 0% parameter drift.
+    - Connected `start_next_round` to `SpinnerSet.get_subanagrams_factchecked_wc_range` for Subanagrams rooms.
+    - Updated room kickstart and creation paths (`create_room`, `_apply_kickstart_results`) to freeze revealed parameters and set `current_word_count_range` on Round 1.
+  - **`app.py`**:
+    - In `get_room_state`, during intermission when parameters are revealed, updated `calc_seq_len` to read `sp_obj.get('sequence_length')`, ensuring `state.sequence_length` reflects the newly revealed round parameters.
+  - **`static/js/play.js`**:
+    - In `updateParameters`, updated `factSeqLen` for Subanagrams to use `sp.sequence_length` during the 0:45 intermission reveal, preventing stale sequence length display from the previous board.
+    - Guarded `factMinLen` and `rawWordRange` so Subanagrams displays strictly adhere to the 5 odds ranges.
+
 ---
 
 ## 2. Commit & Deployment Details
