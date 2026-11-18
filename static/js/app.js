@@ -4937,7 +4937,7 @@ function fallbackCopy(text, cb) {
 (function _setupInAppWikipediaModal() {
     window._wikiSummaryCache = window._wikiSummaryCache || new Map();
 
-    window.openWikipediaModal = async function(title, fallbackUrl = '') {
+    window.openWikipediaModal = async function(title, fallbackUrl = '', word = '') {
         const modal = document.getElementById('wikipedia-article-modal');
         if (!modal) return;
 
@@ -4974,12 +4974,14 @@ function fallbackCopy(text, cb) {
         modal.style.setProperty('z-index', '2147483647', 'important');
         window._hasPriorityModal = true;
 
-        const cacheKey = cleanTitle.toLowerCase();
+        const cleanWord = (word || '').trim();
+        const cacheKey = (cleanTitle + '|' + cleanWord).toLowerCase();
         let data = window._wikiSummaryCache.get(cacheKey);
 
         if (!data) {
             try {
-                const resp = await fetch(`/api/wikipedia_summary?title=${encodeURIComponent(cleanTitle)}`);
+                const wordParam = cleanWord ? `&word=${encodeURIComponent(cleanWord)}` : '';
+                const resp = await fetch(`/api/wikipedia_summary?title=${encodeURIComponent(cleanTitle)}${wordParam}`);
                 if (resp.ok) {
                     data = await resp.json();
                     if (data && !data.error) {
@@ -4994,7 +4996,18 @@ function fallbackCopy(text, cb) {
         if (loadingEl) loadingEl.style.display = 'none';
         if (contentEl) contentEl.style.display = 'block';
 
-        if (data && (data.extract || data.description || (data.bullets && data.bullets.length))) {
+        if (data && data.is_proper_only) {
+            if (titleEl) titleEl.textContent = data.title || cleanTitle;
+            if (descEl) {
+                descEl.textContent = data.description || 'Proper Noun Filter';
+                descEl.style.display = 'block';
+            }
+            if (imgWrap) imgWrap.style.display = 'none';
+            if (bulletsEl) bulletsEl.style.display = 'none';
+            if (extractEl) {
+                extractEl.innerHTML = `<div style="padding: 14px 16px; background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px; color: var(--text-primary); font-size: 0.95rem; line-height: 1.55;">${data.extract}</div>`;
+            }
+        } else if (data && (data.extract || data.description || (data.bullets && data.bullets.length))) {
             if (titleEl && data.title) titleEl.textContent = data.title;
             if (descEl) {
                 if (data.description) {

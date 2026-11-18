@@ -10491,10 +10491,191 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
             lemma = w_lower
 
     title = lemma.capitalize()
-    import urllib.parse
-    encoded = urllib.parse.quote(title.replace(' ', '_'))
-    wiki_url = f"https://en.wikipedia.org/wiki/{encoded}"
-    return True, wiki_url, title
+    return resolve_wiki_common_noun(word, combined_text, lemma)
+
+# ---------------------------------------------------------------------------
+# WIKIPEDIA COMMON NOUN RESOLUTION & PROPER NOUN FILTER
+# Guarantees that Wikipedia articles referenced in Morpheme explain a common noun
+# meaning of the word rather than a proper noun (e.g. books, cities, bands, people).
+# ---------------------------------------------------------------------------
+WIKI_COMMON_NOUN_OVERRIDES = {
+    'CALYPSO': ('Calypso music', 'https://en.wikipedia.org/wiki/Calypso_music'),
+    'FARADAY': ('Faraday constant', 'https://en.wikipedia.org/wiki/Faraday_constant'),
+    'TURKEY': ('Turkey (bird)', 'https://en.wikipedia.org/wiki/Turkey_(bird)'),
+    'COLT': ('Colt (horse)', 'https://en.wikipedia.org/wiki/Colt_(horse)'),
+    'CARDIGAN': ('Cardigan (sweater)', 'https://en.wikipedia.org/wiki/Cardigan_(sweater)'),
+    'CHEVRON': ('Chevron (insignia)', 'https://en.wikipedia.org/wiki/Chevron_(insignia)'),
+    'FORD': ('Ford (crossing)', 'https://en.wikipedia.org/wiki/Ford_(crossing)'),
+    'CHINA': ('Porcelain', 'https://en.wikipedia.org/wiki/Porcelain'),
+    'PANAMA': ('Panama hat', 'https://en.wikipedia.org/wiki/Panama_hat'),
+    'JORDAN': ('Chamber pot', 'https://en.wikipedia.org/wiki/Chamber_pot'),
+    'MERCURY': ('Mercury (element)', 'https://en.wikipedia.org/wiki/Mercury_(element)'),
+    'NEWTON': ('Newton (unit)', 'https://en.wikipedia.org/wiki/Newton_(unit)'),
+    'PASCAL': ('Pascal (unit)', 'https://en.wikipedia.org/wiki/Pascal_(unit)'),
+    'TESLA': ('Tesla (unit)', 'https://en.wikipedia.org/wiki/Tesla_(unit)'),
+    'HENRY': ('Henry (unit)', 'https://en.wikipedia.org/wiki/Henry_(unit)'),
+    'WEBER': ('Weber (unit)', 'https://en.wikipedia.org/wiki/Weber_(unit)'),
+    'SIEMENS': ('Siemens (unit)', 'https://en.wikipedia.org/wiki/Siemens_(unit)'),
+    'GRAY': ('Gray (unit)', 'https://en.wikipedia.org/wiki/Gray_(unit)'),
+    'CURIE': ('Curie (unit)', 'https://en.wikipedia.org/wiki/Curie_(unit)'),
+    'POISE': ('Poise (unit)', 'https://en.wikipedia.org/wiki/Poise_(unit)'),
+    'STOKES': ('Stokes (unit)', 'https://en.wikipedia.org/wiki/Stokes_(unit)'),
+    'GAUSS': ('Gauss (unit)', 'https://en.wikipedia.org/wiki/Gauss_(unit)'),
+    'MAXWELL': ('Maxwell (unit)', 'https://en.wikipedia.org/wiki/Maxwell_(unit)'),
+    'GILBERT': ('Gilbert (unit)', 'https://en.wikipedia.org/wiki/Gilbert_(unit)'),
+    'BAR': ('Bar (unit)', 'https://en.wikipedia.org/wiki/Bar_(unit)'),
+    'ROOK': ('Rook (chess)', 'https://en.wikipedia.org/wiki/Rook_(chess)'),
+    'PAWN': ('Pawn (chess)', 'https://en.wikipedia.org/wiki/Pawn_(chess)'),
+    'BENEDICT': ('Eggs Benedict', 'https://en.wikipedia.org/wiki/Eggs_Benedict'),
+    'CAESAR': ('Caesar salad', 'https://en.wikipedia.org/wiki/Caesar_salad'),
+    'ALEXANDER': ('Alexander (cocktail)', 'https://en.wikipedia.org/wiki/Alexander_(cocktail)'),
+    # Words with NO common noun Wikipedia article (proper nouns only):
+    'VINELAND': (None, None),
+    'BETHESDA': (None, None),
+}
+
+_PROPER_NOUN_INDICATORS = [
+    'novel by', 'book by', 'film directed by', 'movie directed by', 'album by',
+    'song by', 'band', 'rock band', 'musical group', 'singer', 'musician',
+    'actor', 'actress', 'politician', 'chemist and physicist', 'physicist',
+    'english chemist', 'born ', 'died ', 'american writer', 'author',
+    'city in', 'town in', 'village in', 'municipality in', 'county in',
+    'capital of', 'country in', 'island in', 'river in', 'mountain in',
+    'unincorporated community', 'census-designated place', 'commune in',
+    'company', 'corporation', 'brand of', 'subsidiary of', 'video game',
+    'given name', 'surname', 'family name', 'human settlement',
+    'ancient greek', 'greek mythology', 'roman mythology', 'biblical',
+    'pool in jerusalem', 'new testament',
+    'church in', 'chapel in', 'cathedral in', 'parish in',
+    'area of coastal', 'historical region', 'region in', 'historic site'
+]
+
+_WIKI_RESOLVED_CACHE = {}
+
+def _init_wiki_common_noun_cache():
+    global _WIKI_RESOLVED_CACHE
+    try:
+        with sqlite3.connect(DB_PATH, timeout=10) as conn:
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS wiki_common_noun_cache (
+                    word TEXT PRIMARY KEY,
+                    is_common_noun INTEGER,
+                    wiki_url TEXT,
+                    wiki_title TEXT
+                );
+            ''')
+            rows = conn.execute('SELECT word, is_common_noun, wiki_url, wiki_title FROM wiki_common_noun_cache').fetchall()
+            for w, is_cn, u, t in rows:
+                _WIKI_RESOLVED_CACHE[w.upper()] = (bool(is_cn), u, t)
+    except Exception as e:
+        print(f"[WikiCache] Warning initializing cache from DB: {e}")
+
+_init_wiki_common_noun_cache()
+
+def save_wiki_cache(w_upper, is_cn, u, t):
+    _WIKI_RESOLVED_CACHE[w_upper] = (bool(is_cn), u, t)
+    try:
+        with sqlite3.connect(DB_PATH, timeout=5) as conn:
+            conn.execute('''
+                INSERT OR REPLACE INTO wiki_common_noun_cache (word, is_common_noun, wiki_url, wiki_title)
+                VALUES (?, ?, ?, ?)
+            ''', (w_upper, 1 if is_cn else 0, u, t))
+    except Exception:
+        pass
+
+def is_proper_noun(desc, extract):
+    if not desc and not extract:
+        return False
+    d = (desc or '').lower()
+    e = (extract or '')[:300].lower()
+    return any(ind in d or ind in e for ind in _PROPER_NOUN_INDICATORS)
+
+def resolve_wiki_common_noun(word: str, definition: str = '', lemma: str = None):
+    if not word:
+        return False, None, None
+    w_upper = word.strip().upper()
+
+    # 1. Check explicit overrides first
+    if w_upper in WIKI_COMMON_NOUN_OVERRIDES:
+        t, u = WIKI_COMMON_NOUN_OVERRIDES[w_upper]
+        if not t or not u:
+            return False, None, None
+        return True, u, t
+
+    # 2. Check cached resolution
+    if w_upper in _WIKI_RESOLVED_CACHE:
+        is_cn, u, t = _WIKI_RESOLVED_CACHE[w_upper]
+        return is_cn, u, t
+
+    # 3. Resolve using lemma or word
+    base = (lemma.strip() if lemma else word.strip().lower())
+    title = base.capitalize()
+    headers = {'User-Agent': 'MorphemeWordGame/1.0 (https://morpheme.games; contact@morpheme.games)'}
+
+    # Step A: Check direct title summary
+    import urllib.request, urllib.parse, json
+    checked_successfully = False
+    try:
+        url = f'https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(title)}'
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=2.5) as r:
+            checked_successfully = True
+            data = json.loads(r.read().decode('utf-8'))
+            is_disambig = data.get('type') == 'disambiguation' or 'topics referred to' in (data.get('description') or '').lower()
+            if not is_disambig and not is_proper_noun(data.get('description'), data.get('extract')):
+                ret_url = data.get('content_urls', {}).get('desktop', {}).get('page') or f'https://en.wikipedia.org/wiki/{urllib.parse.quote(title)}'
+                ret_title = data.get('title') or title
+                save_wiki_cache(w_upper, True, ret_url, ret_title)
+                return True, ret_url, ret_title
+    except Exception:
+        pass
+
+    # Step B: Check contextual parenthetical / suffixed variants based on definition clues
+    def_lower = (definition or '').lower()
+    candidates = []
+    if any(k in def_lower for k in ('music', 'dance', 'song', 'rhythm', 'genre')):
+        candidates.extend([f'{title} music', f'{title} (music)', f'{title} (genre)'])
+    if any(k in def_lower for k in ('electricity', 'coulomb', 'unit', 'physics', 'measure', 'charge')):
+        candidates.extend([f'{title} (unit)', f'{title} constant'])
+    if any(k in def_lower for k in ('bird', 'fowl', 'gallinaceous')):
+        candidates.append(f'{title} (bird)')
+    if any(k in def_lower for k in ('horse', 'foal', 'stallion', 'equine')):
+        candidates.append(f'{title} (horse)')
+    if any(k in def_lower for k in ('sweater', 'garment', 'clothing', 'jacket', 'coat', 'fabric', 'dress')):
+        candidates.extend([f'{title} (sweater)', f'{title} (clothing)', f'{title} (garment)'])
+    if any(k in def_lower for k in ('insignia', 'badge', 'stripe', 'chevron')):
+        candidates.append(f'{title} (insignia)')
+    if any(k in def_lower for k in ('river', 'shallow', 'crossing', 'water')):
+        candidates.append(f'{title} (crossing)')
+    if any(k in def_lower for k in ('hat', 'cap', 'headwear')):
+        candidates.append(f'{title} hat')
+    if any(k in def_lower for k in ('porcelain', 'ceramic', 'dish', 'pottery')):
+        candidates.extend(['Porcelain', 'Bone china', f'{title} (dishware)'])
+    if any(k in def_lower for k in ('chess', 'game piece', 'board game')):
+        candidates.extend([f'{title} (chess)', f'{title} (game)'])
+
+    for cand in candidates:
+        try:
+            cand_url = f'https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(cand)}'
+            req = urllib.request.Request(cand_url, headers=headers)
+            with urllib.request.urlopen(req, timeout=2.5) as r:
+                cdata = json.loads(r.read().decode('utf-8'))
+                if cdata.get('type') != 'disambiguation' and not is_proper_noun(cdata.get('description'), cdata.get('extract')):
+                    ret_url = cdata.get('content_urls', {}).get('desktop', {}).get('page') or f'https://en.wikipedia.org/wiki/{urllib.parse.quote(cand)}'
+                    ret_title = cdata.get('title') or cand
+                    save_wiki_cache(w_upper, True, ret_url, ret_title)
+                    return True, ret_url, ret_title
+        except Exception:
+            continue
+
+    # Step C: Fallback - if Wikipedia confirmed it was a disambiguation or proper noun
+    if checked_successfully:
+        save_wiki_cache(w_upper, False, None, None)
+        return False, None, None
+
+    # If network call failed, default to standard fallback without caching false
+    ret_url = f'https://en.wikipedia.org/wiki/{urllib.parse.quote(title)}'
+    return True, ret_url, title
 
 def get_word_dictionaries(word: str) -> list:
     """Returns the list of dictionaries the word belongs to: NWL, CSW, AW."""
@@ -10549,26 +10730,50 @@ _WIKI_SUMMARY_CACHE = {}
 def get_wikipedia_summary():
     """
     Fetch clean in-app Wikipedia summary/extract for words.
-    Uses Wikipedia's official REST API and falls back to Action API.
+    Uses Wikipedia's official REST API, disambiguates to common noun articles,
+    and filters out proper nouns (such as books, towns, bands, or persons).
     Caches responses to guarantee near-instant lookup with zero UI lag.
     """
     title = request.args.get('title', '').strip()
-    if not title:
-        return jsonify({'error': 'Title parameter required'}), 400
+    word = request.args.get('word', '').strip()
+    if not title and not word:
+        return jsonify({'error': 'Title or word parameter required'}), 400
 
-    cache_key = title.lower()
+    target_word = (word or title).strip().upper()
+    cache_key = f"{title.lower()}|{target_word.lower()}"
     if cache_key in _WIKI_SUMMARY_CACHE:
         return jsonify(_WIKI_SUMMARY_CACHE[cache_key])
 
     import urllib.request, urllib.parse, json, re
     headers = {'User-Agent': 'MorphemeWordGame/1.0 (https://morpheme.games; contact@morpheme.games)'}
-    safe_title = urllib.parse.quote(title.replace(' ', '_'), safe='')
 
+    # 1. Check if word is known to have NO common noun article on Wikipedia
+    if target_word in WIKI_COMMON_NOUN_OVERRIDES and WIKI_COMMON_NOUN_OVERRIDES[target_word][0] is None:
+        proper_only_res = {
+            'title': title or target_word.capitalize(),
+            'description': 'Proper Noun Filter',
+            'extract': f'Wikipedia does not currently have an article explaining the noun meaning of this word. Available articles for "{title or target_word.capitalize()}" refer exclusively to proper nouns (such as works of fiction, geographic locations, or proper names).',
+            'is_disambiguation': False,
+            'is_proper_only': True,
+            'bullets': [],
+            'thumbnail': None,
+            'url': None
+        }
+        _WIKI_SUMMARY_CACHE[cache_key] = proper_only_res
+        return jsonify(proper_only_res)
+
+    # 2. Check if an override gives a specific common noun article
+    lookup_title = title
+    if target_word in WIKI_COMMON_NOUN_OVERRIDES and WIKI_COMMON_NOUN_OVERRIDES[target_word][0]:
+        lookup_title = WIKI_COMMON_NOUN_OVERRIDES[target_word][0]
+
+    safe_title = urllib.parse.quote(lookup_title.replace(' ', '_'), safe='')
     result = {
-        'title': title,
+        'title': lookup_title,
         'description': '',
         'extract': '',
         'is_disambiguation': False,
+        'is_proper_only': False,
         'bullets': [],
         'thumbnail': None,
         'url': f"https://en.wikipedia.org/wiki/{safe_title}"
@@ -10579,7 +10784,7 @@ def get_wikipedia_summary():
         req = urllib.request.Request(summary_url, headers=headers)
         with urllib.request.urlopen(req, timeout=3.5) as resp:
             data = json.loads(resp.read().decode('utf-8'))
-            result['title'] = data.get('title') or title
+            result['title'] = data.get('title') or lookup_title
             result['description'] = data.get('description') or ''
             result['extract'] = data.get('extract') or ''
             result['url'] = data.get('content_urls', {}).get('desktop', {}).get('page') or result['url']
@@ -10587,10 +10792,40 @@ def get_wikipedia_summary():
                 result['thumbnail'] = data.get('thumbnail', {}).get('source')
             if data.get('type') == 'disambiguation' or (result['description'].lower() == 'topics referred to by the same term'):
                 result['is_disambiguation'] = True
-    except Exception as e:
+    except Exception:
         pass
 
-    if result.get('is_disambiguation') or not result.get('extract'):
+    # 3. If the article is a disambiguation page or a proper noun, attempt resolution to common noun
+    is_prop = is_proper_noun(result.get('description'), result.get('extract'))
+    if result.get('is_disambiguation') or is_prop:
+        def_text, _ = lookup_word_definition_and_pronunciation(target_word)
+        is_cn, cn_url, cn_title = resolve_wiki_common_noun(target_word, def_text or '', lookup_title.lower())
+        if is_cn and cn_title and cn_title.lower() != lookup_title.lower():
+            try:
+                cn_safe = urllib.parse.quote(cn_title.replace(' ', '_'), safe='')
+                cn_url_fetch = f"https://en.wikipedia.org/api/rest_v1/page/summary/{cn_safe}"
+                req = urllib.request.Request(cn_url_fetch, headers=headers)
+                with urllib.request.urlopen(req, timeout=3.5) as cn_resp:
+                    cn_data = json.loads(cn_resp.read().decode('utf-8'))
+                    result['title'] = cn_data.get('title') or cn_title
+                    result['description'] = cn_data.get('description') or ''
+                    result['extract'] = cn_data.get('extract') or ''
+                    result['url'] = cn_data.get('content_urls', {}).get('desktop', {}).get('page') or cn_url
+                    result['thumbnail'] = cn_data.get('thumbnail', {}).get('source') if cn_data.get('thumbnail') else None
+                    result['is_disambiguation'] = False
+                    result['is_proper_only'] = False
+            except Exception:
+                pass
+        elif not is_cn and is_prop:
+            # Entirely proper noun with no common noun article on Wikipedia
+            result['is_proper_only'] = True
+            result['description'] = 'Proper Noun Filter'
+            result['extract'] = f'Wikipedia does not currently have an article explaining the noun meaning of this word. Available articles for "{lookup_title}" refer exclusively to proper nouns (such as works of fiction, geographic locations, or proper names).'
+            result['bullets'] = []
+            result['thumbnail'] = None
+            result['url'] = None
+
+    if not result.get('is_proper_only') and (result.get('is_disambiguation') or not result.get('extract')):
         try:
             parse_url = f"https://en.wikipedia.org/w/api.php?action=parse&page={safe_title}&prop=text&mobileformat=1&format=json"
             p_req = urllib.request.Request(parse_url, headers=headers)
