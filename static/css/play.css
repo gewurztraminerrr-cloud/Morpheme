@@ -14076,6 +14076,108 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
+/* Light & White Themes: High contrast for Player Activity & Stats subtabs and content */
+body.theme-white .player-stats-subtabs,
+body[class*="theme-light-"] .player-stats-subtabs,
+[class*="theme-white"] .player-stats-subtabs,
+[class*="theme-light-"] .player-stats-subtabs {
+    border-bottom-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+body.theme-white .player-stats-subtab-btn,
+body[class*="theme-light-"] .player-stats-subtab-btn,
+[class*="theme-white"] .player-stats-subtab-btn,
+[class*="theme-light-"] .player-stats-subtab-btn,
+body.theme-white #page-tools #tool-new-users .player-stats-subtab-btn,
+body[class*="theme-light-"] #page-tools #tool-new-users .player-stats-subtab-btn,
+[class*="theme-white"] #page-tools #tool-new-users .player-stats-subtab-btn,
+[class*="theme-light-"] #page-tools #tool-new-users .player-stats-subtab-btn {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #334155 !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+}
+
+body.theme-white .player-stats-subtab-btn:hover,
+body[class*="theme-light-"] .player-stats-subtab-btn:hover,
+[class*="theme-white"] .player-stats-subtab-btn:hover,
+[class*="theme-light-"] .player-stats-subtab-btn:hover,
+body.theme-white #page-tools #tool-new-users .player-stats-subtab-btn:hover,
+body[class*="theme-light-"] #page-tools #tool-new-users .player-stats-subtab-btn:hover,
+[class*="theme-white"] #page-tools #tool-new-users .player-stats-subtab-btn:hover,
+[class*="theme-light-"] #page-tools #tool-new-users .player-stats-subtab-btn:hover {
+    background: rgba(0, 0, 0, 0.1) !important;
+    color: #0f172a !important;
+    border-color: rgba(0, 0, 0, 0.32) !important;
+}
+
+body.theme-white .player-stats-subtab-btn.active,
+body[class*="theme-light-"] .player-stats-subtab-btn.active,
+[class*="theme-white"] .player-stats-subtab-btn.active,
+[class*="theme-light-"] .player-stats-subtab-btn.active,
+body.theme-white #page-tools #tool-new-users .player-stats-subtab-btn.active,
+body[class*="theme-light-"] #page-tools #tool-new-users .player-stats-subtab-btn.active,
+[class*="theme-white"] #page-tools #tool-new-users .player-stats-subtab-btn.active,
+[class*="theme-light-"] #page-tools #tool-new-users .player-stats-subtab-btn.active {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+    border-color: #0284c7 !important;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3) !important;
+}
+
+body.theme-white .player-stats-subtab-btn.active:hover,
+body[class*="theme-light-"] .player-stats-subtab-btn.active:hover,
+[class*="theme-white"] .player-stats-subtab-btn.active:hover,
+[class*="theme-light-"] .player-stats-subtab-btn.active:hover,
+body.theme-white #page-tools #tool-new-users .player-stats-subtab-btn.active:hover,
+body[class*="theme-light-"] #page-tools #tool-new-users .player-stats-subtab-btn.active:hover,
+[class*="theme-white"] #page-tools #tool-new-users .player-stats-subtab-btn.active:hover,
+[class*="theme-light-"] #page-tools #tool-new-users .player-stats-subtab-btn.active:hover {
+    background: #0369a1 !important;
+    color: #ffffff !important;
+    border-color: #0369a1 !important;
+}
+
+body.theme-white #tool-new-users .stat-desc,
+body[class*="theme-light-"] #tool-new-users .stat-desc,
+[class*="theme-white"] #tool-new-users .stat-desc,
+[class*="theme-light-"] #tool-new-users .stat-desc {
+    color: #475569 !important;
+    font-weight: 600 !important;
+}
+
+body.theme-white #new-users-table-scroll,
+body[class*="theme-light-"] #new-users-table-scroll,
+[class*="theme-white"] #new-users-table-scroll,
+[class*="theme-light-"] #new-users-table-scroll {
+    background: rgba(255, 255, 255, 0.75) !important;
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+body.theme-white #new-users-table th,
+body[class*="theme-light-"] #new-users-table th,
+[class*="theme-white"] #new-users-table th,
+[class*="theme-light-"] #new-users-table th,
+body.theme-white #page-tools #tool-new-users .history-table th,
+body[class*="theme-light-"] #page-tools #tool-new-users .history-table th,
+[class*="theme-white"] #page-tools #tool-new-users .history-table th,
+[class*="theme-light-"] #page-tools #tool-new-users .history-table th {
+    background: rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+body.theme-white #new-users-table td,
+body[class*="theme-light-"] #new-users-table td,
+[class*="theme-white"] #new-users-table td,
+[class*="theme-light-"] #new-users-table td,
+body.theme-white #page-tools #tool-new-users .history-table td,
+body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
+[class*="theme-white"] #page-tools #tool-new-users .history-table td,
+[class*="theme-light-"] #page-tools #tool-new-users .history-table td {
+    color: #1e293b !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
 .new-users-stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
