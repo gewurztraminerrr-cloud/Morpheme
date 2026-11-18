@@ -1397,6 +1397,8 @@ window.showModTab = function(tabId) {
     } else if (tabId === 'tally-divisions') {
         loadTallyDivisionsStatus();
         loadTallyDivisionsExamples();
+    } else if (tabId === 'forum-maintenance') {
+        loadForumThreadsStatus();
     }
 
     // Trigger scroll to content area on mobile with smooth sliding animation
@@ -2504,13 +2506,147 @@ window.applyRatingAdjustment = applyRatingAdjustment;
 window.setupRatingAdjHandlers = setupRatingAdjHandlers;
 window.checkRatingAdjAuth = checkRatingAdjAuth;
 
+// --- FORUM THREAD MAINTENANCE ---
+let _forumMaintenanceData = null;
+
+async function loadForumThreadsStatus() {
+    const listContainer = document.getElementById('forum-categories-list-container');
+    const summaryBadge = document.getElementById('forum-total-summary-badge');
+    const refreshBtn = document.getElementById('refresh-forum-threads-btn');
+
+    if (refreshBtn) refreshBtn.disabled = true;
+
+    try {
+        const response = await fetch('/api/mods/forum/threads_status');
+        const data = await response.json();
+        
+        if (!data.success) {
+            showModStatus(data.error || 'Failed to fetch forum status.', true, 'forum-prune-status-area');
+            if (listContainer) {
+                listContainer.innerHTML = `<div style="text-align: center; color: #ef4444; padding: 16px;">Failed to load forum status: ${escapeHtml(data.error || 'Unknown error')}</div>`;
+            }
+            return;
+        }
+
+        _forumMaintenanceData = data;
+
+        if (summaryBadge) {
+            if (data.total_prunable > 0) {
+                summaryBadge.innerHTML = `<span style="color: #ef4444; font-weight: 700;">${data.total_threads} total threads &bull; ${data.total_prunable} exceeding 300 limit</span>`;
+            } else {
+                summaryBadge.innerHTML = `<span style="color: #10b981; font-weight: 700;">${data.total_threads} total threads &bull; All categories ≤ 300</span>`;
+            }
+        }
+
+        if (listContainer) {
+            if (!data.categories || data.categories.length === 0) {
+                listContainer.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 16px;">No categories found.</div>`;
+                return;
+            }
+
+            let html = '';
+            data.categories.forEach(cat => {
+                const isOverLimit = cat.prunable_count > 0;
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--card-border, rgba(0,0,0,0.1)); gap: 10px;">
+                        <div style="min-width: 0; flex: 1;">
+                            <div style="font-weight: 600; font-size: 0.92rem; color: var(--text-primary); margin-bottom: 2px;">
+                                ${escapeHtml(cat.category_name)}
+                            </div>
+                            <div style="font-size: 0.78rem; color: var(--text-secondary);">
+                                Total: <strong>${cat.thread_count}</strong> threads &bull; Preserved: <strong>${cat.keep_count}</strong> &bull; Excess: <strong>${cat.prunable_count}</strong>
+                            </div>
+                        </div>
+                        <div style="flex-shrink: 0;">
+                            ${isOverLimit
+                                ? `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">✂️ ${cat.prunable_count} to prune</span>`
+                                : `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);">✓ ≤ 300 (${cat.thread_count})</span>`
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+            listContainer.innerHTML = html;
+        }
+    } catch (err) {
+        console.error('Error fetching forum thread status:', err);
+        showModStatus('Network error fetching forum status.', true, 'forum-prune-status-area');
+    } finally {
+        if (refreshBtn) refreshBtn.disabled = false;
+    }
+}
+
+async function pruneForumThreads() {
+    const pruneBtn = document.getElementById('prune-forum-threads-btn');
+    const totalPrunable = _forumMaintenanceData ? _forumMaintenanceData.total_prunable : null;
+
+    let confirmMsg = 'Are you sure you want to cut thread counts in each category down to the 300 most recently-replied threads?\n\nThreads exceeding the top 300 most active in each category will be permanently removed along with all replies, reactions, and bookmarks.';
+    if (totalPrunable !== null && totalPrunable > 0) {
+        confirmMsg = `Are you sure you want to cut thread counts down to the 300 most recently-replied threads?\n\nThis will permanently delete ${totalPrunable} thread(s) exceeding 300 across categories, along with all their replies, reactions, and bookmarks.\n\nThis action cannot be undone.`;
+    } else if (totalPrunable === 0) {
+        confirmMsg = 'All categories currently have 300 or fewer threads.\n\nDo you still want to run the verification and pruning process?';
+    }
+
+    if (!confirm(confirmMsg)) return;
+
+    if (pruneBtn) {
+        pruneBtn.disabled = true;
+        pruneBtn.innerHTML = '✂️ Pruning Threads...';
+    }
+
+    showModStatus('Pruning threads across all categories...', false, 'forum-prune-status-area');
+
+    try {
+        const response = await fetch('/api/mods/forum/prune_threads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showModStatus(data.message, false, 'forum-prune-status-area');
+            alert(data.message);
+            await loadForumThreadsStatus();
+        } else {
+            showModStatus(data.error || 'Failed to prune forum threads.', true, 'forum-prune-status-area');
+            alert('Error: ' + (data.error || 'Failed to prune forum threads.'));
+        }
+    } catch (err) {
+        console.error('Error pruning forum threads:', err);
+        showModStatus('Network error while pruning threads.', true, 'forum-prune-status-area');
+        alert('Network error while pruning threads.');
+    } finally {
+        if (pruneBtn) {
+            pruneBtn.disabled = false;
+            pruneBtn.innerHTML = '✂️ Prune Threads (Max 300/Category)';
+        }
+    }
+}
+
+function setupForumMaintenanceHandlers() {
+    const pruneBtn = document.getElementById('prune-forum-threads-btn');
+    if (pruneBtn) {
+        pruneBtn.onclick = pruneForumThreads;
+    }
+    const refreshBtn = document.getElementById('refresh-forum-threads-btn');
+    if (refreshBtn) {
+        refreshBtn.onclick = () => loadForumThreadsStatus();
+    }
+}
+
+window.loadForumThreadsStatus = loadForumThreadsStatus;
+window.pruneForumThreads = pruneForumThreads;
+window.setupForumMaintenanceHandlers = setupForumMaintenanceHandlers;
+
 // Initialize setupModsNavigation and handlers when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         setupModsNavigation();
+        setupForumMaintenanceHandlers();
     });
 } else {
     setupModsNavigation();
+    setupForumMaintenanceHandlers();
 }
 
 

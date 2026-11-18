@@ -3602,6 +3602,120 @@ def get_tally_divisions_examples():
         return jsonify({'error': str(e)}), 500
 
 
+# --- FORUM THREAD PRUNING & MAINTENANCE ---
+
+@app.route('/api/mods/forum/threads_status', methods=['GET'])
+@login_required
+def get_forum_threads_status():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        categories = conn.execute('SELECT id, name, description FROM forum_categories ORDER BY id ASC').fetchall()
+        result = []
+        total_threads = 0
+        total_prunable = 0
+        for cat in categories:
+            cat_id = cat['id']
+            cat_name = cat['name']
+            count = conn.execute('SELECT COUNT(*) FROM forum_posts WHERE category_id = ?', (cat_id,)).fetchone()[0]
+            prunable = max(0, count - 300)
+            total_threads += count
+            total_prunable += prunable
+            result.append({
+                'category_id': cat_id,
+                'category_name': cat_name,
+                'thread_count': count,
+                'prunable_count': prunable,
+                'keep_count': min(count, 300)
+            })
+        return jsonify({
+            'success': True,
+            'categories': result,
+            'total_threads': total_threads,
+            'total_prunable': total_prunable,
+            'max_threads_per_category': 300
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
+@app.route('/api/mods/forum/prune_threads', methods=['POST'])
+@login_required
+def prune_forum_threads():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    try:
+        categories = conn.execute('SELECT id, name FROM forum_categories ORDER BY id ASC').fetchall()
+        total_pruned = 0
+        category_results = []
+        
+        for cat_id, cat_name in categories:
+            # Query all posts in category ordered by:
+            # 1. is_pinned DESC (preserve pinned threads)
+            # 2. last_activity DESC (most recent comment timestamp or post timestamp)
+            # 3. p.id DESC
+            posts = conn.execute('''
+                SELECT p.id
+                FROM forum_posts p
+                WHERE p.category_id = ?
+                ORDER BY COALESCE(p.is_pinned, 0) DESC,
+                         COALESCE((SELECT MAX(timestamp) FROM forum_comments WHERE post_id = p.id), p.timestamp) DESC,
+                         p.id DESC
+            ''', (cat_id,)).fetchall()
+            
+            post_count = len(posts)
+            if post_count > 300:
+                prune_ids = [row[0] for row in posts[300:]]
+                pruned_this_cat = len(prune_ids)
+                
+                # Delete associated records in chunks of 500
+                chunk_size = 500
+                for i in range(0, len(prune_ids), chunk_size):
+                    chunk = prune_ids[i:i + chunk_size]
+                    placeholders = ','.join('?' for _ in chunk)
+                    conn.execute(f'DELETE FROM forum_responders WHERE post_id IN ({placeholders})', chunk)
+                    conn.execute(f'DELETE FROM forum_reactions WHERE post_id IN ({placeholders})', chunk)
+                    conn.execute(f'DELETE FROM forum_thread_bookmarks WHERE post_id IN ({placeholders})', chunk)
+                    conn.execute(f'DELETE FROM forum_comments WHERE post_id IN ({placeholders})', chunk)
+                    conn.execute(f'DELETE FROM forum_posts WHERE id IN ({placeholders})', chunk)
+                
+                conn.commit()
+                total_pruned += pruned_this_cat
+                category_results.append({
+                    'category_id': cat_id,
+                    'category_name': cat_name,
+                    'before_count': post_count,
+                    'pruned_count': pruned_this_cat,
+                    'after_count': 300
+                })
+            else:
+                category_results.append({
+                    'category_id': cat_id,
+                    'category_name': cat_name,
+                    'before_count': post_count,
+                    'pruned_count': 0,
+                    'after_count': post_count
+                })
+                
+        msg = f"Pruning complete. {total_pruned} threads pruned across {len(category_results)} categories." if total_pruned > 0 else "All categories already have 300 or fewer threads. No threads pruned."
+        return jsonify({
+            'success': True,
+            'total_pruned': total_pruned,
+            'categories': category_results,
+            'message': msg
+        })
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        conn.close()
+
+
 # --- AUTH ROUTES ---
 
 DEFINITIONS_CACHE = None
