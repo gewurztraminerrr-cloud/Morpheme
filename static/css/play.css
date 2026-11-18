@@ -1010,7 +1010,9 @@ body[class*="theme-light-"] .intermission-winner-card .winner-bonus-word {
     line-height: 1.15;
 }
 
-.tool-word-badges-row {
+.tool-word-badges-row,
+#valid-word-badges,
+#random-word-badges {
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -1020,28 +1022,55 @@ body[class*="theme-light-"] .intermission-winner-card .winner-bonus-word {
     width: 100%;
     box-sizing: border-box;
     padding: 0 12px;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
 }
 
 body.is-desktop .tool-word-badges-row,
 body:not(.is-mobile) .tool-word-badges-row,
 @media (min-width: 901px) {
-    .tool-word-badges-row {
+    .tool-word-badges-row,
+    #valid-word-badges,
+    #random-word-badges {
         justify-content: flex-start !important;
         padding-left: 12px !important;
         padding-right: 12px !important;
     }
 }
 
-.tool-word-badges-row .tool-def-len-badge {
-    font-size: 0.84rem;
-    padding: 3px 9px;
-    border-radius: 5px;
+.tool-word-badges-row .tool-def-lists-container,
+#valid-word-badges .tool-def-lists-container,
+#random-word-badges .tool-def-lists-container {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    vertical-align: middle !important;
 }
 
-.tool-word-badges-row .work-on-badge {
-    font-size: 0.80rem;
-    padding: 3px 8px;
-    border-radius: 5px;
+.tool-word-badges-row .tool-def-len-badge,
+.tool-word-badges-row .work-on-badge,
+#valid-word-badges .tool-def-len-badge,
+#valid-word-badges .work-on-badge,
+#random-word-badges .tool-def-len-badge,
+#random-word-badges .work-on-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.82rem !important;
+    line-height: 1.35 !important;
+    padding: 3px 8px !important;
+    height: auto !important;
+    min-height: 24px !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    vertical-align: middle !important;
+    border-radius: 5px !important;
 }
 
 /* Membership Badges */
