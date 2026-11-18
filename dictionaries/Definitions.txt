@@ -11135,7 +11135,6 @@ AFFIDAVITS - AFFIDAVIT, (Latin) a written statement, confirmed by oath, to be us
 AFFIDAVY - (colloquial, dialect) An affidavit.
 AFFIED - AFFY, (obsolete) to trust; to assure on one's faith [v]
 AFFIES - AFFY, (obsolete) to trust; to assure on one's faith [v]
-AFFILED - simple past and past participle of affile
 AFFILIABLE - capable of being affiliated to or on, or connected with in origin [adj]
 AFFILIATE - to adopt or attach as a member or branch [v AFFILIATED, AFFILIATING, AFFILIATES]
 AFFILIATED - AFFILIATE, to adopt or attach as a member or branch [v]
@@ -11148,7 +11147,6 @@ AFFILIATIONS - AFFILIATION, the result of affiliating [n]
 AFFILIATIVE - (of behaviour) tending to promote social cohesion
 AFFILIATIVELY - In an affiliative manner
 AFFILIATORY - Relating to affiliation.
-AFFILING - present participle and gerund of affile
 AFFIMER - (biochemistry) A small protein that binds to a target molecule in the manner of an antibody
 AFFIMERS - plural of affimer
 AFFINAGE - The aging of cheese as part of its manufacture.
@@ -827877,3 +827875,7 @@ TILCAYOS - plural of tilcayo (Leopardus tilcayo, a small spotted felid, found in
 TESTINGG - Social test and quiz app where you can create personalized tests for friends, partners, spouses, family members, and people close to you
 TESTINGG - Social test and quiz app where you can create personalized tests for friends, partners, spouses, family members, and people close to you
 AEROMONIASES - plural of aeromoniasis ((pathology) infection with bacteria of the genus Aeromonas.)
+AFFILE - (archaic) to polish, smooth, or refine, especially the tongue or speech; to sharpen
+AFFILED - simple past and past participle of affile (to polish, smooth, or refine, especially speech or the tongue; to sharpen)
+AFFILES - third-person singular simple present indicative of affile (to polish, smooth, or refine, especially speech or the tongue; to sharpen)
+AFFILING - present participle of affile (to polish, smooth, or refine, especially speech or the tongue; to sharpen)

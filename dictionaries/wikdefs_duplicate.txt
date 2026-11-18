@@ -10779,7 +10779,6 @@ AFFIDAVITS	plural of affidavit
 AFFIDAVY	(colloquial, dialect) An affidavit.
 AFFIED	simple past and past participle of affy
 AFFIES	third-person singular simple present indicative of affy
-AFFILED	simple past and past participle of affile
 AFFILIABLE	Capable of being affiliated to.
 AFFILIATE	Someone or something, especially, a television station, that is associated with a larger, related organization, such as a television network; a member of a group of associated things.
 AFFILIATED	Associated, related, or united; subject to a particular affiliation.
@@ -10792,7 +10791,6 @@ AFFILIATIONS	plural of affiliation
 AFFILIATIVE	(of behaviour) tending to promote social cohesion
 AFFILIATIVELY	In an affiliative manner
 AFFILIATORY	Relating to affiliation.
-AFFILING	present participle and gerund of affile
 AFFIMER	(biochemistry) A small protein that binds to a target molecule in the manner of an antibody
 AFFIMERS	plural of affimer
 AFFINAGE	The aging of cheese as part of its manufacture.
@@ -793485,3 +793483,7 @@ TILCAYOS	plural of tilcayo (Leopardus tilcayo, a small spotted felid, found in t
 TESTINGG	Social test and quiz app where you can create personalized tests for friends, partners, spouses, family members, and people close to you
 TESTINGG	Social test and quiz app where you can create personalized tests for friends, partners, spouses, family members, and people close to you
 AEROMONIASES	plural of aeromoniasis ((pathology) infection with bacteria of the genus Aeromonas.)
+AFFILE	(archaic) to polish, smooth, or refine, especially the tongue or speech; to sharpen
+AFFILED	simple past and past participle of affile (to polish, smooth, or refine, especially speech or the tongue; to sharpen)
+AFFILES	third-person singular simple present indicative of affile (to polish, smooth, or refine, especially speech or the tongue; to sharpen)
+AFFILING	present participle of affile (to polish, smooth, or refine, especially speech or the tongue; to sharpen)
