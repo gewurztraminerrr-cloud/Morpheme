@@ -2954,15 +2954,18 @@ async function _doUpdateGameState(incomingState = null) {
                 boardToRender = window.lastGameState.board;
             }
             // IMMUTABLE ACTIVE BOARD SHIELD: Never allow active board to swap mid-round
-            if (window.lastGameState &&
-                window.lastGameState.state === 'active' &&
+            if (previousState &&
+                previousState.state === 'active' &&
                 state.state === 'active' &&
-                window.lastGameState.current_round === state.current_round &&
-                window.lastGameState.board &&
-                window.lastGameState.board.length > 0 &&
-                JSON.stringify(window.lastGameState.board) !== JSON.stringify(boardToRender)) {
+                previousState.current_round === state.current_round &&
+                previousState.board &&
+                previousState.board.length > 0 &&
+                JSON.stringify(previousState.board) !== JSON.stringify(boardToRender)) {
                 console.warn('[play.js] Rejected mid-round board swap! Retaining active board for round', state.current_round);
-                boardToRender = window.lastGameState.board;
+                boardToRender = previousState.board;
+                state.board = previousState.board;
+                if (previousState.all_words) state.all_words = previousState.all_words;
+                if (previousState.all_words_paths) state.all_words_paths = previousState.all_words_paths;
             }
             const is3D = state.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
             try {

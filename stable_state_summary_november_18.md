@@ -271,6 +271,28 @@
 
 ---
 
+### Solo Mode Mid-Round Board Swap Fix
+- **Problem**: Shortly after beginning the first round of Solo mode, the board changed ~10 seconds into the round to a completely different board.
+- **Root Cause**:
+  1. *Kickstart Bypass for Solo Rooms*: In `app.py:16662`, `create_solo_match` passes `is_private=True, is_solo=True` to `room_manager.create_room`. In `game_room.py:4209`, the board kickstart check was `if not is_24h and not is_private:`. Because `is_private=True`, lines 4209–4440 were skipped entirely, bypassing the dedicated solo cache pop/generation at lines 4252–4293.
+  2. *Fallback to Background Generation*: As a result, `create_room` returned an empty room without a board (`room.board = []`). In `app.py:16747`, `has_kickstarted_board` evaluated to `False`, so `app.py:16831` set `room.state = 'loading'` and dispatched a background thread running `start_round(room_id)`.
+  3. *Premature 10s Rescue*: In `game_room.py:6333`, `check_6x8_rescue(room)` checked `if room.state == 'loading':` with a 10.0-second threshold. At 10 seconds, `check_6x8_rescue` triggered, pulled an emergency fallback board, assigned `room.board = e_board`, and transitioned the room to `state = 'active'`. The user saw this emergency fallback board and began playing Round 1.
+  4. *Uncoordinated Background Overwrite*: Meanwhile, the original background thread running `start_round` finished its board generation ~10 seconds later and blindly executed `room.board = board; room.current_round += 1`, overwriting the live gameplay board mid-game without checking if the room had already become active.
+  5. *Client Shield Bypassed*: On the client side in `static/js/play.js:2237`, `window.lastGameState = state;` had been placed before line 2957, neutralizing the `IMMUTABLE ACTIVE BOARD SHIELD` because line 2957 compared `window.lastGameState.board` (which was already mutated to the incoming new `state.board`) instead of comparing `previousState.board`.
+- **Fixes Applied**:
+  - **`game_room.py`**:
+    - Line 4209: Changed kickstart check to `if not is_24h and (not is_private or room.is_solo):`. Solo matches now pop a compatible cached board in 0ms (or generate one) immediately during `create_room`.
+    - Line 4401: Set `room._initial_board_delivered = True` upon kickstarting.
+    - `_apply_kickstart_results`: Added concurrency guard under `with room._state_lock:` to abort and prevent overwriting board if `room.state == 'active'` and board is already populated.
+    - `start_round`: Added concurrency guard under `with room._state_lock:` to abort and prevent overwriting board if `room.state == 'active'` and board is already populated.
+    - `check_6x8_rescue`: Fixed `start_t` to check `_round_start_init_time` and `creation_time`, and increased loading rescue threshold from `10.0s` to `25.0s`.
+  - **`app.py`**:
+    - With `room.board` populated by `create_room`, `has_kickstarted_board` is `True`, so `app.py` avoids setting `state = 'loading'` and does not launch a redundant background `start_round` thread.
+  - **`static/js/play.js`**:
+    - In `IMMUTABLE ACTIVE BOARD SHIELD` (line 2956), updated check to compare incoming `state.board` against `previousState.board` (and preserved `previousState.all_words` and `previousState.all_words_paths`), strictly rejecting mid-round board swaps on the client.
+
+---
+
 ## 2. Commit & Deployment Details
 - **Latest Commit ID**: `3d6aac38f97e2f5b5c97f8045e0aa06c138d6df8` (short: `3d6aac38`)
 - **Previous Commits**: `65c4cd6021fb68afe8b48672488d777f0419461b`, `6c0754b46fc9678b667b0eb6aec05f414b385602`, `a41872a020389edc6b7d5f67c0125c9935c3644e`, `a406cd5e1b61ace30014dfba46920220140fa184`, `658ba7632823cd934e51219a2026bc71a029e65f`

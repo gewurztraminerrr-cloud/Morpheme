@@ -4206,7 +4206,7 @@ class RoomManager:
                 
                 if not restored_active:
                     # INSTANT START: Kickstart room immediately by popping/generating board first
-                    if not is_24h and not is_private:
+                    if not is_24h and (not is_private or room.is_solo):
                         if room.game_type == 'subanagrams':
                             print(f"[RoomManager] {room_id}: Kickstarting Subanagrams room immediately...")
                             from subanagrams_generator import generate_subanagrams_board_and_words
@@ -4398,6 +4398,7 @@ class RoomManager:
                             room.round_start_time = time.time()
                             room.state = 'active'
                             room.current_round = 1
+                            room._initial_board_delivered = True
                             room.last_round_had_winner = False
                             room.winners_history = [h for h in getattr(room, 'winners_history', []) if h.get('round') != 1]
                             room.last_saved_round = -1
@@ -4451,6 +4452,11 @@ class RoomManager:
         room = self.get_room(room_id)
         if not room:
             return
+        
+        with room._state_lock:
+            if room.state == 'active' and room.board and len(room.board) > 0:
+                print(f"[RoomManager] Aborting _apply_kickstart_results for {room_id}: Room is ALREADY active with board!")
+                return
         
         e_board, e_words, e_bonus_c, e_fmt, e_dict, e_ratio, e_bonus_word = e_results[:7]
         e_params = e_results[8] if len(e_results) > 8 else None
@@ -5483,6 +5489,11 @@ class RoomManager:
             
             # CRITICAL: Preserve special cell metadata (Bonus Letter / Either/Or)
             # generate_board returns 'bonus_cell' coordinate as the 3rd element.
+            with room._state_lock:
+                if room.state == 'active' and room.board and len(room.board) > 0:
+                    print(f"[RoomManager] Aborting start_round board application for {room_id}: Room is ALREADY active with board!")
+                    room.starting_round = False
+                    return True
             room.board = board
             room.bonus_cell = bonus_cell
 
@@ -6328,12 +6339,12 @@ class RoomManager:
         now = time.time()
         is_daily = room.time_limit >= 7200
         
-        # 1. Loading state rescue (stuck loading for >20s)
+        # 1. Loading state rescue (stuck loading for >25s)
         is_stuck_loading = False
         if room.state == 'loading':
-            start_t = getattr(room, 'intermission_start_time', None) or getattr(room, 'created_at', None) or now
+            start_t = getattr(room, '_round_start_init_time', None) or getattr(room, 'creation_time', None) or getattr(room, 'intermission_start_time', None) or now
             elapsed = now - start_t
-            if elapsed > 10.0 and not getattr(room, '_did_loading_rescue', False):
+            if elapsed > 25.0 and not getattr(room, '_did_loading_rescue', False):
                 is_stuck_loading = True
                 
         # 2. Intermission 15s remaining rescue (normal countdown rooms only)
