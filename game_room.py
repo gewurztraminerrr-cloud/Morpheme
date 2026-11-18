@@ -2435,6 +2435,11 @@ class GameRoom:
                                 'round_start_time': self.round_start_time,
                             })
                             if len(self.winners_history) > 25: self.winners_history = self.winners_history[:25]
+                            self.last_round_had_winner = True
+                        else:
+                            # If no one entered words or scored > 0, ensure no winner record exists for this round
+                            self.winners_history = [h for h in self.winners_history if h.get('round') != self.current_round]
+                            self.last_round_had_winner = False
 
                         # Ratings logic...
                         try:
@@ -3949,6 +3954,8 @@ class RoomManager:
                                         existing_room.total_words_count = len(existing_room.all_words)
                                         existing_room.initial_total_words = existing_room.total_words_count
                                         existing_room.current_round = 1
+                                        existing_room.last_round_had_winner = False
+                                        existing_room.winners_history = [h for h in getattr(existing_room, 'winners_history', []) if h.get('round') != 1]
                                         existing_room.round_start_time = time.time()
                                         existing_room.state = 'active'
                                         existing_room.initialize_density(r_board, existing_room.all_words_paths, r_fmt)
@@ -4377,6 +4384,8 @@ class RoomManager:
                             room.round_start_time = time.time()
                             room.state = 'active'
                             room.current_round = 1
+                            room.last_round_had_winner = False
+                            room.winners_history = [h for h in getattr(room, 'winners_history', []) if h.get('round') != 1]
                             room.last_saved_round = -1
 
                             room.initialize_density(r_board, room.all_words_paths, r_fmt)
@@ -4497,6 +4506,8 @@ class RoomManager:
         room.round_start_time = time.time()
         room.state = 'active'
         room.current_round = 1
+        room.last_round_had_winner = False
+        room.winners_history = [h for h in getattr(room, 'winners_history', []) if h.get('round') != 1]
         room.last_saved_round = -1
         room.initialize_density(e_board, room.all_words_paths, e_fmt)
         room.recalculate_total_points()

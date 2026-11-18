@@ -8644,6 +8644,7 @@ def get_room_state(room_id):
                 ] if hasattr(room, 'spectators') else [],
                 'chat_messages': getattr(room, 'chat_messages', []),
                 'last_round_placements': getattr(room, 'last_round_placements', {}),
+                'last_round_had_winner': getattr(room, 'last_round_had_winner', None),
                 'winners_history': getattr(room, 'winners_history', []),
                 'previous_day_history': getattr(room, 'previous_day_history', {}),
                 'board_gen_failed': getattr(room, 'board_gen_failed', False),

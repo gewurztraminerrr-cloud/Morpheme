@@ -2385,6 +2385,9 @@ async function _doUpdateGameState(incomingState = null) {
             window.subanagramsCustomBoard = null;
             window.subanagramsBoardKey = null;
             stopRotatingLetters();
+            if (typeof stopDefinitionFireworks === 'function') {
+                stopDefinitionFireworks();
+            }
             const wordInput = document.getElementById('word-input');
             const chatInput = document.getElementById('chat-input');
             const isMobile = window.innerWidth <= 992;
@@ -2531,11 +2534,36 @@ async function _doUpdateGameState(incomingState = null) {
         const isTimerExpired = defPanel ? defPanel.classList.contains('timer-flash') : false;
         let hasActualWinner = false;
 
-        if (state.state === 'intermission' && state.winners_history) {
-            const latest = state.winners_history[0];
-            // MANDATE: Only track if the record is for the round that JUST finished AND someone scored
-            const isForCurrentRound = latest && latest.round === state.current_round;
-            hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
+        if (state.state === 'intermission') {
+            // Stop any leftover celebration overlay/fireworks on intermission
+            if (typeof stopDefinitionFireworks === 'function') {
+                stopDefinitionFireworks();
+            }
+
+            if (state.winners_history && state.winners_history.length > 0) {
+                const latest = state.winners_history[0];
+
+                // 1. Freshness check: Intermission is 60s (or 5s in 24h).
+                // If the record timestamp was generated > 180 seconds ago, it is from a previous round/session hours ago.
+                const recordAge = latest && latest.timestamp ? (Date.now() - latest.timestamp) : 0;
+                const isFresh = recordAge >= 0 && recordAge < 180000;
+
+                // 2. Active gameplay check: Did any player in the room actually score or enter words in the round that just concluded?
+                // If no one entered words in this round, there CANNOT be a winner for this round.
+                const anyoneEnteredWords = Array.isArray(state.players) && state.players.some(p => {
+                    const score = (p && typeof p.score === 'number') ? p.score : 0;
+                    const wordsCount = (p && typeof p.words_count === 'number') ? p.words_count : 0;
+                    const subWords = (p && Array.isArray(p.submitted_words)) ? p.submitted_words.length : 0;
+                    return score > 0 || wordsCount > 0 || subWords > 0;
+                });
+
+                // 3. Server flag: if server explicitly reported last_round_had_winner === false, trust it
+                const serverSaysHadWinner = (state.last_round_had_winner !== undefined) ? !!state.last_round_had_winner : true;
+
+                // MANDATE: Only track if the record is for the round that JUST finished AND someone scored
+                const isForCurrentRound = latest && latest.round === state.current_round && isFresh && anyoneEnteredWords && serverSaysHadWinner;
+                hasActualWinner = isForCurrentRound && (latest.score || 0) > 0;
+            }
 
             if (hasActualWinner && !isViewingDefinition && !isTimerExpired) {
                 if (defPanel) {
@@ -2552,6 +2580,7 @@ async function _doUpdateGameState(incomingState = null) {
 
             if (defContent && !isViewingDefinition && !isTimerExpired) {
                 if (hasActualWinner) {
+                    const latest = state.winners_history[0];
                     const winnerTextIdentifier = `WINNER_R${latest.round}`;
                     if (!defContent.innerHTML.includes(winnerTextIdentifier)) {
                         const winnersList = latest.winners.map(w => w.username).join(' & ');
@@ -2580,7 +2609,7 @@ async function _doUpdateGameState(incomingState = null) {
                         if (defLenBadge) defLenBadge.style.display = 'none';
                     }
                 } else {
-                    if (!defContent.innerHTML.includes('placeholder') || defContent.innerHTML.includes('intermission-winner-card')) {
+                    if (!defContent.innerHTML.includes('placeholder') || defContent.innerHTML.includes('intermission-winner-card') || defContent.innerHTML.includes('def-congrats-overlay') || defContent.innerHTML.includes('Congratulations')) {
                         defContent.innerHTML = '<p class="placeholder">Select a word to see its definition</p>';
                         if (defHeader) {
                             defHeader.classList.add('hidden');
@@ -3540,10 +3569,10 @@ async function _doUpdateGameState(incomingState = null) {
                     safeWordsStats.style.display = 'block';
                 }
 
-                // 24H Room Fireworks: Check if all words on the board have been found
-                if (is24H && totalWords > 0 && uniqueFound >= totalWords) {
+                // 24H Room Fireworks: Check if all words on the board have been found (Active rounds only)
+                if (is24H && totalWords > 0 && uniqueFound >= totalWords && state.state === 'active') {
                     startDefinitionFireworks();
-                } else if (is24H && totalWords > 0 && uniqueFound < totalWords && defFireworksActive) {
+                } else if (is24H && (state.state !== 'active' || (totalWords > 0 && uniqueFound < totalWords)) && defFireworksActive) {
                     stopDefinitionFireworks();
                 }
 
@@ -3662,10 +3691,10 @@ async function _doUpdateGameState(incomingState = null) {
                 const safeWordsStats = document.getElementById('words-stats');
                 if (safeWordsStats) safeWordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}% (${totalPoints} total pts)`;
 
-                // 24H Room Fireworks: Check if all words on the board have been found (FCFS)
-                if (is24H && totalWords > 0 && uniqueFound >= totalWords) {
+                // 24H Room Fireworks: Check if all words on the board have been found (FCFS, Active rounds only)
+                if (is24H && totalWords > 0 && uniqueFound >= totalWords && state.state === 'active') {
                     startDefinitionFireworks();
-                } else if (is24H && totalWords > 0 && uniqueFound < totalWords && defFireworksActive) {
+                } else if (is24H && (state.state !== 'active' || (totalWords > 0 && uniqueFound < totalWords)) && defFireworksActive) {
                     stopDefinitionFireworks();
                 }
 
