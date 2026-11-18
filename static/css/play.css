@@ -21228,14 +21228,6 @@ body.is-mobile #combo-explorer-response-list {
         height: 30px !important;
         border-radius: 6px !important;
     }
-        width: 100% !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
-        font-size: 0.82rem !important;
-        padding: 3px 6px !important;
-        height: 30px !important;
-        border-radius: 6px !important;
-    }
 
     #combo-explorer-section .combo-explorer-grid,
     .combo-explorer-grid {

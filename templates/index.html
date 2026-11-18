@@ -183,15 +183,26 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <script>
+        function _handleStyleRetry(el) {
+            if (!el || (el._retryCount && el._retryCount >= 3)) return;
+            el._retryCount = (el._retryCount || 0) + 1;
+            setTimeout(function() {
+                var cleanHref = el.href.split('?')[0];
+                el.href = cleanHref + '?retry=' + el._retryCount + '_' + Date.now();
+            }, 350 * el._retryCount);
+        }
+    </script>
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1794330000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794220000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1794330000">
-    <link rel="stylesheet" href="/css/lobby.css?v=1794220000">
-    <link rel="stylesheet" href="/css/play.css?v=1794380000">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000">
-    <link rel="stylesheet" href="/css/forum.css?v=1794030000">
-    <link rel="stylesheet" href="/css/donate.css?v=1791060000">
+    <link rel="preload" href="/css/play.css?v=1794380000" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1794330000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/lobby.css?v=1794220000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1794380000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/forum.css?v=1794030000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
     <style id="mobile-back-nav-theme-override">
         /* Mobile Back Button Panel: Clean white for white layouts */
         body.is-mobile[class*="theme-white"] .mobile-bottom-nav,
@@ -1772,139 +1783,32 @@
         <audio id="triple-music" src="/music/triple.mp3" data-src="/music/triple.mp3" preload="auto" playsinline webkit-playsinline loop></audio>
 
         <script>
-            // 0ms Instant Audio Playback Trigger & Early Web Audio Decoding (Chrome / Safari / Firefox / Mobile)
+            // Single unified trigger for gateway and lobby background audio
+            window.triggerGatewayAudioImmediate = function() {
+                if (window.lobbyMusicEngine && typeof window.lobbyMusicEngine.play === 'function') {
+                    window.lobbyMusicEngine.play();
+                    return;
+                }
+                var music = document.getElementById('lobby-music');
+                if (music) {
+                    music.volume = 0.5;
+                    music.loop = true;
+                    if (music.paused) {
+                        music.play().catch(function(){});
+                    }
+                }
+            };
+
+            // Attempt seamless playback initiation on direct user interaction
             (function() {
-                try {
-                    var AudioCtx = window.AudioContext || window.webkitAudioContext;
-                    if (AudioCtx && !window._morphemeAudioCtx) {
-                        window._morphemeAudioCtx = new AudioCtx({ latencyHint: 'interactive' });
-                    }
-                } catch(e) {}
-
-                // Preload and pre-decode lobby music into AudioBuffer early during HTML parsing
-                try {
-                    fetch('/music/lobby.mp3', { cache: 'force-cache' })
-                        .then(function(r) { return r.arrayBuffer(); })
-                        .then(function(buf) {
-                            if (window._morphemeAudioCtx) {
-                                window._morphemeAudioCtx.decodeAudioData(buf, function(decoded) {
-                                    window._preDecodedLobbyBuffer = decoded;
-                                    var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
-                                    var onLobbyOrGateway = !activePage || activePage === 'page-loading' || activePage === 'page-lobby';
-                                    var inGame = (activePage === 'page-play') || (!onLobbyOrGateway && ((document.body && document.body.classList.contains('play-active')) || !!document.querySelector('#page-play.active')));
-                                    if (window.lobbyMusicEngine) {
-                                        window.lobbyMusicEngine.buffer = decoded;
-                                        window.lobbyMusicEngine.isLoaded = true;
-                                        if (window.lobbyMusicEngine._pendingPlay || (onLobbyOrGateway && !inGame)) {
-                                            window.lobbyMusicEngine._pendingPlay = false;
-                                            if (!inGame) {
-                                                window.lobbyMusicEngine.play();
-                                            }
-                                        }
-                                    } else if (!inGame && onLobbyOrGateway) {
-                                        window.triggerGatewayAudioImmediate();
-                                    }
-                                });
-                            }
-                        })
-                        .catch(function(){});
-                } catch(e) {}
-
-                window.triggerGatewayAudioImmediate = function() {
-                    var activePage = window.currentPageId || (document.querySelector('.page.active') ? document.querySelector('.page.active').id : '');
-                    var onLobbyOrGateway = !activePage || activePage === 'page-loading' || activePage === 'page-lobby';
-                    var inGame = (activePage === 'page-play') || (!onLobbyOrGateway && ((document.body && document.body.classList.contains('play-active')) || !!document.querySelector('#page-play.active')));
-                    if (inGame || !onLobbyOrGateway) return;
-                    if (window.lobbyMusicEngine) {
-                        window.lobbyMusicEngine.play();
-                        window._gatewayAudioTriggered = true;
-                        return;
-                    }
-                    try {
-                        if (window._morphemeAudioCtx && typeof window._morphemeAudioCtx.resume === 'function') {
-                            var rp = window._morphemeAudioCtx.resume();
-                            if (rp && typeof rp.then === 'function') {
-                                rp.then(function() {
-                                    if (window._earlyWebAudioSource && window._morphemeAudioCtx && window._morphemeAudioCtx.state === 'running') {
-                                        var fallbackEl = document.getElementById('lobby-music');
-                                        if (fallbackEl && !fallbackEl.paused) {
-                                            try { fallbackEl.pause(); fallbackEl.currentTime = 0; fallbackEl.muted = true; } catch(e) {}
-                                        }
-                                    }
-                                }).catch(function(){});
-                            }
-                        }
-                    } catch(e) {}
-
-                    if (window._morphemeAudioCtx && window._preDecodedLobbyBuffer && !window._earlyWebAudioSource) {
-                        try {
-                            var src = window._morphemeAudioCtx.createBufferSource();
-                            src.buffer = window._preDecodedLobbyBuffer;
-                            src.loop = true;
-                            var gain = window._morphemeAudioCtx.createGain();
-                            gain.gain.setValueAtTime(0.5, window._morphemeAudioCtx.currentTime || 0);
-                            src.connect(gain);
-                            gain.connect(window._morphemeAudioCtx.destination);
-                            src.start(0);
-                            window._earlyWebAudioSource = src;
-                            window._earlyWebAudioGain = gain;
-                            window._gatewayAudioTriggered = true;
-                            if (window._morphemeAudioCtx.state === 'running') {
-                                return;
-                            }
-                        } catch(e) {}
-                    }
-
-                    // Fallback to HTML5 audio element if Web Audio context is not yet in 'running' state
-                    if (!window._earlyWebAudioSource || !window._morphemeAudioCtx || window._morphemeAudioCtx.state !== 'running') {
-                        try {
-                            var music = document.getElementById('lobby-music');
-                            if (music) {
-                                if (!music.src || !music.src.includes('/music/lobby.mp3')) {
-                                    music.src = '/music/lobby.mp3';
-                                }
-                                music.loop = true;
-                                music.volume = 0.5;
-                                music.muted = false;
-                                if (music.paused) {
-                                    var p = music.play();
-                                    if (p !== undefined) {
-                                        p.then(function() {
-                                            if (window._earlyWebAudioSource && window._morphemeAudioCtx && window._morphemeAudioCtx.state === 'running') {
-                                                try { music.pause(); music.currentTime = 0; music.muted = true; } catch(e) {}
-                                            }
-                                            window._gatewayAudioTriggered = true;
-                                        }).catch(function(){});
-                                    }
-                                }
-                            }
-                        } catch(e) {}
-                    }
-                };
-
-                // Warm HTML audio tag as well
-                try {
-                    var m = document.getElementById('lobby-music');
-                    if (m && typeof m.load === 'function') m.load();
-                } catch(e) {}
-
-                // Immediately begin music playback as soon as the ENTER LOBBY gateway screen appears
-                window.triggerGatewayAudioImmediate();
-
-                // Attach gesture unlock across pointer/touch/click/key events until audio is confirmed running
-                var gestureEvents = ['pointerdown', 'touchstart', 'mousedown', 'touchend', 'pointerup', 'click', 'keydown'];
-                var unlockAudioOnGesture = function() {
+                var once = function() {
                     window.triggerGatewayAudioImmediate();
-                    var isRunning = (window.lobbyMusicEngine && typeof window.lobbyMusicEngine.isActuallyPlaying === 'function' && window.lobbyMusicEngine.isActuallyPlaying()) ||
-                                    (window._morphemeAudioCtx && window._morphemeAudioCtx.state === 'running' && window._earlyWebAudioSource);
-                    if (isRunning) {
-                        gestureEvents.forEach(function(evt) {
-                            window.removeEventListener(evt, unlockAudioOnGesture, true);
-                        });
-                    }
+                    ['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(function(evt) {
+                        window.removeEventListener(evt, once, true);
+                    });
                 };
-                gestureEvents.forEach(function(evt) {
-                    window.addEventListener(evt, unlockAudioOnGesture, { capture: true, passive: true });
+                ['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(function(evt) {
+                    window.addEventListener(evt, once, { capture: true, passive: true });
                 });
             })();
         </script>
@@ -2148,13 +2052,13 @@
                     }
                 } catch(e) {}
 
-                // Background room cleanup without blocking UI
+                // Reset match and room flags cleanly on entering lobby
                 try {
                     localStorage.removeItem('private_match_active');
                     localStorage.removeItem('tournament_play_active');
-                    if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
-                        window.leaveCurrentRoom().catch(function() {});
-                    }
+                    localStorage.removeItem('last_joined_room');
+                    window.currentRoomId = null;
+                    window._userLeftRoom = false;
                 } catch(e) {}
 
                 // Allow 120ms for the physical 3D flattening animation to complete visually before switching views

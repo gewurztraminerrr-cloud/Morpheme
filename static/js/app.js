@@ -786,13 +786,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.error('[LobbyMusic] Exception during synchronous gateway play initialization:', audioErr);
         }
 
-        // 2. Non-blocking background room cleanup
+        // 2. Synchronous room state reset for clean lobby entry
         try {
             localStorage.removeItem('private_match_active');
             localStorage.removeItem('tournament_play_active');
-            if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
-                window.leaveCurrentRoom().catch(() => {});
-            }
+            localStorage.removeItem('last_joined_room');
+            window.currentRoomId = null;
+            window._userLeftRoom = false;
         } catch (_) {}
 
         // 3. Immediately fetch lobby stats in background
@@ -825,13 +825,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const navBtn = document.querySelector('.nav-btn[data-page="lobby"]');
                 if (navBtn) updateActiveNav(navBtn);
                 handleLobbyMusicState();
-                if (typeof window.scrollLobbyToMainPanel === 'function') {
-                    window.scrollLobbyToMainPanel();
-                    requestAnimationFrame(window.scrollLobbyToMainPanel);
-                    setTimeout(window.scrollLobbyToMainPanel, 50);
-                    setTimeout(window.scrollLobbyToMainPanel, 150);
-                    setTimeout(window.scrollLobbyToMainPanel, 300);
-                }
                 try {
                     history.replaceState(null, null, '#page-lobby');
                 } catch (e) {}
@@ -1290,49 +1283,22 @@ async function fetchUserCount() {
 
 
 // ==========================================
-// LobbyMusicEngine: Web Audio API 0ms Playback
+// LobbyMusicEngine: Unified Single-Stream Playback
 // ==========================================
 class LobbyMusicEngine {
     constructor() {
-        this.ctx = window._morphemeAudioCtx || null;
-        this.buffer = window._preDecodedLobbyBuffer || null;
-        this.source = null;
-        this.gainNode = null;
         this.isPlaying = false;
-        this.isLoaded = !!this.buffer;
         this._pendingPlay = false;
         this._volume = 0.5;
+        this._initAudioElement();
+    }
 
-        // Adopt any early source started by triggerGatewayAudioImmediate in index.html
-        if (window._earlyWebAudioSource) {
-            this.source = window._earlyWebAudioSource;
-            this.gainNode = window._earlyWebAudioGain;
-            this.isPlaying = true;
-            window._earlyWebAudioSource = null;
-            window._earlyWebAudioGain = null;
-        }
-
-        // Initialize AudioContext if not already present
-        if (!this.ctx) {
-            try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (AudioCtx) {
-                    this.ctx = new AudioCtx({ latencyHint: 'interactive' });
-                    window._morphemeAudioCtx = this.ctx;
-                }
-            } catch (e) {}
-        }
-
-        // Ensure HTML audio element is stopped if Web Audio is already active
-        if (this.isPlaying) {
-            const htmlAudio = document.getElementById('lobby-music');
-            if (htmlAudio && !htmlAudio.paused) {
-                try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
-            }
-        }
-
-        if (!this.buffer) {
-            this.loadBuffer();
+    _initAudioElement() {
+        const audio = document.getElementById('lobby-music');
+        if (audio) {
+            audio.loop = true;
+            audio.volume = this._volume;
+            audio.muted = false;
         }
     }
 
@@ -1354,84 +1320,11 @@ class LobbyMusicEngine {
     }
 
     isActuallyPlaying() {
-        if (this.isPlaying && this.source && this.ctx && this.ctx.state === 'running') {
-            return true;
-        }
-        const fallbackAudio = document.getElementById('lobby-music');
-        if (fallbackAudio && !fallbackAudio.paused && !fallbackAudio.muted && fallbackAudio.currentTime > 0) {
+        const audio = document.getElementById('lobby-music');
+        if (audio && !audio.paused && !audio.muted && audio.currentTime > 0) {
             return true;
         }
         return false;
-    }
-
-    loadBuffer() {
-        if (this.buffer) return;
-        if (!this.ctx) {
-            try {
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                if (AudioCtx) {
-                    this.ctx = window._morphemeAudioCtx || new AudioCtx({ latencyHint: 'interactive' });
-                    window._morphemeAudioCtx = this.ctx;
-                }
-            } catch (e) {}
-        }
-        if (!this.ctx || this._loadingBuffer) return;
-        this._loadingBuffer = true;
-        fetch('/music/lobby.mp3', { cache: 'force-cache' })
-            .then(res => res.arrayBuffer())
-            .then(arrayBuf => {
-                if (this.ctx) {
-                    this.ctx.decodeAudioData(arrayBuf, decoded => {
-                        this._loadingBuffer = false;
-                        this.buffer = decoded;
-                        window._preDecodedLobbyBuffer = decoded;
-                        this.isLoaded = true;
-                        if (this._pendingPlay || this.isLobbyOrGatewayActive()) {
-                            this._pendingPlay = false;
-                            if (this.isLobbyOrGatewayActive() && (!window.userSettings || window.userSettings.lobby_music !== false)) {
-                                this.play();
-                            }
-                        }
-                    }, err => {
-                        this._loadingBuffer = false;
-                        console.warn('[LobbyMusicEngine] decodeAudioData failed:', err);
-                    });
-                } else {
-                    this._loadingBuffer = false;
-                }
-            })
-            .catch(err => {
-                this._loadingBuffer = false;
-                console.warn('[LobbyMusicEngine] fetch lobby.mp3 failed:', err);
-            });
-    }
-
-    _startBufferSource() {
-        if (!this.ctx || !this.buffer) return false;
-        try {
-            if (this.source) {
-                try { this.source.stop(); } catch(e) {}
-                try { this.source.disconnect(); } catch(e) {}
-                this.source = null;
-            }
-            this.source = this.ctx.createBufferSource();
-            this.source.buffer = this.buffer;
-            this.source.loop = true;
-
-            if (!this.gainNode || this.gainNode.context !== this.ctx) {
-                this.gainNode = this.ctx.createGain();
-                this.gainNode.connect(this.ctx.destination);
-            }
-            this.gainNode.gain.setValueAtTime(this._volume, this.ctx.currentTime || 0);
-            this.source.connect(this.gainNode);
-            this.source.start(0);
-            this.isPlaying = true;
-            this._pendingPlay = false;
-            return true;
-        } catch (e) {
-            console.warn('[LobbyMusicEngine] Failed to start Web Audio source:', e);
-            return false;
-        }
     }
 
     play() {
@@ -1446,166 +1339,46 @@ class LobbyMusicEngine {
             return;
         }
 
-        if (!this.buffer && window._preDecodedLobbyBuffer) {
-            this.buffer = window._preDecodedLobbyBuffer;
-            this.isLoaded = true;
-        }
+        const audio = document.getElementById('lobby-music');
+        if (!audio) return;
 
-        if (!this.ctx && window._morphemeAudioCtx) {
-            this.ctx = window._morphemeAudioCtx;
-        }
-
-        // Adopt early web audio source if one was created during button press
-        if (window._earlyWebAudioSource) {
-            if (this.source && this.source !== window._earlyWebAudioSource) {
-                try { this.source.stop(); this.source.disconnect(); } catch(e) {}
-            }
-            this.source = window._earlyWebAudioSource;
-            this.gainNode = window._earlyWebAudioGain;
+        // If already playing smoothly, preserve continuous unbroken playback without restarting (no hiccups, no double start)
+        if (!audio.paused && audio.currentTime > 0) {
             this.isPlaying = true;
-            window._earlyWebAudioSource = null;
-            window._earlyWebAudioGain = null;
-        }
-
-        // Unconditionally resume AudioContext (cancels any in-flight suspend() and wakes 'suspended' or iOS 'interrupted' states)
-        if (this.ctx && typeof this.ctx.resume === 'function') {
-            try {
-                const resumePromise = this.ctx.resume();
-                if (resumePromise && typeof resumePromise.then === 'function') {
-                    resumePromise.then(() => {
-                        if (!this.isLobbyOrGatewayActive() || (window.userSettings && window.userSettings.lobby_music === false)) {
-                            this.pause();
-                            return;
-                        }
-                        if (this.buffer && (!this.source || !this.isPlaying)) {
-                            this._startBufferSource();
-                        }
-                        if (this.source && this.isPlaying && this.ctx && this.ctx.state === 'running') {
-                            const htmlAudio = document.getElementById('lobby-music');
-                            if (htmlAudio && !htmlAudio.paused) {
-                                try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
-                            }
-                            if (typeof removeInteractionListeners === 'function') {
-                                removeInteractionListeners();
-                            }
-                        }
-                    }).catch(() => {});
-                }
-            } catch (e) {}
-        }
-        if (window._morphemeAudioCtx && window._morphemeAudioCtx !== this.ctx && typeof window._morphemeAudioCtx.resume === 'function') {
-            try { window._morphemeAudioCtx.resume().catch(() => {}); } catch (e) {}
-        }
-
-        // If already playing smoothly on a running AudioContext, do NOT duplicate playback
-        if (this.isPlaying && this.source && this.ctx && this.ctx.state === 'running') {
-            const htmlAudio = document.getElementById('lobby-music');
-            if (htmlAudio && !htmlAudio.paused) {
-                try { htmlAudio.pause(); htmlAudio.currentTime = 0; htmlAudio.muted = true; } catch(e) {}
-            }
             return;
         }
 
-        if (this.ctx) {
-            if (this.buffer) {
-                if (!this.source || !this.isPlaying) {
-                    this._startBufferSource();
+        audio.volume = this._volume;
+        audio.loop = true;
+        audio.muted = false;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                this.isPlaying = true;
+                if (typeof removeInteractionListeners === 'function') {
+                    removeInteractionListeners();
                 }
-                if (this.ctx.state === 'running' && this.isPlaying) {
-                    // Unconditionally stop & mute HTML5 fallback audio so only 1 stream plays
-                    const fallbackAudio = document.getElementById('lobby-music');
-                    if (fallbackAudio && !fallbackAudio.paused) {
-                        try { fallbackAudio.pause(); fallbackAudio.currentTime = 0; fallbackAudio.muted = true; } catch(e) {}
-                    }
-                    console.log('[LobbyMusicEngine] Web Audio buffer playback started single stream (0ms latency).');
-                    return;
-                }
-            } else {
+            }).catch(err => {
                 this._pendingPlay = true;
-                this.loadBuffer();
-            }
-        }
-
-        // Fallback to HTML5 <audio> element if Web Audio context is not yet in 'running' state or buffer is still loading
-        if (!this.ctx || this.ctx.state !== 'running' || !this.buffer) {
-            const fallbackAudio = document.getElementById('lobby-music');
-            if (fallbackAudio) {
-                if (!fallbackAudio.src || !fallbackAudio.src.includes('/music/lobby.mp3')) {
-                    fallbackAudio.src = fallbackAudio.getAttribute('data-src') || '/music/lobby.mp3';
-                }
-                fallbackAudio.loop = true;
-                fallbackAudio.volume = this._volume;
-                fallbackAudio.muted = false;
-                if (fallbackAudio.paused) {
-                    const p = fallbackAudio.play();
-                    if (p !== undefined) {
-                        p.then(() => {
-                            if (this.ctx && this.ctx.state === 'running' && this.source && this.isPlaying) {
-                                // Web Audio already woke up; silence HTML5 fallback to prevent double audio
-                                try { fallbackAudio.pause(); fallbackAudio.currentTime = 0; fallbackAudio.muted = true; } catch(e) {}
-                            } else {
-                                this.isPlaying = true;
-                            }
-                            if (typeof removeInteractionListeners === 'function') {
-                                removeInteractionListeners();
-                            }
-                        }).catch(err => {
-                            console.warn('[LobbyMusicEngine] HTML5 Audio play deferred until gesture:', err);
-                        });
-                    }
-                } else {
-                    this.isPlaying = true;
-                }
-            }
+                console.warn('[LobbyMusicEngine] Autoplay deferred until user gesture:', err);
+            });
         }
     }
 
     pause() {
-        this._pendingPlay = false;
-        if (window._earlyWebAudioSource) {
-            try { window._earlyWebAudioSource.stop(); } catch(e) {}
-            try { window._earlyWebAudioSource.disconnect(); } catch(e) {}
-            window._earlyWebAudioSource = null;
-            window._earlyWebAudioGain = null;
-        }
-        if (this.source) {
-            try {
-                this.source.stop();
-                this.source.disconnect();
-            } catch (e) {}
-            this.source = null;
-        }
         this.isPlaying = false;
-
-        const fallbackAudio = document.getElementById('lobby-music');
-        if (fallbackAudio && !fallbackAudio.paused) {
-            try { fallbackAudio.pause(); fallbackAudio.currentTime = 0; } catch(e) {}
-        }
-
-        // Suspend AudioContext to release hardware audio sink so browser tab horn icon is immediately removed
-        if (this.ctx && typeof this.ctx.suspend === 'function' && this.ctx.state === 'running') {
-            try { this.ctx.suspend().catch(() => {}); } catch(e) {}
-        }
-        if (window._morphemeAudioCtx && typeof window._morphemeAudioCtx.suspend === 'function' && window._morphemeAudioCtx.state === 'running') {
-            try { window._morphemeAudioCtx.suspend().catch(() => {}); } catch(e) {}
-        }
-        if (typeof BoardAudio !== 'undefined' && typeof BoardAudio.suspend === 'function') {
-            try { BoardAudio.suspend(); } catch(e) {}
-        } else if (window.BoardAudio && typeof window.BoardAudio.suspend === 'function') {
-            try { window.BoardAudio.suspend(); } catch(e) {}
+        this._pendingPlay = false;
+        const audio = document.getElementById('lobby-music');
+        if (audio && !audio.paused) {
+            try { audio.pause(); } catch(e) {}
         }
     }
 
     setVolume(vol) {
         this._volume = Math.max(0, Math.min(1, vol));
-        if (this.gainNode && this.ctx) {
-            try {
-                this.gainNode.gain.setValueAtTime(this._volume, this.ctx.currentTime);
-            } catch(e) {}
-        }
-        const fallbackAudio = document.getElementById('lobby-music');
-        if (fallbackAudio) {
-            try { fallbackAudio.volume = this._volume; } catch(e) {}
+        const audio = document.getElementById('lobby-music');
+        if (audio) {
+            try { audio.volume = this._volume; } catch(e) {}
         }
     }
 }
@@ -1710,18 +1483,17 @@ function playMusicOnFirstInteraction(e) {
     }
 }
 
-const GESTURE_AUDIO_EVENTS = ['pointerdown', 'touchstart', 'mousedown', 'touchend', 'pointerup', 'click', 'keydown'];
+const GESTURE_AUDIO_EVENTS = ['pointerdown', 'touchstart', 'keydown'];
 
 function removeInteractionListeners() {
     GESTURE_AUDIO_EVENTS.forEach(evt => {
-        window.removeEventListener(evt, playMusicOnFirstInteraction, { capture: true });
         document.removeEventListener(evt, playMusicOnFirstInteraction, { capture: true });
+        window.removeEventListener(evt, playMusicOnFirstInteraction, { capture: true });
     });
 }
 
 function setupFirstInteractionMusic() {
     GESTURE_AUDIO_EVENTS.forEach(evt => {
-        window.addEventListener(evt, playMusicOnFirstInteraction, { capture: true, passive: true });
         document.addEventListener(evt, playMusicOnFirstInteraction, { capture: true, passive: true });
     });
 }
@@ -2669,16 +2441,22 @@ window.showPage = showPage;
         window._userLeftRoom = false;
         window._isEnteringRoom = false;
         window._isCreatingRoom = false;
-        if (typeof window.scrollLobbyToMainPanel === 'function') {
-            window.scrollLobbyToMainPanel();
-            requestAnimationFrame(window.scrollLobbyToMainPanel);
-            setTimeout(window.scrollLobbyToMainPanel, 50);
-            setTimeout(window.scrollLobbyToMainPanel, 150);
-            setTimeout(window.scrollLobbyToMainPanel, 300);
-        } else {
-            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-            if (isMobile) {
-                const scrollToMain = () => {
+
+        // Cancel any pending lobby snap timers
+        if (typeof window._clearLobbySnapTimers === 'function') {
+            window._clearLobbySnapTimers();
+        }
+        window._lobbySnapTimers = window._lobbySnapTimers || [];
+
+        const snapLobbyToMain = () => {
+            if (window._userIsTouchingLobbyGrid) return;
+            if (window._currentLobbyPanel && window._currentLobbyPanel !== 'main') return;
+            if (window.currentPageId && window.currentPageId !== 'page-lobby') return;
+            if (typeof window.scrollLobbyToMainPanel === 'function') {
+                window.scrollLobbyToMainPanel();
+            } else {
+                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                if (isMobile) {
                     const mainPanel = document.getElementById('mobile-panel-main');
                     const lobbyGrid = document.querySelector('.lobby-grid');
                     if (mainPanel && lobbyGrid) {
@@ -2686,14 +2464,15 @@ window.showPage = showPage;
                         const targetLeft = (mainPanel.offsetLeft > 0) ? mainPanel.offsetLeft : (soloPanel ? (soloPanel.offsetWidth || lobbyGrid.clientWidth) : lobbyGrid.clientWidth);
                         if (targetLeft > 0) lobbyGrid.scrollLeft = targetLeft;
                     }
-                };
-                scrollToMain();
-                requestAnimationFrame(scrollToMain);
-                setTimeout(scrollToMain, 50);
-                setTimeout(scrollToMain, 150);
-                setTimeout(scrollToMain, 300);
+                }
             }
-        }
+        };
+
+        snapLobbyToMain();
+        requestAnimationFrame(snapLobbyToMain);
+        window._lobbySnapTimers.push(setTimeout(snapLobbyToMain, 50));
+        window._lobbySnapTimers.push(setTimeout(snapLobbyToMain, 150));
+        window._lobbySnapTimers.push(setTimeout(snapLobbyToMain, 300));
         if (typeof window.resetLobbyButtons === 'function') {
             window.resetLobbyButtons();
         }

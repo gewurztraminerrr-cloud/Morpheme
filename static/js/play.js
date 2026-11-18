@@ -458,29 +458,18 @@ window.updateIntermissionBellSource = function() {
 const unlockAudio = () => {
     const activePage = window.currentPageId || (document.querySelector('.page.active')?.id);
     if (activePage === 'page-loading' && !window._gatewayPassed) return;
-    window.updateIntermissionBellSource();
+    if (typeof window.updateIntermissionBellSource === 'function') {
+        window.updateIntermissionBellSource();
+    }
     if (window.intermissionBellAudio) {
         try {
-            window.intermissionBellAudio.muted = true;
-            window.intermissionBellAudio.volume = 0;
-            const p = window.intermissionBellAudio.play();
-            if (p !== undefined) {
-                p.then(() => {
-                    window.intermissionBellAudio.pause();
-                    window.intermissionBellAudio.currentTime = 0;
-                    window.intermissionBellAudio.muted = false;
-                    window.intermissionBellAudio.volume = 1.0;
-                }).catch(() => {
-                    window.intermissionBellAudio.muted = false;
-                    window.intermissionBellAudio.volume = 1.0;
-                });
+            const bellType = (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
+            const expectedSrc = `/static/audio/${bellType}.wav`;
+            if (!window.intermissionBellAudio.src || !window.intermissionBellAudio.src.includes(bellType)) {
+                window.intermissionBellAudio.src = expectedSrc;
+                try { window.intermissionBellAudio.load(); } catch (_) {}
             }
-        } catch (_) {
-            try {
-                window.intermissionBellAudio.muted = false;
-                window.intermissionBellAudio.volume = 1.0;
-            } catch (_) {}
-        }
+        } catch (_) {}
     }
     if (typeof BoardAudio !== 'undefined') {
         BoardAudio.init();
@@ -1097,6 +1086,10 @@ async function ejectToLobby(reason = "inactivity") {
     if (window._transitionPollTimer) {
         clearInterval(window._transitionPollTimer);
         window._transitionPollTimer = null;
+    }
+    if (window._intermissionVibrationTimer) {
+        clearTimeout(window._intermissionVibrationTimer);
+        window._intermissionVibrationTimer = null;
     }
     window.currentRoomId = null;
     window.lastGameState = null;
@@ -1923,6 +1916,10 @@ function stopPolling() {
     if (window.rotatingLettersInterval) {
         clearInterval(window.rotatingLettersInterval);
         window.rotatingLettersInterval = null;
+    }
+    if (window._intermissionVibrationTimer) {
+        clearTimeout(window._intermissionVibrationTimer);
+        window._intermissionVibrationTimer = null;
     }
     timerFormatIs24h = false;
 }
@@ -7135,6 +7132,8 @@ function triggerIntermissionVibration() {
 window.triggerIntermissionVibration = triggerIntermissionVibration;
 
 function playIntermissionBell(bellType) {
+    if (typeof isOnPlayPage === 'function' && !isOnPlayPage()) return;
+    if (window.currentPageId && window.currentPageId !== 'page-play') return;
     bellType = bellType || (window.userSettings && window.userSettings.next_round_bell_type) || 'bell1';
 
     // 1. Mobile App Bridge (Flutter WebView / Native Wrappers)
@@ -7201,10 +7200,14 @@ function armIntermissionVibrationSchedule(remaining) {
         clearTimeout(window._intermissionVibrationTimer);
         window._intermissionVibrationTimer = null;
     }
+    if (typeof isOnPlayPage === 'function' && !isOnPlayPage()) return;
+    if (window.currentPageId && window.currentPageId !== 'page-play') return;
     if (typeof remaining !== 'number' || remaining <= 10.2) return;
     const delayMs = (remaining - 10.0) * 1000;
     if (delayMs > 0 && delayMs < 65000) {
         window._intermissionVibrationTimer = setTimeout(() => {
+            if (typeof isOnPlayPage === 'function' && !isOnPlayPage()) return;
+            if (window.currentPageId && window.currentPageId !== 'page-play') return;
             const curState = (window.lastGameState && window.lastGameState.state) || '';
             if (curState === 'intermission' && !hasPlayedIntermissionVibration) {
                 const vibrationEnabled = !window.userSettings || (
@@ -11476,6 +11479,10 @@ async function leaveCurrentRoom() {
         window._isEnteringRoom = false;
         window._userLeftRoom = true;
         window._lastLeftRoomTime = Date.now();
+    }
+    if (window._intermissionVibrationTimer) {
+        clearTimeout(window._intermissionVibrationTimer);
+        window._intermissionVibrationTimer = null;
     }
 
     if (isTournamentPlay) {

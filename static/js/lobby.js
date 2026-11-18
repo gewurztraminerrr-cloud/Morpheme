@@ -140,8 +140,8 @@ async function enterLobbyRoom(rawBtn) {
         }
 
         if (createResp.ok && data && data.success && data.room_id) {
-            if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-lobby' && window.currentPageId !== 'page-play')) {
-                console.log('[Lobby] User left or navigated away while room was creating. Aborting auto-navigation to page-play.');
+            if (window.currentPageId && window.currentPageId !== 'page-lobby' && window.currentPageId !== 'page-play') {
+                console.log('[Lobby] User navigated away to ' + window.currentPageId + ' while room was creating. Aborting auto-navigation to page-play.');
                 window._isEnteringRoom = false;
                 return;
             }
@@ -361,8 +361,8 @@ async function createRoom(config, minRating, maxRating) {
         }
 
         if (data.success) {
-            if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-lobby' && window.currentPageId !== 'page-play')) {
-                console.log('[Lobby] User left or navigated away while room was creating. Aborting auto-navigation to page-play.');
+            if (window.currentPageId && window.currentPageId !== 'page-lobby' && window.currentPageId !== 'page-play') {
+                console.log('[Lobby] User navigated away to ' + window.currentPageId + ' while room was creating. Aborting auto-navigation to page-play.');
                 window._isCreatingRoom = false;
                 return;
             }
@@ -583,8 +583,8 @@ function setupLobbyEvents() {
                     return;
                 }
 
-                if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play' && window.currentPageId !== 'page-lobby')) {
-                    console.log('[Lobby] User left or navigated away while join was in-flight, canceling room activation');
+                if (window.currentPageId && window.currentPageId !== 'page-play' && window.currentPageId !== 'page-lobby') {
+                    console.log('[Lobby] User navigated away to ' + window.currentPageId + ' while join was in-flight, canceling room activation');
                     window._isEnteringRoom = false;
                     return;
                 }
@@ -960,7 +960,17 @@ window.toggleRoomsListCollapse = function() {};
 const _LOBBY_PANELS = ['solo', 'main', 'rooms'];
 window._currentLobbyPanel = 'main'; // tracks which lobby panel is in view
 
+window._userIsTouchingLobbyGrid = false;
+window._clearLobbySnapTimers = function() {
+    if (Array.isArray(window._lobbySnapTimers)) {
+        while (window._lobbySnapTimers.length) {
+            clearTimeout(window._lobbySnapTimers.pop());
+        }
+    }
+};
+
 window.switchLobbyPanel = function(panelId, smooth = false) {
+    if (window._userIsTouchingLobbyGrid) return;
     window._currentLobbyPanel = panelId || 'main';
     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) return;
@@ -981,10 +991,12 @@ window.switchLobbyPanel = function(panelId, smooth = false) {
 };
 
 window.scrollLobbyToMainPanel = function(behavior = 'auto') {
+    if (window._userIsTouchingLobbyGrid) return;
     window.switchLobbyPanel('main', behavior === 'smooth');
 };
 
 window._restoreLobbyPanel = function() {
+    if (window._userIsTouchingLobbyGrid) return;
     let target = window._currentLobbyPanel || 'main';
     window.switchLobbyPanel(target, false);
 };
@@ -1031,9 +1043,25 @@ window._restoreLobbyPanel = function() {
     function _attachTracker() {
         const lobbyGrid = document.querySelector('.lobby-grid');
         if (!lobbyGrid) return;
+        lobbyGrid.addEventListener('touchstart', () => {
+            window._userIsTouchingLobbyGrid = true;
+            if (typeof window._clearLobbySnapTimers === 'function') {
+                window._clearLobbySnapTimers();
+            }
+        }, { passive: true });
+        lobbyGrid.addEventListener('touchend', () => {
+            window._userIsTouchingLobbyGrid = false;
+            updateActiveLobbyPanelTrack();
+        }, { passive: true });
+        lobbyGrid.addEventListener('touchcancel', () => {
+            window._userIsTouchingLobbyGrid = false;
+        }, { passive: true });
         lobbyGrid.addEventListener('scroll', updateActiveLobbyPanelTrack, { passive: true });
         if ('onscrollend' in window) {
-            lobbyGrid.addEventListener('scrollend', updateActiveLobbyPanelTrack, { passive: true });
+            lobbyGrid.addEventListener('scrollend', () => {
+                window._userIsTouchingLobbyGrid = false;
+                updateActiveLobbyPanelTrack();
+            }, { passive: true });
         }
     }
     if (document.readyState === 'loading') {
