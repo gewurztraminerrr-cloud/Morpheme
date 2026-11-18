@@ -466,4 +466,20 @@
   - Concurrent simulation test confirmed `_state_lock` acquisition times dropped to **0.00ms – 0.02ms** (down from >6,000ms).
   - 100% of concurrent submissions during background generation succeeded instantly without errors.
 
+---
+
+### Stuck on "Loading..." Screen Resolution (Lobby Navigation & Leave Room Reliability)
+- **Problem**: When a user was in Multiplayer Subanagrams, returned to the lobby, and clicked an Accumulative room (`ACC 4x6 45s`), the browser got permanently stuck on the "Loading..." screen for several minutes.
+- **Root Cause**:
+  1. *Unbounded Leave Request Awaiting*: When navigating from one room to another, `enterLobbyRoom` called `leaveCurrentRoom()`, which awaited `fetch('/api/room/${roomId}/leave')` with `keepalive: true` and no timeout. During moments of server activity (or mobile socket suspension), `leave` hung in the queue for up to 60s until Nginx returned 504.
+  2. *Missing Timeout on Room Creation & Joining*: `enterLobbyRoom` then called `fetch('/api/room/create')` with no timeout. If the server was processing or the mobile browser aborted the stalled socket (`HTTP 499`), the request hung.
+  3. *Unbounded Loading Overlay*: `showLoadingOverlay('Loading...')` in `app.js` and `index.html` only set an auto-hide timeout if `autoHideMs` was explicitly provided. When called without `autoHideMs`, any hung network promise or duplicate-click rejection trapped the user behind the modal overlay indefinitely.
+  4. *Stale Lockout in `_isEnteringRoom`*: If a prior room entrance attempt failed or hung, `window._isEnteringRoom` remained `true`. Subsequent button clicks hit `if (window._isEnteringRoom) return;` without dismissing the loading overlay.
+- **Fixes Applied**:
+  1. *Failsafe Overlay Auto-Hide (`templates/index.html` & `static/js/app.js`)*: Added a default failsafe auto-hide timeout of 10 seconds (`autoHideMs || 10000`) so the user can never be permanently stuck on a loading screen under any circumstance.
+  2. *Non-Blocking Leave Room (`static/js/play.js`)*: Removed `keepalive: true` and added a strict 1.5-second `AbortController` timeout to `leaveCurrentRoom()` so room transitions never stall waiting on `/leave`.
+  3. *Timed Room Creation & Joining (`static/js/lobby.js`)*: Added an 8-second `AbortController` timeout to both `/api/room/create` and `/api/room/${roomId}/join` with clear error handling.
+  4. *Stale Entrance Lock Guard (`static/js/lobby.js`)*: Added timestamped expiration (10s) to `window._isEnteringRoom` and ensured `hideLoadingOverlay()` is called whenever duplicate clicks are rejected.
+
+
 

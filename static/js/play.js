@@ -11663,15 +11663,18 @@ async function leaveCurrentRoom() {
 
     if (!roomId) return;
 
-    // 2. Immediate fetch with keepalive to notify server of leave
+    // 2. Immediate fetch to notify server of leave (with short timeout so UI never blocks)
     const url = `/api/room/${roomId}/leave`;
     try {
+        const leaveController = new AbortController();
+        const leaveTimer = setTimeout(() => leaveController.abort(), 1500);
         const leavePromise = fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({}),
-            keepalive: true
-        });
+            signal: leaveController.signal
+        }).finally(() => clearTimeout(leaveTimer));
+
         if (navigator.sendBeacon) {
             try {
                 const blob = new Blob(['{}'], { type: 'application/json' });
@@ -11680,7 +11683,7 @@ async function leaveCurrentRoom() {
         }
         await leavePromise;
     } catch (e) {
-        console.error('[play.js] fetch /leave failed in leaveCurrentRoom, attempting fallback:', e);
+        console.warn('[play.js] fetch /leave completed or timed out in leaveCurrentRoom:', e.message);
         if (navigator.sendBeacon) {
             try {
                 const blob = new Blob(['{}'], { type: 'application/json' });

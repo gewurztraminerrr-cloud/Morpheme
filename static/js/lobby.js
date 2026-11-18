@@ -60,9 +60,11 @@ window.showLobbyToast = showLobbyToast;
 
 async function enterLobbyRoom(rawBtn) {
     if (!rawBtn) return;
-    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
-    if (window._isEnteringRoom) {
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 10000);
+    const now = Date.now();
+    if (window._isEnteringRoom && window._isEnteringRoomTime && (now - window._isEnteringRoomTime < 10000)) {
         console.warn('[Lobby] enterLobbyRoom already in progress, ignoring duplicate call');
+        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
         return;
     }
     if (window._lobbyEnterCooldown) {
@@ -70,6 +72,7 @@ async function enterLobbyRoom(rawBtn) {
         window._lobbyEnterCooldown = false;
     }
     window._isEnteringRoom = true;
+    window._isEnteringRoomTime = now;
     window._userLeftRoom = false;
     if (window._userIsBanned || (window._userTimeoutInfo && (window._userTimeoutInfo.banned || window._userTimeoutInfo.is_banned))) {
         window._isEnteringRoom = false;
@@ -102,21 +105,30 @@ async function enterLobbyRoom(rawBtn) {
         }
         window.currentRoomId = null;
         window._isEnteringRoom = true;
+        window._isEnteringRoomTime = Date.now();
         window._userLeftRoom = false;
 
         localStorage.removeItem('tournament_play_active');
         localStorage.removeItem('private_match_active');
 
-        // 2. Perform room creation and loading inside the game room in the background
-        const createResp = await fetch('/api/room/create', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                game_type: gameType,
-                time_limit: timeLimit,
-                board_dimensions: boardDimensions
-            })
-        });
+        // 2. Perform room creation and loading inside the game room in the background with 8s timeout
+        const createCtrl = new AbortController();
+        const createTimer = setTimeout(() => createCtrl.abort(), 8000);
+        let createResp;
+        try {
+            createResp = await fetch('/api/room/create', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    game_type: gameType,
+                    time_limit: timeLimit,
+                    board_dimensions: boardDimensions
+                }),
+                signal: createCtrl.signal
+            });
+        } finally {
+            clearTimeout(createTimer);
+        }
 
         let data = null;
         try {
@@ -467,13 +479,16 @@ function setupLobbyEvents() {
             if (typeof window.checkAccountTimeoutAndAlert === 'function' && await window.checkAccountTimeoutAndAlert()) {
                 return;
             }
-            if (window._isEnteringRoom) {
+            const now = Date.now();
+            if (window._isEnteringRoom && window._isEnteringRoomTime && (now - window._isEnteringRoomTime < 10000)) {
                 console.warn('[Lobby] Join already in progress, ignoring duplicate call');
+                if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                 return;
             }
             window._isEnteringRoom = true;
+            window._isEnteringRoomTime = now;
             window._userLeftRoom = false;
-            if (window.showLoadingOverlay) window.showLoadingOverlay('Joining Room...');
+            if (window.showLoadingOverlay) window.showLoadingOverlay('Joining Room...', 10000);
             joinBtn.style.opacity = '0.5';
             joinBtn.style.pointerEvents = 'none';
             const roomId = joinBtn.dataset.room;
@@ -518,6 +533,7 @@ function setupLobbyEvents() {
             }
             window.currentRoomId = null;
             window._isEnteringRoom = true;
+            window._isEnteringRoomTime = Date.now();
             window._userLeftRoom = false;
             const isSpectator = joinBtn.dataset.spectator === 'true';
             console.log(`Joining room: ${roomId} (Spectator: ${isSpectator})`);
@@ -526,12 +542,19 @@ function setupLobbyEvents() {
             localStorage.removeItem('tournament_play_active');
             localStorage.removeItem('private_match_active');
 
+            const joinCtrl = new AbortController();
+            const joinTimer = setTimeout(() => joinCtrl.abort(), 8000);
+            let response;
             try {
-                const response = await fetch(`/api/room/${roomId}/join`, {
+                response = await fetch(`/api/room/${roomId}/join`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ as_spectator: isSpectator })
+                    body: JSON.stringify({ as_spectator: isSpectator }),
+                    signal: joinCtrl.signal
                 });
+            } finally {
+                clearTimeout(joinTimer);
+            }
                 
                 let data = null;
                 try {

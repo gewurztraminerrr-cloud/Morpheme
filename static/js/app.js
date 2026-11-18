@@ -4289,11 +4289,10 @@ window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = null) 
         clearTimeout(window._loadingOverlayTimeout);
         window._loadingOverlayTimeout = null;
     }
-    if (typeof autoHideMs === 'number' && autoHideMs > 0) {
-        window._loadingOverlayTimeout = setTimeout(() => {
-            if (window.hideLoadingOverlay) window.hideLoadingOverlay();
-        }, autoHideMs);
-    }
+    const timeoutDuration = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : 10000;
+    window._loadingOverlayTimeout = setTimeout(() => {
+        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+    }, timeoutDuration);
 };
 
 window.hideLoadingOverlay = function() {
