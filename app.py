@@ -11663,8 +11663,9 @@ def warm_up_server_resources():
     global STARTUP_WARMUP_COMPLETE
     try:
         import time
-        time.sleep(1.0)
-        print("[Warmup] Starting comprehensive background pre-warming for Tools and Mods...")
+        # Grace period: allow Waitress to bind, accept initial connections, and serve clients immediately
+        time.sleep(10.0)
+        print("[Warmup] Starting background pre-warming for Tools and Dictionaries...")
         
         # 1. Authoritative pre-load of CSW dictionary into WordValidator
         word_validator.ensure_csw_loaded()
@@ -11674,9 +11675,9 @@ def warm_up_server_resources():
         load_definitions()
         load_pronunciations()
         
-        # 3. Pre-load and pre-compute NumPy matrices & bitmasks for all dictionaries used in Tools
-        print("[Warmup] Pre-building Tools dictionary caches (NWL, CSW, ALL, added_words, subsets, new lists)...")
-        for dict_name in ['NWL', 'CSW', 'ALL', 'added_words', 'csw_only', 'uniqueNWL', 'new_nwl', 'new_csw', 'new_added', 'all_new']:
+        # 3. Pre-load Tools dictionary caches (NWL, CSW, ALL, added_words, subsets, new lists)
+        print("[Warmup] Pre-building Tools dictionary caches...")
+        for dict_name in ['NWL', 'CSW', 'ALL', 'added_words', 'csw_only', 'uniqueNWL']:
             try:
                 load_tools_dictionary(dict_name)
             except Exception as e:
@@ -11684,34 +11685,9 @@ def warm_up_server_resources():
                 
         # 4. Pre-initialize native C morpheme metric engine
         _init_c_morpheme_metric()
-        
-        # 5. Pre-compute Undefined Words for Mods Definition Management
-        print("[Warmup] Pre-computing Undefined Words cache for Mods...")
-        try:
-            compute_undefined_words(force=True)
-        except Exception as e:
-            print(f"[Warmup] Error pre-computing undefined words: {e}")
-
-        # 5b. Pre-build Reverse Dictionary inverted index
-        print("[Warmup] Pre-building Reverse Dictionary inverted index...")
-        try:
-            get_reverse_dict_data()
-        except Exception as e:
-            print(f"[Warmup] Error pre-building reverse dict index: {e}")
-
-        # 6. Priming Tools endpoint routes
-        with app.app_context():
-            client = app.test_client()
-            for dict_name in ['NWL', 'CSW', 'ALL', 'added_words']:
-                client.post('/api/tools/validate', json={'word': 'APPLE', 'dictionary': dict_name})
-            client.get('/api/tools/wotd')
-            client.post('/api/tools/sequence', json={'sequence': 'WORD', 'dictionary': 'NWL'})
-            client.post('/api/tools/subanagrams', json={'input': 'TESTING', 'dictionary': 'NWL'})
-            client.post('/api/tools/combo', json={'search_term': 'TEST', 'dictionary': 'NWL'})
-            client.get('/api/tools/reverse-dictionary?query=test&mode=similar')
             
         STARTUP_WARMUP_COMPLETE = True
-        print("[Warmup] Comprehensive Tools & Mods warming completed successfully!")
+        print("[Warmup] Background warming completed successfully!")
     except Exception as warmup_err:
         print(f"[Warmup] Error during warmup: {warmup_err}")
         STARTUP_WARMUP_COMPLETE = True

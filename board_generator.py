@@ -822,7 +822,7 @@ def seed_pregenerated_cache_bg():
     """Background startup bootstrapper to pre-populate pregenerated_boards cache"""
     def _seed():
         import time
-        time.sleep(2.0)  # Wait for app boot
+        time.sleep(30.0)  # Defer background seeding until app has fully booted and handled initial traffic
         bg = BoardGenerator()
         common_configs = [
             ("4x4", "NWL", (100, 200), "Normal", 3, "Medium", False),
