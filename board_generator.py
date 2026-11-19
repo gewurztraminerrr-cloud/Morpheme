@@ -227,6 +227,31 @@ def _sanitize_special_tiles_for_format(board, board_format, bonus_cell):
     return bonus_cell
 
 
+def is_board_count_valid(word_count, target_range):
+    """Ensure actual word_count falls strictly within the spun target_range (e.g. 100-199 for 100-200, 300-399 for 300-400)."""
+    if not target_range:
+        return True
+    try:
+        if isinstance(target_range, (list, tuple)) and len(target_range) >= 2:
+            r_min = int(target_range[0])
+            r_max = int(target_range[1]) - 1
+            return (r_min <= word_count <= r_max)
+            
+        s_range = str(target_range).replace(',', '-').strip()
+        if '-' in s_range:
+            parts = s_range.split('-')
+            if len(parts) == 2:
+                r_min = int(parts[0])
+                r_max = int(parts[1]) - 1
+                return (r_min <= word_count <= r_max)
+        elif '+' in s_range:
+            r_min = int(s_range.replace('+', '').strip())
+            return (word_count >= r_min)
+    except Exception as e:
+        print(f"[is_board_count_valid] Error parsing target_range '{target_range}': {e}")
+        return False
+    return False
+
 def serialize_param_key(dimensions, bonus_word, word_count_range, dictionary, board_format, min_word_length, difficulty, use_added_words=False):
     d_upper = str(dictionary).upper()
     if "+ AW" in d_upper or "+AW" in d_upper or "ADDED" in d_upper:
@@ -314,7 +339,7 @@ def mark_board_hash_used(board_hash, conn=None):
         return True
 
 
-def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, exclude_format=None, dictionary=None, use_added_words=None):
+def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, exclude_format=None, dictionary=None, use_added_words=None, word_count_range=None, difficulty=None):
     if isinstance(dimensions, (tuple, list)):
         if len(dimensions) == 3:
             dimensions = f"{dimensions[0]}x{dimensions[1]}x{dimensions[2]}"
@@ -405,15 +430,30 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
             board = data["board"]
             all_words = data["all_words"]
             
+            min_l_int = int(min_word_length)
+            playable_words = [w for w in all_words if len(w) >= min_l_int]
+            if norm_dict != 'CSW':
+                try:
+                    import word_validator
+                    if hasattr(word_validator, 'word_validator'):
+                        word_validator.word_validator.ensure_csw_loaded()
+                        playable_words = [w for w in playable_words if not word_validator.word_validator.is_csw_only(w)]
+                except Exception:
+                    pass
+            actual_count = len(playable_words)
+
             # For + AW, word count must strictly be >= 300
-            if is_aw is True and len(all_words) < 300:
-                print(f"[BoardGen] Discarding any_cached board for {dimensions}: +AW requires >= 300 words, got {len(all_words)}")
+            if is_aw is True and actual_count < 300:
+                print(f"[BoardGen] Discarding any_cached board for {dimensions}: +AW requires >= 300 words, got {actual_count}")
                 continue
 
-            min_l_int = int(min_word_length)
-            matching_min_words = sum(1 for w in all_words if len(w) == min_l_int)
-            if matching_min_words < 5:
-                print(f"[BoardGen] Discarding any_cached board for {dimensions}: only {matching_min_words} words of length {min_l_int} (needed >= 5)")
+            if word_count_range and not is_board_count_valid(actual_count, word_count_range):
+                print(f"[BoardGen] Discarding any_cached board for {dimensions}: actual count {actual_count} outside requested range {word_count_range}")
+                continue
+
+            matching_min_words = sum(1 for w in playable_words if len(w) == min_l_int)
+            if matching_min_words < 3:
+                print(f"[BoardGen] Discarding any_cached board for {dimensions}: only {matching_min_words} words of length {min_l_int} (needed >= 3)")
                 continue
 
             board_hash = get_board_hash(board)
@@ -421,7 +461,6 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                 print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
                 continue
                 
-            all_words = data["all_words"]
             bonus_cell = tuple(data["bonus_cell"]) if data.get("bonus_cell") else None
             board_format_ret = data.get("board_format_ret", target_format or "Normal")
             bonus_cell = _sanitize_special_tiles_for_format(board, board_format_ret, bonus_cell)
@@ -431,6 +470,19 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                 all_words_dict[w] = [tuple(coord) for coord in path]
                 
             ratio = data.get("ratio", data.get("uniqueness_ratio", 0.0))
+            if difficulty:
+                try:
+                    dims_p = str(dimensions).lower().split('x')
+                    d_cnt = int(dims_p[0]) if len(dims_p) == 3 else 1
+                    r_cnt = int(dims_p[1] if len(dims_p) == 3 else dims_p[0]) if len(dims_p) >= 2 else 4
+                    c_cnt = int(dims_p[2] if len(dims_p) == 3 else dims_p[1]) if len(dims_p) >= 2 else 4
+                    achieved_cached_diff = BoardGenerator().get_difficulty_label(ratio, r_cnt, c_cnt, norm_dict or 'NWL', depth=d_cnt, min_word_length=min_l_int)
+                    if _normalize_difficulty_base(achieved_cached_diff) != _normalize_difficulty_base(difficulty):
+                        print(f"[BoardGen] Discarding any_cached board for {dimensions}: ratio {ratio:.3f} is '{achieved_cached_diff}', expected '{_normalize_difficulty_base(difficulty)}'")
+                        continue
+                except Exception as _diff_chk_err:
+                    print(f"[BoardGen] Warning checking cached difficulty in any_cached: {_diff_chk_err}")
+
             final_bonus_word = data.get("final_bonus_word", data.get("bonus_word", ""))
             
             return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, params)
@@ -516,14 +568,33 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                     return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
 
                 all_words = data["all_words"]
-                if bool(use_added_words) and len(all_words) < 300:
-                    print(f"[BoardGen] Discarding compatible cached board for use_added_words: only {len(all_words)} words (< 300)")
+                min_l_int = int(min_word_length)
+                playable_words = [w for w in all_words if len(w) >= min_l_int]
+                if d_target != "CSW":
+                    try:
+                        import word_validator
+                        if hasattr(word_validator, 'word_validator'):
+                            word_validator.word_validator.ensure_csw_loaded()
+                            playable_words = [w for w in playable_words if not word_validator.word_validator.is_csw_only(w)]
+                    except Exception:
+                        pass
+                actual_count = len(playable_words)
+
+                if bool(use_added_words) and actual_count < 300:
+                    print(f"[BoardGen] Discarding compatible cached board for use_added_words: only {actual_count} playable words (< 300 required)")
                     try: conn.close()
                     except: pass
                     conn = None
                     return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
-                min_l_int = int(min_word_length)
-                matching_min_words = sum(1 for w in all_words if len(w) == min_l_int)
+
+                if word_count_range and not is_board_count_valid(actual_count, word_count_range):
+                    print(f"[BoardGen] Discarding compatible cached board: actual count {actual_count} outside requested range {word_count_range}")
+                    try: conn.close()
+                    except: pass
+                    conn = None
+                    return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
+
+                matching_min_words = sum(1 for w in playable_words if len(w) == min_l_int)
                 if matching_min_words < 3:
                     print(f"[BoardGen] Discarding compatible cached board for {dimensions}: only {matching_min_words} words of length {min_l_int} (needed >= 3)")
                     try: conn.close()
@@ -610,14 +681,33 @@ def pop_cached_board(param_key_str):
                 pk_min = int(pk_data.get('min_word_length', 3))
                 pk_aw = bool(pk_data.get('use_added_words', False)) or ('+ AW' in str(pk_data.get('dictionary', '')).upper())
                 pk_bw_len = int(pk_data.get('bonus_word_len', 0) or 0)
+                pk_range = pk_data.get('word_count_range')
+                pk_dict = str(pk_data.get('dictionary', 'NWL')).upper()
             except:
                 pk_min = 3
                 pk_aw = False
                 pk_bw_len = 0
-            if pk_aw and len(all_words) < 300:
-                print(f"[BoardGen] Discarding cached board for {param_key_str[:60]}: only {len(all_words)} words (< 300 required for added words)")
+                pk_range = None
+                pk_dict = 'NWL'
+
+            playable_words = [w for w in all_words if len(w) >= pk_min]
+            if 'CSW' not in pk_dict:
+                try:
+                    import word_validator
+                    if hasattr(word_validator, 'word_validator'):
+                        word_validator.word_validator.ensure_csw_loaded()
+                        playable_words = [w for w in playable_words if not word_validator.word_validator.is_csw_only(w)]
+                except Exception:
+                    pass
+            actual_count = len(playable_words)
+
+            if pk_aw and actual_count < 300:
+                print(f"[BoardGen] Discarding cached board for {param_key_str[:60]}: only {actual_count} words (< 300 required for added words)")
                 continue
-            matching_min_words = sum(1 for w in all_words if len(w) == pk_min)
+            if pk_range and not is_board_count_valid(actual_count, pk_range):
+                print(f"[BoardGen] Discarding cached board for {param_key_str[:60]}: count {actual_count} outside range {pk_range}")
+                continue
+            matching_min_words = sum(1 for w in playable_words if len(w) == pk_min)
             if matching_min_words < 3:
                 print(f"[BoardGen] Discarding cached board for {param_key_str[:60]}: only {matching_min_words} words of length {pk_min} (needed >= 3)")
                 continue
@@ -777,6 +867,38 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                             dictionary, 
                             depth
                         )
+
+                playable_words = [w for w in all_words if len(w) >= min_word_length]
+                d_str = str(dictionary).upper()
+                if 'CSW' not in d_str:
+                    try:
+                        import word_validator
+                        if hasattr(word_validator, 'word_validator'):
+                            word_validator.word_validator.ensure_csw_loaded()
+                            playable_words = [w for w in playable_words if not word_validator.word_validator.is_csw_only(w)]
+                    except Exception:
+                        pass
+                actual_wc = len(playable_words)
+                
+                # Added words strictly requires >= 300 playable words
+                if use_aw_val and actual_wc < 300:
+                    print(f"[BoardGen] [Refill] Skipping board for Added Words: only {actual_wc} playable words (< 300 required).")
+                    time.sleep(1.0)
+                    continue
+
+                matching_min_words = sum(1 for w in playable_words if len(w) == min_word_length)
+                if matching_min_words < 3:
+                    print(f"[BoardGen] [Refill] Skipping board: only {matching_min_words} words of length {min_word_length} (needed >= 3).")
+                    time.sleep(1.0)
+                    continue
+
+                from spinner_set import SpinnerSet
+                factual_wc_range = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val, dictionary=dictionary)
+                
+                insert_diff = achieved_diff if achieved_diff != normalized_diff else normalized_diff
+                insert_key_str = serialize_param_key(
+                    dimensions, '', factual_wc_range, dictionary, board_format, min_word_length, insert_diff, use_added_words=use_aw_val
+                )
                 
                 board_data = {
                     "board": board,
@@ -785,7 +907,8 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     "board_format_ret": board_format_ret,
                     "all_words_dict": all_words_dict,
                     "ratio": ratio,
-                    "final_bonus_word": final_bonus_word
+                    "final_bonus_word": final_bonus_word,
+                    "word_count_range": factual_wc_range
                 }
                 
                 # DEDUP GUARD: Never cache a board that has already been played.

@@ -2000,6 +2000,7 @@ class GameRoom:
         use_aw_val = target_params.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
         bonus_word_len = target_params.get('bonus_word_length')
         diff_val = target_params.get('difficulty')
+        target_range = target_params.get('word_count_range')
         fallback = None
         for _ in range(10):
             candidate = pop_compatible_cached_board(
@@ -2009,6 +2010,7 @@ class GameRoom:
                 min_l_val,
                 use_aw_val,
                 bonus_word_len=bonus_word_len,
+                word_count_range=target_range,
                 difficulty=diff_val
             )
             if not candidate:
@@ -2023,7 +2025,19 @@ class GameRoom:
             f_min_l = max(grid_floor, int(f_min_l) if f_min_l is not None else 3)
             
             fw_filtered = [w for w in fw if len(w) >= f_min_l]
+            if 'CSW' not in str(dict_val).upper() and hasattr(word_validator, 'word_validator'):
+                word_validator.word_validator.ensure_csw_loaded()
+                fw_filtered = [w for w in fw_filtered if not word_validator.word_validator.is_csw_only(w)]
             actual_cnt = len(fw_filtered)
+
+            is_aw_effective = (fparams.get('use_added_words', False) or '+ AW' in str(fparams.get('dictionary', '')).upper()) if fparams else False
+            if is_aw_effective and actual_cnt < 300:
+                print(f"[GameRoom] ensure_next_board_ready: Candidate for +AW had only {actual_cnt} words (< 300). Discarding...")
+                continue
+
+            if target_range and not is_board_count_valid(actual_cnt, target_range):
+                print(f"[GameRoom] ensure_next_board_ready: Candidate count {actual_cnt} outside target range {target_range}. Discarding...")
+                continue
             
             f_wc = fparams.get('word_count_range', '100-200') if fparams else '100-200'
             min_accept = 50
@@ -2037,7 +2051,6 @@ class GameRoom:
                 elif '400' in str(f_wc): min_accept = 400
                 elif '500' in str(f_wc): min_accept = 500
             
-            is_aw_effective = (fparams.get('use_added_words', False) or '+ AW' in str(fparams.get('dictionary', '')).upper()) if fparams else False
             if is_aw_effective:
                 min_accept = max(300, min_accept)
             elif f_min_l >= 6:
@@ -2049,7 +2062,11 @@ class GameRoom:
                 if str(fmt_val).lower() in ['equality freq', 'checkerboard'] and str(ff).lower() != str(fmt_val).lower():
                     print(f"[GameRoom] ensure_next_board_ready: Candidate format {ff} != requested {fmt_val}. Discarding...")
                     continue
-                fallback = (fb, fw_filtered, fc, ff, {w: p for w, p in fp.items() if len(w) >= f_min_l}, fr, fbw, fparams)
+                matching_min = sum(1 for w in fw_filtered if len(w) == f_min_l)
+                if matching_min < 3:
+                    print(f"[GameRoom] ensure_next_board_ready: Candidate had only {matching_min} words of min_len {f_min_l}. Discarding...")
+                    continue
+                fallback = (fb, fw_filtered, fc, ff, {w: p for w, p in fp.items() if len(w) >= f_min_l and w in fw_filtered}, fr, fbw, fparams)
                 break
             else:
                 print(f"[GameRoom] ensure_next_board_ready Pop Candidate had only {actual_cnt} words of length >= {f_min_l} (needed {min_accept}). Discarding...")
@@ -2771,13 +2788,17 @@ class GameRoom:
         min_l_val = sp.get('min_word_length', 3)
         use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
         bonus_word_len = sp.get('bonus_word_length')
+        sp_wc_range = sp.get('word_count_range')
+        sp_diff = sp.get('difficulty')
         fallback = pop_compatible_cached_board(
             self.board_dimensions,
             dict_val,
             fmt_val,
             min_l_val,
             use_aw_val,
-            bonus_word_len=bonus_word_len
+            bonus_word_len=bonus_word_len,
+            word_count_range=sp_wc_range,
+            difficulty=sp_diff
         )
         
         if fallback:
@@ -2845,7 +2866,7 @@ class GameRoom:
         new_sp = {
             'dictionary': sp.get('dictionary') or dict_val,
             'difficulty': sp.get('difficulty') or fparams.get('difficulty', 'Medium'),
-            'word_count_range': declared_target_wc or wc_label,
+            'word_count_range': wc_label,
             'board_format': sp.get('board_format') or ff or 'Normal',
             'min_word_length': sp.get('min_word_length') or fparams.get('min_word_length', 3),
             'bonus_word_length': sp.get('bonus_word_length') or (len(fbw) if fbw else (fparams.get('bonus_word_len') or 6)),
@@ -3613,6 +3634,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 min_word_length,
                 use_added_words,
                 bonus_word_len=bonus_word_len,
+                word_count_range=target_range,
                 difficulty=norm_target_diff
             )
             if relaxed_res:
@@ -6562,13 +6584,22 @@ class RoomManager:
             use_aw = cur_p.get('use_added_words', False) or '+ AW' in str(target_dict).upper() or '+AW' in str(target_dict).upper()
             bw_len = cur_p.get('bonus_word_length')
             
+            target_wc_range = cur_p.get('word_count_range')
+            target_diff = cur_p.get('difficulty')
+            
             cached_candidate = None
             try:
                 # Try compatible match with spun parameters
-                cached_candidate = pop_compatible_cached_board(dims, target_dict, target_fmt, target_min, use_aw, bonus_word_len=bw_len)
+                cached_candidate = pop_compatible_cached_board(
+                    dims, target_dict, target_fmt, target_min, use_aw,
+                    bonus_word_len=bw_len, word_count_range=target_wc_range, difficulty=target_diff
+                )
                 if not cached_candidate and str(target_fmt).lower() == 'normal':
                     # Try any cached Normal board strictly matching dictionary and use_added_words
-                    cached_candidate = pop_any_cached_board(dims, min_word_length=target_min, target_format='Normal', dictionary=target_dict, use_added_words=use_aw)
+                    cached_candidate = pop_any_cached_board(
+                        dims, min_word_length=target_min, target_format='Normal',
+                        dictionary=target_dict, use_added_words=use_aw, word_count_range=target_wc_range, difficulty=target_diff
+                    )
             except Exception as pop_err:
                 print(f"[RoomManager] Error popping pregenerated board in easy fallback: {pop_err}")
 
@@ -7788,12 +7819,17 @@ class RoomManager:
                     fmt_val = sp.get('board_format', 'Normal')
                     use_aw_val = sp.get('use_added_words', False) or '+ AW' in str(dict_val).upper() or '+AW' in str(dict_val).upper()
                     bonus_word_len = sp.get('bonus_word_length')
+                    sp_diff = sp.get('difficulty')
                     
                     candidate = pop_compatible_cached_board(
-                        room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val, bonus_word_len=bonus_word_len
+                        room.board_dimensions, dict_val, fmt_val, m_len, use_aw_val,
+                        bonus_word_len=bonus_word_len, word_count_range=target_range, difficulty=sp_diff
                     )
                     if not candidate and str(fmt_val).lower() == 'normal':
-                        candidate = pop_any_cached_board(room.board_dimensions, min_word_length=m_len, target_format='Normal', dictionary=dict_val, use_added_words=use_aw_val)
+                        candidate = pop_any_cached_board(
+                            room.board_dimensions, min_word_length=m_len, target_format='Normal',
+                            dictionary=dict_val, use_added_words=use_aw_val, word_count_range=target_range, difficulty=sp_diff
+                        )
                     if not candidate:
                         print(f"[start_next_round] Cache miss for {room_id}. Generating instant emergency fallback board for format '{fmt_val}'.")
                         candidate = get_emergency_fallback_board(
@@ -7828,6 +7864,26 @@ class RoomManager:
                             word_validator.word_validator.ensure_csw_loaded()
                             _fw_filtered = [w for w in _fw_filtered if not word_validator.word_validator.is_csw_only(w)]
                         _fp_filtered = {w: p for w, p in (_fp or {}).items() if w in _fw_filtered}
+                        
+                        # Strict word count compliance: candidate MUST match target_range if provided
+                        if target_range and not is_board_count_valid(len(_fw_filtered), target_range):
+                            print(f"[start_next_round] Word count mismatch (candidate {len(_fw_filtered)} not in {target_range}). Regenerating...")
+                            candidate = get_emergency_fallback_board(
+                                room.board_dimensions, fmt_val, room.time_limit,
+                                dictionary=dict_val, use_added_words=use_aw_val, target_range=target_range, min_word_length=m_len,
+                                bonus_word_len=bonus_word_len
+                            )
+                            if candidate:
+                                if len(candidate) >= 9:
+                                    _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _, _fparams = candidate
+                                else:
+                                    _fb, _fw, _fc, _ff, _fp, _fr, _fbw, _fparams = candidate
+                                _fw_filtered = [w for w in _fw if len(w) >= m_len]
+                                if not _fw_filtered: _fw_filtered = _fw
+                                if 'CSW' not in str(dict_val).upper() and hasattr(word_validator, 'word_validator'):
+                                    word_validator.word_validator.ensure_csw_loaded()
+                                    _fw_filtered = [w for w in _fw_filtered if not word_validator.word_validator.is_csw_only(w)]
+                                _fp_filtered = {w: p for w, p in (_fp or {}).items() if w in _fw_filtered}
                         
                         # SAFEGUARD: If Checkerboard format, enforce strict C/V alternation
                         _rep, _rw, _rp = sync_board_checkerboard_and_resolve(self.board_generator, _fb, fmt_val, m_len, dict_val, use_aw_val, _fc)
@@ -8501,9 +8557,6 @@ class RoomManager:
                     declared_wc = active_params.get('word_count_range')
 
                 final_wc = declared_wc if (declared_wc and is_board_count_valid(wc_cnt, declared_wc)) else real_wc
-                if _use_aw or ('+ AW' in str(room.current_dictionary).upper()) or ('+AW' in str(room.current_dictionary).upper()):
-                    if final_wc not in ['300-400', '400-500', '500+']:
-                        final_wc = real_wc if real_wc in ['300-400', '400-500', '500+'] else '300-400'
 
                 room.current_word_count_range = final_wc
                 if isinstance(room.spinner_params, dict):

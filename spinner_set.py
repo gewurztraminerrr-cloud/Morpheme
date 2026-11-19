@@ -603,18 +603,6 @@ class SpinnerSet:
         except (ValueError, TypeError):
             count = 0
 
-        is_aw = (
-            use_added_words is True
-            or (dictionary and ('+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper() or 'AW' in str(dictionary).upper() or 'ADDED' in str(dictionary).upper()))
-        )
-
-        if is_aw:
-            if count >= 500:
-                return '500+'
-            if count >= 400:
-                return '400-500'
-            return '300-400'
-
         if count >= 500:
             return '500+'
         if count >= 400:
