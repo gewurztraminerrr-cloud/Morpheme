@@ -6089,8 +6089,10 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         isCSW = (
             baseDict === 'CSW' ||
             baseDict.includes('CSW') ||
-            baseDict.includes('COLLINS')
+            baseDict.includes('COLLINS') ||
+            (cswOnlySet && cswOnlySet.size > 0)
         );
+        if (addedSet && addedSet.size > 0) useAW = true;
     } else {
         if (cswOnlySet && cswOnlySet.size > 0) isCSW = true;
         if (addedSet && addedSet.size > 0) useAW = true;
@@ -6120,6 +6122,9 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             countNwl++;
         }
     }
+
+    if (countCswOnly > 0) isCSW = true;
+    if (countAw > 0) useAW = true;
 
     // Configure and populate dictionary filter dropdown
     let dictOptions = [];

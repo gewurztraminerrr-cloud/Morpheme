@@ -1740,7 +1740,10 @@ class GameRoom:
                 def _stage_board(popped):
                     p_board, p_words, p_bonus_cell, p_format, p_paths, p_ratio, p_bonus_word, p_params = popped
                     fw = [w for w in p_words if len(w) >= _min_len]
-                    fp = {w: v for w, v in p_paths.items() if len(w) >= _min_len}
+                    if 'CSW' not in str(_dict).upper() and hasattr(word_validator, 'word_validator'):
+                        word_validator.word_validator.ensure_csw_loaded()
+                        fw = [w for w in fw if not word_validator.word_validator.is_csw_only(w)]
+                    fp = {w: v for w, v in p_paths.items() if w in fw}
                     _room_ref.next_round_board = p_board
                     _room_ref.next_round_words = fw
                     _room_ref.next_round_word_paths = fp
@@ -1751,6 +1754,13 @@ class GameRoom:
                     _room_ref.next_round_bonus = bw
                     _room_ref.next_round_format = _fmt
                     _room_ref.next_round_uniqueness = p_ratio
+                    if hasattr(word_validator, 'word_validator'):
+                        word_validator.word_validator.ensure_csw_loaded()
+                        _room_ref.next_round_csw_only_words = [w for w in fw if word_validator.word_validator.is_csw_only(w)]
+                        _room_ref.next_round_added_words = [w for w in fw if word_validator.word_validator.is_added_word(w)]
+                    else:
+                        _room_ref.next_round_csw_only_words = []
+                        _room_ref.next_round_added_words = []
 
                 # STEP 1: Try fast cache pop (< 1ms with WAL mode) — runs on Waitress thread
                 popped = None
@@ -2050,6 +2060,10 @@ class GameRoom:
             _rep, _rw, _rp = sync_board_checkerboard_and_resolve(_bg, fb, fmt_val, f_min_l, dict_val, use_aw_val, fc)
             if _rep and _rw:
                 fw, fp = _rw, _rp
+            if 'CSW' not in str(dict_val).upper() and hasattr(word_validator, 'word_validator'):
+                word_validator.word_validator.ensure_csw_loaded()
+                fw = [w for w in fw if not word_validator.word_validator.is_csw_only(w)]
+                fp = {w: p for w, p in fp.items() if w in fw}
             print(f"[GameRoom] ensure_next_board_ready: Popped fallback cached board for {self.room_id}")
             self.next_round_board = fb
             self.next_round_words = fw
@@ -2058,6 +2072,13 @@ class GameRoom:
             self.next_round_bonus = fbw or ''
             self.next_round_format = ff
             self.next_round_uniqueness = fr
+            if hasattr(word_validator, 'word_validator'):
+                word_validator.word_validator.ensure_csw_loaded()
+                self.next_round_csw_only_words = [w for w in fw if word_validator.word_validator.is_csw_only(w)]
+                self.next_round_added_words = [w for w in fw if word_validator.word_validator.is_added_word(w)]
+            else:
+                self.next_round_csw_only_words = []
+                self.next_round_added_words = []
             if fparams:
                 actual_wc = len(fw)
                 self.next_round_spinner_params = fparams
@@ -2153,6 +2174,13 @@ class GameRoom:
         self.next_round_format = e_fmt
         self.next_round_bonus_cell = e_bonus_c
         self.next_round_uniqueness = e_ratio
+        if hasattr(word_validator, 'word_validator'):
+            word_validator.word_validator.ensure_csw_loaded()
+            self.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
+            self.next_round_added_words = [w for w in e_words if word_validator.word_validator.is_added_word(w)]
+        else:
+            self.next_round_csw_only_words = []
+            self.next_round_added_words = []
         
         is_valued_e = ('valued' in str(self.current_board_format).lower())
         e_scores = {}
@@ -7446,7 +7474,7 @@ class RoomManager:
                     # CSW and AW word tagging
                     display_min = _sb_min_len
                     filtered_all = [w for w in (all_words or []) if len(w) >= display_min]
-                    if 'CSW' in str(search_dict).upper():
+                    if hasattr(word_validator, 'word_validator'):
                         word_validator.word_validator.ensure_csw_loaded()
                         csw_words = [w for w in filtered_all if word_validator.word_validator.is_csw_only(w)]
                     else:
@@ -7762,6 +7790,9 @@ class RoomManager:
 
                         _fw_filtered = [w for w in _fw if len(w) >= m_len]
                         if not _fw_filtered: _fw_filtered = _fw
+                        if 'CSW' not in str(dict_val).upper() and hasattr(word_validator, 'word_validator'):
+                            word_validator.word_validator.ensure_csw_loaded()
+                            _fw_filtered = [w for w in _fw_filtered if not word_validator.word_validator.is_csw_only(w)]
                         _fp_filtered = {w: p for w, p in (_fp or {}).items() if w in _fw_filtered}
                         
                         # SAFEGUARD: If Checkerboard format, enforce strict C/V alternation
@@ -7775,6 +7806,13 @@ class RoomManager:
                         room.next_round_bonus_cell = _fc
                         room.next_round_bonus = _fbw or ''
                         room.next_round_word_paths = _fp_filtered
+                        if hasattr(word_validator, 'word_validator'):
+                            word_validator.word_validator.ensure_csw_loaded()
+                            room.next_round_csw_only_words = [w for w in _fw_filtered if word_validator.word_validator.is_csw_only(w)]
+                            room.next_round_added_words = [w for w in _fw_filtered if word_validator.word_validator.is_added_word(w)]
+                        else:
+                            room.next_round_csw_only_words = []
+                            room.next_round_added_words = []
                         bw_l_val = int(room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
                         if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                             _s_bw_v = room.initial_solo_params.get('bonus_word_length', 'random')
@@ -8138,11 +8176,8 @@ class RoomManager:
                         room.initialize_density(e_board, e_paths, e_fmt, is_staging=True)
                         
                         if hasattr(word_validator, 'word_validator'):
-                            if 'CSW' in str(getattr(room, 'current_dictionary', 'NWL')).upper():
-                                word_validator.word_validator.ensure_csw_loaded()
-                                room.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
-                            else:
-                                room.next_round_csw_only_words = []
+                            word_validator.word_validator.ensure_csw_loaded()
+                            room.next_round_csw_only_words = [w for w in e_words if word_validator.word_validator.is_csw_only(w)]
                             room.next_round_added_words = [w for w in e_words if word_validator.word_validator.is_added_word(w)]
                         else:
                             room.next_round_csw_only_words = []
@@ -8203,7 +8238,7 @@ class RoomManager:
                 target_words_list = list(room.next_round_words or room.all_words or [])
                 def _tag_supplemental_words(rm_ref, w_list, dict_str, use_aw):
                     try:
-                        if ('CSW' in str(dict_str).upper() or 'ALL' in str(dict_str).upper()) and hasattr(word_validator, 'word_validator'):
+                        if hasattr(word_validator, 'word_validator'):
                             word_validator.word_validator.ensure_csw_loaded()
                             rm_ref.csw_only_words = [w for w in w_list if word_validator.word_validator.is_csw_only(w)]
                         if (use_aw or '+ AW' in str(dict_str).upper() or '+AW' in str(dict_str).upper()) and hasattr(word_validator, 'word_validator'):
@@ -8254,7 +8289,18 @@ class RoomManager:
                 min_l = room.current_min_length if hasattr(room, 'current_min_length') else 3
                 display_min = min_l
                 room.all_words_paths = {w: p for w, p in (room.next_round_word_paths or {}).items() if len(w) >= display_min}
+                
+                # DICTIONARY ENFORCEMENT: Never allow CSW-only words to leak into an NWL room
+                if 'CSW' not in str(getattr(room, 'current_dictionary', 'NWL')).upper() and hasattr(word_validator, 'word_validator'):
+                    word_validator.word_validator.ensure_csw_loaded()
+                    room.all_words_paths = {w: p for w, p in room.all_words_paths.items() if not word_validator.word_validator.is_csw_only(w)}
+                
                 room.all_words = set(room.all_words_paths.keys())
+                room.total_words_count = len(room.all_words)
+                room.initial_total_words = room.total_words_count
+                if hasattr(word_validator, 'word_validator'):
+                    word_validator.word_validator.ensure_csw_loaded()
+                    room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
                 
                 # ACTIVE INTEGRITY SHIELD: Auto-heal if active words ever mismatch active board
                 if getattr(room, 'game_type', None) != 'subanagrams' and room.board and room.all_words and not verify_board_words_consistency(room.board, room.all_words, room.all_words_paths):
@@ -8264,9 +8310,11 @@ class RoomManager:
                     solved_dict = _bg._solve_board(room.board, dictionary=getattr(room, 'current_dictionary', 'NWL'), min_word_length=display_min, use_added_words=_is_heal_aw)
                     room.all_words_paths = {w: p for w, p in solved_dict.items() if len(w) >= display_min}
                     room.all_words = set(room.all_words_paths.keys())
+                    room.total_words_count = len(room.all_words)
+                    room.initial_total_words = room.total_words_count
                     if _is_heal_aw and hasattr(word_validator, 'word_validator'):
                         room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
-                    if ('CSW' in str(getattr(room, 'current_dictionary', '')).upper()) and hasattr(word_validator, 'word_validator'):
+                    if hasattr(word_validator, 'word_validator'):
                         word_validator.word_validator.ensure_csw_loaded()
                         room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
 

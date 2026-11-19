@@ -8417,15 +8417,11 @@ def get_room_state(room_id):
                     prev_use_aw = bool(getattr(room, 'previous_use_added_words', False)) or '+ AW' in prev_dict_name or '+AW' in prev_dict_name
                     prev_csw_list = list(getattr(room, 'previous_csw_only_words', None) or [])
                     prev_aw_list = list(getattr(room, 'previous_added_words', None) or [])
-                    if not prev_csw_list and 'CSW' in prev_dict_name:
+                    if not prev_csw_list:
                         word_validator.word_validator.ensure_csw_loaded()
                         prev_csw_list = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
                     if not prev_aw_list and prev_use_aw:
                         prev_aw_list = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
-                    if 'CSW' not in prev_dict_name:
-                        prev_csw_list = []
-                    if not prev_use_aw:
-                        prev_aw_list = []
                     intermission_csw_only = [w for w in prev_csw_list if len(w) >= display_floor]
                     intermission_added = [w for w in prev_aw_list if len(w) >= display_floor]
 
@@ -8437,6 +8433,9 @@ def get_room_state(room_id):
                 word_scores_to_return = getattr(room, 'solved_words_with_scores', {}) or {}
                 # ALWAYS provide all_words for instant client-side validation
                 words_to_return = list(room.all_words)
+                if hasattr(word_validator, 'word_validator') and (not getattr(room, 'csw_only_words', None) or len(room.csw_only_words) == 0):
+                    word_validator.word_validator.ensure_csw_loaded()
+                    room.csw_only_words = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
 
             # Determine user visibility
             user_id = session.get('user_id')
@@ -8516,7 +8515,7 @@ def get_room_state(room_id):
                     if use_aw and hasattr(word_validator, 'word_validator'):
                         intermission_added = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
                         room.previous_added_words = list(intermission_added)
-                    if 'CSW' in str(d_name).upper() and hasattr(word_validator, 'word_validator'):
+                    if hasattr(word_validator, 'word_validator'):
                         word_validator.word_validator.ensure_csw_loaded()
                         intermission_csw_only = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
                         room.previous_csw_only_words = list(intermission_csw_only)
