@@ -160,6 +160,8 @@ async function enterLobbyRoom(rawBtn) {
             window.currentRoomId = data.room_id;
             localStorage.setItem('last_joined_room', data.room_id);
             window.isSpectatorMode = false;
+            const isSub = (gameType === 'subanagrams' || (data.room_id && data.room_id.includes('subanagrams')));
+            document.body.classList.toggle('is-subanagrams', isSub);
 
             // Switch to play page NOW that currentRoomId is confirmed
             if (typeof window.clearGameUIAndCache === 'function') {
@@ -169,6 +171,9 @@ async function enterLobbyRoom(rawBtn) {
                 window.showPage('page-play');
             } else if (typeof showPage === 'function') {
                 showPage('page-play');
+            }
+            if (typeof window.adjustPlayHeaderForDevice === 'function') {
+                window.adjustPlayHeaderForDevice();
             }
             if (typeof window.switchPlayPanel === 'function') {
                 window.switchPlayPanel('board', false);

@@ -520,6 +520,11 @@
      - Configured `#word-input` on mobile Subanagrams to `width: 100% !important; max-width: 100% !important; flex: 1 1 100% !important; box-sizing: border-box !important; margin: 0 !important;`.
      - Ensured `#submit-word-btn` directly above it has matching `width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; margin: 0 !important;`.
      - The ENTER WORD textbox now spans the exact same horizontal width as the Enter button above it.
+  4. **Eliminated Duplicate Inline Shadow Function & Cache-Busted Assets (`templates/index.html`, `static/js/app.js`, `static/js/lobby.js`)**:
+     - Removed a legacy duplicate definition of `adjustPlayHeaderForDevice()` at the bottom of `templates/index.html` (lines 10526–10632) that was shadowing `play.js`'s updated implementation and executing without the Shuffle relocation logic.
+     - Replaced the duplicate script block with clean delegation listeners (`load`, `resize`, `DOMContentLoaded`) invoking `window.adjustPlayHeaderForDevice()`.
+     - Bumped cache-busting query strings to `?v=1794380002` across `play.css`, `play.js`, `app.js`, and `lobby.js` so mobile devices (iOS Safari, Android Chrome) immediately fetch the live updated assets rather than serving stale cached scripts.
+     - Ensured `adjustPlayHeaderForDevice()` runs reliably during `showPage('page-play')`, `enterLobbyRoom()`, and Subanagrams board rendering.
 
 
 

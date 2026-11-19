@@ -2413,13 +2413,15 @@ window.showPage = showPage;
         if (pageId === 'page-play' && !isTournament && !isSubanagrams) {
             colorBar.style.removeProperty('display');
             colorBar.style.display = 'flex';
+        } else {
+            colorBar.style.setProperty('display', 'none', 'important');
+        }
+        if (pageId === 'page-play') {
             setTimeout(() => {
                 if (typeof adjustPlayHeaderForDevice === 'function') {
                     adjustPlayHeaderForDevice();
                 }
             }, 50);
-        } else {
-            colorBar.style.setProperty('display', 'none', 'important');
         }
     }
     const headingEl = document.getElementById('players-heading');

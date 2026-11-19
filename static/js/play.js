@@ -38,7 +38,14 @@ function adjustPlayHeaderForDevice() {
     if (!header || !boardPanel) return;
     
     const isDesktop = checkIsDesktop();
-    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+    const isSubanagrams = (window.lastGameState && (window.lastGameState.game_type === 'subanagrams' || (window.lastGameState.room_id && window.lastGameState.room_id.includes('subanagrams')))) ||
+        (window.currentRoomId && window.currentRoomId.includes('subanagrams')) ||
+        (window.location.hash && window.location.hash.includes('subanagrams')) ||
+        document.body.classList.contains('is-subanagrams');
+    
+    if (isSubanagrams) {
+        document.body.classList.add('is-subanagrams');
+    }
     
     if (isDesktop) {
         // Desktops and laptops only: Header sits in its own space above Players, Board, and Words panels and below top menu
@@ -114,9 +121,24 @@ function adjustPlayHeaderForDevice() {
         }
     }
 
-    if (colorBar && isSubanagrams) {
-        colorBar.style.display = 'none';
+    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round');
+    if (colorBar && (isTournament || isSubanagrams)) {
+        colorBar.style.setProperty('display', 'none', 'important');
     }
+    const headingEl = document.getElementById('players-heading');
+    if (headingEl && isTournament) {
+        headingEl.style.setProperty('display', 'none', 'important');
+    }
+    const isChatDisabled = document.body.classList.contains('game-chat-disabled') || (window.userSettings && (window.userSettings.game_room_chat === false || window.userSettings.game_room_chat === 'false')) || (localStorage.getItem('morpheme_game_room_chat') === 'false');
+    const chatPanel = document.querySelector('.chat-panel');
+    if (chatPanel) {
+        if (isTournament || isChatDisabled) {
+            chatPanel.style.setProperty('display', 'none', 'important');
+        } else if (!isTournament && !document.body.classList.contains('is-tournament-round')) {
+            chatPanel.style.removeProperty('display');
+        }
+    }
+
     if (timerControlsGroup) {
         timerControlsGroup.style.display = isSubanagrams ? 'none' : '';
     }
@@ -124,7 +146,7 @@ function adjustPlayHeaderForDevice() {
         if (!isSubanagrams) {
             shuffleBtn.style.display = 'none';
         } else {
-            shuffleBtn.style.display = '';
+            shuffleBtn.style.display = 'inline-flex';
         }
     }
 }
@@ -8397,6 +8419,7 @@ function checkBoardOverflow() {
         boardEl.style.gridTemplateColumns = '';
         boardEl.style.gridTemplateRows = '';
         fitSubanagramsBoard();
+        if (typeof adjustPlayHeaderForDevice === 'function') adjustPlayHeaderForDevice();
         return;
     }
 
