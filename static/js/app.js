@@ -4329,7 +4329,7 @@ window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = null) 
         clearTimeout(window._loadingOverlayTimeout);
         window._loadingOverlayTimeout = null;
     }
-    const timeoutDuration = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : 10000;
+    const timeoutDuration = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : 25000;
     window._loadingOverlayTimeout = setTimeout(() => {
         if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     }, timeoutDuration);

@@ -449,7 +449,7 @@
                 clearTimeout(window._loadingOverlayTimeout);
                 window._loadingOverlayTimeout = null;
             }
-            var timeoutDuration = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : 10000;
+            var timeoutDuration = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : 25000;
             window._loadingOverlayTimeout = setTimeout(function() {
                 if (window.hideLoadingOverlay) window.hideLoadingOverlay();
             }, timeoutDuration);
@@ -502,7 +502,7 @@
 
         async function enterLobbyRoomInline(rawBtn) {
             if (!rawBtn) return;
-            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
+            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
             if (window._isEnteringRoom) {
                 console.log('[Lobby] enterLobbyRoomInline blocked: already entering room');
                 return;
@@ -849,7 +849,7 @@
                     return;
                 }
                 if (!btn) return;
-                if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
+                if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
                 if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
                     if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                     window.showTimeoutBanModal(window._userTimeoutInfo);
@@ -971,6 +971,7 @@
                         btn.style.pointerEvents = 'auto';
                     }
                 } catch(err) {
+                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     if (window.showAlertModal) {
                         window.showAlertModal('Network Error', 'Network error joining room: ' + err.message);
                     } else {
@@ -980,7 +981,6 @@
                     btn.style.pointerEvents = 'auto';
                 } finally {
                     window._isEnteringRoom = false;
-                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     if (btn) {
                         btn.style.opacity = '1';
                         btn.style.pointerEvents = 'auto';
@@ -1212,7 +1212,7 @@
             // Show loading notice IMMEDIATELY the instant the button is pressed
             if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative' || gameType === 'subanagrams')) {
                 if (typeof window.showLoadingOverlay === 'function') {
-                    window.showLoadingOverlay('Loading...');
+                    window.showLoadingOverlay('Loading...', 25000);
                 }
             }
 

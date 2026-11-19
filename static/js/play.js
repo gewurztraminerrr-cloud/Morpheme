@@ -4358,7 +4358,8 @@ async function _doUpdateGameState(incomingState = null) {
         if (!incomingState) {
             isFetchingState = false;
         }
-        if (typeof window.hideLoadingOverlay === 'function') {
+        const isRetryingInitialJoin = (!window.lastGameState && joinAttemptCount > 0 && joinAttemptCount < 5);
+        if (!isRetryingInitialJoin && typeof window.hideLoadingOverlay === 'function') {
             window.hideLoadingOverlay();
         }
     }

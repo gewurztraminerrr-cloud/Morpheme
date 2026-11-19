@@ -60,11 +60,10 @@ window.showLobbyToast = showLobbyToast;
 
 async function enterLobbyRoom(rawBtn) {
     if (!rawBtn) return;
-    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 10000);
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
     const now = Date.now();
     if (window._isEnteringRoom && window._isEnteringRoomTime && (now - window._isEnteringRoomTime < 10000)) {
         console.warn('[Lobby] enterLobbyRoom already in progress, ignoring duplicate call');
-        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
         return;
     }
     if (window._lobbyEnterCooldown) {
@@ -200,6 +199,7 @@ async function enterLobbyRoom(rawBtn) {
 
             if (window.startGamePolling) window.startGamePolling();
         } else {
+            if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
             const errMsg = (data && data.error) ? data.error : 'Server error entering room.';
             if (typeof window.showPage === 'function') window.showPage('page-lobby');
             if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
@@ -221,6 +221,7 @@ async function enterLobbyRoom(rawBtn) {
         }
     } catch (error) {
         window._isEnteringRoom = false;
+        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
         console.error('Error entering room:', error);
         if (typeof window.showPage === 'function') window.showPage('page-lobby');
         if (error.name === 'AbortError' || (error.message && error.message.toLowerCase().includes('signal'))) {
@@ -230,12 +231,11 @@ async function enterLobbyRoom(rawBtn) {
         }
     } finally {
         window._isEnteringRoom = false;
-        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
     }
 }
 
 async function handleAccumulativeClick(accBtn) {
-    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
     if (window._lobbyEnterCooldown) {
         await new Promise(r => setTimeout(r, 100));
         window._lobbyEnterCooldown = false;
@@ -264,7 +264,7 @@ async function handleLobbyButtonClickCore(btn, evt) {
     // Show loading notice IMMEDIATELY the instant the button is pressed
     if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative' || gameType === 'subanagrams')) {
         if (typeof window.showLoadingOverlay === 'function') {
-            window.showLoadingOverlay('Loading...');
+            window.showLoadingOverlay('Loading...', 25000);
         }
     }
 
@@ -346,7 +346,7 @@ async function createRoom(config, minRating, maxRating) {
     // Reset left-room flag — user is intentionally creating a new room from the lobby
     window._userLeftRoom = false;
 
-    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...');
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
 
 
     try {
@@ -429,17 +429,18 @@ async function createRoom(config, minRating, maxRating) {
 
             if (window.startGamePolling) window.startGamePolling();
         } else {
+            if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
             if (typeof window.showPage === 'function') window.showPage('page-lobby');
             alert(data.error || 'Unable to create room');
         }
     } catch (err) {
         window._isEnteringRoom = false;
+        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
         if (typeof window.showPage === 'function') window.showPage('page-lobby');
         console.error('Error creating room:', err);
         alert(err.message || 'Error creating room');
     } finally {
         window._isCreatingRoom = false;
-        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
         document.querySelectorAll('.confirm-create-room-btn').forEach(btn => {
             btn.disabled = false;
         });
@@ -491,13 +492,12 @@ function setupLobbyEvents() {
             const now = Date.now();
             if (window._isEnteringRoom && window._isEnteringRoomTime && (now - window._isEnteringRoomTime < 10000)) {
                 console.warn('[Lobby] Join already in progress, ignoring duplicate call');
-                if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                 return;
             }
             window._isEnteringRoom = true;
             window._isEnteringRoomTime = now;
             window._userLeftRoom = false;
-            if (window.showLoadingOverlay) window.showLoadingOverlay('Joining Room...', 10000);
+            if (window.showLoadingOverlay) window.showLoadingOverlay('Loading...', 25000);
             joinBtn.style.opacity = '0.5';
             joinBtn.style.pointerEvents = 'none';
             const roomId = joinBtn.dataset.room;
@@ -577,6 +577,7 @@ function setupLobbyEvents() {
                 window._isEnteringRoom = false;
 
                 if (!response.ok) {
+                    if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                     if (typeof window.showPage === 'function') window.showPage('page-lobby');
                     const errMsg = (data && data.error) ? data.error : `Join failed (${response.status})`;
                     if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
@@ -624,6 +625,7 @@ function setupLobbyEvents() {
 
                 if (data.success) {
                     if (!isSpectator && data.role === 'spectator') {
+                        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                         if (typeof window.showPage === 'function') window.showPage('page-lobby');
                         if (window.showAlertModal) {
                             window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
@@ -658,6 +660,7 @@ function setupLobbyEvents() {
 
                     if (window.startGamePolling) window.startGamePolling();
                 } else {
+                    if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                     if (typeof window.showPage === 'function') window.showPage('page-lobby');
                     const errMsg = data.error || 'Unknown error';
                     if (errMsg.toLowerCase().includes('full')) {
@@ -688,6 +691,7 @@ function setupLobbyEvents() {
                 }
             } catch (err) {
                 window._isEnteringRoom = false;
+                if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                 if (typeof window.showPage === 'function') window.showPage('page-lobby');
                 console.error('Join error:', err);
                 const joinErrMsg = (err.name === 'AbortError' || (err.message && err.message.toLowerCase().includes('signal')))
@@ -701,7 +705,6 @@ function setupLobbyEvents() {
             } finally {
                 joinBtn.style.opacity = '1';
                 joinBtn.style.pointerEvents = 'auto';
-                if (window.hideLoadingOverlay) window.hideLoadingOverlay();
             }
             return; // Handled
         }
