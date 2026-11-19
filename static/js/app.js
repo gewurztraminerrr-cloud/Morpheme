@@ -118,6 +118,9 @@ function setCurrentUser(username, email = null, isGuest = false, isMod = null, r
     localStorage.setItem('morpheme_username', username);
     sessionStorage.removeItem('morpheme_logged_out');
     localStorage.removeItem('morpheme_logged_out');
+    if (typeof window.applyAllSettingsImmediate === 'function') {
+        window.applyAllSettingsImmediate();
+    }
     if (typeof updateAuthUI === 'function') {
         updateAuthUI(rating || window.currentUserRating || window.lastPlayerRating);
     }
@@ -734,6 +737,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         window._gatewayPassed = true;
         try { sessionStorage.removeItem('morpheme_gateway_passed'); } catch (err) {}
 
+        // Immediately put into effect all settings and the correct layout color the moment ENTER LOBBY is pressed
+        if (typeof window.applyAllSettingsImmediate === 'function') {
+            window.applyAllSettingsImmediate();
+        }
+
         // Immediately trigger mobile fullscreen synchronously on user gesture so notice appears on ENTER LOBBY
         if (typeof window.triggerMobileFullscreen === 'function') {
             window.triggerMobileFullscreen();
@@ -817,6 +825,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             document.body.classList.remove('loading-active');
             document.body.classList.add('lobby-active');
+            if (typeof window.applyAllSettingsImmediate === 'function') {
+                window.applyAllSettingsImmediate();
+            }
 
             const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (isMobile) {
@@ -2983,6 +2994,9 @@ function navigateToLobby(rating = null) {
     updateAuthUI(rating);
 
     // Show lobby page
+    if (typeof window.applyAllSettingsImmediate === 'function') {
+        window.applyAllSettingsImmediate();
+    }
     showPage('page-lobby');
     const lobbyBtn = document.querySelector('.nav-btn[data-page="lobby"]');
     if (lobbyBtn) {

@@ -84,34 +84,79 @@ function debounce(func, wait) {
                 if (localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true') {
                     parsed.lobby_guide_dismissed = 'true';
                 }
+                const cachedTheme = localStorage.getItem('morpheme_app_theme');
+                if (cachedTheme && !parsed.app_theme) {
+                    parsed.app_theme = cachedTheme;
+                }
                 return Object.assign(getDefaultSettings(), parsed);
+            } else {
+                const cachedTheme = localStorage.getItem('morpheme_app_theme');
+                const defaults = getDefaultSettings();
+                if (cachedTheme) {
+                    defaults.app_theme = cachedTheme;
+                }
+                return defaults;
             }
         } catch (e) {}
         return getDefaultSettings();
     }
 
-    // Global Settings State - Isolated per user
-    window.userSettings = loadCachedSettings();
-    if (window.userSettings) {
-        if (window.userSettings.subanagrams_tile_size) {
-            document.documentElement.style.setProperty('--subanagrams-cell-size', `${window.userSettings.subanagrams_tile_size}px`);
+    // Apply theme synchronously to both body and documentElement
+    function applyTheme(theme) {
+        const t = theme || 'default';
+        document.body.className = document.body.className.replace(/\btheme-\S+/g, '').trim();
+        if (document.documentElement) {
+            document.documentElement.className = document.documentElement.className.replace(/\btheme-\S+/g, '').trim();
         }
-        if (window.userSettings.chat_font_size) {
-            document.documentElement.style.setProperty('--chat-font-size', `${window.userSettings.chat_font_size}px`, 'important');
+        if (t && t !== 'default') {
+            document.body.classList.add(`theme-${t}`);
+            if (document.documentElement) {
+                document.documentElement.classList.add(`theme-${t}`);
+            }
         }
-        if (window.userSettings.def_font_size) {
-            document.documentElement.style.setProperty('--def-font-size', `${window.userSettings.def_font_size}px`, 'important');
-        }
-        if (window.userSettings.game_room_chat === false || window.userSettings.game_room_chat === 'false' || localStorage.getItem('morpheme_game_room_chat') === 'false') {
-            document.body.classList.add('game-chat-disabled');
-        } else {
-            document.body.classList.remove('game-chat-disabled');
+        try {
+            localStorage.setItem('morpheme_app_theme', t);
+        } catch (e) {}
+
+        const btns = (typeof themeBtns !== 'undefined' && themeBtns) ? themeBtns : document.querySelectorAll('.theme-btn');
+        if (btns && btns.forEach) {
+            btns.forEach(b => {
+                if (b.getAttribute('data-theme') === t) b.classList.add('active');
+                else b.classList.remove('active');
+            });
         }
     }
+    window.applyTheme = applyTheme;
+
+    // Immediately put into effect all settings and the correct layout color
+    function applyAllSettingsImmediate(settingsOverride) {
+        try {
+            const settings = settingsOverride || window.userSettings || loadCachedSettings();
+            if (!settings) return;
+
+            // 1. Immediately apply selected Theme / Layout Color
+            const theme = settings.app_theme || localStorage.getItem('morpheme_app_theme') || 'default';
+            applyTheme(theme);
+
+            // 2. Put into effect all settings (sizes, sounds, highlights, alerts, fonts, bells, toggles, synesthesia colors)
+            applySettings(settings);
+        } catch (err) {
+            console.error('[settings.js] Exception in applyAllSettingsImmediate:', err);
+        }
+    }
+    window.applyAllSettingsImmediate = applyAllSettingsImmediate;
+    window.loadCachedSettings = loadCachedSettings;
+
+    // Global Settings State - Isolated per user & applied immediately
+    window.userSettings = loadCachedSettings();
+    applyAllSettingsImmediate(window.userSettings);
 
     // 1. Load Settings on Startup / User Login
     async function loadSettings() {
         try {
+            // Apply cached settings immediately first so there is zero delay or flash
+            applyAllSettingsImmediate();
+
             const response = await fetch('/api/settings');
             const data = await response.json();
 
@@ -884,8 +929,12 @@ function debounce(func, wait) {
     const themeBtns = document.querySelectorAll('.theme-btn');
     themeBtns.forEach(btn => {
         btn.addEventListener('click', () => {
-            const theme = btn.getAttribute('data-theme');
+            const theme = btn.getAttribute('data-theme') || 'default';
             applyTheme(theme);
+            if (!window.userSettings) window.userSettings = getDefaultSettings();
+            window.userSettings.app_theme = theme;
+            saveSettingsToStorage();
+            try { localStorage.setItem('morpheme_app_theme', theme); } catch (e) {}
             saveSettingDebounced('app_theme', theme);
         });
     });
@@ -1078,14 +1127,6 @@ function debounce(func, wait) {
         audio.play().catch(e => console.log('Audio play failed:', e));
     }
 
-    function applyTheme(theme) {
-        document.body.className = document.body.className.replace(/\btheme-\S+/g, '');
-        if (theme && theme !== 'default') document.body.classList.add(`theme-${theme}`);
-        themeBtns.forEach(b => {
-            if (b.getAttribute('data-theme') === theme) b.classList.add('active');
-            else b.classList.remove('active');
-        });
-    }
 
     // Initialize
     initSynesthesia();
@@ -1530,6 +1571,10 @@ function debounce(func, wait) {
 
     window.loadSettings = loadSettings;
     window.applySettings = applySettings;
+    window.applyTheme = applyTheme;
+    window.applyAllSettingsImmediate = applyAllSettingsImmediate;
+    window.loadCachedSettings = loadCachedSettings;
+    window.getSettingsStorageKey = getSettingsStorageKey;
     window.resetSettingsToDefault = function() { applySettings({}); };
     window.applyMobileSettingsVisibility = applyMobileSettingsVisibility;
 })();

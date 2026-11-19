@@ -1945,6 +1945,18 @@
                             lb.style.display = 'none';
                         }
                     }
+
+                    // Pre-apply user layout color theme from localStorage so the background is ready with 0ms latency
+                    var sKey = activeUser ? ('morpheme_settings_' + activeUser.toLowerCase()) : 'morpheme_settings_guest';
+                    var sData = localStorage.getItem(sKey);
+                    var initTheme = localStorage.getItem('morpheme_app_theme');
+                    if (!initTheme && sData) {
+                        try { var p = JSON.parse(sData); if (p && p.app_theme) initTheme = p.app_theme; } catch(_) {}
+                    }
+                    if (initTheme && initTheme !== 'default') {
+                        document.documentElement.classList.add('theme-' + initTheme);
+                        if (document.body) document.body.classList.add('theme-' + initTheme);
+                    }
                 } catch(e) {}
             })();
 
@@ -1990,6 +2002,27 @@
                 window._gatewayTransitioning = true;
                 window._gatewayPassed = true;
                 try { sessionStorage.removeItem('morpheme_gateway_passed'); } catch(e) {}
+
+                // Immediately put into effect all settings and the correct layout color the moment ENTER LOBBY is pressed
+                if (typeof window.applyAllSettingsImmediate === 'function') {
+                    window.applyAllSettingsImmediate();
+                } else {
+                    try {
+                        var u = (localStorage.getItem('morpheme_username') || '').trim();
+                        var sKey = u ? ('morpheme_settings_' + u.toLowerCase()) : 'morpheme_settings_guest';
+                        var sData = localStorage.getItem(sKey);
+                        var t = localStorage.getItem('morpheme_app_theme');
+                        if (sData) {
+                            var p = JSON.parse(sData);
+                            if (!t && p && p.app_theme) t = p.app_theme;
+                            if (typeof window.applySettings === 'function') window.applySettings(p);
+                        }
+                        if (t && t !== 'default') {
+                            document.body.classList.add('theme-' + t);
+                            if (document.documentElement) document.documentElement.classList.add('theme-' + t);
+                        }
+                    } catch(_) {}
+                }
 
                 // Immediately trigger mobile fullscreen synchronously on direct user gesture
                 if (typeof window.triggerMobileFullscreen === 'function') {
@@ -2075,6 +2108,9 @@
                     window._currentLobbyPanel = 'main';
                     document.body.classList.remove('loading-active');
                     document.body.classList.add('lobby-active');
+                    if (typeof window.applyAllSettingsImmediate === 'function') {
+                        window.applyAllSettingsImmediate();
+                    }
                     if (typeof window.adjustLobbyLayoutForDevice === 'function') {
                         window.adjustLobbyLayoutForDevice();
                     }
