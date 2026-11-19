@@ -549,17 +549,18 @@ function setupLobbyEvents() {
 
             const joinCtrl = new AbortController();
             const joinTimer = setTimeout(() => joinCtrl.abort(), 8000);
-            let response;
             try {
-                response = await fetch(`/api/room/${roomId}/join`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ as_spectator: isSpectator }),
-                    signal: joinCtrl.signal
-                });
-            } finally {
-                clearTimeout(joinTimer);
-            }
+                let response;
+                try {
+                    response = await fetch(`/api/room/${roomId}/join`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ as_spectator: isSpectator }),
+                        signal: joinCtrl.signal
+                    });
+                } finally {
+                    clearTimeout(joinTimer);
+                }
                 
                 let data = null;
                 try {
