@@ -481,5 +481,21 @@
   3. *Timed Room Creation & Joining (`static/js/lobby.js`)*: Added an 8-second `AbortController` timeout to both `/api/room/create` and `/api/room/${roomId}/join` with clear error handling.
   4. *Stale Entrance Lock Guard (`static/js/lobby.js`)*: Added timestamped expiration (10s) to `window._isEnteringRoom` and ensured `hideLoadingOverlay()` is called whenever duplicate clicks are rejected.
 
+---
+
+### Multiplayer Subanagrams Uniform Letter Input Highlight
+- **Problem**: In Multiplayer Subanagrams, when inputting letters to form a word, tiles had conflicting highlight colors and brightness levels. Tapping a new tile applied `.current` with `filter: brightness(1.2)` and a brighter background, causing the most recent tile to look mismatched compared to earlier `.selected` tiles in the word. Typing on keyboard applied `.typing-highlight` with a different yellow color (`#ffcc00`) instead of the selection color.
+- **Root Cause**:
+  1. *Boggle Snake Head Artifact*: In Boggle grid modes, `.board-cell.current` used `filter: brightness(1.2)` to identify the active dragging head. In Subanagrams, there is no spatial grid snake; words are subanagram letter sequences, so brightening the newest tile made the letters of the word look mismatched.
+  2. *Typing vs Mouse Discrepancy*: Typing on keyboard applied `.typing-highlight` without syncing `mouseState.selectedPath`, leading to differing colors between typed and tapped tiles.
+- **Fixes Applied**:
+  1. *CSS Standardization (`static/css/play.css`)*:
+     - Enforced `.game-board.is-subanagrams-board .board-cell.selected`, `.current`, and `.typing-highlight` to share the exact same background (`var(--highlight-mouse-color, #409cff)`), border (3px solid #fff), text color, box-shadow, and `filter: none !important`.
+     - Completely eliminated brightness filter disparity between tiles in the word.
+  2. *Interaction Logic Standardization (`static/js/play.js`)*:
+     - In `handleSubanagramsTileClick`, marked all active tiles uniformly as `.selected` without `.current`.
+     - In `wordInputEl.addEventListener('input')`, synchronized `mouseState.selectedPath` and applied `.selected` alongside `.typing-highlight` for Subanagrams so typed and clicked tiles are 100% unified in color and path tracking.
+
+
 
 

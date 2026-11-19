@@ -10282,6 +10282,7 @@ document.addEventListener('keydown', (e) => {
             }
 
             const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
+            const isSub = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
             const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
             if (path) {
                 path.forEach(coord => {
@@ -10290,9 +10291,22 @@ document.addEventListener('keydown', (e) => {
                     const cell = document.querySelector(selector);
                     if (cell) {
                         cell.classList.add('typing-highlight');
+                        if (isSub) cell.classList.add('selected');
                         cellsToUpdate.add(cell);
                     }
                 });
+                if (isSub && (!mouseState || !mouseState.isDown)) {
+                    mouseState.selectedPath = path.map(pt => ({
+                        row: pt.r,
+                        col: pt.c,
+                        letter: (board && board[0] && board[0][pt.c]) || '',
+                        face: null
+                    }));
+                    mouseState.visitedCells = new Set(path.map(pt => `${pt.r},${pt.c}`));
+                }
+            } else if (isSub && (!mouseState || !mouseState.isDown)) {
+                mouseState.selectedPath = [];
+                mouseState.visitedCells = new Set();
             }
             cellsToUpdate.forEach(c => applyDensityToCell(c));
         }, 30);
@@ -12713,22 +12727,8 @@ function handleSubanagramsTileClick(cell, r, c, f, letter, key) {
             // BACKTRACK / UNDO: Remove the most recent letter
             mouseState.selectedPath.pop();
             mouseState.visitedCells.delete(key);
-            cell.classList.remove('selected', 'current');
+            cell.classList.remove('selected', 'current', 'typing-highlight');
             applyDensityToCell(cell);
-
-            // Mark the new last letter in sequence as 'current'
-            if (mouseState.selectedPath.length > 0) {
-                const newLast = mouseState.selectedPath[mouseState.selectedPath.length - 1];
-                let newLastSelector = `.board-cell[data-r="${newLast.row}"][data-c="${newLast.col}"]`;
-                if (newLast.face !== null && newLast.face !== undefined) {
-                    newLastSelector = `.board-cell[data-f="${newLast.face}"][data-r="${newLast.row}"][data-c="${newLast.col}"]`;
-                }
-                const newLastEl = document.querySelector(newLastSelector);
-                if (newLastEl) {
-                    newLastEl.classList.add('current');
-                    applyDensityToCell(newLastEl);
-                }
-            }
 
             updateWordInputFromPath();
             BoardAudio.playTileSound(mouseState.selectedPath.length);
@@ -12745,14 +12745,9 @@ function handleSubanagramsTileClick(cell, r, c, f, letter, key) {
     mouseState.visitedCells.add(key);
     mouseState.selectedPath.push({ row: r, col: c, letter, face: f });
 
-    // Remove 'current' from the previous tile
-    document.querySelectorAll('.board-cell.current').forEach(cEl => {
-        cEl.classList.remove('current');
-        applyDensityToCell(cEl);
-    });
-
-    // Mark newly clicked cell as selected and current
-    cell.classList.add('selected', 'current');
+    // In Subanagrams, all tiles in the sequence get the exact same highlight
+    cell.classList.add('selected');
+    cell.classList.remove('current');
     applyDensityToCell(cell);
 
     updateWordInputFromPath();
