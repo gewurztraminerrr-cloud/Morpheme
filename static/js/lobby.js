@@ -1008,7 +1008,11 @@ window.switchLobbyPanel = function(panelId, smooth = false) {
     const el = document.getElementById('mobile-panel-' + window._currentLobbyPanel);
     if (!el) return;
 
-    const targetLeft = el.offsetLeft;
+    let targetLeft = el.offsetLeft;
+    if (targetLeft <= 0 && window._currentLobbyPanel === 'main') {
+        const solo = document.getElementById('mobile-panel-solo');
+        targetLeft = (solo && solo.offsetWidth > 0) ? solo.offsetWidth : (lobbyGrid.clientWidth || window.innerWidth);
+    }
     if (Math.abs(lobbyGrid.scrollLeft - targetLeft) <= 2) {
         return;
     }
@@ -1036,6 +1040,9 @@ window._restoreLobbyPanel = function() {
     function updateActiveLobbyPanelTrack() {
         if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
         scrollDebounceTimer = setTimeout(() => {
+            const lobbyPage = document.getElementById('page-lobby');
+            if (!lobbyPage || !lobbyPage.classList.contains('active')) return;
+
             const activeEl = document.activeElement;
             if (activeEl && (activeEl.id === 'rating-filter' || (typeof activeEl.closest === 'function' && activeEl.closest('#mobile-panel-rooms')))) {
                 window._currentLobbyPanel = 'rooms';

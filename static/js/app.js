@@ -812,15 +812,21 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 4. Allow 120ms for the physical 3D flattening animation to complete visually before switching views
         setTimeout(() => {
-            const pLoad = document.getElementById('page-loading');
-            const pLobby = document.getElementById('page-lobby');
-            if (pLoad) {
-                pLoad.classList.remove('active');
-                pLoad.style.display = 'none';
+            if (typeof adjustLobbyLayoutForDevice === 'function') {
+                adjustLobbyLayoutForDevice();
             }
-            if (pLobby) {
-                pLobby.classList.add('active');
-                pLobby.style.display = 'flex';
+            document.body.classList.remove('loading-active');
+            document.body.classList.add('lobby-active');
+
+            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (isMobile) {
+                const lobbyGrid = document.querySelector('.lobby-grid');
+                const mainPanel = document.getElementById('mobile-panel-main');
+                if (lobbyGrid && mainPanel) {
+                    const soloPanel = document.getElementById('mobile-panel-solo') || lobbyGrid.firstElementChild;
+                    const targetLeft = (mainPanel.offsetLeft > 0) ? mainPanel.offsetLeft : (soloPanel ? (soloPanel.offsetWidth || lobbyGrid.clientWidth) : lobbyGrid.clientWidth);
+                    if (targetLeft > 0) lobbyGrid.scrollLeft = targetLeft;
+                }
             }
 
             try {
@@ -2298,6 +2304,25 @@ window.showPage = showPage;
         o.classList.remove('forced-show');
         o.classList.add('hidden');
     });
+
+    // Synchronize body classes & layout before page reveal so no element displacements occur
+    if (pageId === 'page-lobby') {
+        document.body.classList.remove('loading-active');
+        document.body.classList.add('lobby-active');
+        if (typeof adjustLobbyLayoutForDevice === 'function') {
+            adjustLobbyLayoutForDevice();
+        }
+        const isMob = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        if (isMob) {
+            const lobbyGrid = document.querySelector('.lobby-grid');
+            const mainPanel = document.getElementById('mobile-panel-main');
+            if (lobbyGrid && mainPanel) {
+                const soloPanel = document.getElementById('mobile-panel-solo') || lobbyGrid.firstElementChild;
+                const targetLeft = (mainPanel.offsetLeft > 0) ? mainPanel.offsetLeft : (soloPanel ? (soloPanel.offsetWidth || lobbyGrid.clientWidth) : lobbyGrid.clientWidth);
+                if (targetLeft > 0) lobbyGrid.scrollLeft = targetLeft;
+            }
+        }
+    }
 
     // 1. Update Page Visibility
     document.querySelectorAll('.page').forEach(page => {

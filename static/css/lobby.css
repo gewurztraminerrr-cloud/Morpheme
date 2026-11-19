@@ -83,7 +83,6 @@
         width: 100% !important;
         max-width: 100% !important;
         min-width: 0 !important;
-        transition: grid-template-columns 0.3s ease, gap 0.3s ease;
     }
 
     #mobile-panel-main,
@@ -405,7 +404,6 @@
     padding: 5px 6px;
     margin-bottom: 8px;
     box-sizing: border-box;
-    transition: height 0.32s cubic-bezier(0.16, 1, 0.3, 1), min-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), padding 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .rating-filter-buttons-row {
@@ -736,7 +734,6 @@
     flex-direction: column;
     gap: 12px;
     box-sizing: border-box !important;
-    transition: flex 0.32s cubic-bezier(0.16, 1, 0.3, 1), height 0.32s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, padding 0.28s ease, margin 0.28s ease;
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--text-primary-rgb), 0.35) rgba(255, 255, 255, 0.04);
 }

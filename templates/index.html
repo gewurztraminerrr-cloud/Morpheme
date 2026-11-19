@@ -195,11 +195,11 @@
     </script>
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1794330000" as="style">
-    <link rel="preload" href="/css/lobby.css?v=1794220000" as="style">
-    <link rel="preload" href="/css/play.css?v=1794380004" as="style">
+    <link rel="preload" href="/css/lobby.css?v=1794380005" as="style">
+    <link rel="preload" href="/css/play.css?v=1794380005" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1794330000" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/lobby.css?v=1794220000" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/play.css?v=1794380004" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/lobby.css?v=1794380005" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1794380005" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
@@ -2067,28 +2067,37 @@
                 // Allow 120ms for the physical 3D flattening animation to complete visually before switching views
                 setTimeout(function() {
                     window._currentLobbyPanel = 'main';
-                    var pLobby = document.getElementById('page-lobby');
-                    var lobbyGrid = document.querySelector('.lobby-grid');
-                    var mainPanel = document.getElementById('mobile-panel-main');
-                    if (pLobby && lobbyGrid && mainPanel) {
-                        pLobby.classList.add('active');
-                        pLobby.style.display = 'flex';
-                        lobbyGrid.scrollLeft = mainPanel.offsetLeft;
+                    document.body.classList.remove('loading-active');
+                    document.body.classList.add('lobby-active');
+                    if (typeof window.adjustLobbyLayoutForDevice === 'function') {
+                        window.adjustLobbyLayoutForDevice();
                     }
-
-                    var pLoad = document.getElementById('page-loading');
-                    if (pLoad) {
-                        pLoad.classList.remove('active');
-                        pLoad.style.display = 'none';
+                    var isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        var lobbyGrid = document.querySelector('.lobby-grid');
+                        var mainPanel = document.getElementById('mobile-panel-main');
+                        if (lobbyGrid && mainPanel) {
+                            var soloPanel = document.getElementById('mobile-panel-solo') || lobbyGrid.firstElementChild;
+                            var targetLeft = (mainPanel.offsetLeft > 0) ? mainPanel.offsetLeft : (soloPanel ? (soloPanel.offsetWidth || lobbyGrid.clientWidth) : lobbyGrid.clientWidth);
+                            if (targetLeft > 0) lobbyGrid.scrollLeft = targetLeft;
+                        }
                     }
 
                     if (typeof window.showPage === 'function') {
                         window.showPage('page-lobby');
                     } else if (typeof showPage === 'function') {
                         showPage('page-lobby');
-                    } else if (pLobby) {
-                        pLobby.classList.add('active');
-                        pLobby.style.display = 'flex';
+                    } else {
+                        var pLoad = document.getElementById('page-loading');
+                        var pLobby = document.getElementById('page-lobby');
+                        if (pLoad) {
+                            pLoad.classList.remove('active');
+                            pLoad.style.display = 'none';
+                        }
+                        if (pLobby) {
+                            pLobby.classList.add('active');
+                            pLobby.style.display = 'flex';
+                        }
                     }
 
                     if (typeof window.updateAuthUI === 'function') {
@@ -3523,6 +3532,22 @@
                     <div class="mobile-lobby-spacer"></div>
                 </div>
             </div>
+
+            <script>
+                // Synchronously nest Solo & Friends inside Game Types on desktop at initial DOM parse
+                (function() {
+                    try {
+                        var isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                        if (!isMobile) {
+                            var sf = document.getElementById('mobile-panel-solo');
+                            var gt = document.getElementById('mobile-panel-main');
+                            if (sf && gt && sf.parentNode !== gt) {
+                                gt.appendChild(sf);
+                            }
+                        }
+                    } catch(e) {}
+                })();
+            </script>
 
             <!-- Lobby Players & Chat Sliding Drawer -->
             <div id="lobby-chat-drawer" class="lobby-chat-drawer">
@@ -10450,9 +10475,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1794290000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794380004"></script>
-    <script src="/js/lobby.js?v=1794380004"></script>
-    <script src="/js/play.js?v=1794380004"></script>
+    <script src="/js/app.js?v=1794380005"></script>
+    <script src="/js/lobby.js?v=1794380005"></script>
+    <script src="/js/play.js?v=1794380005"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
