@@ -5678,10 +5678,29 @@ function rebuildTileToWordsMap() {
 
     const isTransposed = !!window.isBoardTransposed;
     const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
+    const isSubanagrams = (state.game_type === 'subanagrams') ||
+                          (state.room_id && state.room_id.includes('subanagrams')) ||
+                          (board.length === 1 && Array.isArray(board[0]) && !is3D) ||
+                          document.body.classList.contains('is-subanagrams');
     const roundId = `${state.room_id}_${state.current_round}`;
     const cacheKey = `${roundId}_${isTransposed}`;
 
     const paths = state.all_words_paths || {};
+
+    let subLetters = [];
+    if (isSubanagrams) {
+        if (Array.isArray(board)) {
+            if (board.length === 1 && Array.isArray(board[0])) {
+                subLetters = board[0];
+            } else if (typeof board[0] === 'string' && board.length > 1) {
+                subLetters = board;
+            } else if (Array.isArray(board[0])) {
+                subLetters = board.flat();
+            } else {
+                subLetters = board;
+            }
+        }
+    }
 
     // 3D Neighbors Helper matching board_generator.py logic
     function getCubeNeighbors(f, r, c) {
@@ -5732,6 +5751,23 @@ function rebuildTileToWordsMap() {
         const upperWord = word.toUpperCase();
         const wordLen = upperWord.length;
         const matchingKeys = new Set(); // Stores "f,r,c" or "r,c" keys
+
+        if (isSubanagrams) {
+            for (let c = 0; c < subLetters.length; c++) {
+                const rawChar = String(subLetters[c] || '').toUpperCase().trim();
+                const options = rawChar.includes('/') ? rawChar.split('/') : [rawChar];
+                const matches = options.some(opt => {
+                    if (opt === 'Q' || opt === 'QU') {
+                        return upperWord.includes('Q');
+                    }
+                    return upperWord.includes(opt);
+                });
+                if (matches) {
+                    matchingKeys.add(`0,${c}`);
+                }
+            }
+            return matchingKeys;
+        }
 
         if (is3D) {
             function dfs3D(f, r, c, index, visited) {
@@ -5853,25 +5889,24 @@ function rebuildTileToWordsMap() {
 
     // Populate tileToWordsMap by finding ALL cells for every word
     const wordsToMap = new Set();
-    if (paths) {
-        for (const w of Object.keys(paths)) {
-            if (w) wordsToMap.add(w.toUpperCase());
-        }
-    }
-    if (window.lastDisplayAllWordsArgs && Array.isArray(window.lastDisplayAllWordsArgs[0])) {
-        for (const entry of window.lastDisplayAllWordsArgs[0]) {
-            const w = (typeof entry === 'object' && entry !== null) ? (entry.word || '') : (entry || '');
-            if (w) wordsToMap.add(String(w).toUpperCase());
-        }
-    }
-    if (window.lastGameState) {
-        const fallbackWords = window.lastGameState.previous_all_words || window.lastGameState.all_words;
-        if (Array.isArray(fallbackWords)) {
-            for (const entry of fallbackWords) {
+    function addWordsToSet(wordsObj) {
+        if (!wordsObj) return;
+        if (Array.isArray(wordsObj)) {
+            for (const entry of wordsObj) {
                 const w = (typeof entry === 'object' && entry !== null) ? (entry.word || '') : (entry || '');
                 if (w) wordsToMap.add(String(w).toUpperCase());
             }
+        } else if (typeof wordsObj === 'object') {
+            for (const w of Object.keys(wordsObj)) {
+                if (w) wordsToMap.add(String(w).toUpperCase());
+            }
         }
+    }
+    if (paths) addWordsToSet(paths);
+    if (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[0]) addWordsToSet(window.lastDisplayAllWordsArgs[0]);
+    if (window.lastGameState) {
+        addWordsToSet(window.lastGameState.previous_all_words);
+        addWordsToSet(window.lastGameState.all_words);
     }
 
     for (const wordUpper of wordsToMap) {
@@ -5980,7 +6015,21 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         const filterKey = (f !== null && f !== undefined && f !== -1) ? `${f},${r},${c}` : `${r},${c}`;
         const matchingWords = window.tileToWordsMap[filterKey] || new Set();
         const filterLetter = (window.intermissionTileFilter.letter || '').toUpperCase().trim();
+        const isSub = (window.lastGameState && (window.lastGameState.game_type === 'subanagrams' || (window.lastGameState.room_id && window.lastGameState.room_id.includes('subanagrams')))) || document.body.classList.contains('is-subanagrams');
+
         displayWords = displayWords.filter(entry => {
+            if (isSub) {
+                if (filterLetter) {
+                    const options = filterLetter.includes('/') ? filterLetter.split('/') : [filterLetter];
+                    return options.some(opt => {
+                        if (opt === 'Q' || opt === 'QU') {
+                            return entry.wordUpper.includes('Q');
+                        }
+                        return entry.wordUpper.includes(opt);
+                    });
+                }
+                return matchingWords.has(entry.wordUpper);
+            }
             if (!matchingWords.has(entry.wordUpper)) return false;
             if (filterLetter) {
                 const options = filterLetter.includes('/') ? filterLetter.split('/') : [filterLetter];
@@ -9576,11 +9625,15 @@ function reapplyBoardHighlights() {
         }
     }
 
-    // 2. Reapply typing highlights (input box) - SKIP IF MOUSING to avoid "double-highlighting" the board
+    // 2. Reapply typing highlights (input box) - SKIP IF MOUSING or if tiles are actively selected via touch/mouse
     const wordInputEl = document.getElementById('word-input');
     const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
+    const hasActiveBoardSelection = mouseState && (
+        mouseState.isDown || 
+        (mouseState.selectedPath && mouseState.selectedPath.length > 0)
+    );
 
-    if (wordInputEl && wordInputEl.value.trim() && !(mouseState && mouseState.isDown)) {
+    if (wordInputEl && wordInputEl.value.trim() && !hasActiveBoardSelection) {
         const isEnabled = window.userSettings && window.userSettings.highlight_typing !== false;
         if (isEnabled) {
             const word = wordInputEl.value.trim();
@@ -10292,6 +10345,9 @@ document.addEventListener('keydown', (e) => {
     let typingHighlightTimeout = null;
 
     wordInputEl.addEventListener('input', () => {
+        if (window.isUpdatingFromPath) {
+            return;
+        }
         if (wordInputEl.value && wordInputEl.value.trim().length > 0) {
             window._playedCurrentRound = true;
         }
@@ -10355,13 +10411,16 @@ document.addEventListener('keydown', (e) => {
                 c.classList.remove('typing-highlight');
                 cellsToUpdate.add(c);
             });
-            if (!board || (mouseState && mouseState.isDown)) {
+            const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
+            const isSub = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
+            const hasBoardSelection = mouseState && (
+                mouseState.isDown || 
+                (mouseState.selectedPath && mouseState.selectedPath.length > 0)
+            );
+            if (!board || hasBoardSelection) {
                 cellsToUpdate.forEach(c => applyDensityToCell(c));
                 return;
             }
-
-            const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
-            const isSub = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
             const path = is3D ? findWordPathOnCube(word, board) : findWordPathOnBoard(word, board);
             if (path) {
                 path.forEach(coord => {
@@ -12798,6 +12857,12 @@ function handleSubanagramsTileClick(cell, r, c, f, letter, key) {
     if (!mouseState.visitedCells) mouseState.visitedCells = new Set();
     const pathLen = mouseState.selectedPath.length;
 
+    // Clear any stale typing highlights when selecting board tiles directly
+    document.querySelectorAll('.board-cell.typing-highlight').forEach(c => {
+        c.classList.remove('typing-highlight');
+        applyDensityToCell(c);
+    });
+
     // Check if clicking the MOST RECENT letter entered in the sequence
     if (pathLen > 0) {
         const lastCell = mouseState.selectedPath[pathLen - 1];
@@ -12975,31 +13040,36 @@ function getLetterFromPathIndex(path, i, isForDisplay = false) {
 }
 
 function updateWordInputFromPath() {
-    const displayWord = mouseState.selectedPath.map((p, i) => getLetterFromPathIndex(mouseState.selectedPath, i, true)).join('');
-    const wordInputEl = document.getElementById('word-input');
-    if (wordInputEl) {
-        wordInputEl.value = displayWord;
-    }
+    window.isUpdatingFromPath = true;
+    try {
+        const displayWord = mouseState.selectedPath.map((p, i) => getLetterFromPathIndex(mouseState.selectedPath, i, true)).join('');
+        const wordInputEl = document.getElementById('word-input');
+        if (wordInputEl) {
+            wordInputEl.value = displayWord;
+        }
 
-    const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile')) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    if (isMobile) {
-        const statusEl = document.getElementById('word-validation-status');
-        if (statusEl) {
-            if (mouseState && mouseState.isDown && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
-                if (validationTimeout) {
-                    clearTimeout(validationTimeout);
-                    validationTimeout = null;
+        const isMobile = (window.innerWidth <= 992) || (document.body && document.body.classList.contains('is-mobile')) || /Mobi|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            const statusEl = document.getElementById('word-validation-status');
+            if (statusEl) {
+                if (mouseState && mouseState.isDown && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
+                    if (validationTimeout) {
+                        clearTimeout(validationTimeout);
+                        validationTimeout = null;
+                    }
+                    const capitalLetters = displayWord.toUpperCase();
+                    statusEl.textContent = capitalLetters;
+                    statusEl.className = 'validation-status status-swiping';
+                    statusEl.style.color = '';
+                } else if (statusEl.classList.contains('status-swiping')) {
+                    statusEl.textContent = '';
+                    statusEl.className = 'validation-status';
+                    statusEl.style.color = '';
                 }
-                const capitalLetters = displayWord.toUpperCase();
-                statusEl.textContent = capitalLetters;
-                statusEl.className = 'validation-status status-swiping';
-                statusEl.style.color = '';
-            } else if (statusEl.classList.contains('status-swiping')) {
-                statusEl.textContent = '';
-                statusEl.className = 'validation-status';
-                statusEl.style.color = '';
             }
         }
+    } finally {
+        window.isUpdatingFromPath = false;
     }
 }
 
