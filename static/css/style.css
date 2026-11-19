@@ -7987,6 +7987,107 @@ body.theme-white .theme-btn.active {
     margin-bottom: 15px;
 }
 
+.guest-msg-card p {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 5px;
+}
+
+.guest-msg-card .guest-join-btn,
+#tournament-guest-join-btn {
+    background: linear-gradient(135deg, #e94560, #d63031) !important;
+    color: #ffffff !important;
+    font-weight: 800 !important;
+    font-size: 1.05rem !important;
+    padding: 12px 32px !important;
+    margin-top: 20px !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 15px rgba(233, 69, 96, 0.4) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+    display: inline-block !important;
+    letter-spacing: 0.3px !important;
+    transition: transform 0.2s ease, filter 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+.guest-msg-card .guest-join-btn:hover,
+#tournament-guest-join-btn:hover {
+    background: linear-gradient(135deg, #ff5773, #e94560) !important;
+    color: #ffffff !important;
+    filter: brightness(1.08) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(233, 69, 96, 0.55) !important;
+}
+
+.guest-msg-card .guest-join-btn:active,
+#tournament-guest-join-btn:active {
+    transform: translateY(1px) !important;
+    filter: brightness(0.95) !important;
+    box-shadow: 0 2px 8px rgba(233, 69, 96, 0.4) !important;
+}
+
+/* Light layout overrides for Tournament Guest Card & Join Button */
+body.theme-white .guest-msg-card,
+[class*="theme-white"] .guest-msg-card,
+body[class*="theme-light-"] .guest-msg-card,
+[class*="theme-light-"] .guest-msg-card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08) !important;
+    color: var(--text-primary) !important;
+}
+
+body.theme-white .guest-msg-card h3,
+[class*="theme-white"] .guest-msg-card h3,
+body[class*="theme-light-"] .guest-msg-card h3,
+[class*="theme-light-"] .guest-msg-card h3 {
+    color: var(--text-primary) !important;
+    font-weight: 800 !important;
+}
+
+body.theme-white .guest-msg-card p,
+[class*="theme-white"] .guest-msg-card p,
+body[class*="theme-light-"] .guest-msg-card p,
+[class*="theme-light-"] .guest-msg-card p {
+    color: var(--text-primary) !important;
+    opacity: 0.88 !important;
+}
+
+body.theme-white .guest-msg-card .guest-join-btn,
+[class*="theme-white"] .guest-msg-card .guest-join-btn,
+body[class*="theme-light-"] .guest-msg-card .guest-join-btn,
+[class*="theme-light-"] .guest-msg-card .guest-join-btn {
+    background: linear-gradient(135deg, #e11d48, #be123c) !important;
+    color: #ffffff !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(225, 29, 72, 0.35) !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25) !important;
+}
+
+body.theme-white .guest-msg-card .guest-join-btn:hover,
+[class*="theme-white"] .guest-msg-card .guest-join-btn:hover,
+body[class*="theme-light-"] .guest-msg-card .guest-join-btn:hover,
+[class*="theme-light-"] .guest-msg-card .guest-join-btn:hover {
+    background: linear-gradient(135deg, #f43f5e, #e11d48) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 20px rgba(225, 29, 72, 0.5) !important;
+}
+
+body.theme-black .guest-msg-card .guest-join-btn {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: 1px solid #ffffff !important;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3) !important;
+    text-shadow: none !important;
+}
+
+body.theme-black .guest-msg-card .guest-join-btn:hover {
+    background: #e0e0e0 !important;
+    color: #000000 !important;
+    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.5) !important;
+}
+
 /* Special Tournament Button Color */
 .nav-btn.has-turn,
 #nav-tournaments-btn.has-turn {
