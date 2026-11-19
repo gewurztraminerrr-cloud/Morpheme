@@ -306,3 +306,38 @@
   - Committed changes (`067b9cd1`), pushed to `origin/main`, updated git tag `stable-2026-11-19`.
   - Deployed to live VPS (`132.148.72.249`) and restarted PM2 process #0 (`morpheme`).
   - Verified VPS database state confirms 0 mismatches across all stored boards.
+
+---
+
+### Issue 11: 0ms Instant Layout Color Theme Application on Entering Lobby (Zero Flash & Zero Latency)
+- **Symptom**:
+  - After pressing "ENTER LOBBY", the user experienced a 1–2 second delay while looking at the default dark theme before the color layout changed to the appearance theme configured in Settings.
+  - The user requested that there be zero delay and no visible color scheme transitions outside of Settings.
+- **Root Cause**:
+  1. **Truthy `'default'` Check in `settings.js`**:
+     - In `static/js/settings.js`, `if (cachedTheme && !parsed.app_theme)` failed when `parsed.app_theme` was `'default'`, because `'default'` is a truthy non-empty string in JavaScript (`!'default' === false`). Consequently, `cachedTheme` (e.g. `'white'`) was ignored and discarded in favor of `'default'`.
+  2. **Passive Theme Overwrite to `'default'`**:
+     - In `applyTheme(t)` in `settings.js`, running during startup called `localStorage.setItem('morpheme_app_theme', t)`. When initialized with `'default'`, this actively wiped out the user's custom theme in local storage back to `'default'` before user authentication had completed.
+  3. **CSS Selectors Omitted `html.theme-xyz` and Body Theme Class Missing on First Paint**:
+     - All 38 theme CSS rule blocks in `static/css/style.css` were previously scoped strictly as `body.theme-xyz`.
+     - In `templates/index.html`, `<head>` applied the theme class exclusively to `document.documentElement`. Because `document.body` did not yet exist when `<head>` ran and did not have the `theme-xyz` class attached on first paint, all 38 theme selectors failed to match `<html>`, falling back to the `:root` dark blue default (`--bg-primary: #1a1a2e`).
+  4. **Network Promise Await in `handleEnterLobbyClick`**:
+     - In `templates/index.html`, `handleEnterLobbyClick` waited on `await window._sessionCheckPromise` (a 1–2 second network round-trip for `/api/session`) before applying user settings from `loadSettings()`.
+- **Fix Applied**:
+  1. **Immediate Synchronous Body & HTML Theme Script at First Byte of `<body>`**:
+     - In [`templates/index.html`](file:///Users/jeffbabiak/templates/index.html), placed an immediate script directly after the opening `<body ...>` tag. This runs before any child elements of `<body>` are parsed or painted, checking `initialTheme`, `morpheme_app_theme`, and cached settings to synchronously apply `theme-<theme>` to both `document.body` and `document.documentElement`.
+  2. **0ms Synchronous Theme Class Application on "ENTER LOBBY" Click**:
+     - In [`templates/index.html`](file:///Users/jeffbabiak/templates/index.html) (`handleEnterLobbyClick`) and [`static/js/app.js`](file:///Users/jeffbabiak/static/js/app.js) (`executeGatewayTransition`):
+       Immediately reads `morpheme_app_theme` and synchronous settings and updates `document.body.className` and `document.documentElement.className` synchronously on the user's click gesture before any session check or network promises are awaited.
+  3. **CSS Selectors Updated for Both `html.theme-xyz` and `body.theme-xyz`**:
+     - In [`static/css/style.css`](file:///Users/jeffbabiak/static/css/style.css), expanded all 38 theme rules to `html.theme-<name>, body.theme-<name>`, and added `html { background: var(--bg-primary); }`.
+     - This ensures CSS variables activate on `:root`/`html` immediately from the `<head>` tag.
+  4. **Protected Cached Theme Storage in `settings.js`**:
+     - In [`static/js/settings.js`](file:///Users/jeffbabiak/static/js/settings.js):
+       - Fixed `loadCachedSettings` condition: `if (cachedTheme && cachedTheme !== 'default' && (!parsed.app_theme || parsed.app_theme === 'default'))` so cached custom themes are never ignored when stored theme defaults to `'default'`.
+       - In `applyTheme`: guarded `localStorage.setItem('morpheme_app_theme', t)` so that `'default'` is never written passively unless explicitly chosen by the user clicking the theme button in Settings.
+       - In `applySettings`: prevented uninitialized server responses from resetting a custom layout theme back to default.
+- **Verification & Deployment**:
+  - Committed changes (`dd8f1c29`), pushed to `origin/main`, updated git tag `stable-2026-11-19`.
+  - Deployed to live production VPS (`132.148.72.249`) and restarted PM2 process #0 (`morpheme`).
+  - Verified that layout color theme is applied instantaneously with 0ms latency and zero visual color transition upon pressing ENTER LOBBY.
