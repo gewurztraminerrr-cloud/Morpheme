@@ -7917,6 +7917,7 @@ def send_lobby_chat():
 def get_room_state(room_id):
     uid = session.get('user_id')
     user_rating_for_snapshot = None
+    is_bg_poll = (request.args.get('bg') == '1')
     if uid:
         room_manager.update_presence(uid)
     
@@ -8021,7 +8022,6 @@ def get_room_state(room_id):
                 except (ValueError, TypeError):
                     pass
 
-            is_bg_poll = (request.args.get('bg') == '1')
             if not is_bg_poll:
                 room.update_player_activity(uid)
 
