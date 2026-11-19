@@ -2316,8 +2316,8 @@ class GameRoom:
                 # OPTIMIZATION: Calculate fast length-based scores instantly to avoid transition delay, and refine in background thread!
                 if not getattr(self, 'solved_words_with_scores', None) or not self.solved_words_with_scores:
                     print(f"[GameRoom] Transitioning {self.room_id}: computing missing solved_words_with_scores.")
+                    from scoring import calculate_word_score
                     if getattr(self, 'game_type', None) == 'subanagrams':
-                        from scoring import calculate_word_score
                         bw = getattr(self, 'bonus_word', None)
                         self.solved_words_with_scores = {
                             w: calculate_word_score(w, bw, board_format='Normal', return_details=True)
@@ -3105,28 +3105,78 @@ class GameRoom:
             return _room_manager_instance._get_bonus_word(length=length, dictionary=dictionary, alternating=alternating, difficulty=difficulty, exclude=exclude)
         return 'PLANETS'
 
+_GLOBAL_RECENT_BONUS_WORDS = []
+_GLOBAL_BONUS_LOCK = threading.Lock()
+
+def _init_global_bonus_words():
+    global _GLOBAL_RECENT_BONUS_WORDS
+    try:
+        from db import get_db
+        with get_db() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT bonus_word FROM round_history WHERE bonus_word IS NOT NULL AND bonus_word != '' ORDER BY id DESC LIMIT 50")
+            rows = cursor.fetchall()
+            words = []
+            for r in rows:
+                bw = (r['bonus_word'] if isinstance(r, dict) else r[0])
+                if bw and str(bw).strip().upper() not in ['NONE', 'NULL', 'PLANETS']:
+                    words.append(str(bw).strip().upper())
+            with _GLOBAL_BONUS_LOCK:
+                _GLOBAL_RECENT_BONUS_WORDS = list(dict.fromkeys(reversed(words)))[-50:]
+            print(f"[BonusWord] Initialized global bonus word history with {len(_GLOBAL_RECENT_BONUS_WORDS)} words: {_GLOBAL_RECENT_BONUS_WORDS[-10:]}")
+    except Exception as e:
+        print(f"[BonusWord] Could not initialize global bonus words from DB: {e}")
+
+_init_global_bonus_words()
+
+def _record_global_bonus_word(bw):
+    if not bw: return
+    bw_up = str(bw).upper().strip()
+    if not bw_up or bw_up in ['NONE', 'NULL', 'PLANETS']: return
+    with _GLOBAL_BONUS_LOCK:
+        if bw_up in _GLOBAL_RECENT_BONUS_WORDS:
+            _GLOBAL_RECENT_BONUS_WORDS.remove(bw_up)
+        _GLOBAL_RECENT_BONUS_WORDS.append(bw_up)
+        if len(_GLOBAL_RECENT_BONUS_WORDS) > 50:
+            del _GLOBAL_RECENT_BONUS_WORDS[:-50]
+
 def _record_room_bonus_word(room, bw):
-    """Record a bonus word in the room's rolling history to prevent back-to-back repeats."""
-    if not room or not bw:
+    """Record a bonus word in the room's rolling history and global history to prevent back-to-back repeats."""
+    if not bw:
         return
     bw_up = str(bw).upper().strip()
-    if not hasattr(room, 'recent_bonus_words') or room.recent_bonus_words is None:
-        room.recent_bonus_words = []
-    if bw_up and bw_up not in room.recent_bonus_words:
-        room.recent_bonus_words.append(bw_up)
-        if len(room.recent_bonus_words) > 10:
-            room.recent_bonus_words = room.recent_bonus_words[-10:]
+    if not bw_up or bw_up in ['NONE', 'NULL', 'PLANETS']:
+        return
+    _record_global_bonus_word(bw_up)
+    if room:
+        if not hasattr(room, 'recent_bonus_words') or room.recent_bonus_words is None:
+            room.recent_bonus_words = []
+        if bw_up not in room.recent_bonus_words:
+            room.recent_bonus_words.append(bw_up)
+            if len(room.recent_bonus_words) > 20:
+                room.recent_bonus_words = room.recent_bonus_words[-20:]
+        if not hasattr(room, 'bonus_word_history') or room.bonus_word_history is None:
+            room.bonus_word_history = []
+        if bw_up not in room.bonus_word_history:
+            room.bonus_word_history.append(bw_up)
+            if len(room.bonus_word_history) > 20:
+                room.bonus_word_history = room.bonus_word_history[-20:]
 
 def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictionary='NWL', is_checkerboard=False, room_manager=None, extra_exclude=None):
     """
     Selects a bonus word guaranteeing:
     1. It NEVER matches the immediately preceding round's bonus word (room.previous_bonus_word or ghost_bonus).
-    2. It NEVER repeats any recent bonus words for the room (room.recent_bonus_words).
+    2. It NEVER repeats any recent bonus words for the room or globally across the server (_GLOBAL_RECENT_BONUS_WORDS).
     3. It NEVER ends in ING or INGS.
-    4. It matches target_len if possible (or falls back to length in [6..10]).
+    4. It strictly matches target_len (between 6 and 10).
+    5. It is present on the board. If missing, it is embedded onto the board.
     """
     import random
     exclude_set = set()
+    with _GLOBAL_BONUS_LOCK:
+        for gw in _GLOBAL_RECENT_BONUS_WORDS[-30:]:
+            if gw: exclude_set.add(gw)
+
     if extra_exclude:
         if isinstance(extra_exclude, (list, tuple, set)):
             for e in extra_exclude:
@@ -3141,9 +3191,13 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
             exclude_set.add(str(room.bonus_word).upper().strip())
         for rb in getattr(room, 'recent_bonus_words', []) or []:
             if rb: exclude_set.add(str(rb).upper().strip())
+        for bh in getattr(room, 'bonus_word_history', []) or []:
+            if bh: exclude_set.add(str(bh).upper().strip())
 
     exclude_set.discard('')
     exclude_set.discard('NONE')
+    exclude_set.discard('NULL')
+    exclude_set.discard('PLANETS')
 
     try:
         target_len = int(target_len)
@@ -3152,19 +3206,47 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
     target_len = max(6, min(10, target_len))
 
     words_list = list(target_words) if target_words else []
+    rm = room_manager or _room_manager_instance
 
+    # 1. Candidate check: if valid, matching exact target_len, in words_list (if provided) and not excluded
     cand_str = str(candidate or '').upper().strip()
-    if cand_str and cand_str != 'NONE' and len(cand_str) == target_len and not cand_str.endswith(('ING', 'INGS')) and cand_str not in exclude_set:
+    if cand_str and cand_str not in ('NONE', 'NULL', 'PLANETS') and len(cand_str) == target_len and not cand_str.endswith(('ING', 'INGS')) and cand_str not in exclude_set:
         if not words_list or cand_str in words_list:
             _record_room_bonus_word(room, cand_str)
             return cand_str
 
+    # 2. Check exact matches from the current words on the board
     valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in exclude_set]
     if valid_exact:
         chosen = random.choice(valid_exact).upper()
         _record_room_bonus_word(room, chosen)
         return chosen
 
+    # 3. If no exact match on board, try to get a new bonus word of target_len and embed it on the board
+    if rm and hasattr(rm, '_get_bonus_word'):
+        chosen = rm._get_bonus_word(length=target_len, dictionary=dictionary, alternating=is_checkerboard, exclude=list(exclude_set))
+        if chosen and chosen.upper() not in exclude_set:
+            chosen = chosen.upper()
+            # If room and board exist, embed it onto the board so it is genuinely playable!
+            if room and getattr(room, 'board', None) and hasattr(rm, 'board_generator'):
+                try:
+                    bg = rm.board_generator
+                    depth = 6 if (len(room.board) == 6 and isinstance(room.board[0], list) and isinstance(room.board[0][0], list)) else 1
+                    emb = bg._embed_bonus_word_cube(room.board, chosen, is_checkerboard=is_checkerboard) if depth > 1 else bg._embed_bonus_word(room.board, chosen, is_checkerboard=is_checkerboard)
+                    if emb:
+                        # Re-solve to update all_words and all_words_paths
+                        min_l = getattr(room, 'current_min_length', 3)
+                        use_aw = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                        resolved = bg._solve_board(room.board, dictionary=getattr(room, 'current_dictionary', 'NWL'), min_word_length=min_l, use_added_words=use_aw)
+                        if resolved:
+                            room.all_words_paths = {w: p for w, p in resolved.items() if len(w) >= min_l}
+                            room.all_words = set(room.all_words_paths.keys())
+                except Exception as emb_err:
+                    print(f"[pick_distinct_bonus_word] Note: Could not embed chosen word '{chosen}': {emb_err}")
+            _record_room_bonus_word(room, chosen)
+            return chosen
+
+    # 4. Fallback: closest length from words_list, but strictly excluding recent words
     valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in exclude_set]
     if valid_range:
         valid_range.sort(key=lambda w: abs(len(w) - target_len))
@@ -3175,16 +3257,19 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
             _record_room_bonus_word(room, chosen)
             return chosen
 
-    rm = room_manager or _room_manager_instance
-    if rm and hasattr(rm, '_get_bonus_word'):
-        chosen = rm._get_bonus_word(length=target_len, dictionary=dictionary, alternating=is_checkerboard, exclude=list(exclude_set))
-        if chosen and chosen.upper() not in exclude_set:
-            _record_room_bonus_word(room, chosen.upper())
-            return chosen.upper()
-
+    # 5. Last resort: any valid word on board not in exclude_set
     any_valid = [w for w in words_list if not w.upper().endswith(('ING', 'INGS')) and w.upper() not in exclude_set]
     if any_valid:
         chosen = random.choice(any_valid).upper()
+        _record_room_bonus_word(room, chosen)
+        return chosen
+
+    # If literally everything is excluded, pick a fresh target_len word from word_validator
+    from word_validator import word_validator
+    cand_dict = word_validator.csw_by_len.get(target_len, []) if 'CSW' in str(dictionary).upper() else word_validator.nwl_by_len.get(target_len, [])
+    fallback_pool = [w for w in cand_dict if not w.upper().endswith(('ING', 'INGS')) and w.upper() not in exclude_set]
+    if fallback_pool:
+        chosen = random.choice(fallback_pool).upper()
         _record_room_bonus_word(room, chosen)
         return chosen
 
@@ -3216,7 +3301,7 @@ def _record_fallback_hash_used(board_hash):
     if len(_RECENTLY_USED_FALLBACK_HASHES) > _MAX_RECENT_FALLBACK_HASHES:
         _RECENTLY_USED_FALLBACK_HASHES.pop(0)
 
-def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None, min_word_length=None, difficulty=None, sequence_length=None):
+def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=60, dictionary='NWL', use_added_words=False, target_range=None, min_word_length=None, difficulty=None, sequence_length=None, bonus_word_len=None):
     """Dynamically generate a valid emergency fallback board that matches room dimensions and spells correct words."""
     import random
     from board_generator import BoardGenerator, serialize_param_key, pop_cached_board, refill_board_cache_bg, pop_any_cached_board
@@ -3466,6 +3551,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 board_format,
                 min_word_length,
                 use_added_words,
+                bonus_word_len=bonus_word_len,
                 difficulty=norm_target_diff
             )
             if relaxed_res:
@@ -3504,8 +3590,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
 
     # --- FAST LIVE GENERATION ATTEMPT BEFORE RANDOM GRID ---
     try:
+        target_emergency_bw_len = int(bonus_word_len) if bonus_word_len else (7 if min_word_length < 8 else 8)
+        target_emergency_bw_len = max(6, min(10, target_emergency_bw_len))
         if _room_manager_instance and hasattr(_room_manager_instance, '_get_bonus_word'):
-            emergency_bw = _room_manager_instance._get_bonus_word(length=7 if min_word_length < 8 else 8, dictionary=dictionary)
+            emergency_bw = _room_manager_instance._get_bonus_word(length=target_emergency_bw_len, dictionary=dictionary)
         else:
             emergency_bw = random.choice(['DIAMOND', 'PAINTER', 'CAPTIVE', 'SILVERS', 'WEATHER', 'MONSTER', 'STATION', 'JOURNEY'])
         live_res = bg.generate_board(
@@ -5655,7 +5743,8 @@ class RoomManager:
                 if len(room.board_fingerprint_history) > 10:
                     room.board_fingerprint_history = room.board_fingerprint_history[-10:]
 
-            _target_bw_sr = int(room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
+            _revealed_bw_sr = getattr(room, 'frozen_revealed_params', {}).get('bonus_word_length') if getattr(room, 'frozen_revealed_params', None) else None
+            _target_bw_sr = int(_revealed_bw_sr or room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
             if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                 _solo_bw_c = room.initial_solo_params.get('bonus_word_length', 'random')
                 if _solo_bw_c and str(_solo_bw_c).lower() not in ['random', '0', 'none', 'null', 'nan']:
@@ -7648,7 +7737,8 @@ class RoomManager:
                         print(f"[start_next_round] Cache miss for {room_id}. Generating instant emergency fallback board for format '{fmt_val}'.")
                         candidate = get_emergency_fallback_board(
                             room.board_dimensions, fmt_val, room.time_limit,
-                            dictionary=dict_val, use_added_words=use_aw_val, target_range=target_range, min_word_length=m_len
+                            dictionary=dict_val, use_added_words=use_aw_val, target_range=target_range, min_word_length=m_len,
+                            bonus_word_len=bonus_word_len
                         )
                     
                     if candidate:
@@ -7662,7 +7752,8 @@ class RoomManager:
                             print(f"[start_next_round] Format mismatch (candidate {_ff} != spun {fmt_val}). Regenerating exact format...")
                             candidate = get_emergency_fallback_board(
                                 room.board_dimensions, fmt_val, room.time_limit,
-                                dictionary=dict_val, use_added_words=use_aw_val, target_range=target_range, min_word_length=m_len
+                                dictionary=dict_val, use_added_words=use_aw_val, target_range=target_range, min_word_length=m_len,
+                                bonus_word_len=bonus_word_len
                             )
                             if candidate:
                                 if len(candidate) >= 9:
@@ -7976,6 +8067,7 @@ class RoomManager:
                         e_diff = room.spinner_params.get('difficulty', 'Medium') if room.spinner_params else 'Medium'
                         e_fmt_target = room.spinner_params.get('board_format', 'Normal') if room.spinner_params else 'Normal'
                         e_target_range = room.spinner_params.get('word_count_range') if room.spinner_params else None
+                        e_bw_len = room.spinner_params.get('bonus_word_length') if room.spinner_params else None
                         if not e_target_range:
                             e_target_range = random.choice(['100-200', '200-300', '300-400'])
                         # Use the always-instant emergency fallback (cache → pre-built). Never blocks.
@@ -7985,7 +8077,8 @@ class RoomManager:
                             use_added_words=getattr(room, 'use_added_words', False),
                             target_range=e_target_range,
                             min_word_length=e_min_len or 3,
-                            difficulty=e_diff
+                            difficulty=e_diff,
+                            bonus_word_len=e_bw_len
                         )
                         if e_fallback and len(e_fallback) >= 8:
                             if len(e_fallback) >= 9:
@@ -8190,7 +8283,8 @@ class RoomManager:
                 # Save to DB will occur at the end of promotion after all parameters are finalized
                 
                 current_bw = getattr(room, 'next_round_bonus', '')
-                bw_l = int(room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
+                revealed_bw_l = getattr(room, 'frozen_revealed_params', {}).get('bonus_word_length') if getattr(room, 'frozen_revealed_params', None) else None
+                bw_l = int(revealed_bw_l or room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
                 if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                     _solo_bw_l = room.initial_solo_params.get('bonus_word_length', 'random')
                     if _solo_bw_l and str(_solo_bw_l).lower() not in ['random', '0', 'none', 'null', 'nan']:
@@ -8811,6 +8905,9 @@ class RoomManager:
         
         # PREVENT REPEATS: Filter out words in history or currently active in the room
         final_exclude = set()
+        with _GLOBAL_BONUS_LOCK:
+            for gw in _GLOBAL_RECENT_BONUS_WORDS[-30:]:
+                if gw: final_exclude.add(gw)
         
         # Explicitly passed exclusions (e.g. current/staged words or history list)
         if exclude:
@@ -8831,6 +8928,8 @@ class RoomManager:
             random.shuffle(valid_words)
         
         result = random.choice(valid_words).upper() if valid_words else 'A' * length
+        if result and not result.startswith('A' * length):
+            _record_global_bonus_word(result)
         return result
     
     

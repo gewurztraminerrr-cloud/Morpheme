@@ -492,7 +492,7 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
             if int(params.get('min_word_length', 3)) != int(min_word_length): continue
             if word_count_range and str(params.get('word_count_range', '')).strip() != str(word_count_range).strip(): continue
             cached_bw_l = int(params.get('bonus_word_len', 0) or 0)
-            if bonus_word_len and cached_bw_l > 0 and cached_bw_l != int(bonus_word_len): continue
+            if bonus_word_len and cached_bw_l != int(bonus_word_len): continue
             if difficulty and _normalize_difficulty_base(params.get('difficulty')) != _normalize_difficulty_base(difficulty): continue
             matched_row = row
             break
@@ -1839,11 +1839,19 @@ class BoardGenerator:
         return "FastReRoll"
 
     def _ensure_exact_bonus_word(
-        self, board, all_words_dict, bonus_word, dictionary, min_word_length, final_depth, depth, is_checkerboard, use_aw_flag, bonus_cell=None, difficulty="Medium"
+        self, board, all_words_dict, bonus_word, dictionary, min_word_length, final_depth, depth, is_checkerboard, use_aw_flag, bonus_cell=None, difficulty="Medium", exclude=None
     ):
         """Guarantee that the returned bonus word is on the board and strictly matches the requested bonus_word length."""
         import random
         from word_validator import word_validator
+
+        exclude_set = set()
+        if exclude:
+            if isinstance(exclude, (list, tuple, set)):
+                for e in exclude:
+                    if e: exclude_set.add(str(e).upper().strip())
+            else:
+                exclude_set.add(str(exclude).upper().strip())
 
         req_len = 8
         if isinstance(bonus_word, str) and len(bonus_word.strip()) >= 3:
@@ -1852,59 +1860,64 @@ class BoardGenerator:
             req_len = int(bonus_word)
         req_len = max(int(min_word_length or 3), min(10, req_len))
 
-        # 1. Check if requested bonus_word is already in all_words_dict with exact length
+        # 1. Check if requested bonus_word is already in all_words_dict with exact length and not excluded
         if isinstance(bonus_word, str) and len(bonus_word.strip()) == req_len:
             bw_up = bonus_word.strip().upper()
-            if bw_up in all_words_dict and not bw_up.endswith(("ING", "INGS")):
+            if bw_up in all_words_dict and not bw_up.endswith(("ING", "INGS")) and bw_up not in exclude_set:
                 return bw_up, all_words_dict
 
-        # 2. Check if any word in all_words_dict has the exact requested length (excluding ING/INGS)
-        exact_clean = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS"))]
+        # 2. Check if any word in all_words_dict has the exact requested length (excluding ING/INGS and exclude_set)
+        exact_clean = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS")) and w.upper() not in exclude_set]
         if exact_clean:
             return random.choice(exact_clean).upper(), all_words_dict
 
-        exact_any = [w for w in all_words_dict if len(w) == req_len]
+        exact_any = [w for w in all_words_dict if len(w) == req_len and w.upper() not in exclude_set]
         if exact_any:
             return random.choice(exact_any).upper(), all_words_dict
 
         # 3. Embed an exact-length bonus word onto the board and re-solve
-        cand_word = None
-        if isinstance(bonus_word, str) and len(bonus_word.strip()) == req_len and not bonus_word.strip().upper().endswith(("ING", "INGS")):
-            cand_word = bonus_word.strip().upper()
+        d_up = str(dictionary).upper()
+        if "CSW" in d_up:
+            word_validator.ensure_csw_loaded()
+            pool_set = word_validator.csw_words
         else:
-            d_up = str(dictionary).upper()
-            if "CSW" in d_up:
-                word_validator.ensure_csw_loaded()
-                pool_set = word_validator.csw_words
-            else:
-                pool_set = word_validator.nwl_words
+            pool_set = word_validator.nwl_words
+
+        cands = [w for w in pool_set if len(w) == req_len and not w.endswith(("ING", "INGS")) and "Q" not in w and w.upper() not in exclude_set]
+        if not cands:
             cands = [w for w in pool_set if len(w) == req_len and not w.endswith(("ING", "INGS")) and "Q" not in w]
-            if cands:
-                cand_word = random.choice(cands).upper()
 
-        if cand_word:
-            emb = self._embed_bonus_word_cube(board, cand_word, is_checkerboard=is_checkerboard) if depth > 1 else self._embed_bonus_word(board, cand_word, is_checkerboard=is_checkerboard)
-            if emb:
-                norm_d = _normalize_difficulty_base(difficulty)
-                if norm_d in ["Medium", "Hard"] and self._has_ing_sequence(board, depth, protected_positions=emb):
-                    self._guarantee_no_ing(board, depth, protected_positions=emb)
-                all_words_dict = self._solve_board(
-                    board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=use_aw_flag
-                )
-                if cand_word in all_words_dict:
-                    return cand_word, all_words_dict
-                exact_after = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS"))]
-                if exact_after:
-                    return random.choice(exact_after).upper(), all_words_dict
+        if cands:
+            random.shuffle(cands)
+            for cand_word in cands[:15]:
+                emb = self._embed_bonus_word_cube(board, cand_word, is_checkerboard=is_checkerboard) if depth > 1 else self._embed_bonus_word(board, cand_word, is_checkerboard=is_checkerboard)
+                if emb:
+                    norm_d = _normalize_difficulty_base(difficulty)
+                    if norm_d in ["Medium", "Hard"] and self._has_ing_sequence(board, depth, protected_positions=emb):
+                        self._guarantee_no_ing(board, depth, protected_positions=emb)
+                    all_words_dict = self._solve_board(
+                        board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=use_aw_flag
+                    )
+                    if cand_word in all_words_dict:
+                        return cand_word, all_words_dict
+                    exact_after = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS")) and w.upper() not in exclude_set]
+                    if exact_after:
+                        return random.choice(exact_after).upper(), all_words_dict
 
-        # Fallback: closest length to req_len in all_words_dict
-        suitable = [w for w in all_words_dict if len(w) >= int(min_word_length or 3) and not w.upper().endswith(("ING", "INGS"))]
+        # Fallback: exact matches first
+        exact_sub = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS")) and w.upper() not in exclude_set]
+        if exact_sub:
+            return random.choice(exact_sub).upper(), all_words_dict
+
+        suitable = [w for w in all_words_dict if len(w) >= int(min_word_length or 3) and not w.upper().endswith(("ING", "INGS")) and w.upper() not in exclude_set]
+        if not suitable:
+            suitable = [w for w in all_words_dict if w.upper() not in exclude_set]
         if not suitable:
             suitable = list(all_words_dict.keys())
         if suitable:
             suitable.sort(key=lambda w: (abs(len(w) - req_len), -len(w)))
             return suitable[0].upper(), all_words_dict
-        return (cand_word or "PLANETS"), all_words_dict
+        return (cands[0] if cands else "PLANETS"), all_words_dict
 
     def _ensure_dictionary_distinct_words(
         self, board, all_words_dict, dictionary, use_aw_flag, min_word_length, final_depth, depth, is_checkerboard, protected_positions=None, bonus_cell=None, difficulty="Medium"
