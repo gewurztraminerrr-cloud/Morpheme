@@ -111,9 +111,9 @@ async function enterLobbyRoom(rawBtn) {
         localStorage.removeItem('tournament_play_active');
         localStorage.removeItem('private_match_active');
 
-        // 2. Perform room creation and loading inside the game room in the background with 8s timeout
+        // 2. Perform room creation and loading inside the game room in the background with 25s timeout
         const createCtrl = new AbortController();
-        const createTimer = setTimeout(() => createCtrl.abort(), 8000);
+        const createTimer = setTimeout(() => createCtrl.abort(), 25000);
         let createResp;
         try {
             createResp = await fetch('/api/room/create', {
@@ -223,7 +223,11 @@ async function enterLobbyRoom(rawBtn) {
         window._isEnteringRoom = false;
         console.error('Error entering room:', error);
         if (typeof window.showPage === 'function') window.showPage('page-lobby');
-        showLobbyToast('Network error: ' + error.message, 'error');
+        if (error.name === 'AbortError' || (error.message && error.message.toLowerCase().includes('signal'))) {
+            showLobbyToast('Joining room took longer than expected. Please try again.', 'error');
+        } else {
+            showLobbyToast('Network error: ' + error.message, 'error');
+        }
     } finally {
         window._isEnteringRoom = false;
         if (window.hideLoadingOverlay) window.hideLoadingOverlay();
@@ -548,7 +552,7 @@ function setupLobbyEvents() {
             localStorage.removeItem('private_match_active');
 
             const joinCtrl = new AbortController();
-            const joinTimer = setTimeout(() => joinCtrl.abort(), 8000);
+            const joinTimer = setTimeout(() => joinCtrl.abort(), 25000);
             try {
                 let response;
                 try {
@@ -686,10 +690,13 @@ function setupLobbyEvents() {
                 window._isEnteringRoom = false;
                 if (typeof window.showPage === 'function') window.showPage('page-lobby');
                 console.error('Join error:', err);
+                const joinErrMsg = (err.name === 'AbortError' || (err.message && err.message.toLowerCase().includes('signal')))
+                    ? 'Joining room took longer than expected. Please try again.'
+                    : ('Failed to join room: ' + err.message);
                 if (window.showAlertModal) {
-                    window.showAlertModal('Error', 'Failed to join room: ' + err.message);
+                    window.showAlertModal('Error', joinErrMsg);
                 } else {
-                    alert('Failed to join room: ' + err.message);
+                    alert(joinErrMsg);
                 }
             } finally {
                 joinBtn.style.opacity = '1';
