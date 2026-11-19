@@ -4987,10 +4987,11 @@ class BoardGenerator:
         current_count = len(current_solve)
         if current_count >= min_words: return board
         print(f"[BoardGen] 🆘 RESCUE SWEEP START (Current: {current_count}, Target: {min_words})")
-        max_rescue_tiles = 24 if rows * cols >= 48 else len(positions)
+        max_rescue_tiles = 16 if rows * cols >= 48 else min(12, len(positions))
         rescue_pool = positions[:max_rescue_tiles]
         for pos in rescue_pool:
-            if time.time() - start_time > 30.0: break
+            if time.time() - start_time > 8.0: break
+            time.sleep(0.002)  # Micro-yield GIL to keep web server threads responsive
             f_p, r_p, c_p = (pos[0], pos[1], pos[2]) if depth > 1 else (0, pos[0], pos[1])
             old_char = board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]
             best_char, max_score = old_char, current_count
@@ -5002,6 +5003,7 @@ class BoardGenerator:
                 else:
                     test_chars = [c for c in test_chars if not self._is_vowel(c)]
             for char in list(set(test_chars)):
+                if time.time() - start_time > 8.0: break
                 if char == old_char: continue
                 if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r_p, c_p, f_p, depth=depth):
                     continue
