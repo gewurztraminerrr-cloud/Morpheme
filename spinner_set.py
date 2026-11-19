@@ -244,7 +244,9 @@ class SpinnerSet:
 
         if p.get('_exact_wc_calculated') or p.get('_lock_word_count_range'):
             # Pre-calculated from an actual solved board — preserve the exact truthful range!
-            wc_range = p.get('word_count_range') or '100-200'
+            wc_range = p.get('word_count_range') or ('300-400' if is_aw_effective else '100-200')
+            if is_aw_effective and wc_range not in ['300-400', '400-500', '500+']:
+                wc_range = '300-400'
         elif is_24h:
             p['board_format'] = 'Valued Letters'
             wc_range = '300-400'
@@ -254,7 +256,7 @@ class SpinnerSet:
             if min_word_length >= 7:
                 min_word_length = floor_len
         elif is_aw_effective:
-            # + AW dictionaries target high counts when spinning random params
+            # + AW dictionaries target high counts when spinning random params (NEVER below 300)
             if wc_range not in ['300-400', '400-500', '500+']:
                 wc_range = _rng.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
         else:
@@ -591,11 +593,27 @@ class SpinnerSet:
              - 200 - 299 words -> '200-300'
              - 100 - 199 words -> '100-200'
              - < 100 words -> '50-100'
+
+           CRITICAL RULE:
+           "NWL + AW" and "CSW + AW" word lists should NEVER have a word count below 300.
+           The only options for them are 300-400, 400-500, and 500+ words. Nothing else.
         """
         try:
             count = int(count)
         except (ValueError, TypeError):
             count = 0
+
+        is_aw = (
+            use_added_words is True
+            or (dictionary and ('+ AW' in str(dictionary).upper() or '+AW' in str(dictionary).upper() or 'AW' in str(dictionary).upper() or 'ADDED' in str(dictionary).upper()))
+        )
+
+        if is_aw:
+            if count >= 500:
+                return '500+'
+            if count >= 400:
+                return '400-500'
+            return '300-400'
 
         if count >= 500:
             return '500+'

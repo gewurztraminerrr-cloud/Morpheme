@@ -2721,6 +2721,12 @@ class BoardGenerator:
                         print(f"[BoardGen] Equality Freq fallback: returning best board with count {len(best_equality_words_dict)} (distance {best_equality_distance}) after {attempts} attempts / {time_elapsed:.2f}s")
                         board = best_equality_board
                         embedded_path = best_equality_embedded_path
+                        if is_any_aw and (not best_equality_words_dict or len(best_equality_words_dict) < 300):
+                            print(f"[BoardGen] Equality Freq + AW fell below 300 words ({len(best_equality_words_dict) if best_equality_words_dict else 0}). Performing rescue sweep to enforce >= 300 words...")
+                            board = self._perform_rescue_sweep(
+                                board, rows, cols, depth, dictionary, min_word_length, 300, max_words,
+                                set(), difficulty, protected_path=embedded_path, board_format=safe_format, use_added_words=True
+                            )
                     
                     self._break_accidental_checkerboard(board, depth, protected_positions=embedded_path)
                     

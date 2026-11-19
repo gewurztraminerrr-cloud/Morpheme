@@ -6657,6 +6657,12 @@ function updateParameters(state) {
         rawWordRange = String(rawWordRange).replace(',', '-');
     }
 
+    if (useAW) {
+        if (rawWordRange !== '300-400' && rawWordRange !== '400-500' && rawWordRange !== '500+') {
+            rawWordRange = '300-400';
+        }
+    }
+
     // Truthful Range Guard: If this is an active round and we have an authoritative word count,
     // verify that rawWordRange actually encompasses the board's real word count.
     // If there is a contradiction (e.g., board has 150 words but rawWordRange is '300-400'),
@@ -6681,7 +6687,13 @@ function updateParameters(state) {
                 }
             }
             if (isContradictory) {
-                if (isSubanagrams) {
+                if (useAW) {
+                    // NWL + AW and CSW + AW word lists should NEVER have a word count below 300.
+                    // The only options for them are 300-400, 400-500, and 500+. Nothing else.
+                    if (boardWordCount >= 500) rawWordRange = '500+';
+                    else if (boardWordCount >= 400) rawWordRange = '400-500';
+                    else rawWordRange = '300-400';
+                } else if (isSubanagrams) {
                     if (boardWordCount >= 400) rawWordRange = '500+';
                     else if (boardWordCount >= 300) rawWordRange = '300-400';
                     else if (boardWordCount >= 200) rawWordRange = '200-300';
