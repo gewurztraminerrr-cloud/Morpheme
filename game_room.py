@@ -5624,25 +5624,23 @@ class RoomManager:
                     if _bad and not is_24h:
                         print(f"[RoomManager] First-board contract violated for {room_id}: {_bad}. Generating compliant board...")
                         _base_dict = str(_sp0.get('dictionary', 'NWL')).replace('+ AW', '').replace('+AW', '').strip() or 'NWL'
-                        for _try in range(2):
-                            try:
-                                _g = self.board_generator.generate_board(
-                                    dimensions=room.board_dimensions,
-                                    bonus_word=bonus_word,
-                                    word_count_range=_decl_rng,
-                                    dictionary=_base_dict,
-                                    board_format=_decl_fmt,
-                                    min_word_length=m_len,
-                                    difficulty=_sp0.get('difficulty', 'Medium'),
-                                    timeout=40.0,
-                                    use_added_words=use_aw_flag
-                                )
-                                if _g and len(_g) >= 7:
-                                    board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = _g[:7]
-                                    print(f"[RoomManager] Compliant first board generated for {room_id}: {len(all_words)} words")
-                                    break
-                            except Exception as _gen_err:
-                                print(f"[RoomManager] Compliant first-board generation attempt failed: {_gen_err}")
+                        try:
+                            _g = self.board_generator.generate_board(
+                                dimensions=room.board_dimensions,
+                                bonus_word=bonus_word,
+                                word_count_range=_decl_rng,
+                                dictionary=_base_dict,
+                                board_format=_decl_fmt,
+                                min_word_length=m_len,
+                                difficulty=_sp0.get('difficulty', 'Medium'),
+                                timeout=10.0,
+                                use_added_words=use_aw_flag
+                            )
+                            if _g and len(_g) >= 7:
+                                board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = _g[:7]
+                                print(f"[RoomManager] Compliant first board generated for {room_id}: {len(all_words)} words")
+                        except Exception as _gen_err:
+                            print(f"[RoomManager] Compliant first-board generation attempt failed: {_gen_err}")
                 except Exception as _contract_err:
                     print(f"[RoomManager] first-board contract check error: {_contract_err}")
                 break

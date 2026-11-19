@@ -7414,9 +7414,20 @@ def create_room():
         # Start first round immediately if room does not have a board
         if not room.board:
             print(f"[app.py] Kickstarting first round for NEW room {room_id}")
+            room.state = 'loading'
             room.starting_round = True
             room._round_start_init_time = time.time()
-            room_manager.start_round(room_id)
+            if not getattr(room, '_start_round_thread_active', False):
+                room._start_round_thread_active = True
+                def _bg_start():
+                    try:
+                        room_manager.start_round(room_id)
+                    except Exception as e:
+                        print(f"[app.py] Error in background start_round for {room_id}: {e}")
+                    finally:
+                        room._start_round_thread_active = False
+                t = threading.Thread(target=_bg_start, daemon=True)
+                t.start()
         else:
             print(f"[app.py] Room {room_id} already has a board. Skipping redundant start_round.")
         
@@ -10570,7 +10581,7 @@ def resolve_wiki_common_noun(word: str, definition: str = '', lemma: str = None)
     try:
         url = f'https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(title)}'
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=2.5) as r:
+        with urllib.request.urlopen(req, timeout=1.0) as r:
             checked_successfully = True
             data = json.loads(r.read().decode('utf-8'))
             is_disambig = data.get('type') == 'disambiguation' or 'topics referred to' in (data.get('description') or '').lower()
@@ -10610,11 +10621,11 @@ def resolve_wiki_common_noun(word: str, definition: str = '', lemma: str = None)
     if any(k in def_lower for k in ('rock', 'stone', 'mineral', 'volcanic', 'geology')):
         candidates.extend([f'{title} (rock)', f'{title} (mineral)'])
 
-    for cand in candidates:
+    for cand in candidates[:3]:
         try:
             cand_url = f'https://en.wikipedia.org/api/rest_v1/page/summary/{urllib.parse.quote(cand)}'
             req = urllib.request.Request(cand_url, headers=headers)
-            with urllib.request.urlopen(req, timeout=2.5) as r:
+            with urllib.request.urlopen(req, timeout=1.0) as r:
                 cdata = json.loads(r.read().decode('utf-8'))
                 if cdata.get('type') != 'disambiguation' and not is_proper_noun(cdata.get('description'), cdata.get('extract')):
                     ret_url = cdata.get('content_urls', {}).get('desktop', {}).get('page') or f'https://en.wikipedia.org/wiki/{urllib.parse.quote(cand)}'
@@ -10878,11 +10889,15 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
     title = lemma.capitalize()
     return resolve_wiki_common_noun(word, combined_text, lemma)
 
+_WORD_DICTS_CACHE = {}
+
 def get_word_dictionaries(word: str) -> list:
     """Returns the list of dictionaries the word belongs to: NWL, CSW, AW."""
     if not word:
         return []
     w_upper = word.strip().upper()
+    if w_upper in _WORD_DICTS_CACHE:
+        return _WORD_DICTS_CACHE[w_upper]
     word_validator.ensure_csw_loaded()
     nwl_dict = load_tools_dictionary('NWL')
     csw_dict = load_tools_dictionary('CSW')
@@ -10896,6 +10911,8 @@ def get_word_dictionaries(word: str) -> list:
         res.append('CSW')
     if in_aw:
         res.append('AW')
+    if len(_WORD_DICTS_CACHE) < 500000:
+        _WORD_DICTS_CACHE[w_upper] = res
     return res
 
 @app.route('/api/definition', methods=['GET'])
@@ -10922,6 +10939,59 @@ def get_definition():
         'wiki_title': wiki_title,
         'lists': lists
     })
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    return resp
+
+@app.route('/api/definitions/batch', methods=['POST'])
+def get_definitions_batch():
+    """Batch definition resolution for Subanagrams and fast in-room prefetching."""
+    data = request.get_json() or {}
+    words = data.get('words') or []
+    if not isinstance(words, list):
+        return jsonify({'error': 'words must be a list'}), 400
+
+    clean_words = []
+    seen = set()
+    for w in words[:250]:
+        cw = str(w).strip().upper()
+        if cw and cw not in seen:
+            seen.add(cw)
+            clean_words.append(cw)
+
+    if not clean_words:
+        return jsonify({'definitions': {}})
+
+    import tally_divisions as td
+    res = {}
+    for word in clean_words:
+        defn, pron = lookup_word_definition_and_pronunciation(word)
+        img = lookup_definition_image(word)
+        div_info = td.get_word_division_info(word)
+        lists = get_word_dictionaries(word)
+        is_noun = False
+        wiki_url = None
+        wiki_title = None
+        if word in WIKI_COMMON_NOUN_OVERRIDES:
+            t, u = WIKI_COMMON_NOUN_OVERRIDES[word]
+            if t and u:
+                is_noun, wiki_url, wiki_title = True, u, t
+        elif word in _WIKI_RESOLVED_CACHE:
+            is_n, u, t = _WIKI_RESOLVED_CACHE[word]
+            if is_n:
+                is_noun, wiki_url, wiki_title = True, u, t
+
+        res[word] = {
+            'word': word,
+            'definition': defn or "No definition available for this word.",
+            'pronunciation': pron,
+            'image_url': img,
+            'division_info': div_info,
+            'is_noun': is_noun,
+            'wiki_url': wiki_url,
+            'wiki_title': wiki_title,
+            'lists': lists
+        }
+    resp = jsonify({'definitions': res})
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
     return resp
 

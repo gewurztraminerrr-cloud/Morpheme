@@ -2404,6 +2404,26 @@ async function _doUpdateGameState(incomingState = null) {
             adjustPlayHeaderForDevice();
         }
 
+        // Subanagrams: prefetch definitions for current/intermission words and player submits so definitions load instantly
+        if (isSub && typeof prefetchDefinitions === 'function') {
+            const wordsToPrefetch = [];
+            if (Array.isArray(state.all_words)) wordsToPrefetch.push(...state.all_words);
+            if (Array.isArray(state.previous_all_words)) wordsToPrefetch.push(...state.previous_all_words);
+            if (Array.isArray(state.players)) {
+                for (const p of state.players) {
+                    if (Array.isArray(p.submitted_words)) {
+                        for (const sw of p.submitted_words) {
+                            const w = (typeof sw === 'object' && sw !== null ? sw.word : sw);
+                            if (w) wordsToPrefetch.push(w);
+                        }
+                    }
+                }
+            }
+            if (wordsToPrefetch.length > 0) {
+                prefetchDefinitions(wordsToPrefetch);
+            }
+        }
+
         const gt = (state && state.game_type) ? String(state.game_type).toLowerCase() : '';
         const dims = (state && state.board_dimensions) ? String(state.board_dimensions).toLowerCase() : '';
         const isFCFS = gt === 'fcfs' || gt === 'solo_fcfs';
@@ -5983,6 +6003,11 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             isBonus: !!(bonusUpper && (wordUpper.trim() === bonusUpper))
         };
     }).filter(e => e.word.length > 0);
+
+    // Fast-prefetch definitions for all words on the board/rack in the background
+    if (typeof prefetchDefinitions === 'function' && cleanWords.length > 0) {
+        prefetchDefinitions(cleanWords.map(c => c.wordUpper));
+    }
 
     const targetWordsUpper = (targetUserWords || []).map(w => ((typeof w === 'object' && w !== null) ? (w.word || '') : (w || '')).toString().toUpperCase()).filter(Boolean);
     const allFoundUpper = (allFoundWords || []).map(w => ((typeof w === 'object' && w !== null) ? (w.word || '') : (w || '')).toString().toUpperCase()).filter(Boolean);
@@ -12501,19 +12526,44 @@ function renderDefinitionData(data, word, defContent, defPron) {
     }
 }
 
-function prefetchDefinitions(words) {
+async function prefetchDefinitions(words) {
     if (!words || !words.length) return;
+    if (!window._gameDefCache) window._gameDefCache = new Map();
     const toFetch = [];
     for (const raw of words) {
         const w = (typeof raw === 'object' && raw !== null ? (raw.word || '') : String(raw)).trim().toUpperCase();
-        if (w && (!window._gameDefCache || !window._gameDefCache.has(w)) && !toFetch.includes(w)) {
+        if (w && !window._gameDefCache.has(w) && !toFetch.includes(w)) {
             toFetch.push(w);
-            if (toFetch.length >= 35) break;
+            if (toFetch.length >= 250) break;
         }
     }
     if (!toFetch.length) return;
+
+    // Fast batch definition prefetching for instant definition display
+    try {
+        const resp = await fetch('/api/definitions/batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ words: toFetch })
+        });
+        if (resp.ok) {
+            const data = await resp.json();
+            if (data && data.definitions) {
+                for (const [wKey, defInfo] of Object.entries(data.definitions)) {
+                    if (defInfo) {
+                        window._gameDefCache.set(wKey.toUpperCase(), defInfo);
+                    }
+                }
+                return;
+            }
+        }
+    } catch (e) {
+        console.warn('[prefetchDefinitions] Batch prefetch error, using fallback:', e);
+    }
+
+    // Fallback: staggered individual fetches
     setTimeout(async () => {
-        for (const w of toFetch) {
+        for (const w of toFetch.slice(0, 25)) {
             if (window._gameDefCache && window._gameDefCache.has(w)) continue;
             try {
                 const resp = await fetch(`/api/definition?word=${encodeURIComponent(w)}`);
@@ -12523,7 +12573,7 @@ function prefetchDefinitions(words) {
                 }
             } catch (e) {}
         }
-    }, 120);
+    }, 50);
 }
 window.prefetchDefinitions = prefetchDefinitions;
 
