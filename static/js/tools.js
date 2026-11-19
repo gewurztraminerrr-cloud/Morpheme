@@ -8523,7 +8523,7 @@ async function generateRandomWord() {
                 const pts = dInfo.points || dInfo.base_points || 1;
                 html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${pts} pt${pts === 1 ? '' : 's'}">${pts} pt${pts === 1 ? '' : 's'}</span></div>`;
             }
-            if (data.is_noun && data.wiki_url) {
+            if ((data.is_noun && data.wiki_url) || (data.wiki_url && data.is_noun !== false)) {
                 const wikiTitle = data.wiki_title || word;
                 const safeTitle = (wikiTitle || '').replace(/'/g, "\\'");
                 const safeUrl = (data.wiki_url || '').replace(/'/g, "\\'");
@@ -8624,7 +8624,7 @@ async function updateWotd() {
                 const pts = dInfo.points || dInfo.base_points || 1;
                 html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${pts} pt${pts === 1 ? '' : 's'}">${pts} pt${pts === 1 ? '' : 's'}</span></div>`;
             }
-            if (data.is_noun && data.wiki_url) {
+            if ((data.is_noun && data.wiki_url) || (data.wiki_url && data.is_noun !== false)) {
                 const wikiTitle = data.wiki_title || data.word;
                 const safeTitle = (wikiTitle || '').replace(/'/g, "\\'");
                 const safeUrl = (data.wiki_url || '').replace(/'/g, "\\'");
@@ -9455,7 +9455,7 @@ async function runValidationCheck() {
                     const pts = dInfo.points || dInfo.base_points || 1;
                     html += `<div class="definition-division-row"><span class="tool-def-division-badge" title="Point Value: ${pts} pt${pts === 1 ? '' : 's'}">${pts} pt${pts === 1 ? '' : 's'}</span></div>`;
                 }
-                if (data.is_noun && data.wiki_url) {
+                if ((data.is_noun && data.wiki_url) || (data.wiki_url && data.is_noun !== false)) {
                     const wikiTitle = data.wiki_title || word;
                     const safeTitle = (wikiTitle || '').replace(/'/g, "\\'");
                     const safeUrl = (data.wiki_url || '').replace(/'/g, "\\'");
@@ -11945,7 +11945,7 @@ window.showWordDefinitionPopup = async function (word, event) {
             } else {
                 html += '<span style="opacity: 0.6; font-style: italic;">No definition available for this word.</span>';
             }
-            if (data && data.is_noun && data.wiki_url) {
+            if (data && ((data.is_noun && data.wiki_url) || (data.wiki_url && data.is_noun !== false))) {
                 const wikiTitle = data.wiki_title || cleanWord;
                 const safeTitle = (wikiTitle || '').replace(/'/g, "\\'");
                 const safeUrl = (data.wiki_url || '').replace(/'/g, "\\'");
