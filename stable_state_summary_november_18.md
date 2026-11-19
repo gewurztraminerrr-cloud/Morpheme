@@ -2,6 +2,106 @@
 
 ## 1. Overview of Changes
 
+### Bonus Word Length Accuracy (10L vs 6L), Global Deduplication, and Transition Scoping Fix
+- **User Problem Report**:
+  - "The Spinner Set the Bonus Word was 10L, but the bonus word was GELATE (6L). GELATE was on the board. This is the second time in a row i have seen GELATE as bonus word."
+  - Log audit also revealed `UnboundLocalError: cannot access local variable 'calculate_word_score' where it is not associated with a value` in `game_room.py:2332`.
+- **Root Cause**:
+  1. *Bonus Word Length Discrepancy*:
+     - During 0:45 intermission, the Spinner Set revealed `bonus_word_length = 10`.
+     - In `board_generator.py:_ensure_exact_bonus_word`, if embedding a 10L word onto the board failed on its first attempt, it fell back to:
+       `suitable.sort(key=lambda w: (abs(len(w) - req_len), -len(w)))` which returned the closest word found on the board (`GELATE`, 6 letters).
+     - In `game_room.py:pick_distinct_bonus_word`, lines 3168–3176 checked `valid_range = [w for w in words_list if 6 <= len(w) <= 10...]` *before* attempting to generate or embed a 10L bonus word, immediately latching onto 6L `GELATE`.
+     - Lines 5673–5678 and 8210–8216 then mutated `room.spinner_params['bonus_word_length'] = len(room.bonus_word)` (6), causing a discrepancy between the 10L promised on the Spinner Set and the 6L bonus word on the board.
+     - Fallback board generators (`get_emergency_fallback_board`, `pop_compatible_cached_board`) did not strictly enforce `bonus_word_len`, allowing cached boards with `bonus_word_len == 0` or missing bonus words to match.
+  2. *Bonus Word Repeating Twice in a Row*:
+     - Deduplication was tracked only locally inside individual room instances (`room.recent_bonus_words` vs `room.bonus_word_history`), which were separate lists that were not synchronized.
+     - When a new room was created or kickstarted (e.g., when the user transitioned rooms or after a server restart), both lists on the new room were completely empty, allowing recent words like `GELATE` to be chosen again immediately.
+     - Server lacked a persistent global bonus word history across rooms.
+  3. *UnboundLocalError on `calculate_word_score`*:
+     - In `game_room.py:2320`, `from scoring import calculate_word_score` was indented inside `if getattr(self, 'game_type', None) == 'subanagrams':`. Because Python treats imported names as local for the entire function scope, the `else:` branch threw `UnboundLocalError` when calling `calculate_word_score`.
+- **Fixes Applied**:
+  - **`game_room.py`**:
+    - **Global Rolling History & Synchronization**:
+      - Added thread-safe global registry `_GLOBAL_RECENT_BONUS_WORDS` (last 50 words) initialized automatically from SQLite `round_history` on startup.
+      - In `_record_room_bonus_word`, synchronized updates to `room.recent_bonus_words`, `room.bonus_word_history`, and `_record_global_bonus_word`.
+      - In `RoomManager._get_bonus_word`, included `_GLOBAL_RECENT_BONUS_WORDS[-30:]` in `final_exclude` so recent bonus words are never repeated across rooms.
+    - **Strict Bonus Word Length Enforcement**:
+      - In `pick_distinct_bonus_word`, strictly prioritized exact target length (`valid_exact`).
+      - If no exact target-length word is currently on the board, calls `rm._get_bonus_word(length=target_len)` and embeds the word directly onto `room.board`, re-solving all word paths so the promised length bonus word is guaranteed playable on the grid.
+      - Prioritized `frozen_revealed_params.get('bonus_word_length')` when determining `bw_l` at round start and promotion, ensuring the bonus word strictly matches the revealed Spinner Set length.
+    - **Fallback Board Length Compliance**:
+      - Added `bonus_word_len` parameter to `get_emergency_fallback_board` and passed it through all fallback pop/generation calls.
+    - **Transition Scoping Fix**:
+      - Moved `from scoring import calculate_word_score` in `check_and_update_state` before the `if/else` block, eliminating `UnboundLocalError`.
+  - **`board_generator.py`**:
+    - In `_ensure_exact_bonus_word`:
+      - Added `exclude` parameter to prevent selecting recently used words.
+      - When embedding an exact length word, iterates across up to 15 candidates with randomized start positions to guarantee embedding succeeds.
+      - In the fallback, prioritizes exact target-length words and filters all candidates against `exclude_set`.
+    - In `pop_compatible_cached_board`:
+      - Enforced strict `cached_bw_l == int(bonus_word_len)` check when `bonus_word_len` is provided.
+- **Verification**:
+  - Automated test suite verified:
+    - Target length 8 returns 8L words.
+    - Target length 10 returns 10L words.
+    - Consecutive rounds in the same room produce 0 repeats.
+    - Consecutive rounds across newly created rooms produce 0 repeats via global registry.
+  - Production deployed on VPS `132.148.72.249`, PM2 restarted, Waitress port 5001 returning HTTP 200 OK.
+  - Git commit `c8de5f5f` and tags `stable-2026-11-18` and `live-tested-2026-11-18` pushed to `origin/main`.
+
+---
+
+### Added Words Word Count Range (>= 300 Only) & Bonus Word Repetition Prevention
+- **User Problem Report**:
+  Reviewing the Spinner Set for an hour in public rooms revealed two distinct issues in `justthisone1.jpg` and `justthisone2.jpg`:
+  1. The round showed `Dict: CSW + AW`, but `Words: 100-200`. Rule: `"NWL + AW"` and `"CSW + AW"` word lists should **NEVER** have a word count below 300. The only valid options for them are **`300-400`**, **`400-500`**, and **`500+`** words. Nothing else.
+  2. The bonus word `SALTCELLAR` appeared twice in a row across consecutive rounds in the room.
+- **Root Cause**:
+  1. *Word Count Range Below 300*:
+     - In `spinner_set.py:586`, `get_factchecked_wc_range(count, use_added_words, dictionary)` took `use_added_words` and `dictionary` as parameters but completely ignored them when bucketing `count`, returning `'100-200'` whenever `count < 200` (e.g., 130 words).
+     - In `spinner_set.py:245`, `sanitize_params` had an early return for `_exact_wc_calculated` that bypassed the `is_aw_effective` clamp, allowing ranges like `'100-200'` to persist.
+     - In `board_generator.py:2721`, when Equality Freq hit attempt or timeout limits, it returned `best_equality_board` even if `dist > 0` and word count was only 130 words.
+     - In `game_room.py:3518`, the emergency fallback board solved a random grid (yielding 130 words on a 4x6 board) and did not perform a rescue sweep to guarantee $\ge 300$ words for `+ AW`.
+     - In `static/js/play.js:6683`, the contradiction guard re-bucketed contradictory boards into `'100-200'` without checking whether Added Words (`useAW`) was active.
+  2. *Bonus Word Repeating Twice in a Row (`SALTCELLAR`)*:
+     - When `start_next_round` promoted a board (from cache, staging, or emergency fallback), lines 8108–8135 checked `current_bw` against `target_words`, but **never** excluded `ghost_bonus` (the immediately preceding round's bonus word) or `room.previous_bonus_word`.
+     - In `pre_generate_next_round` (line 7617), `_fbw` was accepted without checking if it matched `room.bonus_word`.
+     - In `force_instant_board` and `existing_room` creation, `previous_bonus_word` was prematurely assigned to the *new* bonus word (`room.previous_bonus_word = room.bonus_word`), wiping out the record of what word actually preceded it.
+- **Fixes Applied**:
+  - **`spinner_set.py`**:
+    - Updated `get_factchecked_wc_range` to enforce that if `use_added_words` is `True` or dictionary contains `+ AW` / `+AW` / `AW` / `ADDED`, the return value is **strictly** one of `'300-400'`, `'400-500'`, or `'500+'` (never `'50-100'`, `'100-200'`, or `'200-300'`).
+    - In `sanitize_params`, guaranteed that any parameter set with `is_aw_effective` is strictly restricted to `['300-400', '400-500', '500+']`, even if `_exact_wc_calculated` or `_lock_word_count_range` is present.
+  - **`board_generator.py`**:
+    - In `generate_board` Equality Freq exit block, if `is_any_aw` is active and `count < 300`, automatically triggers `_perform_rescue_sweep` to guarantee the board achieves $\ge 300$ words before distribution.
+  - **`game_room.py`**:
+    - Created robust helper `pick_distinct_bonus_word` and `_record_room_bonus_word`:
+      - Maintains a rolling history of the last 10 bonus words per room (`room.recent_bonus_words`).
+      - Strictly excludes `room.previous_bonus_word`, `ghost_bonus`, `room.bonus_word`, and `room.recent_bonus_words`.
+      - Excludes words ending in `ING` or `INGS`.
+      - Automatically falls back to closest length candidates or dictionary lookup if the preferred candidate is in the exclusion set.
+    - Integrated `pick_distinct_bonus_word` across all bonus word selection and promotion sites:
+      - `start_next_round`
+      - `pre_generate_next_round`
+      - `start_round`
+      - `force_instant_board`
+      - `get_emergency_fallback_board`
+    - In `get_emergency_fallback_board`, added rescue sweep safeguard when `is_aw` is True and words $< 300$, ensuring even random grid fallbacks reach $\ge 300$ words.
+    - In `start_next_round`, added clamp to ensure `final_wc` for `_use_aw` rooms is never below 300.
+  - **`static/js/play.js`**:
+    - In `updateParameters`, guarded `rawWordRange` so that when `useAW` is true, the range is clamped to `['300-400', '400-500', '500+']`.
+    - In the contradiction auto-alignment block, if `useAW` is true, mapped word counts strictly to `'500+'` (if $\ge 500$), `'400-500'` (if $\ge 400$), or `'300-400'`.
+  - **`templates/index.html`**:
+    - Bumped script cache versions to `?v=1794380008`.
+  - **Verification**:
+    - Unit tests executed and verified:
+      - All count brackets (50 to 600) with `NWL + AW` and `CSW + AW` return only `'300-400'`, `'400-500'`, or `'500+'`.
+      - 20-round consecutive simulation of bonus words ran with 0 back-to-back repeats.
+    - Production deployed on VPS `132.148.72.249`, HTTP/2 200 OK verified.
+    - Git commit `5d1938e4`, tags `stable-2026-11-18` and `live-tested-2026-11-18` pushed to origin.
+
+---
+
 ### Word Charts Mobile Scrolling & Navigation (Vertical Scrolling, Horizontal Scroll & Swipe-Back Guard)
 - **Problem**:
   1. On mobile devices, in Word Charts in Tools under "Point Values & Divisions" and "Dictionary Word Counts", dragging a finger vertically over the tables failed to scroll the page up or down (vertical scrolling was frozen).
@@ -574,4 +674,94 @@
   4. *Asset Cache Version Bump & Verification*:
      - Bumped asset cache versions to `?v=1794380004` across `play.css`, `app.js`, `lobby.js`, and `play.js`.
      - Verified with headless Chrome running live page simulation: 0 unhandled errors, button transitions cleanly to `#page-lobby` with `display: flex`.
+
+---
+
+### Lobby Content Brief Displacement Resolution on Entering Lobby
+- **Problem**: Occasionally, immediately after pressing "ENTER LOBBY", the contents within the lobby appeared briefly displaced, shifting or jumping before settling into place.
+- **Root Causes**:
+  1. *Premature Partial Display & Desynchronized Body Classes*:
+     - In `executeGatewayTransition` (`app.js`) and `handleEnterLobbyClick` (`index.html`), the transition timer set `pLobby.style.display = 'flex'` and `pLobby.classList.add('active')` *before* `showPage('page-lobby')` ran.
+     - At that moment, `document.body` did not yet have the class `lobby-active`.
+     - In `style.css`, `.top-menu-spacer` has `height: var(--top-menu-height, 58px) !important;` when `lobby-active` is absent, and `display: none !important;` when `lobby-active` is present.
+     - Because `#page-lobby` was revealed before `body.lobby-active` was set, the lobby was initially rendered pushed down by 58px. Moments later, when `showPage()` toggled `body.lobby-active`, `.top-menu-spacer` collapsed, shifting the entire lobby layout upward by 58px.
+  2. *Unintended CSS Transitions Firing on Page Reveal*:
+     - In `static/css/lobby.css`:
+       - `.lobby-grid` had `transition: grid-template-columns 0.3s ease, gap 0.3s ease;` (line 86).
+       - `.rating-filter-container` had `transition: height 0.32s cubic-bezier(0.16, 1, 0.3, 1), min-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), padding 0.32s cubic-bezier(0.16, 1, 0.3, 1);` (line 408).
+       - `#rooms-list` had `transition: flex 0.32s cubic-bezier(0.16, 1, 0.3, 1), height 0.32s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s ease, padding 0.28s ease, margin 0.28s ease;` (line 739).
+       - When the page transitioned from `display: none` to `display: flex`, these leftover transitions from an older layout interpolated from 0 / auto over 300ms–320ms, visibly resizing and shifting the columns, filter buttons, and active rooms list.
+  3. *Desktop Static DOM Reordering Flash*:
+     - In `templates/index.html`, `#mobile-panel-solo` was statically located outside `#mobile-panel-main` as a direct child of `.lobby-grid`. On desktop, `.lobby-grid` has 2 columns; with 3 direct children, the rooms panel was initially displaced to row 2 until JavaScript's `adjustLobbyLayoutForDevice()` reparented `#mobile-panel-solo` into `#mobile-panel-main`.
+  4. *Mobile Carousel Zero-Offset Race Condition*:
+     - In `static/js/lobby.js`, `switchLobbyPanel('main')` relied strictly on `el.offsetLeft`. On initial reveal before the browser completes layout reflow, `mainPanel.offsetLeft` could briefly report `0`. This caused the carousel to scroll to `0` (the Solo & Friends panel), and 50ms later snap to the Main panel when `offsetLeft` became positive, resulting in a visible horizontal jump.
+     - Additionally, `_setupLobbyGridScrollTracker` tracked scroll events when the lobby was not active, occasionally setting `window._currentLobbyPanel = 'solo'` from initial unrendered scroll state.
+- **Fixes Applied**:
+  1. *Atomic Layout & Body Class Synchronization (`static/js/app.js` & `templates/index.html`)*:
+     - Set `document.body.classList.remove('loading-active')` and `document.body.classList.add('lobby-active')` *before* revealing `#page-lobby`, ensuring `.top-menu-spacer` is already collapsed (`display: none !important`) and flex layout is active on first paint.
+     - Removed premature manual assignments of `pLobby.style.display = 'flex'` in transition handlers, delegating cleanly to `showPage('page-lobby')`.
+  2. *Elimination of Layout-Displacing CSS Transitions (`static/css/lobby.css`)*:
+     - Removed `transition: grid-template-columns 0.3s ease, gap 0.3s ease;` from `.lobby-grid`.
+     - Removed `transition: height ..., min-height ..., padding ...;` from `.rating-filter-container`.
+     - Removed `transition: flex ..., height ..., max-height ..., opacity ..., padding ..., margin ...;` from `#rooms-list`.
+     - Content now renders immediately in its final, exact geometry without animation lag.
+  3. *Immediate Parse-Time Desktop DOM Nesting (`templates/index.html`)*:
+     - Added an immediate synchronous script right after `.lobby-grid` in `index.html` so that on desktop viewports (`window.innerWidth > 900`), `#mobile-panel-solo` is reparented inside `#mobile-panel-main` at initial HTML parse time before first paint.
+  4. *Mobile Carousel Fallback & Active Page Guard (`static/js/lobby.js`)*:
+     - In `switchLobbyPanel`, if `window._currentLobbyPanel === 'main'` and `targetLeft <= 0`, dynamically fall back to `soloPanel.offsetWidth` or `lobbyGrid.clientWidth` so the carousel never scrolls to `0`.
+     - In `_setupLobbyGridScrollTracker`, added a guard checking `lobbyPage.classList.contains('active')` so background scroll events never contaminate panel tracking.
+  5. *Asset Cache Version Bump*:
+     - Bumped cache-busting strings to `?v=1794380005` across `lobby.css`, `play.css`, `app.js`, `lobby.js`, and `play.js`.
+
+---
+
+### Room Entry AbortController Signal Timeout & Network Error Resolution
+- **Problem**: When attempting to enter the multiplayer subanagrams room (or other rooms), the client encountered a `Network error` with the word `"signal"` in the error notification (`Network error: signal is aborted without reason` / `The operation was aborted due to AbortSignal`).
+- **Root Cause**:
+  1. *Premature 8-Second Client AbortController*:
+     - In `static/js/lobby.js`, `enterLobbyRoom()` and `joinRoom()` wrapped `/api/room/create` and `/api/room/<id>/join` in an `AbortController` configured with `setTimeout(() => ctrl.abort(), 8000)`.
+     - When entering Subanagrams or public rooms after a server restart or when the board generator is generating candidate sequences, loading word validator tries, or under background CPU load, the server took ~9–11 seconds to generate and score the initial board.
+     - At precisely 8,000ms, the client AbortController fired, causing `fetch` to reject with a native browser `AbortError` (`"signal is aborted without reason"` in Chrome/Safari).
+     - The catch blocks in `lobby.js` and `index.html` simply passed `error.message` through to `showLobbyToast('Network error: ' + error.message, 'error')`, directly displaying the browser's internal signal abort text.
+- **Fixes Applied**:
+  1. *Increased Room Join/Creation Timeout (`static/js/lobby.js`)*:
+     - Extended the `AbortController` timeout from 8,000ms to **25,000ms (25 seconds)** for both `enterLobbyRoom` and `joinRoom`, giving complex board generations ample headroom.
+  2. *Graceful User-Friendly Timeout Handling (`static/js/lobby.js` & `templates/index.html`)*:
+     - Added explicit detection for `AbortError` and messages containing `"signal"`, replacing the cryptic browser signal abort text with a clear, helpful message: `"Joining room took longer than expected. Please try again."`.
+  3. *Asset Cache Version Bump*:
+     - Bumped version strings to `?v=1794380006` across `lobby.css`, `play.css`, `app.js`, `lobby.js`, and `play.js`.
+
+---
+
+### Multiplayer Subanagrams Instant Room Entry & Server CPU Starvation Fix
+- **Problem**:
+  - When clicking the multiplayer subanagrams "Start" button in the lobby, the user was stuck on the "Loading..." screen for 10–20 seconds before the overlay disappeared, leaving the user in the lobby without entering the room.
+- **Root Causes**:
+  1. *Synchronous Subanagrams Board Generation Inside Request Handler*:
+     - In `game_room.py:3875` and `game_room.py:4238`, `create_room()` synchronously called `generate_subanagrams_board_and_words(sp)` while holding the global `RoomManager` lock (`with self.lock:`).
+     - Because dictionary tries (specifically CSW with 280k+ words and Counter objects) were not preloaded on server startup, the first user to enter Subanagrams suffered a 10–20 second synchronous delay on the HTTP thread.
+     - Even if the room already had an active board or a staged `next_round_board`, the code did not check them on wakeup, needlessly wiping and regenerating the board.
+  2. *Unbounded Cache Refill Worker CPU Thrashing*:
+     - In `board_generator.py:698`, `refill_board_cache_bg` ran a `while True:` loop without a break condition on retry attempts.
+     - Configuration `("4x6", "CSW", (50, 100), "Normal", 6, "Easy", False)` in `seed_pregenerated_cache_bg` required <= 15% uniqueness on a 4x6 grid with 6L minimum and CSW dictionary, which is mathematically near-impossible and resulted in 25 attempts per cycle (~60s of 100% CPU DFS search) without ever matching "Easy".
+     - Because it saved the resulting board under "Hard", the "Easy" cache count never reached the target, causing the worker to run continuously in an infinite CPU loop.
+     - Under Python's Global Interpreter Lock (GIL), this pegged the CPU and blocked Waitress worker threads from processing incoming HTTP requests (`waitress.queue:Task queue depth is 60`). Nginx or client AbortControllers timed out (`499 Client Closed Request`), aborting `/api/room/create` and dismissing the loading screen.
+  3. *Missing Mobile Layout State Synchronization in Inline Room Entry*:
+     - `enterLobbyRoomInline` in `templates/index.html` did not toggle `is-subanagrams` on `document.body` upon receiving room confirmation.
+- **Fixes Applied**:
+  1. *Subanagrams Background Pre-Warming (`app.py`)*:
+     - Added `prewarm_subanagrams_bg()` to asynchronously pre-load the Subanagrams CSW dictionary and pre-initialize `pub_v2_subanagrams_subanagrams_120` 2 seconds after server boot.
+     - When any user clicks "Start", the room and board are already active and ready in memory; `/api/room/create` returns in **< 2 milliseconds**.
+  2. *Instant Promotion of Staged Boards & Active Board Guard (`game_room.py`)*:
+     - In `create_room()` wakeup logic, added fast-paths to check if the room already has an active board (returns immediately in <1ms) or if `next_round_board` is staged (promotes it instantly without generating on the fly).
+  3. *Unbounded Cache Refill Worker Guard (`board_generator.py`)*:
+     - Added `if attempts > 3: break` in `refill_board_cache_bg` so impossible parameter sets terminate after 3 attempts rather than spinning forever.
+     - Adjusted `("4x6", "CSW", (50, 100), "Normal", 6, "Easy", False)` to `"Hard"` in `seed_pregenerated_cache_bg`.
+  4. *Body Class Synchronization (`templates/index.html`)*:
+     - Added `document.body.classList.toggle('is-subanagrams', isSub)` in `enterLobbyRoomInline`.
+  5. *Asset Cache Version Bump*:
+     - Bumped asset version strings to `?v=1794380007` across `lobby.css`, `play.css`, `app.js`, `lobby.js`, and `play.js`.
+
+
+
 
