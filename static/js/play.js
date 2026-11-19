@@ -3702,10 +3702,16 @@ async function _doUpdateGameState(incomingState = null) {
                         
                         let ptsDisplay = ptsNum;
 
+                        const bwUpper = (state.bonus_word || '').trim().toUpperCase();
+                        const isBonus = Boolean(bwUpper ? (wordUpper === bwUpper) : (w && typeof w === 'object' && w.is_bonus));
+
                         if (typeof pointsObj === 'object' && pointsObj !== null) {
-                            const bonusWordPts = pointsObj.bonus_word_points || 0;
+                            const bonusWordPts = isBonus ? (pointsObj.bonus_word_points || 0) : 0;
                             const bonusLetterPts = pointsObj.bonus_letter_points || 0;
                             const eoPts = pointsObj.either_or_points || 0;
+                            if (!isBonus && pointsObj.bonus_word_points) {
+                                ptsNum = Math.max(0, ptsNum - Number(pointsObj.bonus_word_points));
+                            }
                             const basePts = pointsObj.base !== undefined ? pointsObj.base : (ptsNum - bonusWordPts - bonusLetterPts - eoPts);
 
                             let parts = [basePts];
@@ -3719,13 +3725,6 @@ async function _doUpdateGameState(incomingState = null) {
                                 ptsDisplay = ptsNum;
                             }
                         }
-
-                        const bwUpper = (state.bonus_word || '').trim().toUpperCase();
-                        const isBonus = Boolean(
-                            (bwUpper && wordUpper === bwUpper) ||
-                            (w && typeof w === 'object' && (w.is_bonus || (w.score_details && (w.score_details.bonus_word_points || 0) > 0))) ||
-                            (pointsObj && typeof pointsObj === 'object' && (pointsObj.bonus_word_points || 0) > 0)
-                        );
                         const isCSWOnly = cswForList && cswForList.some(csw => csw.toUpperCase() === wordUpper);
                         const isAddedWord = addedForList && addedForList.some(aw => aw.toUpperCase() === wordUpper);
 
@@ -3821,10 +3820,7 @@ async function _doUpdateGameState(incomingState = null) {
                         const indicator = isMe ? '<span class="found-indicator present">✓</span>' : (wObj.is_ai ? '<span>🤖</span>' : '<span>🔸</span>');
 
                         const bwUpper = (state.bonus_word || '').trim().toUpperCase();
-                        const isBonus = Boolean(
-                            (bwUpper && wordUpper === bwUpper) ||
-                            (wObj && typeof wObj === 'object' && (wObj.is_bonus || (wObj.score_details && (wObj.score_details.bonus_word_points || 0) > 0)))
-                        );
+                        const isBonus = Boolean(bwUpper ? (wordUpper === bwUpper) : (wObj && typeof wObj === 'object' && wObj.is_bonus));
                         const isAddedWord = addedForList && addedForList.some(aw => aw.toUpperCase() === wordUpper);
                         const isCSWOnly = cswForList && cswForList.some(csw => csw.toUpperCase() === wordUpper);
 
@@ -4202,11 +4198,9 @@ async function _doUpdateGameState(incomingState = null) {
                         ? playerWordObj.points
                         : (details ? (details.total || 0) : (typeof rawDetails === 'number' ? rawDetails : 0));
 
-                    const isBW = Boolean(
-                        ((state.previous_bonus_word || state.bonus_word || '').toUpperCase().trim() === wUpper) ||
-                        (details && (details.bonus_word_points || 0) > 0)
-                    );
-                    const bwPts = (details && details.bonus_word_points !== undefined) ? details.bonus_word_points : (isBW ? w.length : 0);
+                    const bwTarget = ((state.previous_bonus_word || state.bonus_word || '').toUpperCase().trim());
+                    const isBW = Boolean(bwTarget ? (bwTarget === wUpper) : (details && (details.bonus_word_points || 0) > 0));
+                    const bwPts = isBW ? ((details && details.bonus_word_points !== undefined) ? details.bonus_word_points : w.length) : 0;
                     const blPts = details ? (details.bonus_letter_points || 0) : 0;
                     const eoPts = details ? (details.either_or_points || 0) : 0;
                     const totalBonus = bwPts + blPts + eoPts;
@@ -6307,15 +6301,17 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             pointsData = finderDetails;
         }
 
-        // Determine bonus word points (+Length)
+        // Determine bonus word points (+Length) - STRICTLY only for the true bonus word
         let bonusWordPts = 0;
-        if (typeof pointsData === 'object' && pointsData !== null && pointsData.bonus_word_points !== undefined) {
-            bonusWordPts = Number(pointsData.bonus_word_points) || 0;
-        } else if (isBonus) {
-            bonusWordPts = word.length;
-        }
-        if (isBonus && bonusWordPts === 0) {
-            bonusWordPts = word.length;
+        if (isBonus) {
+            if (typeof pointsData === 'object' && pointsData !== null && pointsData.bonus_word_points !== undefined) {
+                bonusWordPts = Number(pointsData.bonus_word_points) || word.length;
+            } else {
+                bonusWordPts = word.length;
+            }
+            if (bonusWordPts === 0) {
+                bonusWordPts = word.length;
+            }
         }
 
         // Determine bonus letter points (+3) - STRICTLY only when format is Bonus Letter
@@ -6386,7 +6382,11 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         // Derive total points and ensure exact breakdown consistency
         let totalPts = basePts + bonusWordPts + bonusLetterPts + eoPts;
         if (typeof pointsData === 'object' && pointsData !== null && typeof pointsData.total === 'number') {
-            totalPts = Math.max(totalPts, pointsData.total);
+            let serverTotal = pointsData.total;
+            if (!isBonus && pointsData.bonus_word_points) {
+                serverTotal = Math.max(0, serverTotal - Number(pointsData.bonus_word_points));
+            }
+            totalPts = Math.max(totalPts, serverTotal);
             basePts = Math.max(0, totalPts - bonusWordPts - bonusLetterPts - eoPts);
         } else if (typeof pointsData === 'number') {
             totalPts = Math.max(totalPts, pointsData);
@@ -6411,7 +6411,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         let bonusIndicator = '';
         if (bonusLetterPts > 0) {
             bonusIndicator = `<span class="list-bonus-tag bl-tag" title="Used Bonus Letter">BL</span>`;
-        } else if (bonusWordPts > 0 || isBonus) {
+        } else if (isBonus) {
             bonusIndicator = `<span class="list-bonus-tag bonus-word-tag">★</span>`;
         } else if (eoPts > 0) {
             bonusIndicator = `<span class="list-bonus-tag eo-tag">EO</span>`;
@@ -11227,7 +11227,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             
             const cleanWord = (data.word || word).toUpperCase();
             const bwUpper = (currentState && currentState.bonus_word ? currentState.bonus_word : '').trim().toUpperCase();
-            const isServerBonus = Boolean(data.is_bonus || (data.score_details && (data.score_details.bonus_word_points || 0) > 0) || (bwUpper && cleanWord === bwUpper));
+            const isServerBonus = Boolean(bwUpper ? (cleanWord === bwUpper) : data.is_bonus);
 
             const existingLocalIdx = window._localSubmittedWordsList.findIndex(item =>
                 (typeof item === 'string' ? item : (item && item.word) || '').toUpperCase() === cleanWord
@@ -11325,7 +11325,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
 
                         const cleanWord = (data.word || word).toUpperCase();
                         const bwUpper = (currentState.bonus_word || '').trim().toUpperCase();
-                        const isBonus = Boolean(data.is_bonus || (data.score_details && (data.score_details.bonus_word_points || 0) > 0) || (bwUpper && cleanWord === bwUpper));
+                        const isBonus = Boolean(bwUpper ? (cleanWord === bwUpper) : data.is_bonus);
 
                         // Prevent duplicate row: Check if word is already in DOM (e.g. from optimistic instant render)
                         const existingWordItem = Array.from(listEl.querySelectorAll('.word-item')).find(item => {

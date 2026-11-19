@@ -8425,11 +8425,38 @@ def get_room_state(room_id):
                     intermission_csw_only = [w for w in prev_csw_list if len(w) >= display_floor]
                     intermission_added = [w for w in prev_aw_list if len(w) >= display_floor]
 
-                # Purge scores as well
-                word_scores_to_return = {w: word_scores_to_return[w] for w in words_to_return if w in word_scores_to_return}
+                # Purge scores as well and ensure bonus_word_points strictly matches previous_bonus_word
+                prev_bw_san = str(getattr(room, 'previous_bonus_word', None) or getattr(room, 'bonus_word', '') or '').upper().strip()
+                clean_scores = {}
+                for w in words_to_return:
+                    if w in word_scores_to_return:
+                        s_info = word_scores_to_return[w]
+                        if isinstance(s_info, dict):
+                            s_copy = dict(s_info)
+                            cur_bwp = s_copy.get('bonus_word_points', 0)
+                            w_up = str(w).upper().strip()
+                            if prev_bw_san and w_up == prev_bw_san:
+                                needed_bwp = len(w_up)
+                                if cur_bwp != needed_bwp:
+                                    base = s_copy.get('base', s_copy.get('total', 0) - cur_bwp)
+                                    s_copy['base'] = base
+                                    s_copy['bonus_word_points'] = needed_bwp
+                                    s_copy['total'] = base + needed_bwp + s_copy.get('bonus_letter_points', 0) + s_copy.get('either_or_points', 0)
+                            else:
+                                if cur_bwp > 0:
+                                    s_copy['bonus_word_points'] = 0
+                                    base = s_copy.get('base', max(0, s_copy.get('total', 0) - cur_bwp))
+                                    s_copy['base'] = base
+                                    s_copy['total'] = base + s_copy.get('bonus_letter_points', 0) + s_copy.get('either_or_points', 0)
+                            clean_scores[w] = s_copy
+                        else:
+                            clean_scores[w] = s_info
+                word_scores_to_return = clean_scores
             elif is_active:
                 # ACTIVE: Provide word scores for total-points calculation client-side
                 # (Avoids showing '0 total pts' when total_points_count hasn't been computed yet)
+                from game_room import sync_bonus_word_scores
+                sync_bonus_word_scores(room)
                 word_scores_to_return = getattr(room, 'solved_words_with_scores', {}) or {}
                 # ALWAYS provide all_words for instant client-side validation
                 words_to_return = list(room.all_words)
@@ -8927,7 +8954,7 @@ def submit_word(room_id):
     last_sub = (player.submitted_words[-1] if (player and player.submitted_words) else {})
     score_details = last_sub.get('score_details', {}) if isinstance(last_sub, dict) else {}
     bw_str = str(getattr(room, 'bonus_word', '') or '').strip().upper()
-    is_bonus = bool(final_word and bw_str and final_word.strip().upper() == bw_str) or bool(score_details.get('bonus_word_points', 0) > 0)
+    is_bonus = bool(final_word and bw_str and final_word.strip().upper() == bw_str)
     returned_path = path
     if success and not returned_path:
         returned_path = (last_sub.get('path') if isinstance(last_sub, dict) else None) or (room.all_words_paths.get(final_word) if (final_word and getattr(room, 'all_words_paths', None)) else None)

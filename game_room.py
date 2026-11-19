@@ -1098,7 +1098,7 @@ class GameRoom:
             )
             points = points_data['total']
             word_timestamp = time.time()
-            is_bonus = bool(self.bonus_word and final_word.strip().upper() == self.bonus_word.strip().upper()) or bool(points_data.get('bonus_word_points', 0) > 0)
+            is_bonus = bool(self.bonus_word and final_word.strip().upper() == self.bonus_word.strip().upper())
             word_metadata = {
                 'word': final_word,
                 'time': word_timestamp,
@@ -1338,7 +1338,7 @@ class GameRoom:
         points = points_data['total']
         
         word_timestamp = time.time()
-        is_bonus = bool(self.bonus_word and final_word.strip().upper() == self.bonus_word.strip().upper()) or bool(points_data.get('bonus_word_points', 0) > 0)
+        is_bonus = bool(self.bonus_word and final_word.strip().upper() == self.bonus_word.strip().upper())
         word_metadata = {
             'word': final_word,
             'time': word_timestamp,
@@ -3085,6 +3085,7 @@ class GameRoom:
     def recalculate_total_points(self):
         """Aggregate total attainable points for the active round's word list"""
         try:
+            sync_bonus_word_scores(self)
             attainable = 0
             scores = getattr(self, 'solved_words_with_scores', None)
             
@@ -3302,6 +3303,38 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
         return chosen
 
     return 'PLANETS'
+
+def sync_bonus_word_scores(room):
+    """
+    Ensure that ONLY room.bonus_word has bonus_word_points in room.solved_words_with_scores,
+    and all other words have bonus_word_points = 0 and corrected total points.
+    """
+    if not room:
+        return
+    bw_up = str(getattr(room, 'bonus_word', '') or '').upper().strip()
+    scores = getattr(room, 'solved_words_with_scores', None)
+    if not scores or not isinstance(scores, dict):
+        return
+
+    for w, s_info in list(scores.items()):
+        if not isinstance(s_info, dict):
+            continue
+        w_up = str(w).upper().strip()
+        if bw_up and w_up == bw_up:
+            needed_bwp = len(w_up)
+            cur_bwp = s_info.get('bonus_word_points', 0)
+            if cur_bwp != needed_bwp:
+                base = s_info.get('base', s_info.get('total', 0) - cur_bwp)
+                s_info['base'] = base
+                s_info['bonus_word_points'] = needed_bwp
+                s_info['total'] = base + needed_bwp + s_info.get('bonus_letter_points', 0) + s_info.get('either_or_points', 0)
+        else:
+            cur_bwp = s_info.get('bonus_word_points', 0)
+            if cur_bwp > 0:
+                s_info['bonus_word_points'] = 0
+                base = s_info.get('base', max(0, s_info.get('total', 0) - cur_bwp))
+                s_info['base'] = base
+                s_info['total'] = base + s_info.get('bonus_letter_points', 0) + s_info.get('either_or_points', 0)
 
 def _get_word_path(paths_dict, word):
     if not isinstance(paths_dict, dict) or not word:
@@ -5791,6 +5824,7 @@ class RoomManager:
                     room.spinner_params['bonus_word_length'] = actual_bw_len
                 if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                     room.frozen_revealed_params['bonus_word_length'] = actual_bw_len
+            sync_bonus_word_scores(room)
 
             print(f"[RoomManager] ROUND {room.current_round} START for {room_id}. Words found: {len(all_words)}")
             with open(DEBUG_FLOW_PATH, 'a') as f:
@@ -8355,6 +8389,7 @@ class RoomManager:
                         room.frozen_revealed_params['bonus_word_length'] = actual_bw_len
                     if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
                         room.next_spinner_params['bonus_word_length'] = actual_bw_len
+                sync_bonus_word_scores(room)
                 
                 room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
 
@@ -8852,6 +8887,7 @@ class RoomManager:
                 )
                 if _prev_bw_saved:
                     room.previous_bonus_word = _prev_bw_saved
+                sync_bonus_word_scores(room)
                 final_dict = d_target if d_target else raw_dict
                 final_aw = use_aw_target if use_aw_target is not None else raw_aw
                 final_fmt = fmt_target if fmt_target else r_fmt
