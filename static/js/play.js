@@ -28,6 +28,9 @@ function adjustPlayHeaderForDevice() {
     const timerDisplay = document.querySelector('.timer-display');
     const timerControlsGroup = document.getElementById('timer-controls-group');
     const wordInputSection = document.querySelector('.word-input-section');
+    const wordInputRow = document.getElementById('word-input-row');
+    const shuffleBtn = document.getElementById('shuffle-board-btn');
+    const clearWordBtn = document.getElementById('clear-word-btn');
     const colorBar = document.getElementById('game-color-bar');
     const playersPanel = document.getElementById('play-panel-players');
     const playGrid = document.querySelector('.play-grid');
@@ -35,6 +38,7 @@ function adjustPlayHeaderForDevice() {
     if (!header || !boardPanel) return;
     
     const isDesktop = checkIsDesktop();
+    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     
     if (isDesktop) {
         // Desktops and laptops only: Header sits in its own space above Players, Board, and Words panels and below top menu
@@ -60,6 +64,14 @@ function adjustPlayHeaderForDevice() {
         if (timerControlsGroup && wordInputSection && timerControlsGroup.parentElement !== wordInputSection) {
             wordInputSection.appendChild(timerControlsGroup);
         }
+        // Shuffle button sits in wordInputRow on laptops and desktops
+        if (shuffleBtn && wordInputRow && shuffleBtn.parentElement !== wordInputRow) {
+            if (clearWordBtn && clearWordBtn.parentElement === wordInputRow) {
+                wordInputRow.insertBefore(shuffleBtn, clearWordBtn);
+            } else {
+                wordInputRow.appendChild(shuffleBtn);
+            }
+        }
     } else {
         // Mobile only: Move play-header strictly inside board panel so it ONLY appears in the Board window above the Timer
         if (header.parentElement !== boardPanel) {
@@ -84,14 +96,36 @@ function adjustPlayHeaderForDevice() {
         if (colorBar && playersPanel && colorBar.parentElement !== playersPanel) {
             playersPanel.prepend(colorBar);
         }
+
+        // On mobile in Multiplayer Subanagrams: Move Shuffle button to timerDisplay (right side)
+        if (isSubanagrams) {
+            if (shuffleBtn && timerDisplay && shuffleBtn.parentElement !== timerDisplay) {
+                timerDisplay.appendChild(shuffleBtn);
+            }
+        } else {
+            // Normal game rooms on mobile: shuffleBtn belongs in wordInputRow
+            if (shuffleBtn && wordInputRow && shuffleBtn.parentElement !== wordInputRow) {
+                if (clearWordBtn && clearWordBtn.parentElement === wordInputRow) {
+                    wordInputRow.insertBefore(shuffleBtn, clearWordBtn);
+                } else {
+                    wordInputRow.appendChild(shuffleBtn);
+                }
+            }
+        }
     }
 
-    const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     if (colorBar && isSubanagrams) {
         colorBar.style.display = 'none';
     }
-    if (timerControlsGroup && isSubanagrams) {
-        timerControlsGroup.style.display = 'none';
+    if (timerControlsGroup) {
+        timerControlsGroup.style.display = isSubanagrams ? 'none' : '';
+    }
+    if (shuffleBtn) {
+        if (!isSubanagrams) {
+            shuffleBtn.style.display = 'none';
+        } else {
+            shuffleBtn.style.display = '';
+        }
     }
 }
 window.checkIsDesktop = checkIsDesktop;
@@ -259,9 +293,9 @@ window._restorePlayPanel = function() {
 
 // Re-snap the game panels when the viewport changes (Android/iOS "exit full screen" banner or orientation change).
 window.addEventListener('resize', () => {
+    if (typeof adjustPlayHeaderForDevice === 'function') adjustPlayHeaderForDevice();
     const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     if (!isMobile) {
-        if (typeof adjustPlayHeaderForDevice === 'function') adjustPlayHeaderForDevice();
         return;
     }
     if (typeof window.scheduleMobileViewportRecovery === 'function') {
@@ -2337,6 +2371,9 @@ async function _doUpdateGameState(incomingState = null) {
         window.lastGameState = state;  // Store for optimistic updates
         const isSub = state.game_type === 'subanagrams';
         document.body.classList.toggle('is-subanagrams', isSub);
+        if (typeof adjustPlayHeaderForDevice === 'function') {
+            adjustPlayHeaderForDevice();
+        }
 
         const gt = (state && state.game_type) ? String(state.game_type).toLowerCase() : '';
         const dims = (state && state.board_dimensions) ? String(state.board_dimensions).toLowerCase() : '';
@@ -11643,6 +11680,9 @@ async function leaveCurrentRoom() {
     window._displayedParams = null;
     window.subanagramsCustomBoard = null;
     document.body.classList.remove('is-subanagrams');
+    if (typeof adjustPlayHeaderForDevice === 'function') {
+        adjustPlayHeaderForDevice();
+    }
     const boardEl = document.getElementById('game-board');
     if (boardEl) {
         boardEl.classList.remove('is-subanagrams-board');

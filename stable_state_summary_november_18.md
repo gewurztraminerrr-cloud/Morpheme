@@ -496,6 +496,31 @@
      - In `handleSubanagramsTileClick`, marked all active tiles uniformly as `.selected` without `.current`.
      - In `wordInputEl.addEventListener('input')`, synchronized `mouseState.selectedPath` and applied `.selected` alongside `.typing-highlight` for Subanagrams so typed and clicked tiles are 100% unified in color and path tracking.
 
+---
+
+### Multiplayer Subanagrams Mobile Layout: Shuffle Button Relocated to Timer & Full-Width Word Input
+- **Problem**:
+  1. On mobile devices in Multiplayer Subanagrams, the Shuffle button sat beside `#word-input` in `.word-input-row`, causing the "ENTER WORD" textbox to take only a fraction of the row's horizontal width while the "Enter" button directly above it stretched full width.
+  2. The user requested:
+     - Move the Shuffle button in multiplayer subanagrams on mobile devices to the right side of the timer display, occupying the exact same spot where the Rotate and Transpose buttons sit in standard game rooms.
+     - Make the ENTER WORD textbox run along the exact same horizontal length as the Enter button above it.
+- **Root Cause**:
+  - In standard game rooms on mobile, `adjustPlayHeaderForDevice()` relocated `#timer-controls-group` (Rotate & Transpose) to `.timer-display` with `margin-left: auto`. In Subanagrams, Rotate & Transpose are hidden, leaving that spot vacant, while Shuffle was appended to `.word-input-row` next to `#word-input`.
+  - Because `#shuffle-board-btn` was inside `.word-input-row`, `#word-input` was restricted to ~60–70% width, falling short of `#submit-word-btn` which spanned 100% of `.word-input-section`.
+- **Fixes Applied**:
+  1. **Shuffle Button Relocation on Mobile (`static/js/play.js`)**:
+     - Updated `adjustPlayHeaderForDevice()` to detect `isSubanagrams` and `!isDesktop`.
+     - On mobile in Subanagrams, moved `#shuffle-board-btn` into `.timer-display` (after `.timer-left-group`) with `margin-left: auto`, placing it in the exact same spot and alignment as Rotate & Transpose in standard game rooms.
+     - On desktop, restored `#shuffle-board-btn` back to `wordInputRow` (before `clearWordBtn`) with standard desktop styling.
+     - Automatically called `adjustPlayHeaderForDevice()` on room state updates, leave room cleanup, and viewport resize.
+  2. **Timer Display Shuffle Styling (`static/css/play.css`)**:
+     - Styled `.timer-display #shuffle-board-btn` to match the exact dimensions and position of Rotate & Transpose buttons: `height: 26px !important; line-height: 26px !important; padding: 3px 12px !important; font-size: 0.75rem !important; font-weight: 700 !important; border-radius: 6px !important; margin-left: auto !important; width: auto !important;` with sleek vibrant blue gradient.
+  3. **Identical Horizontal Length for Word Input (`static/css/play.css`)**:
+     - Configured `.word-input-row` on mobile Subanagrams to `width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; box-sizing: border-box !important;`.
+     - Configured `#word-input` on mobile Subanagrams to `width: 100% !important; max-width: 100% !important; flex: 1 1 100% !important; box-sizing: border-box !important; margin: 0 !important;`.
+     - Ensured `#submit-word-btn` directly above it has matching `width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; margin: 0 !important;`.
+     - The ENTER WORD textbox now spans the exact same horizontal width as the Enter button above it.
+
 
 
 

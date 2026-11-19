@@ -2030,6 +2030,7 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     body.is-subanagrams .word-input-section #submit-word-btn,
     body.is-subanagrams.is-mobile .word-input-section #submit-word-btn {
         width: 100% !important;
+        max-width: 100% !important;
         height: 48px !important;
         min-height: 48px !important;
         max-height: 48px !important;
@@ -2038,6 +2039,7 @@ body.is-subanagrams .timer-display #transpose-board-btn {
         font-size: 1.05rem !important;
         font-weight: 800 !important;
         box-sizing: border-box !important;
+        margin: 0 !important;
         order: 1 !important;
         touch-action: manipulation !important;
     }
@@ -2049,26 +2051,49 @@ body.is-subanagrams .timer-display #transpose-board-btn {
         align-items: center !important;
         justify-content: center !important;
         width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 0 !important;
         gap: 6px !important;
         order: 2 !important;
+    }
+    body.is-subanagrams .word-input-section #word-input,
+    body.is-subanagrams.is-mobile .word-input-section #word-input {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
     }
     body.is-subanagrams .word-input-section #clear-word-btn,
     body.is-subanagrams.is-mobile .word-input-section #clear-word-btn {
         display: none !important;
     }
-    /* Shuffle button traded places with Enter, sitting next to word-input */
-    body.is-subanagrams .word-input-section #shuffle-board-btn,
-    body.is-subanagrams.is-mobile .word-input-section #shuffle-board-btn {
+    /* Shuffle button in multiplayer Subanagrams sits in timer display on the right on mobile */
+    .timer-display #shuffle-board-btn,
+    body.is-subanagrams .timer-display #shuffle-board-btn,
+    body.is-subanagrams.is-mobile .timer-display #shuffle-board-btn {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
         width: auto !important;
         flex: 0 0 auto !important;
-        min-width: 80px !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        max-height: 42px !important;
-        line-height: 42px !important;
-        padding: 0 16px !important;
-        font-size: 0.95rem !important;
+        min-width: 0 !important;
+        height: 26px !important;
+        min-height: 26px !important;
+        max-height: 26px !important;
+        line-height: 26px !important;
+        padding: 3px 12px !important;
+        font-size: 0.75rem !important;
         font-weight: 700 !important;
+        border-radius: 6px !important;
         box-sizing: border-box !important;
         touch-action: manipulation !important;
     }
@@ -9713,6 +9738,7 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     body.is-subanagrams.is-mobile .word-input-section #submit-word-btn {
         display: inline-flex !important;
         width: 100% !important;
+        max-width: 100% !important;
         flex: 1 1 100% !important;
         align-items: center !important;
         justify-content: center !important;
@@ -9726,6 +9752,7 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         letter-spacing: 0.5px !important;
         white-space: nowrap !important;
         box-sizing: border-box !important;
+        margin: 0 !important;
         background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         color: #ffffff !important;
         border: none !important;
@@ -9745,16 +9772,23 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         align-items: center !important;
         justify-content: center !important;
         width: 100% !important;
-        gap: 6px !important;
+        max-width: 100% !important;
         box-sizing: border-box !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        gap: 6px !important;
         order: 2 !important;
     }
 
+    /* Word input runs along the exact same horizontal length as the Enter button above it */
     body.is-subanagrams .word-input-section #word-input,
     body.is-subanagrams.is-mobile .word-input-section #word-input {
         display: block !important;
-        flex: 1 1 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
         min-width: 0 !important;
+        margin: 0 !important;
         height: 42px !important;
         padding: 8px 10px !important;
         font-size: 1.1rem !important;
@@ -9771,28 +9805,34 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         display: none !important;
     }
 
-    /* Shuffle sits in the other row alongside word-input */
-    body.is-subanagrams .word-input-section #shuffle-board-btn,
-    body.is-subanagrams.is-mobile .word-input-section #shuffle-board-btn {
+    /* Shuffle button in multiplayer Subanagrams sits on right side of timer on mobile */
+    .timer-display #shuffle-board-btn,
+    body.is-subanagrams .timer-display #shuffle-board-btn,
+    body.is-subanagrams.is-mobile .timer-display #shuffle-board-btn {
         display: inline-flex !important;
+        flex-direction: row !important;
         align-items: center !important;
         justify-content: center !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
         width: auto !important;
         flex: 0 0 auto !important;
-        min-width: 80px !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        max-height: 42px !important;
-        line-height: 42px !important;
-        padding: 0 16px !important;
-        font-size: 0.95rem !important;
+        min-width: 0 !important;
+        height: 26px !important;
+        min-height: 26px !important;
+        max-height: 26px !important;
+        line-height: 26px !important;
+        padding: 3px 12px !important;
+        font-size: 0.75rem !important;
         font-weight: 700 !important;
         white-space: nowrap !important;
         box-sizing: border-box !important;
         background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
         color: #ffffff !important;
         border: none !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         touch-action: manipulation !important;
         user-select: none !important;
         -webkit-user-select: none !important;
@@ -15526,6 +15566,51 @@ body.theme-white .find-count-division-badge,
         margin: 0 !important;
     }
 
+    /* Subanagrams Mobile: Shuffle button inside timer display, matching Rotate & Transpose position */
+    .timer-display #shuffle-board-btn,
+    body.is-mobile.is-subanagrams .timer-display #shuffle-board-btn,
+    body.is-subanagrams .timer-display #shuffle-board-btn {
+        display: inline-flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin-left: auto !important;
+        margin-right: 0 !important;
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        height: 26px !important;
+        min-height: 26px !important;
+        max-height: 26px !important;
+        line-height: 26px !important;
+        padding: 3px 12px !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        border-radius: 6px !important;
+        float: none !important;
+        width: auto !important;
+        min-width: 0 !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+        transform: none !important;
+        box-shadow: none !important;
+        vertical-align: middle !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        color: #ffffff !important;
+        border: none !important;
+        cursor: pointer !important;
+        touch-action: manipulation !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -webkit-tap-highlight-color: transparent !important;
+        flex-shrink: 0 !important;
+    }
+    .timer-display #shuffle-board-btn:hover:not(:disabled),
+    .timer-display #shuffle-board-btn:active:not(:disabled) {
+        transform: none !important;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4) !important;
+        filter: brightness(1.1) !important;
+    }
+
     body.is-mobile .timer-display,
     body.is-mobile .board-panel .timer-display,
     body.is-mobile .play-header .timer-display {
@@ -18591,10 +18676,11 @@ body.is-desktop.is-subanagrams .word-input-section #shuffle-board-btn {
     flex: 0 0 auto !important;
 }
 
-/* Explicit Mobile Invariant: Enter is largest full-width button (48px), Shuffle locked to 42px row, Clear removed */
+/* Explicit Mobile Invariant for Multiplayer Subanagrams: Enter and Word Input run along the exact same full horizontal length */
 body.is-mobile.is-subanagrams .word-input-section #submit-word-btn,
 body.is-subanagrams.is-mobile #submit-word-btn {
     width: 100% !important;
+    max-width: 100% !important;
     height: 48px !important;
     min-height: 48px !important;
     max-height: 48px !important;
@@ -18603,7 +18689,29 @@ body.is-subanagrams.is-mobile #submit-word-btn {
     font-size: 1.05rem !important;
     font-weight: 800 !important;
     box-sizing: border-box !important;
+    margin: 0 !important;
     order: 1 !important;
+}
+
+body.is-mobile.is-subanagrams .word-input-row,
+body.is-subanagrams.is-mobile .word-input-row {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    order: 2 !important;
+}
+
+body.is-mobile.is-subanagrams .word-input-section #word-input,
+body.is-subanagrams.is-mobile .word-input-section #word-input,
+body.is-subanagrams.is-mobile #word-input,
+body.is-mobile.is-subanagrams #word-input {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
 }
 
 body.is-mobile.is-subanagrams .word-input-section #clear-word-btn,
@@ -18611,19 +18719,39 @@ body.is-subanagrams.is-mobile #clear-word-btn {
     display: none !important;
 }
 
-body.is-mobile.is-subanagrams .word-input-section #shuffle-board-btn,
-body.is-subanagrams.is-mobile #shuffle-board-btn {
+/* On mobile in Subanagrams, Shuffle button sits in timer display on the right */
+.timer-display #shuffle-board-btn,
+body.is-mobile.is-subanagrams .timer-display #shuffle-board-btn,
+body.is-subanagrams.is-mobile .timer-display #shuffle-board-btn {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-left: auto !important;
+    margin-right: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
     width: auto !important;
     flex: 0 0 auto !important;
-    min-width: 80px !important;
-    height: 42px !important;
-    min-height: 42px !important;
-    max-height: 42px !important;
-    line-height: 42px !important;
-    padding: 0 16px !important;
-    font-size: 0.95rem !important;
+    min-width: 0 !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    max-height: 26px !important;
+    line-height: 26px !important;
+    padding: 3px 12px !important;
+    font-size: 0.75rem !important;
     font-weight: 700 !important;
+    white-space: nowrap !important;
     box-sizing: border-box !important;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
 }
 
 body.is-desktop .word-input-section #word-input {
