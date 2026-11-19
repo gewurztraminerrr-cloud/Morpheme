@@ -7626,6 +7626,7 @@ class RoomManager:
     def start_next_round(self, room_id):
         """Start next round with pre-generated board (called at 0s remaining)"""
         import time
+        from scoring import calculate_word_score
         room = self.get_room(room_id)
         if not room:
             print(f"[RoomManager] ERROR: Room {room_id} not found")
