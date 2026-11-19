@@ -33,7 +33,7 @@
 /* Themes */
 /* Themes */
 /* Themes */
-body.theme-black {
+html.theme-black, body.theme-black {
     --bg-primary: #000000;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -43,7 +43,7 @@ body.theme-black {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-white {
+html.theme-white, body.theme-white {
     --bg-primary: #ffffff;
     --bg-panel: rgba(0, 0, 0, 0.05);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -54,7 +54,7 @@ body.theme-white {
     --btn-text: #fff;
 }
 
-body.theme-light-light-gray {
+html.theme-light-light-gray, body.theme-light-light-gray {
     --bg-primary: #ececec;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -65,7 +65,7 @@ body.theme-light-light-gray {
     --btn-text: #fff;
 }
 
-body.theme-light-gray {
+html.theme-light-gray, body.theme-light-gray {
     --bg-primary: #d8d8d8;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -76,7 +76,7 @@ body.theme-light-gray {
     --btn-text: #fff;
 }
 
-body.theme-gray {
+html.theme-gray, body.theme-gray {
     --bg-primary: #484848;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -85,7 +85,7 @@ body.theme-gray {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-dark-gray {
+html.theme-dark-gray, body.theme-dark-gray {
     --bg-primary: #242424;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -94,7 +94,7 @@ body.theme-dark-gray {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-light-light-red {
+html.theme-light-light-red, body.theme-light-light-red {
     --bg-primary: #ffe5e5;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -103,7 +103,7 @@ body.theme-light-light-red {
     --accent-color: #cc0000;
 }
 
-body.theme-light-red {
+html.theme-light-red, body.theme-light-red {
     --bg-primary: #ffcccc;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -112,7 +112,7 @@ body.theme-light-red {
     --accent-color: #cc0000;
 }
 
-body.theme-red {
+html.theme-red, body.theme-red {
     --bg-primary: #801010;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -121,7 +121,7 @@ body.theme-red {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-dark-red {
+html.theme-dark-red, body.theme-dark-red {
     --bg-primary: #440000;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -130,7 +130,7 @@ body.theme-dark-red {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-light-light-orange {
+html.theme-light-light-orange, body.theme-light-light-orange {
     --bg-primary: #fff0db;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -139,7 +139,7 @@ body.theme-light-light-orange {
     --accent-color: #cc6600;
 }
 
-body.theme-light-orange {
+html.theme-light-orange, body.theme-light-orange {
     --bg-primary: #ffe0b3;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -148,7 +148,7 @@ body.theme-light-orange {
     --accent-color: #cc6600;
 }
 
-body.theme-orange {
+html.theme-orange, body.theme-orange {
     --bg-primary: #8c3e00;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -157,7 +157,7 @@ body.theme-orange {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-dark-orange {
+html.theme-dark-orange, body.theme-dark-orange {
     --bg-primary: #4a2000;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -166,7 +166,7 @@ body.theme-dark-orange {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-light-light-yellow {
+html.theme-light-light-yellow, body.theme-light-light-yellow {
     --bg-primary: #ffffe5;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -175,7 +175,7 @@ body.theme-light-light-yellow {
     --accent-color: #8b8b00;
 }
 
-body.theme-light-yellow {
+html.theme-light-yellow, body.theme-light-yellow {
     --bg-primary: #ffffcc;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -184,7 +184,7 @@ body.theme-light-yellow {
     --accent-color: #8b8b00;
 }
 
-body.theme-yellow {
+html.theme-yellow, body.theme-yellow {
     --bg-primary: #705f00;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -193,7 +193,7 @@ body.theme-yellow {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-dark-yellow {
+html.theme-dark-yellow, body.theme-dark-yellow {
     --bg-primary: #3d3400;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -202,7 +202,7 @@ body.theme-dark-yellow {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-light-light-green {
+html.theme-light-light-green, body.theme-light-light-green {
     --bg-primary: #e6ffe6;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -211,7 +211,7 @@ body.theme-light-light-green {
     --accent-color: #008000;
 }
 
-body.theme-light-green {
+html.theme-light-green, body.theme-light-green {
     --bg-primary: #ccffcc;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -220,7 +220,7 @@ body.theme-light-green {
     --accent-color: #008000;
 }
 
-body.theme-green {
+html.theme-green, body.theme-green {
     --bg-primary: #0f590f;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -229,7 +229,7 @@ body.theme-green {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-dark-green {
+html.theme-dark-green, body.theme-dark-green {
     --bg-primary: #002900;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -238,7 +238,7 @@ body.theme-dark-green {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-light-light-blue {
+html.theme-light-light-blue, body.theme-light-light-blue {
     --bg-primary: #e5f6ff;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -247,7 +247,7 @@ body.theme-light-light-blue {
     --accent-color: #0066cc;
 }
 
-body.theme-light-blue {
+html.theme-light-blue, body.theme-light-blue {
     --bg-primary: #cceeff;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -256,7 +256,7 @@ body.theme-light-blue {
     --accent-color: #0066cc;
 }
 
-body.theme-blue {
+html.theme-blue, body.theme-blue {
     --bg-primary: #0a3a78;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -265,7 +265,7 @@ body.theme-blue {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-dark-blue {
+html.theme-dark-blue, body.theme-dark-blue {
     --bg-primary: #001445;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -274,7 +274,7 @@ body.theme-dark-blue {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-light-light-purple {
+html.theme-light-light-purple, body.theme-light-light-purple {
     --bg-primary: #f9f2fa;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -283,7 +283,7 @@ body.theme-light-light-purple {
     --accent-color: #7b1fa2;
 }
 
-body.theme-light-purple {
+html.theme-light-purple, body.theme-light-purple {
     --bg-primary: #f3e5f5;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -292,7 +292,7 @@ body.theme-light-purple {
     --accent-color: #7b1fa2;
 }
 
-body.theme-purple {
+html.theme-purple, body.theme-purple {
     --bg-primary: #591759;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -301,7 +301,7 @@ body.theme-purple {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-dark-purple {
+html.theme-dark-purple, body.theme-dark-purple {
     --bg-primary: #2e082e;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -310,7 +310,7 @@ body.theme-dark-purple {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-light-light-pink {
+html.theme-light-light-pink, body.theme-light-light-pink {
     --bg-primary: #fef0f5;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -319,7 +319,7 @@ body.theme-light-light-pink {
     --accent-color: #c2185b;
 }
 
-body.theme-light-pink {
+html.theme-light-pink, body.theme-light-pink {
     --bg-primary: #fce4ec;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -328,7 +328,7 @@ body.theme-light-pink {
     --accent-color: #c2185b;
 }
 
-body.theme-pink {
+html.theme-pink, body.theme-pink {
     --bg-primary: #851b47;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -337,7 +337,7 @@ body.theme-pink {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-dark-pink {
+html.theme-dark-pink, body.theme-dark-pink {
     --bg-primary: #4a0a26;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -346,7 +346,7 @@ body.theme-dark-pink {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-light-light-brown {
+html.theme-light-light-brown, body.theme-light-light-brown {
     --bg-primary: #f7efe5;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -355,7 +355,7 @@ body.theme-light-light-brown {
     --accent-color: #795548;
 }
 
-body.theme-light-brown {
+html.theme-light-brown, body.theme-light-brown {
     --bg-primary: #efe0cc;
     --bg-panel: rgba(0, 0, 0, 0.08);
     --toast-bg: rgba(255, 255, 255, 0.95);
@@ -364,7 +364,7 @@ body.theme-light-brown {
     --accent-color: #795548;
 }
 
-body.theme-brown {
+html.theme-brown, body.theme-brown {
     --bg-primary: #52362b;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);
@@ -373,7 +373,7 @@ body.theme-brown {
     --text-primary-rgb: 255, 255, 255;
 }
 
-body.theme-dark-brown {
+html.theme-dark-brown, body.theme-dark-brown {
     --bg-primary: #2b1812;
     --bg-panel: rgba(var(--text-primary-rgb), 0.08);
     --accent-color: var(--text-primary);

@@ -738,6 +738,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         try { sessionStorage.removeItem('morpheme_gateway_passed'); } catch (err) {}
 
         // Immediately put into effect all settings and the correct layout color the moment ENTER LOBBY is pressed
+        try {
+            let t = localStorage.getItem('morpheme_app_theme');
+            if (!t || t === 'default') {
+                const u = (localStorage.getItem('morpheme_username') || '').trim();
+                const sKey = u ? ('morpheme_settings_' + u.toLowerCase()) : 'morpheme_settings_guest';
+                const sData = localStorage.getItem(sKey);
+                if (sData) {
+                    const p = JSON.parse(sData);
+                    if (p && p.app_theme && p.app_theme !== 'default') t = p.app_theme;
+                }
+            }
+            if (t && t !== 'default') {
+                document.body.className = document.body.className.replace(/\btheme-\S+/g, '').trim() + ' theme-' + t;
+                if (document.documentElement) {
+                    document.documentElement.className = document.documentElement.className.replace(/\btheme-\S+/g, '').trim() + ' theme-' + t;
+                }
+            }
+        } catch (_) {}
+
         if (typeof window.applyAllSettingsImmediate === 'function') {
             window.applyAllSettingsImmediate();
         }

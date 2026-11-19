@@ -93,13 +93,13 @@ function debounce(func, wait) {
                 if (localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true') {
                     parsed.lobby_guide_dismissed = 'true';
                 }
-                if (cachedTheme && !parsed.app_theme) {
+                if (cachedTheme && cachedTheme !== 'default' && (!parsed.app_theme || parsed.app_theme === 'default')) {
                     parsed.app_theme = cachedTheme;
                 }
                 return Object.assign(getDefaultSettings(), parsed);
             } else {
                 const defaults = getDefaultSettings();
-                if (cachedTheme) {
+                if (cachedTheme && cachedTheme !== 'default') {
                     defaults.app_theme = cachedTheme;
                 }
                 return defaults;
@@ -131,7 +131,9 @@ function debounce(func, wait) {
             }
         }
         try {
-            localStorage.setItem('morpheme_app_theme', t);
+            if (t && t !== 'default') {
+                localStorage.setItem('morpheme_app_theme', t);
+            }
         } catch (e) {}
 
         const btns = (typeof themeBtns !== 'undefined' && themeBtns) ? themeBtns : document.querySelectorAll('.theme-btn');
@@ -351,8 +353,13 @@ function debounce(func, wait) {
         }
 
         // App Theme
-        if (settings.app_theme) {
+        if (settings.app_theme && settings.app_theme !== 'default') {
             applyTheme(settings.app_theme);
+        } else if (settings.app_theme === 'default') {
+            const cached = localStorage.getItem('morpheme_app_theme');
+            if (!cached || cached === 'default') {
+                applyTheme('default');
+            }
         }
 
         // Highlight as you type
