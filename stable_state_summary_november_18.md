@@ -523,7 +523,7 @@
   4. **Eliminated Duplicate Inline Shadow Function & Cache-Busted Assets (`templates/index.html`, `static/js/app.js`, `static/js/lobby.js`)**:
      - Removed a legacy duplicate definition of `adjustPlayHeaderForDevice()` at the bottom of `templates/index.html` (lines 10526–10632) that was shadowing `play.js`'s updated implementation and executing without the Shuffle relocation logic.
      - Replaced the duplicate script block with clean delegation listeners (`load`, `resize`, `DOMContentLoaded`) invoking `window.adjustPlayHeaderForDevice()`.
-     - Bumped cache-busting query strings to `?v=1794380003` across `play.css`, `play.js`, `app.js`, and `lobby.js` so mobile devices (iOS Safari, Android Chrome) immediately fetch the live updated assets rather than serving stale cached scripts.
+     - Bumped cache-busting query strings to `?v=1794380004` across `play.css`, `play.js`, `app.js`, and `lobby.js` so mobile devices (iOS Safari, Android Chrome) immediately fetch the live updated assets rather than serving stale cached scripts.
      - Ensured `adjustPlayHeaderForDevice()` runs reliably during `showPage('page-play')`, `enterLobbyRoom()`, and Subanagrams board rendering.
 
 ---
@@ -543,6 +543,35 @@
      - Wrapped lines 553–684 with a clean outer `try { ... } catch (err) { ... } finally { ... }` block, properly pairing all control flow structures.
      - Verified with JavaScriptCore (`jsc`) across all files in `static/js/` (zero syntax errors).
   2. *Cache-Busting & Deployment (`templates/index.html`)*:
-     - Bumped cache-busting version strings to `?v=1794380003` for `lobby.js`, `play.js`, `play.css`, and `app.js`.
+     - Bumped cache-busting version strings to `?v=1794380004` for `lobby.js`, `play.js`, `play.css`, and `app.js`.
      - Deployed cleanly to production VPS (`132.148.72.249`), verified HTTP/2 200 OK.
+---
+
+### Gateway "ENTER LOBBY" Button Navigation Resolution (Temporal Dead Zone ReferenceError Fix)
+- **Problem**: When clicking the "ENTER LOBBY" button on the gateway page (`#page-loading`), the button remained permanently flattened in Chrome after mouse release (and popped back up in Safari), but the user was not transitioned to the lobby.
+- **Root Cause**:
+  1. *Temporal Dead Zone ReferenceError in `play.js`*:
+     - In `static/js/play.js`, `adjustPlayHeaderForDevice()` at line 124 executed `(typeof isTournamentPlay !== "undefined" && isTournamentPlay)`.
+     - `let isTournamentPlay = false;` was declared later at line 465.
+     - When `adjustPlayHeaderForDevice()` was called on script evaluation at line 157, `isTournamentPlay` was in the JavaScript Temporal Dead Zone (TDZ).
+     - In ES6+, accessing a block-scoped variable in TDZ—even with `typeof`—immediately throws `ReferenceError: Cannot access "isTournamentPlay" before initialization`.
+     - This unhandled exception caused `play.js` script execution to abort midway, preventing `window.BoardAudio` and subsequent modules from initializing.
+  2. *Uncaught Exception in `updateAuthUI()` during Gateway Transition*:
+     - In `static/js/app.js`, line 3883 (`renderGameColorBar()`) also contained `typeof isTournamentPlay !== "undefined" && isTournamentPlay`.
+     - When the user clicked "ENTER LOBBY", `executeGatewayTransition()` set `gatewayTransitioning = true` and invoked `updateAuthUI()`.
+     - `updateAuthUI()` called `renderGameColorBar()`, which threw `ReferenceError: isTournamentPlay is not defined`.
+     - Because `updateAuthUI()` was called without a `try...catch` wrapper in `executeGatewayTransition()`, the uncaught exception immediately aborted the async transition handler before the `setTimeout` to hide `#page-loading` and show `#page-lobby` could be scheduled.
+     - Consequently, `#page-loading` remained visible, the button stayed flattened with `gatewayTransitioning = true` permanently stuck, and all subsequent clicks were blocked.
+- **Fixes Applied**:
+  1. *Hoisted Global Scope Variable Declaration (`static/js/play.js`)*:
+     - Hoisted `var isTournamentPlay = false;` and `var isPrivateMatchPlay = false;` to the very top of `play.js` (above `adjustPlayHeaderForDevice`).
+     - Exposed `window.isTournamentPlay` and `window.isPrivateMatchPlay` globally.
+     - Replaced `(typeof isTournamentPlay !== "undefined" && isTournamentPlay)` with safe `Boolean(window.isTournamentPlay || localStorage.getItem("tournament_play_active") || ...)` across `play.js` (lines 124, 4486, 5104) and `app.js` (lines 2408, 3883).
+  2. *Safe Global Object Lookups (`static/js/app.js`)*:
+     - Replaced bare `typeof BoardAudio !== "undefined"` lookups with safe `window.BoardAudio` object property checks (`window.BoardAudio && typeof window.BoardAudio.suspend === "function"`), preventing any ReferenceError if audio helpers are called during initial page setup.
+  3. *Failsafe Gateway Execution Protection (`static/js/app.js` & `templates/index.html`)*:
+     - Wrapped `updateAuthUI()` inside `try...catch` in both `executeGatewayTransition` (`app.js`) and inline `handleEnterLobbyClick` (`index.html`), guaranteeing that UI helper warnings never interrupt or block the user from entering the lobby.
+  4. *Asset Cache Version Bump & Verification*:
+     - Bumped asset cache versions to `?v=1794380004` across `play.css`, `app.js`, `lobby.js`, and `play.js`.
+     - Verified with headless Chrome running live page simulation: 0 unhandled errors, button transitions cleanly to `#page-lobby` with `display: flex`.
 

@@ -8,6 +8,11 @@
 // Fix: direct scrollLeft assignment + strict snap enforcement on touchend/resize/visibility.
 // =============================================================================
 
+var isTournamentPlay = false;
+var isPrivateMatchPlay = false;
+window.isTournamentPlay = false;
+window.isPrivateMatchPlay = false;
+
 function checkIsDesktop() {
     const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     if (isMobileUA || window.innerWidth <= 992) {
@@ -121,7 +126,7 @@ function adjustPlayHeaderForDevice() {
         }
     }
 
-    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round');
+    const isTournament = Boolean(window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
     if (colorBar && (isTournament || isSubanagrams)) {
         colorBar.style.setProperty('display', 'none', 'important');
     }
@@ -462,9 +467,11 @@ window.toggleGameRoomTopMenu = function() {
 
 // =============================================================================
 
-let isTournamentPlay = false;
+isTournamentPlay = false;
+window.isTournamentPlay = false;
 
-let isPrivateMatchPlay = false;
+isPrivateMatchPlay = false;
+window.isPrivateMatchPlay = false;
 let wrongGuessesOnBoardCount = 0;
 window.isPopupVisible = false;
 let privateMatchWords = [];
@@ -4483,7 +4490,7 @@ function renderPlayers(players, currentUser = null, state = null) {
     const findFriendsBtn = document.getElementById('find-friends-btn');
     const showEveryoneBtn = document.getElementById('show-everyone-btn');
 
-    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round');
+    const isTournament = Boolean(window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
     const playerActionsRow = document.querySelector('.player-actions-row');
 
     if (isTournament) {
@@ -5101,7 +5108,7 @@ function applyGameRoomChatSetting() {
         } catch (e) {}
     }
 
-    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round');
+    const isTournament = Boolean(window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
     const chatPanel = document.querySelector('.chat-panel');
 
     if (!isEnabled) {

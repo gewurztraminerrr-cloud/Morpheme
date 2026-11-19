@@ -196,10 +196,10 @@
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1794330000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794220000" as="style">
-    <link rel="preload" href="/css/play.css?v=1794380003" as="style">
+    <link rel="preload" href="/css/play.css?v=1794380004" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1794330000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/lobby.css?v=1794220000" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/play.css?v=1794380003" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1794380004" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
@@ -2029,8 +2029,12 @@
                     } else {
                         window.currentUser = activeUser;
                         window.currentUserIsMod = storedIsMod;
-                        if (typeof window.updateAuthUI === 'function') {
-                            window.updateAuthUI();
+                        try {
+                            if (typeof window.updateAuthUI === 'function') {
+                                window.updateAuthUI();
+                            }
+                        } catch(uiErr) {
+                            console.error('[Gateway] updateAuthUI error:', uiErr);
                         }
                     }
                 }
@@ -10446,9 +10450,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1794290000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794380003"></script>
-    <script src="/js/lobby.js?v=1794380003"></script>
-    <script src="/js/play.js?v=1794380003"></script>
+    <script src="/js/app.js?v=1794380004"></script>
+    <script src="/js/lobby.js?v=1794380004"></script>
+    <script src="/js/play.js?v=1794380004"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>

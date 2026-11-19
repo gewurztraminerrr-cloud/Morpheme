@@ -758,8 +758,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         currentUser = activeUser;
         window.currentUser = activeUser;
-        if (typeof updateAuthUI === 'function') {
-            updateAuthUI();
+        try {
+            if (typeof updateAuthUI === 'function') {
+                updateAuthUI();
+            }
+        } catch (uiErr) {
+            console.error('[Gateway] updateAuthUI error:', uiErr);
         }
 
         window.currentPageId = 'page-lobby';
@@ -2376,16 +2380,11 @@ window.showPage = showPage;
     }
 
     if (pageId !== 'page-play') {
-        if (typeof BoardAudio !== 'undefined' && typeof BoardAudio.suspend === 'function') {
-            BoardAudio.suspend();
-        } else if (window.BoardAudio && typeof window.BoardAudio.suspend === 'function') {
+        if (window.BoardAudio && typeof window.BoardAudio.suspend === 'function') {
             window.BoardAudio.suspend();
         }
     } else {
-        if (typeof BoardAudio !== 'undefined') {
-            if (typeof BoardAudio.init === 'function') BoardAudio.init();
-            if (typeof BoardAudio.resume === 'function') BoardAudio.resume();
-        } else if (window.BoardAudio) {
+        if (window.BoardAudio) {
             if (typeof window.BoardAudio.init === 'function') window.BoardAudio.init();
             if (typeof window.BoardAudio.resume === 'function') window.BoardAudio.resume();
         }
@@ -2405,7 +2404,7 @@ window.showPage = showPage;
     }
 
     // Standardize: Rating color bar ONLY appears on the Play page (and hidden during tournament rounds and subanagrams)
-    const isTournament = (pageId === 'page-play') && (window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
+    const isTournament = (pageId === 'page-play') && Boolean(window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
     document.body.classList.toggle('is-tournament-round', !!isTournament);
     const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     const colorBar = document.getElementById('game-color-bar');
@@ -3880,7 +3879,7 @@ window.showConfirmModal = function (title, message, onConfirm, okText = 'Confirm
 };
 
 function renderGameColorBar() {
-    const isTournament = window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || !!localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round');
+    const isTournament = Boolean(window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
     const isSubanagrams = (window.lastGameState && window.lastGameState.game_type === 'subanagrams') || document.body.classList.contains('is-subanagrams');
     const bar = document.getElementById('game-color-bar');
     if (!bar) return;
