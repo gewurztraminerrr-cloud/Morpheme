@@ -523,9 +523,26 @@
   4. **Eliminated Duplicate Inline Shadow Function & Cache-Busted Assets (`templates/index.html`, `static/js/app.js`, `static/js/lobby.js`)**:
      - Removed a legacy duplicate definition of `adjustPlayHeaderForDevice()` at the bottom of `templates/index.html` (lines 10526–10632) that was shadowing `play.js`'s updated implementation and executing without the Shuffle relocation logic.
      - Replaced the duplicate script block with clean delegation listeners (`load`, `resize`, `DOMContentLoaded`) invoking `window.adjustPlayHeaderForDevice()`.
-     - Bumped cache-busting query strings to `?v=1794380002` across `play.css`, `play.js`, `app.js`, and `lobby.js` so mobile devices (iOS Safari, Android Chrome) immediately fetch the live updated assets rather than serving stale cached scripts.
+     - Bumped cache-busting query strings to `?v=1794380003` across `play.css`, `play.js`, `app.js`, and `lobby.js` so mobile devices (iOS Safari, Android Chrome) immediately fetch the live updated assets rather than serving stale cached scripts.
      - Ensured `adjustPlayHeaderForDevice()` runs reliably during `showPage('page-play')`, `enterLobbyRoom()`, and Subanagrams board rendering.
 
+---
 
-
+### Gateway "ENTER LOBBY" Button Navigation Resolution
+- **Problem**: Clicking the "ENTER LOBBY" button (`#btn-enter-lobby-gateway`) on the gateway page (`#page-loading`) no longer transitioned the user into the lobby.
+- **Root Cause**:
+  1. *Uncaught SyntaxError in `static/js/lobby.js`*:
+     - An inner `try...finally` block introduced to manage the room join `AbortController` prematurely closed the outer `try` statement, leaving a stray `} catch (err) {` at line 684 without an opening `try`.
+     - In JavaScript, a `SyntaxError` prevents the entire script file from evaluating when loaded via `<script src="/js/lobby.js">`.
+     - Consequently, none of the functions in `lobby.js` (including `fetchLobbyStats`, `startStatsPolling`, and room handlers) were defined on `window`.
+  2. *Gateway State Lockout*:
+     - When the user clicked "ENTER LOBBY", `executeGatewayTransition()` attempted to invoke `fetchLobbyStats()` and setup lobby state.
+     - Because `lobby.js` failed to evaluate, exceptions were thrown or promises stalled, leaving `gatewayTransitioning = true` stuck and preventing subsequent clicks from doing anything.
+- **Fixes Applied**:
+  1. *Syntax Fix (`static/js/lobby.js`)*:
+     - Wrapped lines 553–684 with a clean outer `try { ... } catch (err) { ... } finally { ... }` block, properly pairing all control flow structures.
+     - Verified with JavaScriptCore (`jsc`) across all files in `static/js/` (zero syntax errors).
+  2. *Cache-Busting & Deployment (`templates/index.html`)*:
+     - Bumped cache-busting version strings to `?v=1794380003` for `lobby.js`, `play.js`, `play.css`, and `app.js`.
+     - Deployed cleanly to production VPS (`132.148.72.249`), verified HTTP/2 200 OK.
 
