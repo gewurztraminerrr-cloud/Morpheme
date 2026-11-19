@@ -3872,11 +3872,29 @@ class RoomManager:
                             if len(humans) == 0 and existing_room.time_limit < 7200:
                                 if existing_room.state in ['waiting', 'intermission']:
                                     if existing_room.game_type == 'subanagrams':
-                                        from subanagrams_generator import generate_subanagrams_board_and_words
-                                        sp = SpinnerSet.generate_subanagrams_params()
-                                        res = generate_subanagrams_board_and_words(sp)
-                                        if res:
-                                            b_board, b_words, b_bonus, fparams = res
+                                        # Fast-path 1: If room already has a board, return it immediately without re-generating!
+                                        if existing_room.board and len(existing_room.board) > 0:
+                                            print(f"[RoomManager] Subanagrams singleton already has active board: {existing_room.room_id}")
+                                            return existing_room
+                                        # Fast-path 2: If next_round_board is already staged, promote it instantly in <1ms!
+                                        if getattr(existing_room, 'next_round_board', None) and getattr(existing_room, 'next_round_words', None):
+                                            print(f"[RoomManager] Subanagrams singleton promoting staged next_round_board instantly (<1ms): {existing_room.room_id}")
+                                            b_board = existing_room.next_round_board
+                                            b_words = existing_room.next_round_words
+                                            b_bonus = getattr(existing_room, 'next_round_bonus', None)
+                                            fparams = getattr(existing_room, 'next_spinner_params', None) or dict(existing_room.spinner_params or {})
+                                            existing_room.next_round_board = None
+                                            existing_room.next_round_words = None
+                                            existing_room.next_round_bonus = None
+                                        else:
+                                            from subanagrams_generator import generate_subanagrams_board_and_words
+                                            sp = SpinnerSet.generate_subanagrams_params()
+                                            res = generate_subanagrams_board_and_words(sp)
+                                            if res:
+                                                b_board, b_words, b_bonus, fparams = res
+                                            else:
+                                                b_board = None
+                                        if b_board:
                                             existing_room.board = b_board
                                             existing_room.sequence_length = fparams.get('sequence_length', len(b_board[0]))
                                             existing_room.all_words = set(b_words)

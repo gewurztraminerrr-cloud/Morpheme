@@ -712,6 +712,9 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     break
                     
                 attempts += 1
+                if attempts > 3:
+                    print(f"[BoardGen] [Refill] Max attempts reached ({attempts}) for {param_key_str}. Stopping refill worker.")
+                    break
                 bw_len = bonus_word_len if (bonus_word_len and bonus_word_len > 0) else random.choice([6, 7, 8, 9, 10])
                 potential_dict_words = [w for w in dictionary_set if len(w) == bw_len and not w.upper().endswith(('ING', 'INGS'))]
                 bonus_word = random.choice(potential_dict_words) if potential_dict_words else None
@@ -860,7 +863,7 @@ def seed_pregenerated_cache_bg():
             ("4x6", "NWL", (100, 200), "Normal", 5, "Medium", False),
             ("4x6", "CSW", (100, 200), "Normal", 5, "Hard", False),
             ("4x6", "NWL", (50, 100), "Normal", 6, "Medium", False),
-            ("4x6", "CSW", (50, 100), "Normal", 6, "Easy", False),
+            ("4x6", "CSW", (50, 100), "Normal", 6, "Hard", False),
             ("4x6", "NWL + AW", (300, 400), "Normal", 4, "Medium", True),
             ("4x6", "CSW + AW", (400, 500), "Normal", 4, "Medium", True),
             ("5x7", "NWL", (200, 300), "Normal", 5, "Medium", False),

@@ -17235,6 +17235,26 @@ try:
 except Exception as e:
     print(f"[AppInit] Error starting pregeneration bootstrapper: {e}")
 
+def prewarm_subanagrams_bg():
+    def _warm():
+        import time
+        time.sleep(2.0)
+        try:
+            from subanagrams_generator import get_subanagrams_dict
+            print("[Prewarm] Pre-loading Subanagrams CSW dictionary in background...")
+            get_subanagrams_dict('CSW', use_added_words=False)
+            print("[Prewarm] Subanagrams dictionary ready. Pre-initializing public singleton...")
+            room_manager.create_room('pub_v2_subanagrams_subanagrams_120', 'subanagrams', 120, 'subanagrams', 0, 9999, is_private=False)
+            print("[Prewarm] pub_v2_subanagrams_subanagrams_120 ready and active.")
+        except Exception as e:
+            print(f"[Prewarm] Error prewarming subanagrams: {e}")
+    threading.Thread(target=_warm, daemon=True).start()
+
+try:
+    prewarm_subanagrams_bg()
+except Exception as e:
+    print(f"[AppInit] Error starting subanagrams prewarm: {e}")
+
 if __name__ == '__main__':
     # Background room advancer is now handled by RoomManager's internal thread
     print("[Main] Background Room Advancer consolidated into RoomManager.")
