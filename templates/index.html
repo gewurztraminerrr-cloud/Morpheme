@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="{% if initial_theme and initial_theme != 'default' %}theme-{{ initial_theme }}{% endif %}">
 
 <head>
     <meta charset="UTF-8">
@@ -43,6 +43,34 @@
                 localStorage.setItem('morpheme_timezone', window.currentUserTimezone);
             }
         } catch (_) {}
+    </script>
+    <script>
+        /* Instant Theme and Settings Initialization (Head-Executed before First Paint) */
+        window.initialTheme = {{ initial_theme|default('default')|tojson }};
+        window.initialSettings = {{ initial_settings|default({})|tojson }};
+        (function() {
+            var theme = window.initialTheme;
+            if (!theme || theme === 'default') {
+                try {
+                    var cached = localStorage.getItem('morpheme_app_theme');
+                    if (cached && cached !== 'default') {
+                        theme = cached;
+                    } else {
+                        var u = (localStorage.getItem('morpheme_username') || '').trim();
+                        var sKey = u ? ('morpheme_settings_' + u.toLowerCase()) : 'morpheme_settings_guest';
+                        var s = localStorage.getItem(sKey);
+                        if (s) {
+                            var p = JSON.parse(s);
+                            if (p && p.app_theme && p.app_theme !== 'default') theme = p.app_theme;
+                        }
+                    }
+                } catch (e) {}
+            }
+            if (theme && theme !== 'default') {
+                document.documentElement.classList.add('theme-' + theme);
+                try { localStorage.setItem('morpheme_app_theme', theme); } catch (e) {}
+            }
+        })();
     </script>
     <script>
         /* Instant Desktop Firefox Detection (Head-Executed before First Paint) */
@@ -1391,7 +1419,7 @@
     </style>
 </head>
 
-<body>
+<body class="{% if initial_theme and initial_theme != 'default' %}theme-{{ initial_theme }}{% endif %}">
     <!-- Header - Always visible (Fixed on Desktops/Laptops for Tabs, Scrolls in Game Rooms) -->
     <div class="top-menu-bar" id="top-menu-bar">
         <header class="header">
@@ -1946,10 +1974,10 @@
                         }
                     }
 
-                    // Pre-apply user layout color theme from localStorage so the background is ready with 0ms latency
+                    // Pre-apply user layout color theme so the background is ready with 0ms latency
                     var sKey = activeUser ? ('morpheme_settings_' + activeUser.toLowerCase()) : 'morpheme_settings_guest';
                     var sData = localStorage.getItem(sKey);
-                    var initTheme = localStorage.getItem('morpheme_app_theme');
+                    var initTheme = (window.initialTheme && window.initialTheme !== 'default') ? window.initialTheme : localStorage.getItem('morpheme_app_theme');
                     if (!initTheme && sData) {
                         try { var p = JSON.parse(sData); if (p && p.app_theme) initTheme = p.app_theme; } catch(_) {}
                     }

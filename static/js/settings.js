@@ -79,18 +79,25 @@ function debounce(func, wait) {
 
             const key = getSettingsStorageKey();
             const saved = localStorage.getItem(key);
+            let parsed = null;
             if (saved) {
-                const parsed = JSON.parse(saved);
+                try { parsed = JSON.parse(saved); } catch(e) {}
+            }
+            if (!parsed && window.initialSettings && typeof window.initialSettings === 'object' && Object.keys(window.initialSettings).length > 0) {
+                parsed = Object.assign({}, window.initialSettings);
+            }
+            const cachedTheme = (window.initialTheme && window.initialTheme !== 'default') 
+                ? window.initialTheme 
+                : localStorage.getItem('morpheme_app_theme');
+            if (parsed) {
                 if (localStorage.getItem('morpheme_lobby_guide_dismissed') === 'true') {
                     parsed.lobby_guide_dismissed = 'true';
                 }
-                const cachedTheme = localStorage.getItem('morpheme_app_theme');
                 if (cachedTheme && !parsed.app_theme) {
                     parsed.app_theme = cachedTheme;
                 }
                 return Object.assign(getDefaultSettings(), parsed);
             } else {
-                const cachedTheme = localStorage.getItem('morpheme_app_theme');
                 const defaults = getDefaultSettings();
                 if (cachedTheme) {
                     defaults.app_theme = cachedTheme;
@@ -101,17 +108,26 @@ function debounce(func, wait) {
         return getDefaultSettings();
     }
 
-    // Apply theme synchronously to both body and documentElement
+    // Apply theme synchronously to both body and documentElement without layout flicker
     function applyTheme(theme) {
         const t = theme || 'default';
-        document.body.className = document.body.className.replace(/\btheme-\S+/g, '').trim();
-        if (document.documentElement) {
-            document.documentElement.className = document.documentElement.className.replace(/\btheme-\S+/g, '').trim();
-        }
-        if (t && t !== 'default') {
-            document.body.classList.add(`theme-${t}`);
+        const hasBodyTheme = (t === 'default')
+            ? !document.body.className.match(/\btheme-\S+/)
+            : document.body.classList.contains(`theme-${t}`);
+        const hasDocTheme = (t === 'default')
+            ? (!document.documentElement || !document.documentElement.className.match(/\btheme-\S+/))
+            : (document.documentElement && document.documentElement.classList.contains(`theme-${t}`));
+
+        if (!hasBodyTheme || !hasDocTheme) {
+            document.body.className = document.body.className.replace(/\btheme-\S+/g, '').trim();
             if (document.documentElement) {
-                document.documentElement.classList.add(`theme-${t}`);
+                document.documentElement.className = document.documentElement.className.replace(/\btheme-\S+/g, '').trim();
+            }
+            if (t && t !== 'default') {
+                document.body.classList.add(`theme-${t}`);
+                if (document.documentElement) {
+                    document.documentElement.classList.add(`theme-${t}`);
+                }
             }
         }
         try {

@@ -5193,20 +5193,26 @@ def index():
     # USER REQUEST: once the user logs in, entering "morpheme.games" (or refreshing root)
     # should automatically take them to the lobby without having to login again.
     user_tz = 'auto'
+    user_theme = 'default'
+    user_settings = {}
     if 'user_id' in session:
         try:
             conn = sqlite3.connect(DB_PATH, timeout=30)
-            row = conn.execute("SELECT setting_value FROM user_settings WHERE user_id = ? AND setting_key = 'timezone'", (session['user_id'],)).fetchone()
-            if row and row[0]:
-                user_tz = row[0]
-            else:
-                row2 = conn.execute("SELECT timezone FROM users WHERE id = ?", (session['user_id'],)).fetchone()
-                if row2 and row2[0]:
-                    user_tz = row2[0]
+            cursor = conn.execute('SELECT setting_key, setting_value FROM user_settings WHERE user_id = ?', (session['user_id'],))
+            rows = cursor.fetchall()
+            user_settings = {row[0]: row[1] for row in rows}
+            if 'timezone' not in user_settings:
+                u_row = conn.execute('SELECT timezone FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+                if u_row and u_row[0]:
+                    user_settings['timezone'] = u_row[0]
+            user_tz = user_settings.get('timezone', 'auto')
+            user_theme = user_settings.get('app_theme', 'default')
             conn.close()
-        except Exception:
-            pass
-    resp = make_response(render_template('index.html', initial_timezone=user_tz))
+        except Exception as e:
+            print(f"[index] Error loading initial settings: {e}")
+    if 'lobby_guide_dismissed' in session and 'lobby_guide_dismissed' not in user_settings:
+        user_settings['lobby_guide_dismissed'] = session['lobby_guide_dismissed']
+    resp = make_response(render_template('index.html', initial_timezone=user_tz, initial_theme=user_theme, initial_settings=user_settings))
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
     resp.headers['Pragma'] = 'no-cache'
     resp.headers['Expires'] = '0'

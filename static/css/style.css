@@ -1842,7 +1842,13 @@ body {
     background: var(--bg-primary);
     min-height: 100vh;
     color: var(--text-primary);
-    transition: background 0.5s ease, color 0.5s ease;
+    transition: none !important;
+}
+
+/* Color scheme transitions are ONLY active inside Settings when the user explicitly clicks a theme swatch */
+body.settings-active,
+body:has(#page-settings.active) {
+    transition: background 0.25s ease, color 0.25s ease;
 }
 
 /* Header */
