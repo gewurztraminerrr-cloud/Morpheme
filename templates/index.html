@@ -530,11 +530,15 @@
 
         async function enterLobbyRoomInline(rawBtn) {
             if (!rawBtn) return;
-            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
-            if (window._isEnteringRoom) {
+            var now = Date.now();
+            if (window._isEnteringRoom && window._isEnteringRoomTime && (now - window._isEnteringRoomTime < 10000)) {
                 console.log('[Lobby] enterLobbyRoomInline blocked: already entering room');
                 return;
             }
+            window._isEnteringRoom = true;
+            window._isEnteringRoomTime = now;
+            window._userLeftRoom = false;
+            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
             if (window._lobbyEnterCooldown) {
                 await new Promise(function(r) { setTimeout(r, 100); });
                 window._lobbyEnterCooldown = false;
@@ -542,27 +546,25 @@
             var btn = (typeof rawBtn.closest === 'function') ? (rawBtn.closest('.game-btn, button') || rawBtn) : rawBtn;
 
             if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
+                window._isEnteringRoom = false;
                 if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                 window.showTimeoutBanModal(window._userTimeoutInfo);
                 return;
             }
 
-            window._isEnteringRoom = true;
-            window._userLeftRoom = false;
-
             try {
                 if (typeof window.stopLobbyPolling === 'function') window.stopLobbyPolling();
+                if (typeof window.stopGamePolling === 'function') window.stopGamePolling();
                 var gameType = (btn.dataset && btn.dataset.game) ? btn.dataset.game : 'accumulative';
                 var timeLimit = (btn.dataset && btn.dataset.time) ? (parseInt(btn.dataset.time) || 45) : 45;
                 var boardDimensions = (btn.dataset && btn.dataset.board) ? btn.dataset.board : '4x4';
 
                 var timeStr = (timeLimit < 60) ? (timeLimit + 's') : (timeLimit < 3600) ? (Math.floor(timeLimit / 60) + 'm') : (Math.floor(timeLimit / 3600) + 'h');
 
-                if (window.currentRoomId && typeof window.leaveCurrentRoom === 'function') {
-                    try { await window.leaveCurrentRoom(); } catch (e) {}
-                }
+                // Server-side /api/room/create automatically removes user from previous rooms via cleanup_user_rooms
                 window.currentRoomId = null;
                 window._isEnteringRoom = true;
+                window._isEnteringRoomTime = Date.now();
                 window._userLeftRoom = false;
 
                 localStorage.removeItem('tournament_play_active');
@@ -588,6 +590,7 @@
                 }
 
                 if (createResp.status === 403 && data && data.timed_out) {
+                    window._isEnteringRoom = false;
                     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     var rText = data.timeout_reason || 'Moderator timeout';
                     var dText = data.remaining || 'a temporary timeout';
@@ -603,6 +606,7 @@
                 if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play' && window.currentPageId !== 'page-lobby')) {
                     console.log('[Lobby] enterLobbyRoomInline aborted: user left or navigated away');
                     window._isEnteringRoom = false;
+                    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     return;
                 }
 
@@ -641,6 +645,7 @@
 
                     if (typeof window.startGamePolling === 'function') window.startGamePolling();
                 } else {
+                    window._isEnteringRoom = false;
                     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     var errMsg = (data && data.error) ? data.error : 'Server error entering room.';
                     if (window.showAlertModal) {
@@ -650,6 +655,7 @@
                     }
                 }
             } catch (error) {
+                window._isEnteringRoom = false;
                 if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                 console.error('Error entering room:', error);
                 if (error.name === 'AbortError' || (error.message && error.message.toLowerCase().includes('signal'))) {
@@ -657,8 +663,6 @@
                 } else {
                     showLobbyToast('Network error: ' + error.message, 'error');
                 }
-            } finally {
-                window._isEnteringRoom = false;
             }
         }
 
@@ -872,29 +876,34 @@
             doFetch();
 
             window.handleJoinRoomInline = async function(btn) {
-                if (window._isEnteringRoom) {
+                var now = Date.now();
+                if (window._isEnteringRoom && window._isEnteringRoomTime && (now - window._isEnteringRoomTime < 10000)) {
                     console.log('[Lobby] handleJoinRoomInline blocked: already entering room');
                     return;
                 }
                 if (!btn) return;
+                window._isEnteringRoom = true;
+                window._isEnteringRoomTime = now;
+                window._userLeftRoom = false;
                 if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
                 if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
+                    window._isEnteringRoom = false;
                     if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                     window.showTimeoutBanModal(window._userTimeoutInfo);
                     return;
                 }
                 var roomId = btn.getAttribute('data-room');
                 if (!roomId) {
+                    window._isEnteringRoom = false;
                     if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                     return;
                 }
 
-                window._isEnteringRoom = true;
-                window._userLeftRoom = false;
                 btn.style.opacity = '0.5';
                 btn.style.pointerEvents = 'none';
 
                 try {
+                    if (typeof window.stopGamePolling === 'function') window.stopGamePolling();
                     var isSpectator = btn.getAttribute('data-spectator') === 'true';
                     var response = await fetch('/api/room/' + roomId + '/join', {
                         method: 'POST',
@@ -906,6 +915,7 @@
                     if (window._userLeftRoom || (window.currentPageId && window.currentPageId !== 'page-play' && window.currentPageId !== 'page-lobby')) {
                         console.log('[Lobby] handleJoinRoomInline aborted: user left or navigated away');
                         window._isEnteringRoom = false;
+                        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                         btn.style.opacity = '1';
                         btn.style.pointerEvents = 'auto';
                         return;
@@ -913,6 +923,7 @@
 
                     if (data && data.success) {
                         if (!isSpectator && data.role === 'spectator') {
+                            window._isEnteringRoom = false;
                             if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                             if (window.showAlertModal) {
                                 window.showAlertModal('Room Full', 'This room is now full.<br><br>Please press the Refresh button to update the list of Open Rooms and Closed Rooms.');
@@ -959,6 +970,7 @@
                         }
                         if (typeof window.startGamePolling === 'function') window.startGamePolling();
                     } else {
+                        window._isEnteringRoom = false;
                         if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                         var errMsg = (data && data.error) ? data.error : 'Unknown error';
                         if (data && (data.timed_out || errMsg.toLowerCase().includes('timed out'))) {
@@ -999,6 +1011,7 @@
                         btn.style.pointerEvents = 'auto';
                     }
                 } catch(err) {
+                    window._isEnteringRoom = false;
                     if (window.hideLoadingOverlay) window.hideLoadingOverlay();
                     if (window.showAlertModal) {
                         window.showAlertModal('Network Error', 'Network error joining room: ' + err.message);
@@ -1008,7 +1021,6 @@
                     btn.style.opacity = '1';
                     btn.style.pointerEvents = 'auto';
                 } finally {
-                    window._isEnteringRoom = false;
                     if (btn) {
                         btn.style.opacity = '1';
                         btn.style.pointerEvents = 'auto';
@@ -1123,11 +1135,12 @@
             if (window._isCreatingRoom) return;
             window._isCreatingRoom = true;
             if (realBtn) realBtn.disabled = true;
-            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Creating & Generating Room...');
+            if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
 
             showLobbyToast('Creating custom room (' + minRating + ' - ' + (maxRating < 9999 ? maxRating : '∞') + ')...');
 
             try {
+                if (typeof window.stopGamePolling === 'function') window.stopGamePolling();
                 var resp = await fetch('/api/room/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1146,12 +1159,13 @@
                     window.isSpectatorMode = false;
                     if (typeof window.stopLobbyPolling === 'function') window.stopLobbyPolling();
                     if (typeof window.clearGameUIAndCache === 'function') window.clearGameUIAndCache();
-                    if (data.state && typeof window.updateGameState === 'function') window.updateGameState(data.state);
                     if (typeof window.showPage === 'function') window.showPage('page-play');
                     if (typeof window.switchPlayPanel === 'function') window.switchPlayPanel('board', false);
+                    if (data.state && typeof window.updateGameState === 'function') window.updateGameState(data.state);
                     if (typeof window.startGamePolling === 'function') window.startGamePolling();
                     showLobbyToast('Room created successfully!', 'success');
                 } else {
+                    window._isCreatingRoom = false;
                     if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                     if (window.showAlertModal) {
                         window.showAlertModal('Rating Limit Notice', data.error || 'Failed to create room.');
@@ -1160,6 +1174,7 @@
                     }
                 }
             } catch (err) {
+                window._isCreatingRoom = false;
                 if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
                 if (window.showAlertModal) {
                     window.showAlertModal('Creation Error', 'Error creating room: ' + err.message);
@@ -1167,7 +1182,6 @@
                     showLobbyToast('Error creating room: ' + err.message, 'error');
                 }
             } finally {
-                window._isCreatingRoom = false;
                 if (realBtn) realBtn.disabled = false;
             }
         }
@@ -1237,25 +1251,9 @@
             var realBtn = (typeof btn.closest === 'function') ? (btn.closest('.game-btn, button') || btn) : btn;
             var gameType = (realBtn && realBtn.dataset && realBtn.dataset.game) ? realBtn.dataset.game : 'accumulative';
 
-            // Show loading notice IMMEDIATELY the instant the button is pressed
             if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative' || gameType === 'subanagrams')) {
                 if (typeof window.showLoadingOverlay === 'function') {
                     window.showLoadingOverlay('Loading...', 25000);
-                }
-            }
-
-            if (window._lobbyEnterCooldown) {
-                await new Promise(function(r) { setTimeout(r, 100); });
-                window._lobbyEnterCooldown = false;
-            }
-
-            if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative' || gameType === 'subanagrams')) {
-                if (typeof window.checkAccountTimeoutAndAlert === 'function') {
-                    var isTimedOut = await window.checkAccountTimeoutAndAlert();
-                    if (isTimedOut) {
-                        if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
-                        return;
-                    }
                 }
                 enterLobbyRoomInline(realBtn);
             } else {
@@ -10572,9 +10570,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1794290000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1794380008"></script>
-    <script src="/js/lobby.js?v=1794380008"></script>
-    <script src="/js/play.js?v=1794380008"></script>
+    <script src="/js/app.js?v=1795149000"></script>
+    <script src="/js/lobby.js?v=1795149000"></script>
+    <script src="/js/play.js?v=1795149000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>

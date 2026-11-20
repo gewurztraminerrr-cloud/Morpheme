@@ -4212,9 +4212,13 @@ class RoomManager:
                                     f_fmt = sp_fresh.get('board_format', 'Normal')
                                     f_min = sp_fresh.get('min_word_length', 3)
                                     f_wc = sp_fresh.get('word_count_range')
-                                    pre_pop = pop_compatible_cached_board(existing_room.board_dimensions, f_dict, f_fmt, f_min, f_aw)
-                                    if not pre_pop and f_fmt == 'Normal':
-                                        pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format='Normal', dictionary=f_dict, use_added_words=f_aw)
+                                    pre_pop = pop_compatible_cached_board(existing_room.board_dimensions, f_dict, f_fmt, f_min, f_aw, word_count_range=f_wc)
+                                    if not pre_pop:
+                                        pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format=f_fmt, dictionary=f_dict, use_added_words=f_aw, word_count_range=f_wc)
+                                    if not pre_pop:
+                                        pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format=f_fmt, dictionary=f_dict, use_added_words=f_aw)
+                                    if not pre_pop and existing_room.time_limit < 7200:
+                                        pre_pop = pop_any_cached_board(existing_room.board_dimensions)
                                     if not pre_pop:
                                         pre_pop = get_emergency_fallback_board(existing_room.board_dimensions, f_fmt, existing_room.time_limit, dictionary=f_dict, use_added_words=f_aw, target_range=f_wc, min_word_length=f_min)
                                     if pre_pop:
@@ -4638,9 +4642,13 @@ class RoomManager:
                             k_fmt = sp_kick.get('board_format', 'Normal')
                             k_min = sp_kick.get('min_word_length', 3)
                             k_wc = sp_kick.get('word_count_range')
-                            pre_pop = pop_compatible_cached_board(room.board_dimensions, k_dict, k_fmt, k_min, k_aw)
-                            if not pre_pop and k_fmt == 'Normal':
-                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=k_min, target_format='Normal', dictionary=k_dict, use_added_words=k_aw)
+                            pre_pop = pop_compatible_cached_board(room.board_dimensions, k_dict, k_fmt, k_min, k_aw, word_count_range=k_wc)
+                            if not pre_pop:
+                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=k_min, target_format=k_fmt, dictionary=k_dict, use_added_words=k_aw, word_count_range=k_wc)
+                            if not pre_pop:
+                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=k_min, target_format=k_fmt, dictionary=k_dict, use_added_words=k_aw)
+                            if not pre_pop and room.time_limit < 7200:
+                                pre_pop = pop_any_cached_board(room.board_dimensions)
                             if not pre_pop:
                                 pre_pop = get_emergency_fallback_board(
                                     room.board_dimensions, k_fmt, room.time_limit,

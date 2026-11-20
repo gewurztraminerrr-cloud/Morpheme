@@ -2160,6 +2160,7 @@ async function _doUpdateGameState(incomingState = null) {
         lastStateFetchTime = now;
     }
 
+    let didRenderRoomView = false;
     try {
         let state;
         let tBefore = null;
@@ -3042,8 +3043,10 @@ async function _doUpdateGameState(incomingState = null) {
 
         if (isSplitIntermission && !showBoardInSplitIntermission) {
             renderSplitNotepads(state.players, state);
+            didRenderRoomView = true;
         } else if (isFCFSIntermission && !showBoardInSplitIntermission) {
             renderFCFSNotepads(state.players, state);
+            didRenderRoomView = true;
         } else {
             let grayed = state.state === 'intermission' || state.state === 'waiting';
             let boardToRender = state.board;
@@ -3068,8 +3071,21 @@ async function _doUpdateGameState(incomingState = null) {
                 if (previousState.all_words_paths) state.all_words_paths = previousState.all_words_paths;
             }
             const is3D = state.game_type === '3d' || (boardToRender && boardToRender.length === 6 && Array.isArray(boardToRender[0]) && Array.isArray(boardToRender[0][0]));
+            let boardHasLetters = false;
+            if (is3D) {
+                if (Array.isArray(boardToRender) && boardToRender.length > 0) {
+                    boardHasLetters = boardToRender.some(f => Array.isArray(f) && f.some(r => Array.isArray(r) && r.some(c => c && typeof c === 'string' && c.trim() !== '')));
+                }
+            } else {
+                if (Array.isArray(boardToRender) && boardToRender.length > 0) {
+                    boardHasLetters = boardToRender.some(row => Array.isArray(row) && row.some(cell => cell && typeof cell === 'string' && cell.trim() !== ''));
+                }
+            }
             try {
                 renderBoard(boardToRender, grayed, is3D, state);
+                if (boardHasLetters || state.state === 'intermission') {
+                    didRenderRoomView = true;
+                }
             } catch (bErr) {
                 console.error('[play.js] Error in renderBoard:', bErr);
             }
@@ -4382,8 +4398,12 @@ async function _doUpdateGameState(incomingState = null) {
             isFetchingState = false;
         }
         const isRetryingInitialJoin = (!window.lastGameState && joinAttemptCount > 0 && joinAttemptCount < 5);
-        if (!isRetryingInitialJoin && typeof window.hideLoadingOverlay === 'function') {
-            window.hideLoadingOverlay();
+        if (didRenderRoomView && !isRetryingInitialJoin) {
+            window._isEnteringRoom = false;
+            window._isCreatingRoom = false;
+            if (typeof window.hideLoadingOverlay === 'function') {
+                window.hideLoadingOverlay();
+            }
         }
     }
 }
@@ -8109,7 +8129,11 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         }
     }
 
-    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+    if ((hasLetters || (state && state.state === 'intermission')) && window.hideLoadingOverlay) {
+        window._isEnteringRoom = false;
+        window._isCreatingRoom = false;
+        window.hideLoadingOverlay();
+    }
 
     // Determine dimensions early
     let rows = 0;
@@ -9765,7 +9789,11 @@ function reapplyBoardHighlights() {
 }
 
 function renderSplitNotepads(players, state) {
-    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+    window._isEnteringRoom = false;
+    window._isCreatingRoom = false;
+    if (window.hideLoadingOverlay) {
+        window.hideLoadingOverlay();
+    }
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
 
@@ -10058,7 +10086,11 @@ function renderSplitNotepads(players, state) {
 }
 
 function renderFCFSNotepads(players, state) {
-    if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+    window._isEnteringRoom = false;
+    window._isCreatingRoom = false;
+    if (window.hideLoadingOverlay) {
+        window.hideLoadingOverlay();
+    }
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
 

@@ -253,12 +253,15 @@ class SpinnerSet:
             p['use_added_words'] = False
             p['dictionary'] = clean_base_dict
             # Ensure 300-400 is physically achievable on 24h boards without AW
-            if min_word_length >= 7:
+            if min_word_length > floor_len:
                 min_word_length = floor_len
         elif is_aw_effective:
             # + AW dictionaries target high counts when spinning random params (NEVER below 300)
             if wc_range not in ['300-400', '400-500', '500+']:
                 wc_range = _rng.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+            # Clamp min_word_length so 300+ words is physically achievable on the board dimension
+            if min_word_length > floor_len:
+                min_word_length = floor_len
         else:
             # Standard NWL and CSW dictionaries:
             # Maximum normal range is 300-400 (NEVER 400-500), plus 1% chance of 500+.
@@ -273,9 +276,19 @@ class SpinnerSet:
             if wc_range == '50-100' and min_word_length not in low_wc_allowed_mins:
                 wc_range = _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
 
-            # Preserve the 1% 500+ roll by adjusting min_word_length down to floor_len if needed
+            # Enforce physical feasibility matching check_board_config_feasibility:
+            # - 500+ or 300-400 requires floor_len (except 6x8/3x3x3 where 300-400 is feasible at 6L or 7L)
+            # - Highest min_word_length for dimension (5L on 4x4, 6L on 4x6, 7L on 5x7) cannot exceed 100-200
             if wc_range == '500+' and min_word_length > floor_len:
                 min_word_length = floor_len
+            elif wc_range == '300-400':
+                if ('6x8' in dims or '3x3x3' in dims):
+                    if min_word_length >= 8:
+                        min_word_length = 7
+                elif min_word_length > floor_len:
+                    min_word_length = floor_len
+            elif wc_range == '200-300' and min_word_length == max_len_for_dims and not ('6x8' in dims or '3x3x3' in dims):
+                min_word_length = allowed_mins[1] if len(allowed_mins) >= 2 else floor_len
 
         p['min_word_length'] = min_word_length
         p['word_count_range'] = wc_range
@@ -325,14 +338,24 @@ class SpinnerSet:
             # 4. Word Count Range (ALWAYS 300-400 for 24h rooms)
             if is_24h:
                 wc_range = '300-400'
-                if min_word_length >= 7:
+                if min_word_length > allowed_mins[0]:
                     min_word_length = allowed_mins[0]
             elif is_aw_effective:
                 wc_range = _rng.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
+                if min_word_length > allowed_mins[0]:
+                    min_word_length = allowed_mins[0]
             else:
                 wc_range = SpinnerSet._spin_word_count(dictionary, min_word_length, SpinnerSet.strip_difficulty_pct(difficulty), dims, use_added_words=False)
                 if wc_range == '500+' and min_word_length > allowed_mins[0]:
                     min_word_length = allowed_mins[0]
+                elif wc_range == '300-400':
+                    if ('6x8' in dims or '3x3x3' in dims):
+                        if min_word_length >= 8:
+                            min_word_length = 7
+                    elif min_word_length > allowed_mins[0]:
+                        min_word_length = allowed_mins[0]
+                elif wc_range == '200-300' and min_word_length == allowed_mins[-1] and not ('6x8' in dims or '3x3x3' in dims):
+                    min_word_length = allowed_mins[1] if len(allowed_mins) >= 2 else allowed_mins[0]
 
             # 5. Board Format
             board_format = SpinnerSet._spin_board_format(is_24h, board_dimensions, previous_params=previous_params)

@@ -1189,6 +1189,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (gatewayAlreadyPassed) {
         console.log('[app.js] Gateway already passed by user; retaining active view.');
         window._gatewayPassed = true;
+        if (window._isEnteringRoom || window._isCreatingRoom) {
+            return;
+        }
         const curPage = (window.currentPageId && window.currentPageId !== 'page-loading') ? window.currentPageId : 'page-lobby';
         showPage(curPage);
         const targetNav = curPage.replace('page-', '');
@@ -2313,7 +2316,7 @@ window.showPage = showPage;
         }
     }
 
-    if (pageId !== 'page-play' && window.hideLoadingOverlay) {
+    if (pageId !== 'page-play' && !window._isEnteringRoom && !window._isCreatingRoom && window.hideLoadingOverlay) {
         window.hideLoadingOverlay();
     }
     // 0. Synchronize URL Hash (for Reload/Navigation consistency)
