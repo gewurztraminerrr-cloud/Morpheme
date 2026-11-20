@@ -341,3 +341,56 @@
   - Committed changes (`dd8f1c29`), pushed to `origin/main`, updated git tag `stable-2026-11-19`.
   - Deployed to live production VPS (`132.148.72.249`) and restarted PM2 process #0 (`morpheme`).
   - Verified that layout color theme is applied instantaneously with 0ms latency and zero visual color transition upon pressing ENTER LOBBY.
+
+---
+
+### Issue 12: Remaining Tab & `Min: 4L` Word Distribution Synchronization (`wrong1.jpg`, `wrong2.jpg`, `wrong3.jpg`)
+- **Symptom**:
+  - In `wrong1.jpg`, `wrong2.jpg`, and `wrong3.jpg` (`ACCUMULATIVE 4X6 | 45S`, `Diff: Easy (13%) | Min: 4L | Dict: NWL | Words: 200-300 | Format: Normal | Bonus: 8L`, board `C T C QU / S E N E / G S L S / T P E V / T E R A / M B A V`), the Spinner Set showed `Min: 4L` and the Words tab showed `0/255` (the true 255 words on that board at `Min: 4L`, including 99 4-letter words), yet the Remaining tab showed `0` 4-letter words (`5LW: 155, 6LW: 155, 7LW: 88, 8LW: 52, 9LW: 18, 10LW: 8, 11LW: 2`) and total points showed `2095 total pts` (the exact point total of that stale 478-word `Min: 5L` board).
+- **Root Cause**:
+  1. **Singleton Wakeup & Kickstart Missing `update_counts_by_len()` and Score Reset (`game_room.py`)**:
+     - When an idle singleton room woke up to Active Round 1 with a fresh board, `create_room` updated `existing_room.all_words` and `existing_room.total_words_count = 255` and reset `existing_room.current_round = 1`, but never called `existing_room.update_counts_by_len()` and never reset `existing_room.solved_words_with_scores`.
+     - Because `existing_room.total_counts_by_len.get('_round')` was already `1` from the previous session before going idle, `app.py`'s check (`counts_obj.get('_round') != room.current_round`) evaluated to `False` (`1 != 1`) and never refreshed `total_counts_by_len`.
+     - `recalculate_total_points()` summed all values in `existing_room.solved_words_with_scores` without verifying that the score dictionary keys matched `self.all_words`.
+  2. **Round Counter Increment Order in `start_next_round` (`game_room.py`)**:
+     - `room.update_counts_by_len()` ran before `room.current_round += 1`, stamping `_round` with round `N` instead of `N + 1`.
+  3. **`ensure_next_board_ready` & `get_emergency_fallback_board` Min-Length Alignment (`game_room.py`)**:
+     - `ensure_next_board_ready` filtered candidate words by `fparams.get('min_word_length')` while setting `new_sp['min_word_length'] = target_params.get('min_word_length')`.
+     - `get_emergency_fallback_board` hardcoded `min_l = 5 if '4x6' in dimensions` for cache candidates instead of using the requested `min_word_length`.
+- **Fix Applied**:
+  - Updated [`update_counts_by_len`](file:///Users/jeffbabiak/game_room.py) to stamp `_round`, `_total`, and `_min_len` and refresh `csw_only_words` and `added_words`.
+  - Updated [`recalculate_total_points`](file:///Users/jeffbabiak/game_room.py) to verify `set(scores.keys()) == set(self.all_words)` and automatically recompute `solved_words_with_scores` whenever stale or mismatched.
+  - Updated singleton wakeup, `create_room` kickstart, `start_next_round` (incrementing `current_round` before `update_counts_by_len`), `ensure_next_board_ready`, `get_emergency_fallback_board`, [`app.py`](file:///Users/jeffbabiak/app.py) (`get_room_state`, `/api/tournament/game-state`, `/api/private-match/status`), [`tournament_logic.py`](file:///Users/jeffbabiak/tournament_logic.py), [`private_match_logic.py`](file:///Users/jeffbabiak/private_match_logic.py), and [`static/js/play.js`](file:///Users/jeffbabiak/static/js/play.js) to cross-check word counts by length across all game modes.
+
+---
+
+### Issue 13: CSW-Only Words Completeness Across All Game Modes (`1CSW1.jpg`–`1CSW3.jpg` & `CSWwhat1.jpg`–`CSWwhat2.jpg`)
+- **Symptom**:
+  - On CSW boards (such as `B R L G / P E N Y / E M L T / B A S I / M O P E / I O R E` with 321 total words: 230 NWL and 91 CSW-Only words including `ROOPIEST`, `BEPELTS`, `AMOROSITY`, `OPEROSITY`, `BEASTILY`, `REIST`), the All Words dictionary dropdown only listed `CSW Only (1)` (`REIST`) or `CSW Only (11)`, failing to classify `ROOPIEST`, `BEPELTS`, and the other CSW-only words on the board.
+- **Root Cause**:
+  1. **Stale `next_round_csw_only_words` / `csw_only_words` Across Board Transitions**:
+     - `trigger_early_fallback_rescue`, `apply_easy_fallback_and_search`, `start_board_search` (instant cache-hit path), singleton wakeup, and `create_room` kickstart staged or promoted boards without updating `next_round_csw_only_words` / `csw_only_words`, and `start_next_round` cleanup never cleared `next_round_csw_only_words = []`.
+     - In `check_and_update_state` (`ACTIVE -> INTERMISSION`) and `app.py` (`get_room_state`), `previous_csw_only_words` was only recomputed if `len(csw_only_words) == 0`. Because `csw_only_words` still contained the non-empty CSW-only list from a **previous board**, the frontend intersected the current board's 321 words with the previous board's `cswOnlySet`, matching only the 1 word (`REIST`) or 11 words common to both boards.
+  2. **Lazy-Load Gate in `WordValidator.is_csw_only`**:
+     - `word_validator.py` returned `False` from `is_csw_only(word)` if `self.csw_loaded` was `False`.
+- **Fix Applied**:
+  - In [`word_validator.py`](file:///Users/jeffbabiak/word_validator.py): Populated `self.csw_words` and `self.csw_only = self.csw_words - self.nwl_words` immediately during `_load_dictionaries()` at startup (~70ms set load) and made `ensure_csw_loaded()` thread-safe with a lock.
+  - In [`game_room.py`](file:///Users/jeffbabiak/game_room.py) and [`app.py`](file:///Users/jeffbabiak/app.py): Always compute `csw_only_words` and `previous_csw_only_words` authoritatively from the active/completed board's word list (`[w for w in words if word_validator.is_csw_only(w)]`), removed the racy `_tag_supplemental_words` thread in `start_next_round`, and added `csw_only_words` to Tournament and Private Match endpoints and client render keys in [`static/js/play.js`](file:///Users/jeffbabiak/static/js/play.js).
+
+---
+
+### Issue 14: 0:50 Intermission Pregenerated Fallback & 0:45 Spinner Set Parameter Immutability
+- **Symptom**:
+  - Parameters indicated on the Spinner Set at `0:45` time during intermission changed at `0:00` (the start of the following new round), whereas the Spinner Set must only change if by `0:50` time during intermission a board hasn't been found, and must never change what was established at `0:45`.
+- **Root Cause**:
+  1. **Inverted `0:50` Watchdog Elapsed Calculation**:
+     - `get_next_round_milestone` checked `elapsed_intermission >= (intermission_limit - 10.0)` (`50s` elapsed = `0:10` remaining on the clock, after `0:45` reveal) instead of `10.0s` elapsed (`0:50` remaining on the clock, 5 seconds before `0:45` reveal), and `_fallback_at_50s_done` was never reset on transition to intermission.
+  2. **Late Background `start_board_search` Overwriting Locked `0:45` Staged Board**:
+     - `generate_spinner_params(room_id, reveal=True)` unconditionally spawned a `start_board_search` thread at line 6549 even when revealing at `0:45`, and in-flight background search threads finishing after `0:50`/`0:45` overwrote `next_round_board`, `next_round_words`, `next_round_uniqueness`, and `next_round_bonus` after `frozen_revealed_params` was locked at `0:45`.
+  3. **Self-Exclusion of Staged Bonus Word in `pick_distinct_bonus_word`**:
+     - `start_board_search` added the upcoming round's `bonus_word` to `room.bonus_word_history` before round start; at `0:00`, `start_next_round` called `pick_distinct_bonus_word`, which saw `next_round_bonus` in `bonus_word_history` and rejected it, re-rolling or mutating the board at `0:00`.
+- **Fix Applied**:
+  - Set `fallback_050_threshold = 10.0` (`0:50` remaining on the 60s intermission clock) in [`get_next_round_milestone`](file:///Users/jeffbabiak/game_room.py) and reset `_fallback_at_50s_done = False` on every transition.
+  - At `0:50`, if no board is staged, `ensure_next_board_ready()` pulls and validates a pregenerated board (testing word count range, $\ge 3$ words of `min_word_length`, dictionary, format, difficulty, and distinct bonus word) and synchronizes `next_spinner_params` before `0:45`.
+  - At `0:45` reveal, `generate_spinner_params(room_id, reveal=True)` finalizes the bonus word and all factual parameters (including `Difficulty (XX%)`) and locks `frozen_revealed_params` and `spinner_params` without spawning redundant searches.
+  - Blocked any late-finishing `start_board_search` thread from overwriting `next_round_board` or parameters once `0:50` fallback or `0:45` reveal has locked them, and fixed `pick_distinct_bonus_word` so an already-staged distinct `next_round_bonus` is preserved at `0:00`.
