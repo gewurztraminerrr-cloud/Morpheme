@@ -367,9 +367,20 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
         conn = get_db_connection(timeout=60.0, row_factory=sqlite3.Row)
         cursor = conn.cursor()
         
-        while True:
+        seen_ids = []
+        attempts = 0
+        while attempts < 12:
+            attempts += 1
             where_clauses = ["param_key LIKE ?"]
             query_params = [f'%"dimensions": "{dimensions}"%']
+
+            # The spun minimum word length must match the board's own parameters exactly
+            where_clauses.append("param_key LIKE ?")
+            query_params.append(f'%"min_word_length": {int(min_word_length)},%')
+
+            if seen_ids:
+                where_clauses.append(f"id NOT IN ({','.join('?' * len(seen_ids))})")
+                query_params.extend(seen_ids)
 
             if norm_dict:
                 where_clauses.append("param_key LIKE ?")
@@ -382,8 +393,10 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                 where_clauses.append("param_key LIKE ?")
                 query_params.append('%"use_added_words": false%')
 
+            fmt_idx = None
             if target_format:
                 where_clauses.append("param_key LIKE ?")
+                fmt_idx = len(query_params)
                 query_params.append(f'%"board_format": "{target_format}"%')
             elif exclude_format:
                 where_clauses.append("param_key NOT LIKE ?")
@@ -395,16 +408,15 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
 
             if not row and target_format:
                 # Try wildcard format match
-                query_params[-1] = f'%"board_format": "%{target_format}%"%'
+                query_params[fmt_idx] = f'%"board_format": "%{target_format}%"%'
                 cursor.execute(f"SELECT id, param_key, board_json FROM pregenerated_boards WHERE {where_sql} ORDER BY RANDOM() LIMIT 1;", tuple(query_params))
                 row = cursor.fetchone()
 
             if not row:
                 break
-                
-            cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
-            conn.commit()
-            
+
+            seen_ids.append(row['id'])
+
             param_key_str = row['param_key']
             try:
                 params = json.loads(param_key_str)
@@ -412,6 +424,8 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                 print(f"[BoardGen] Error parsing param_key JSON: {e}")
                 params = {}
             if params.get('v') != BOARD_CACHE_VERSION:
+                cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
+                conn.commit()
                 continue
 
             # Strict validation against requested dictionary and use_added_words
@@ -459,6 +473,8 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
             board_hash = get_board_hash(board)
             if not mark_board_hash_used(board_hash, conn=conn):
                 print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
+                cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
+                conn.commit()
                 continue
                 
             bonus_cell = tuple(data["bonus_cell"]) if data.get("bonus_cell") else None
@@ -485,6 +501,11 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
 
             final_bonus_word = data.get("final_bonus_word", data.get("bonus_word", ""))
             
+            # Consume ONLY the board we are actually serving (mismatched boards stay in the pool)
+            cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
+            conn.commit()
+            if cursor.rowcount == 0:
+                continue  # another thread already took this board
             return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, params)
     except Exception as e:
         print(f"[BoardGen] Error in pop_any_cached_board: {e}")
