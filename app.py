@@ -8363,18 +8363,38 @@ def get_room_state(room_id):
             # GLOBAL FOUND WORDS (Critical for FCFS accuracy)
             global_found = list(room.global_round_found_words) if hasattr(room, 'global_round_found_words') else []
             
-            # FAIL-SAFE: If active but counts are missing or from a previous round, force a synchronous sync
+            # FAIL-SAFE: If active but counts are missing, from a previous round, or out of sync with all_words, force a synchronous sync
             counts_obj = getattr(room, 'total_counts_by_len', {})
-            needs_update = (not counts_obj or len(counts_obj) == 0 or counts_obj.get('_round') != room.current_round)
+            counts_sum = sum(v for k, v in counts_obj.items() if str(k).isdigit()) if isinstance(counts_obj, dict) else 0
+            min_l_val = int(getattr(room, 'current_min_length', 3) or 3)
+            min_l_key = str(min_l_val)
+            if is_active and getattr(room, 'all_words', None) and getattr(room, 'game_type', '') != 'subanagrams':
+                actual_shortest = min(len(w) for w in room.all_words)
+                if actual_shortest != min_l_val:
+                    room.current_min_length = actual_shortest
+                    min_l_val = actual_shortest
+                    min_l_key = str(actual_shortest)
+                    if isinstance(getattr(room, 'spinner_params', None), dict):
+                        room.spinner_params['min_word_length'] = actual_shortest
+                    if isinstance(getattr(room, 'frozen_revealed_params', None), dict):
+                        room.frozen_revealed_params['min_word_length'] = actual_shortest
+            needs_update = (
+                not counts_obj
+                or len(counts_obj) == 0
+                or counts_obj.get('_round') != room.current_round
+                or counts_sum != len(room.all_words or [])
+                or counts_obj.get('_min_len', min_l_val) != min_l_val
+                or (len(room.all_words or []) > 0 and getattr(room, 'game_type', '') != 'subanagrams' and counts_obj.get(min_l_key, 0) == 0)
+            )
             
             if is_active and needs_update:
-                print(f"[Remaining-Hardener] Found stale/missing counts (Round {counts_obj.get('_round') if counts_obj else 'None'} vs {room.current_round}) for {room_id}. Forcing sync.")
+                print(f"[Remaining-Hardener] Found stale/missing counts (Round {counts_obj.get('_round') if counts_obj else 'None'} vs {room.current_round}, sum={counts_sum} vs {len(room.all_words or [])}) for {room_id}. Forcing sync.")
                 room.update_counts_by_len()
+                room.recalculate_total_points()
 
-            # TOTAL POINTS HARDENER: If active and total_points_count is 0, compute it now inline
-            # This handles the race window between start_next_round setting state=active and
-            # recalculate_total_points() being called, and also the first round of a new room.
-            if is_active and room.total_points_count == 0:
+            # TOTAL POINTS HARDENER: If active and total_points_count is 0 or scores mismatch active words, compute it now inline
+            scores_map = getattr(room, 'solved_words_with_scores', None)
+            if is_active and (room.total_points_count == 0 or not isinstance(scores_map, dict) or len(scores_map) != len(room.all_words or [])):
                 computed_pts = room.recalculate_total_points()
                 if computed_pts == 0 and getattr(room, 'all_words', None):
                     # Ultra fallback: length-based estimate
@@ -8416,20 +8436,22 @@ def get_room_state(room_id):
 
                 words_to_return = list(raw_w_list)
 
-                # RE-SYNC (read-only): the intermission shows the COMPLETED round, so its dictionary/AW
-                # flags come from previous_* snapshots. NEVER mutate room.csw_only_words / room.added_words here.
+                # RE-SYNC: the intermission shows the COMPLETED round, so compute CSW-only and AW lists
+                # directly and authoritatively from words_to_return (<0.05ms set lookup) so stale lists from other boards can never appear.
                 if hasattr(word_validator, 'word_validator'):
                     prev_dict_name = str(getattr(room, 'previous_dictionary', None) or getattr(room, 'current_dictionary', 'NWL')).upper()
                     prev_use_aw = bool(getattr(room, 'previous_use_added_words', False)) or '+ AW' in prev_dict_name or '+AW' in prev_dict_name
-                    prev_csw_list = list(getattr(room, 'previous_csw_only_words', None) or [])
-                    prev_aw_list = list(getattr(room, 'previous_added_words', None) or [])
-                    if not prev_csw_list:
-                        word_validator.word_validator.ensure_csw_loaded()
-                        prev_csw_list = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
-                    if not prev_aw_list and prev_use_aw:
-                        prev_aw_list = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
-                    intermission_csw_only = [w for w in prev_csw_list if len(w) >= display_floor]
-                    intermission_added = [w for w in prev_aw_list if len(w) >= display_floor]
+                    word_validator.word_validator.ensure_csw_loaded()
+                    intermission_csw_only = [w for w in words_to_return if len(w) >= display_floor and word_validator.word_validator.is_csw_only(w)]
+                    intermission_added = [w for w in words_to_return if len(w) >= display_floor and word_validator.word_validator.is_added_word(w)] if prev_use_aw else []
+                    room.previous_csw_only_words = list(intermission_csw_only)
+                    room.previous_added_words = list(intermission_added)
+                room.previous_total_counts_by_len = {
+                    '_round': getattr(room, 'current_round', 1),
+                    '_total': len(words_to_return),
+                    '_min_len': display_floor,
+                    **{str(l): sum(1 for w in words_to_return if len(w) == l) for l in range(1, 31)}
+                }
 
                 # Purge scores as well and ensure bonus_word_points strictly matches previous_bonus_word
                 prev_bw_san = str(getattr(room, 'previous_bonus_word', None) or getattr(room, 'bonus_word', '') or '').upper().strip()
@@ -8466,9 +8488,17 @@ def get_room_state(room_id):
                 word_scores_to_return = getattr(room, 'solved_words_with_scores', {}) or {}
                 # ALWAYS provide all_words for instant client-side validation
                 words_to_return = list(room.all_words)
-                if hasattr(word_validator, 'word_validator') and (not getattr(room, 'csw_only_words', None) or len(room.csw_only_words) == 0):
+                if hasattr(word_validator, 'word_validator'):
                     word_validator.word_validator.ensure_csw_loaded()
-                    room.csw_only_words = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
+                    if (
+                        not getattr(room, 'csw_only_words', None)
+                        or getattr(room, '_csw_tagged_round', None) != room.current_round
+                        or getattr(room, '_csw_tagged_total', None) != len(words_to_return)
+                    ):
+                        room.csw_only_words = [w for w in words_to_return if word_validator.word_validator.is_csw_only(w)]
+                        room.added_words = [w for w in words_to_return if word_validator.word_validator.is_added_word(w)]
+                        room._csw_tagged_round = room.current_round
+                        room._csw_tagged_total = len(words_to_return)
 
             # Determine user visibility
             user_id = session.get('user_id')
@@ -8634,8 +8664,8 @@ def get_room_state(room_id):
                 'previous_all_words': list(getattr(room, 'previous_all_words', []) or []),
                 'previous_all_word_scores': getattr(room, 'previous_all_word_scores', {}) or {},
                 'previous_board': getattr(room, 'previous_board', []),
-                'previous_csw_only_words': getattr(room, 'previous_csw_only_words', []),
-                'previous_added_words': getattr(room, 'previous_added_words', []),
+                'previous_csw_only_words': (intermission_csw_only if intermission_csw_only is not None else getattr(room, 'previous_csw_only_words', [])),
+                'previous_added_words': (intermission_added if intermission_added is not None else getattr(room, 'previous_added_words', [])),
                 'previous_bonus_word': getattr(room, 'previous_bonus_word', ''),
                 'previous_dictionary': getattr(room, 'previous_dictionary', 'NWL'),
                 'previous_use_added_words': bool(getattr(room, 'previous_use_added_words', False)) or ('+ AW' in str(getattr(room, 'previous_dictionary', '')).upper()) or ('+AW' in str(getattr(room, 'previous_dictionary', '')).upper()),
@@ -16348,14 +16378,27 @@ def get_tournament_game_state():
             params['word_count_range'] = SpinnerSet.get_factchecked_wc_range(len(all_words), use_added_words=params.get('use_added_words', False), dictionary=params.get('dictionary', 'NWL'))
         if 'min_word_length' in board_raw:
             params['min_word_length'] = board_raw['min_word_length']
-        elif all_words:
-            actual_min = min(len(w) for w in all_words)
-            if actual_min > params.get('min_word_length', 3):
-                params['min_word_length'] = actual_min
+        if all_words:
+            min_l_t = int(params.get('min_word_length', 3) or 3)
+            all_words = [w for w in all_words if len(w) >= min_l_t]
+            if all_words:
+                actual_min = min(len(w) for w in all_words)
+                if actual_min != min_l_t:
+                    params['min_word_length'] = actual_min
     else:
         board = board_raw
         bonus_word = ''
         all_words = []
+
+    word_validator.ensure_csw_loaded()
+    t_csw_only = [w for w in (all_words or []) if word_validator.is_csw_only(w)]
+    t_added = [w for w in (all_words or []) if word_validator.is_added_word(w)]
+    t_counts_by_len = {
+        '_round': t['current_round'],
+        '_total': len(all_words or []),
+        '_min_len': params.get('min_word_length', 3),
+        **{str(l): sum(1 for w in (all_words or []) if len(w) == l) for l in range(1, 31)}
+    }
     
     return jsonify({
         'tournament_id': t['id'],
@@ -16365,6 +16408,9 @@ def get_tournament_game_state():
         'bonus_cell': board_raw.get('bonus_cell') if isinstance(board_raw, dict) else None,
         'board_format': board_raw.get('board_format', 'Normal') if isinstance(board_raw, dict) else 'Normal',
         'all_words': all_words,
+        'csw_only_words': t_csw_only,
+        'added_words': t_added,
+        'total_counts_by_len': t_counts_by_len,
         'params': params,
         'end_time': r['end_time'],
         'server_time': time.time()
@@ -17015,6 +17061,18 @@ def get_private_match_status(match_id):
     now = time.time()
     time_remaining = max(0, calculated_end_time - now)
 
+    pm_all_words = json.loads(r['all_words']) if r['all_words'] else []
+    pm_word_list = list(pm_all_words.keys()) if isinstance(pm_all_words, dict) else list(pm_all_words or [])
+    word_validator.ensure_csw_loaded()
+    pm_csw_only = [w for w in pm_word_list if word_validator.is_csw_only(w)]
+    pm_added = [w for w in pm_word_list if word_validator.is_added_word(w)]
+    pm_counts_by_len = {
+        '_round': round_num,
+        '_total': len(pm_word_list),
+        '_min_len': params.get('min_word_length', 3),
+        **{str(l): sum(1 for w in pm_word_list if len(w) == l) for l in range(1, 31)}
+    }
+
     return jsonify({
         'match_id': match_id,
         'current_round': round_num,
@@ -17022,7 +17080,10 @@ def get_private_match_status(match_id):
         'board': json.loads(r['board_data']),
         'bonus_word': r['bonus_word'],
         'bonus_cell': json.loads(r['bonus_cell']) if r['bonus_cell'] else None,
-        'all_words': json.loads(r['all_words']) if r['all_words'] else [],
+        'all_words': pm_all_words,
+        'csw_only_words': pm_csw_only,
+        'added_words': pm_added,
+        'total_counts_by_len': pm_counts_by_len,
         'end_time': calculated_end_time,
         'time_remaining': time_remaining
     })

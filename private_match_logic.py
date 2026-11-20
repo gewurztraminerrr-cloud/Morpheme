@@ -414,12 +414,15 @@ class PrivateMatchManager:
              bonus_cell = None
         
         # Fact check word count range & min word length
-        actual_wc = len(all_words_dict or all_words_on_board or [])
-        factual_range = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=use_aw_flag, dictionary=dict_name)
+        all_words_on_board = [w for w in (all_words_on_board or []) if len(w) >= min_len]
         if all_words_on_board:
             actual_min = min(len(w) for w in all_words_on_board)
             if actual_min > min_len:
                 min_len = actual_min
+        if isinstance(all_words_dict, dict):
+            all_words_dict = {w: p for w, p in all_words_dict.items() if len(w) >= min_len}
+        actual_wc = len(all_words_dict or all_words_on_board or [])
+        factual_range = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=use_aw_flag, dictionary=dict_name)
 
         now = time.time()
         # Round-start time is when board is generated, but turn-timers start on client when they click Play.

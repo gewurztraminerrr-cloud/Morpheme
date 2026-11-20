@@ -3612,7 +3612,9 @@ async function _doUpdateGameState(incomingState = null) {
                 const selectedDict = window.selectedAllWordsDict || 'all';
                 const sortMode = window.allWordsSortMode || 'length';
                 const wordsLen = allWords ? allWords.length : 0;
-                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}`;
+                const cswLen = cswForList ? cswForList.length : 0;
+                const addedLen = addedForList ? addedForList.length : 0;
+                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}_${cswLen}_${addedLen}`;
 
                 if (window.lastRenderedIntermissionKey !== currentRenderKey) {
                     try {
@@ -3926,8 +3928,29 @@ async function _doUpdateGameState(incomingState = null) {
                     if (l > 0) foundByLen[l] = (foundByLen[l] || 0) + 1;
                 });
                 
+                let useWordsFallback = false;
+                const wordsByLenFromList = {};
+                if (allWords && allWords.length > 0) {
+                    let serverSum = 0;
+                    for (let i = 1; i <= 30; i++) {
+                        serverSum += (totalByLen[i] !== undefined ? totalByLen[i] : (totalByLen[String(i)] !== undefined ? totalByLen[String(i)] : 0));
+                    }
+                    allWords.forEach(w => {
+                        const str = (typeof w === 'string' ? w : (w && w.word) || '');
+                        const len = str.length;
+                        if (len >= 1 && len <= 30) wordsByLenFromList[len] = (wordsByLenFromList[len] || 0) + 1;
+                    });
+                    const curMin = state.current_min_length || 3;
+                    const serverMinCnt = (totalByLen[curMin] !== undefined ? totalByLen[curMin] : (totalByLen[String(curMin)] || 0));
+                    if (serverSum !== allWords.length || (wordsByLenFromList[curMin] > 0 && serverMinCnt === 0)) {
+                        useWordsFallback = true;
+                    }
+                }
+
                 for (let i = 1; i <= 30; i++) {
-                    const serverTotalForLen = (totalByLen[i] !== undefined ? totalByLen[i] : (totalByLen[String(i)] !== undefined ? totalByLen[String(i)] : 0));
+                    const serverTotalForLen = useWordsFallback
+                        ? (wordsByLenFromList[i] || 0)
+                        : (totalByLen[i] !== undefined ? totalByLen[i] : (totalByLen[String(i)] !== undefined ? totalByLen[String(i)] : 0));
                     totalByLenMap[i] = serverTotalForLen;
                     foundByLenMap[i] = foundByLen[i] || 0;
                     countsByLen[i] = Math.max(0, serverTotalForLen - (foundByLen[i] || 0));
@@ -5948,7 +5971,9 @@ function updateIntermissionRenderKey() {
     const selectedDict = window.selectedAllWordsDict || 'all';
     const sortMode = window.allWordsSortMode || 'length';
     const wordsLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[0]) ? window.lastDisplayAllWordsArgs[0].length : 0;
-    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}`;
+    const cswLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[5]) ? window.lastDisplayAllWordsArgs[5].length : 0;
+    const addedLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[6]) ? window.lastDisplayAllWordsArgs[6].length : 0;
+    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}_${cswLen}_${addedLen}`;
 }
 
 window.LETTER_VALUES = window.LETTER_VALUES || {
@@ -13830,9 +13855,14 @@ async function initTournamentPlay() {
             board_dimensions: data.params.board_dimensions,
             time_limit: data.params.time_limit,
             current_board_format: data.params.board_format || 'Normal',
+            current_min_length: data.params.min_word_length || 3,
+            current_dictionary: data.params.dictionary || 'NWL',
             spinner_params: data.params,
             bonus_word: data.bonus_word,
             all_words: data.all_words || [],
+            csw_only_words: data.csw_only_words || [],
+            added_words: data.added_words || [],
+            total_counts_by_len: data.total_counts_by_len || {},
             bonus_cell: data.bonus_cell
         };
         window.lastGameState = tournamentGameState;
@@ -14296,10 +14326,14 @@ window.initPrivateMatchPlay = function () {
         current_board_format: activeMatch.parameters.board_format || 'Normal',
         current_difficulty: activeMatch.parameters.difficulty || 'Medium',
         current_dictionary: activeMatch.parameters.dictionary || 'NWL',
+        current_min_length: activeMatch.parameters.min_word_length || 3,
         current_word_count_range: activeMatch.parameters.word_count_range || '100-200',
         spinner_params: activeMatch.parameters,
         bonus_word: activeMatch.bonus_word,
         all_words: activeMatch.all_words || [],
+        csw_only_words: activeMatch.csw_only_words || [],
+        added_words: activeMatch.added_words || [],
+        total_counts_by_len: activeMatch.total_counts_by_len || {},
         bonus_cell: activeMatch.bonus_cell
     };
     safelyTransposeState(mockState);

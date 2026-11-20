@@ -387,13 +387,25 @@ class TournamentManager:
         formatted_difficulty = SpinnerSet.format_difficulty_with_pct(difficulty, uniqueness_ratio)
         
         # Fact check word count range & min word length
-        actual_wc = len(all_words_on_board or [])
-        factual_range = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=use_aw_flag, dictionary=dict_name)
         factual_min = min_len_param
+        all_words_on_board = [w for w in (all_words_on_board or []) if len(w) >= factual_min]
         if all_words_on_board:
             actual_min = min(len(w) for w in all_words_on_board)
             if actual_min > factual_min:
                 factual_min = actual_min
+        if isinstance(all_words_dict, dict):
+            all_words_dict = {w: p for w, p in all_words_dict.items() if len(w) >= factual_min}
+        actual_wc = len(all_words_on_board)
+        factual_range = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=use_aw_flag, dictionary=dict_name)
+        word_validator.ensure_csw_loaded()
+        csw_only_list = [w for w in all_words_on_board if word_validator.is_csw_only(w)]
+        added_words_list = [w for w in all_words_on_board if word_validator.is_added_word(w)]
+        counts_by_len = {
+            '_round': round_number,
+            '_total': actual_wc,
+            '_min_len': factual_min,
+            **{str(l): sum(1 for w in all_words_on_board if len(w) == l) for l in range(1, 31)}
+        }
 
         now = time.time()
         # Allow turn duration override from parameters
@@ -408,6 +420,9 @@ class TournamentManager:
             'bonus_word': bonus_word,
             'all_words': all_words_on_board,
             'all_words_paths': all_words_dict if isinstance(all_words_dict, dict) else {},
+            'csw_only_words': csw_only_list,
+            'added_words': added_words_list,
+            'total_counts_by_len': counts_by_len,
             'bonus_cell': bonus_cell,
             'board_format': target_format,
             'uniqueness_ratio': uniqueness_ratio,
