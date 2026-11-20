@@ -84,6 +84,10 @@ def run_backfill(base_dir=None):
         w_up = str(word).strip().upper()
         if len(w_up) < 2 or not uid or uid == -1 or uid not in uid_to_name:
             return
+        if str(uid_to_name[uid]).startswith('Guest_'):
+            return
+        if room_id and ('24h' in str(room_id) or '86400' in str(room_id)):
+            return
         iso = format_ts(ts_val)
         key = (w_up, uid, iso[:19])
         if key in existing_keys:

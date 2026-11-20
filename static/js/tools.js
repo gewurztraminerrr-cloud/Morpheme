@@ -10840,17 +10840,6 @@ async function runFindCountSearch() {
                 `;
             }).join('');
 
-            if (data.count > data.recent.length) {
-                const diff = data.count - data.recent.length;
-                rowsHtml += `
-                    <tr>
-                        <td colspan="2" style="padding: 10px 12px; text-align: center; color: var(--muted-text); font-size: 0.85rem; border-top: 1px dashed rgba(var(--text-primary-rgb), 0.1);">
-                            * ${diff} additional ${diff === 1 ? 'find' : 'finds'} occurred in guest or unregistered rounds.
-                        </td>
-                    </tr>
-                `;
-            }
-
             tableBody.innerHTML = rowsHtml;
             
             // Add click events to rows
@@ -10892,14 +10881,6 @@ async function runFindCountSearch() {
                     row.style.background = 'transparent';
                 });
             });
-        } else if (data.count > 0) {
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="2" style="padding: 20px; text-align: center; color: var(--muted-text);">
-                        All ${data.count} ${data.count === 1 ? 'find' : 'finds'} occurred in guest or unregistered rounds.
-                    </td>
-                </tr>
-            `;
         } else {
             tableBody.innerHTML = `
                 <tr>

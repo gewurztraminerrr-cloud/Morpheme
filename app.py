@@ -4630,6 +4630,17 @@ def init_db():
         conn.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_rh_id ON word_finds(round_history_id)')
         conn.commit()
 
+        # Find Count rules: purge any 24h-room or Guest finds
+        try:
+            conn.execute("""
+                DELETE FROM word_finds
+                WHERE room_id LIKE '%24h%' OR room_id LIKE '%86400%'
+                   OR user_id IN (SELECT id FROM users WHERE username LIKE 'Guest_%')
+            """)
+            conn.commit()
+        except Exception as purge_err:
+            print(f"[init_db] Notice purging 24h/guest word_finds: {purge_err}")
+
         # Link historical round_history records accurately where available
         try:
             # 1. Clear round_history_id if pointing to a round that does NOT contain the word
@@ -4892,6 +4903,8 @@ def _get_word_finds(word):
                 JOIN users u ON wf.user_id = u.id
                 LEFT JOIN round_history rh ON wf.round_history_id = rh.id
                 WHERE wf.word = ?
+                  AND u.username NOT LIKE 'Guest_%'
+                  AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%'))
             """, (word,))
             for row in wf_cursor.fetchall():
                 ts_val = row['timestamp']
@@ -4919,6 +4932,7 @@ def _get_word_finds(word):
             FROM round_history rh
             JOIN users u ON rh.user_id = u.id
             WHERE rh.words_json LIKE ?
+              AND u.username NOT LIKE 'Guest_%'
               AND (rh.round_duration IS NULL OR rh.round_duration < 7200)
               AND (rh.game_type IS NULL OR (rh.game_type != 'subanagrams' AND rh.game_type != '24h'))
               AND (rh.room_id IS NULL OR (rh.room_id NOT LIKE '%24h%' AND rh.room_id NOT LIKE '%86400%'))
@@ -5048,7 +5062,7 @@ def _get_word_finds(word):
                 players = list(room.players.values()) if isinstance(getattr(room, 'players', None), dict) else getattr(room, 'players', [])
                 for p in players:
                     u_name = getattr(p, 'username', None)
-                    if not u_name or u_name == 'System':
+                    if not u_name or u_name == 'System' or str(u_name).startswith('Guest_'):
                         continue
                     sw_list = getattr(p, 'submitted_words', []) or []
                     for sw in sw_list:
@@ -14042,18 +14056,21 @@ def tools_find_count():
 
     try:
         finds = _get_word_finds(word)
+        # Newest finder first; only the 10 most recent are shown (oldest bumped out of sight).
+        finds = sorted(finds, key=lambda x: str(x.get('timestamp', '')), reverse=True)
         recent_finds = finds[:10]
         
         # Check if the word is valid in dictionaries (NWL, CSW, supplementary 16+, or added words)
         is_valid = word_validator.is_valid_word(word, 'ALL + AW', use_added_words=True)
         
-        # Tally division information
+        # Tally division information (used only for the division badge)
         import tally_divisions as td
         div_info = td.get_word_division_info(word)
         tally_count = div_info.get('count', 0)
         
-        # Synchronized total count: global tally count from word_stats.json (which also captures guest/unregistered matches)
-        total_count = max(tally_count, len(finds))
+        # Count is ALWAYS the number of recorded finders (registered users, no Guests, no 24h rooms),
+        # so the count and the finder list can never disagree.
+        total_count = len(finds)
         
         return jsonify({
             'word': word,

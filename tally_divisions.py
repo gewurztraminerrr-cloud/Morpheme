@@ -152,13 +152,28 @@ def sync_word_stats_from_db(db_path: str = None, tally_log_path: str = None) -> 
             conn = sqlite3.connect(db_path, timeout=30)
             c = conn.cursor()
             tables = [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+            # Find Count rules: never count 24h rooms, Subanagrams, or Guest finds.
             if 'word_finds' in tables:
-                for w, cnt in c.execute("SELECT word, COUNT(*) FROM word_finds GROUP BY word").fetchall():
+                for w, cnt in c.execute("""
+                    SELECT wf.word, COUNT(*) FROM word_finds wf
+                    JOIN users u ON wf.user_id = u.id
+                    WHERE u.username NOT LIKE 'Guest_%'
+                      AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%'))
+                    GROUP BY wf.word
+                """).fetchall():
                     if w:
                         w_up = str(w).strip().upper()
                         target_counts[w_up] = max(target_counts.get(w_up, 0), int(cnt))
             if 'round_history' in tables:
-                c.execute("SELECT words_json FROM round_history WHERE words_json IS NOT NULL AND words_json != ''")
+                c.execute("""
+                    SELECT rh.words_json FROM round_history rh
+                    JOIN users u ON rh.user_id = u.id
+                    WHERE rh.words_json IS NOT NULL AND rh.words_json != ''
+                      AND u.username NOT LIKE 'Guest_%'
+                      AND (rh.round_duration IS NULL OR rh.round_duration < 7200)
+                      AND (rh.game_type IS NULL OR (rh.game_type != 'subanagrams' AND rh.game_type != '24h'))
+                      AND (rh.room_id IS NULL OR (rh.room_id NOT LIKE '%24h%' AND rh.room_id NOT LIKE '%86400%'))
+                """)
                 for r in c.fetchall():
                     try:
                         w_list = json.loads(r[0])
@@ -190,6 +205,12 @@ def sync_word_stats_from_db(db_path: str = None, tally_log_path: str = None) -> 
                 stats = {}
 
             updated = 0
+            # Reset stale counts that no longer come from any legitimate source
+            # (e.g. words previously counted from 24h rooms or Guests).
+            for w, old in list(stats.items()):
+                if isinstance(old, (int, float)) and old > 0 and w not in target_counts:
+                    stats[w] = 0
+                    updated += 1
             for w, cnt in target_counts.items():
                 old_cnt = stats.get(w, 0)
                 if old_cnt != cnt:

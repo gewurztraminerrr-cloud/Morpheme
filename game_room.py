@@ -9365,7 +9365,8 @@ class RoomManager:
                     rh_id = cur_rh.lastrowid
 
                     # Also persist player word finds into lightweight word_finds table for Find Count
-                    if u_id != -1 and u_name != 'System':
+                    # Find Count rules: never record 24h rooms or Guest finds
+                    if u_id != -1 and u_name != 'System' and room.time_limit < 7200 and not str(u_name).startswith('Guest_'):
                         try:
                             for entry in words_data:
                                 w_text = entry.get('word', '').upper() if isinstance(entry, dict) else str(entry).upper()
@@ -9439,7 +9440,9 @@ class RoomManager:
             
             # 1. Efficient Tally: Number of unique USERS who found each word in THIS round
             word_counts = collections.Counter()
-            for words in player_words.values():
+            for _uname, words in player_words.items():
+                if str(_uname).startswith('Guest_'):
+                    continue  # Guest finds are never counted in Find Count
                 unique_words_for_user = set()
                 for entry in words:
                     w = entry.get('word', '').upper() if isinstance(entry, dict) else str(entry).upper()
