@@ -5821,6 +5821,29 @@ def auto_login():
         return jsonify({'success': False, 'error': str(e)}), 200
 
 
+def compute_store_monthly_dates():
+    """Computes the current and next scheduled monthly Store update dates anchored on the 16th of each month."""
+    now = datetime.datetime.now()
+    if now.day >= 16:
+        last_dt = datetime.date(now.year, now.month, 16)
+        if now.month == 12:
+            next_dt = datetime.date(now.year + 1, 1, 16)
+        else:
+            next_dt = datetime.date(now.year, now.month + 1, 16)
+    else:
+        if now.month == 1:
+            last_dt = datetime.date(now.year - 1, 12, 16)
+        else:
+            last_dt = datetime.date(now.year, now.month - 1, 16)
+        next_dt = datetime.date(now.year, now.month, 16)
+
+    month_names = ["", "January", "February", "March", "April", "May", "June",
+                   "July", "August", "September", "October", "November", "December"]
+    last_str = f"{month_names[last_dt.month]} {last_dt.day}, {last_dt.year}"
+    next_str = f"{month_names[next_dt.month]} {next_dt.day}, {next_dt.year}"
+    return last_str, next_str
+
+
 @app.route('/api/store/catalog', methods=['GET'])
 def get_store_catalog():
     try:
@@ -5828,6 +5851,25 @@ def get_store_catalog():
         if os.path.exists(catalog_path):
             with open(catalog_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
+
+            # Ensure monthly update dates dynamically roll forward on the 16th of each month
+            current_last, next_sched = compute_store_monthly_dates()
+            needs_disk_sync = False
+
+            if data.get('last_catalog_update') != current_last or data.get('next_scheduled_update') != next_sched:
+                data['last_catalog_update'] = current_last
+                data['next_scheduled_update'] = next_sched
+                needs_disk_sync = True
+
+            if needs_disk_sync:
+                for prod in data.get('products', []):
+                    prod['last_changed_date'] = current_last
+                try:
+                    with open(catalog_path, 'w', encoding='utf-8') as f_out:
+                        json.dump(data, f_out, indent=4)
+                except Exception as write_err:
+                    print(f"[StoreCatalogUpdateError] {write_err}")
+
             resp = jsonify(data)
             resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
             return resp

@@ -1,13 +1,13 @@
 {
-    "last_catalog_update": "October 16, 2026",
-    "next_scheduled_update": "November 16, 2026",
+    "last_catalog_update": "November 16, 2026",
+    "next_scheduled_update": "December 16, 2026",
     "products": [
         {
             "id": "stylus",
             "category": "accessories",
             "title": "Yacig 4-in-1 Capacitive Stylus",
             "base_price_usd": 12.99,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/stylus.png?v=33139",
             "desc": [
                 "High-precision 4-in-1 stylus with clear disc tip, mesh fiber, and black rubber tips. Perfect for Morpheme mobile and tablet play!"
@@ -26,7 +26,7 @@
             "category": "accessories",
             "title": "Ergonomic Mousepad with Wrist Support",
             "base_price_usd": 9.49,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/mousepad.png?v=33139",
             "desc": [
                 "High-quality non-slip rubber surface with an integrated, raised wrist rest. This is perfect for repurposing as an ergonomic support while playing Morpheme with a stylus, reducing strain during high-speed word searching."
@@ -45,7 +45,7 @@
             "category": "books",
             "title": "Official Scrabble Dictionary (CSW)",
             "base_price_usd": 17.99,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/csw_dict_29.jpg?v=1",
             "desc": [
                 "The official, authoritative dictionary for Scrabble and international word tournaments (CSW), containing 2\u20139 letter words and their definitions. Essential for mastering all valid playable words and understanding their meanings in Morpheme's CSW dictionary mode."
@@ -64,7 +64,7 @@
             "category": "books",
             "title": "The Official Scrabble Players Dictionary (OSPD)",
             "base_price_usd": 14.5,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/scrabble_players_dict_7.png?v=33141",
             "desc": [
                 "The official North American Scrabble Players Dictionary (OSPD, Seventh Edition) published by Merriam-Webster, containing words and their definitions 2\u20138 letters long. This dictionary is not identical to NWL, but close enough to render it worth having for studying and reference."
@@ -83,7 +83,7 @@
             "category": "books",
             "title": "Official SCRABBLE Words (Collins 2\u201315 All Words)",
             "base_price_usd": 21.99,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/collins_words_green.png?v=33140",
             "desc": [
                 "The complete, unabridged official tournament wordlist published by Collins and endorsed by WESPA, containing over 276,000 playable words from 2 to 15 letters with inflected forms. The first half covers all 2-to-9 letter words, and the other half covers all 10-to-15 letter words. (Note: This book is strictly a word list \u2014 there are no definitions.)"
@@ -103,7 +103,7 @@
             "category": "games",
             "title": "Boggle Classic (4\u00d74) \u2014 The Original Word Rush",
             "base_price_usd": 14.99,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/boggle_classic.jpg?v=33139",
             "desc": [
                 "The game that Morpheme was born from! This original 4\u00d74 grid gives you 16 lettered cubes and a 3-minute timer to find as many words as possible \u2014 identical in spirit to a Morpheme 4\u00d74 blitz round. It is the single best physical training tool for building spatial word-pattern recognition.",
@@ -123,7 +123,7 @@
             "category": "games",
             "title": "Big Boggle (5\u00d75) \u2014 Extended Grid Challenge",
             "base_price_usd": 21.99,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/boggle_big.jpg?v=33139",
             "desc": [
                 "Big Boggle expands the grid to 5\u00d75 \u2014 25 cubes, a 4-letter minimum word requirement, and exponentially more possible word paths. This directly mirrors Morpheme's 5\u00d75 board mode.",
@@ -143,7 +143,7 @@
             "category": "games",
             "title": "Super Big Boggle (6\u00d76) \u2014 Tournament Grade",
             "base_price_usd": 28.99,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/boggle_super_big.jpg?v=33139",
             "desc": [
                 "Super Big Boggle takes the grid all the way to 6\u00d76 \u2014 36 cubes including special double-letter and blank cubes. This is the closest physical equivalent to Morpheme's flagship 6\u00d78 extended boards.",
@@ -163,7 +163,7 @@
             "category": "accessories",
             "title": "JoyCat Silicone Uppercase Magnetic Letters (26 Pcs)",
             "base_price_usd": 14.49,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/joycat_letters.png?v=33139",
             "desc": [
                 "Active Word Recall: Spell out challenging words or stems you struggle with so you are constantly reminded of them every time you open the fridge!",
@@ -183,7 +183,7 @@
             "category": "mobile",
             "title": "Samsung Galaxy S25 Ultra (The Ultimate Mobile Platform)",
             "base_price_usd": 1299.99,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/phones25_final.png?v=33139",
             "desc": [
                 "The Perfect Choice: With an expansive 6.9\" Dynamic AMOLED 2X display and an integrated S-Pen, this is the ultimate way to play Morpheme on mobile. The S-Pen delivers surgical, zero-drag precision for complex word paths across large boards.",
@@ -204,7 +204,7 @@
             "category": "mobile",
             "title": "OnePlus 15 (Extreme Speed Platform)",
             "base_price_usd": 999.99,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/oneplus15_final.png?v=33139",
             "desc": [
                 "The Record Breaker: If you value pure speed, the OnePlus 15 is built for you. Its 6.78\" AMOLED screen supports an extraordinary 165Hz Refresh Rate, offering the smoothest Morpheme experience possible.",
@@ -225,7 +225,7 @@
             "category": "mobile",
             "title": "Apple iPhone 17 Pro (Elite Mobile Gaming Platform)",
             "base_price_usd": 1199.0,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/iphone17_final.png?v=33139",
             "desc": [
                 "Why It's Perfect: The iPhone 17 Pro features the A19 Pro chip with laser-welded vapor chamber cooling, ensuring your Morpheme sessions stay locked at 120FPS even during the most complex 6x8 grid animations.",
@@ -246,7 +246,7 @@
             "category": "tablet",
             "title": "Apple iPad Pro 11-inch (M5 Pro Platform)",
             "base_price_usd": 999.0,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/ipadpro11m5_final.png?v=33139",
             "desc": [
                 "The Ultimate Canvas: Featuring Apple's blazing M5 chip, this is the most powerful handheld Morpheme device ever made. Its Ultra Retina XDR (Tandem OLED) display provides extreme contrast and vibrancy across all 39 Morpheme color themes.",
@@ -267,7 +267,7 @@
             "category": "pc_laptop",
             "title": "ASUS ROG Zephyrus G16 (Tournament PC Laptop)",
             "base_price_usd": 1999.99,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/asus_zephyrus_g16.jpg?v=1",
             "desc": [
                 "The Ultimate Competitive PC Laptop: Equipped with a stunning 16-inch 240Hz ROG Nebula OLED display (0.2ms response time), the Zephyrus G16 completely eliminates motion blur during fast letter scanning on 6x8 and 3D boards.",
@@ -288,7 +288,7 @@
             "category": "pc_desktop",
             "title": "Morpheme Pro Tournament PC Desktop Rig",
             "base_price_usd": 2199.0,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/pc_desktop_rig.jpg?v=1",
             "desc": [
                 "Peak Esports Performance: Designed for serious competitive Morpheme players who stream, practice multi-board analysis, and compete in live brackets. Boasts top-tier single-core CPU speeds for instant JavaScript DOM rendering and sub-millisecond WebSocket validation.",
@@ -309,7 +309,7 @@
             "category": "mac_laptop",
             "title": "Apple 16-inch MacBook Pro (M4 Pro / Max Flagship)",
             "base_price_usd": 2499.0,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/macbook_pro_16.jpg?v=1",
             "desc": [
                 "The Elite Mac Laptop: Built around the M4 Pro chip, the 16-inch MacBook Pro delivers blistering single-core performance that makes Morpheme's real-time word lookup and animation run with locked 120FPS fluidity.",
@@ -330,7 +330,7 @@
             "category": "mac_desktop",
             "title": "Apple Mac Studio & 5K Studio Display (Master Analyzer Rig)",
             "base_price_usd": 3598.0,
-            "last_changed_date": "October 16, 2026",
+            "last_changed_date": "November 16, 2026",
             "image_url": "/static/images/mac_studio_display.jpg?v=1",
             "desc": [
                 "The Ultimate Analytical Setup: For players who study word lists, test high-depth Combo Checker algorithms, and run tournament broadcasts. The Mac Studio packs immense CPU bandwidth in an ultra-compact desktop footprint.",

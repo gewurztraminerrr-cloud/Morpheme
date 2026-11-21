@@ -154,6 +154,31 @@
     }
 
     /**
+     * Dynamically computes the current active monthly Store cycle dates anchored on the 16th.
+     */
+    function getMonthlyStoreDates() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const day = now.getDate();
+
+        let lastDate, nextDate;
+        if (day >= 16) {
+            lastDate = new Date(year, month, 16);
+            nextDate = new Date(year, month + 1, 16);
+        } else {
+            lastDate = new Date(year, month - 1, 16);
+            nextDate = new Date(year, month, 16);
+        }
+
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+                            "July", "August", "September", "October", "November", "December"];
+        const lastStr = `${monthNames[lastDate.getMonth()]} ${lastDate.getDate()}, ${lastDate.getFullYear()}`;
+        const nextStr = `${monthNames[nextDate.getMonth()]} ${nextDate.getDate()}, ${nextDate.getFullYear()}`;
+        return { lastStr, nextStr };
+    }
+
+    /**
      * Renders the complete Store UI inside #tool-store.
      */
     async function renderMorphemeStore() {
@@ -165,6 +190,10 @@
             console.error('[Store] Unable to load store catalog data.');
             return;
         }
+
+        const monthlyDates = getMonthlyStoreDates();
+        const lastCatalogUpdate = catalog.last_catalog_update || monthlyDates.lastStr;
+        const nextScheduledUpdate = catalog.next_scheduled_update || monthlyDates.nextStr;
 
         const curr = getActiveCurrency();
         const flagHtml = window.getFlagHtml ? window.getFlagHtml(curr.flagEmoji, 'width: 22px; height: auto; margin-right: 6px;') : `${curr.flagEmoji} `;
@@ -192,7 +221,7 @@
                             <span class="store-status-icon-wrap"><span class="store-pulse-dot"></span></span>
                             <div class="store-status-content">
                                 <span class="store-status-label">Prices and products last updated on</span>
-                                <span class="store-status-date">${catalog.last_catalog_update || 'October 16, 2026'}</span>
+                                <span class="store-status-date">${lastCatalogUpdate}</span>
                             </div>
                         </div>
                         <div class="store-status-divider"></div>
@@ -200,7 +229,7 @@
                             <span class="store-status-icon-wrap"><i class="fas fa-calendar-alt"></i></span>
                             <div class="store-status-content">
                                 <span class="store-status-label">Next Store update will occur on</span>
-                                <span class="store-status-date">${catalog.next_scheduled_update || 'November 16, 2026'}</span>
+                                <span class="store-status-date">${nextScheduledUpdate}</span>
                             </div>
                         </div>
                         <div class="store-status-divider"></div>
@@ -255,7 +284,7 @@
                 _activeCategory = btn.dataset.cat;
                 filterBtns.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                renderProductGrid(catalog.products, curr);
+                renderProductGrid(catalog.products, curr, lastCatalogUpdate);
             });
         });
 
@@ -268,15 +297,16 @@
             storePane.appendChild(gridEl);
         }
 
-        renderProductGrid(catalog.products, curr);
+        renderProductGrid(catalog.products, curr, lastCatalogUpdate);
     }
 
     /**
      * Renders filtered product cards into #store-items-grid.
      */
-    function renderProductGrid(products, curr) {
+    function renderProductGrid(products, curr, activeCycleDate) {
         const gridEl = document.getElementById('store-items-grid');
         if (!gridEl) return;
+        const defaultCycleDate = activeCycleDate || getMonthlyStoreDates().lastStr;
 
         const filtered = products.filter(p => {
             if (_activeCategory === 'all') return true;
@@ -318,7 +348,7 @@
                             <span class="store-item-price">${priceHtml}</span>
                             <div class="store-item-last-changed" title="Last date this product was introduced, verified, or updated">
                                 <i class="fas fa-calendar-check" style="margin-right: 4px; opacity: 0.85;"></i>
-                                Last changed on ${escapeHtml(item.last_changed_date || 'October 16, 2026')}
+                                Last changed on ${escapeHtml(item.last_changed_date || defaultCycleDate || 'November 16, 2026')}
                             </div>
                         </div>
                         ${descHtml}
