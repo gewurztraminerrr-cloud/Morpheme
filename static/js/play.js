@@ -6146,20 +6146,47 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         filterContainer.style.display = 'flex';
     }
 
-    // Calculate dictionary counts for all words in the round
+    // Calculate dictionary counts and found counts for all words in the round
     const countTotal = cleanWords.length;
+    let countTotalFound = 0;
+    let countCsw = 0;
+    let countCswFound = 0;
     let countCswOnly = 0;
+    let countCswOnlyFound = 0;
     let countNwl = 0;
+    let countNwlFound = 0;
     let countAw = 0;
+    let countAwFound = 0;
+
     for (let i = 0; i < cleanWords.length; i++) {
         const wUpper = cleanWords[i].wordUpper;
         const isAW = (addedSet && addedSet.has(wUpper)) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wUpper));
+        const isCswOnly = !isAW && cswOnlySet && cswOnlySet.has(wUpper);
+        const isFound = (targetWordsSet && targetWordsSet.size > 0)
+            ? targetWordsSet.has(wUpper)
+            : (allFoundSet && allFoundSet.has(wUpper));
+
+        if (isFound) {
+            countTotalFound++;
+        }
+
         if (isAW) {
             countAw++;
-        } else if (cswOnlySet && cswOnlySet.has(wUpper)) {
+            if (isFound) countAwFound++;
+        } else if (isCswOnly) {
             countCswOnly++;
+            countCsw++;
+            if (isFound) {
+                countCswOnlyFound++;
+                countCswFound++;
+            }
         } else {
             countNwl++;
+            countCsw++;
+            if (isFound) {
+                countNwlFound++;
+                countCswFound++;
+            }
         }
     }
 
@@ -6170,26 +6197,27 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     let dictOptions = [];
     if (isCSW && useAW) {
         dictOptions = [
-            { value: 'all', label: `CSW + AW (${countTotal})` },
-            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnly})` },
-            { value: 'NWL', label: `NWL (${countNwl})` },
-            { value: 'AW', label: `AW (${countAw})` }
+            { value: 'all', label: `CSW + AW (${countTotalFound} / ${countTotal})` },
+            { value: 'CSW', label: `CSW (${countCswFound} / ${countCsw})` },
+            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnlyFound} / ${countCswOnly})` },
+            { value: 'NWL', label: `NWL (${countNwlFound} / ${countNwl})` },
+            { value: 'AW', label: `AW (${countAwFound} / ${countAw})` }
         ];
     } else if (isCSW) {
         dictOptions = [
-            { value: 'all', label: `CSW (${countTotal})` },
-            { value: 'NWL', label: `NWL (${countNwl})` },
-            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnly})` }
+            { value: 'all', label: `CSW (${countTotalFound} / ${countTotal})` },
+            { value: 'NWL', label: `NWL (${countNwlFound} / ${countNwl})` },
+            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnlyFound} / ${countCswOnly})` }
         ];
     } else if (useAW) {
         dictOptions = [
-            { value: 'all', label: `NWL + AW (${countTotal})` },
-            { value: 'NWL', label: `NWL (${countNwl})` },
-            { value: 'AW', label: `AW (${countAw})` }
+            { value: 'all', label: `NWL + AW (${countTotalFound} / ${countTotal})` },
+            { value: 'NWL', label: `NWL (${countNwlFound} / ${countNwl})` },
+            { value: 'AW', label: `AW (${countAwFound} / ${countAw})` }
         ];
     } else {
         dictOptions = [
-            { value: 'all', label: `NWL (${countTotal})` }
+            { value: 'all', label: `NWL (${countTotalFound} / ${countTotal})` }
         ];
     }
 
@@ -6225,22 +6253,28 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     // Filter words by selected dictionary
     const selectedDict = window.selectedAllWordsDict || 'all';
     let dictFilteredWords = displayWords;
-    if (selectedDict === 'CSW_ONLY') {
+    if (selectedDict === 'CSW') {
         dictFilteredWords = displayWords.filter(e => {
             const wUpper = e.wordUpper;
-            const isAW = addedSet.has(wUpper) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wUpper));
-            return cswOnlySet.has(wUpper) && !isAW;
+            const isAW = (addedSet && addedSet.has(wUpper)) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wUpper));
+            return !isAW;
+        });
+    } else if (selectedDict === 'CSW_ONLY') {
+        dictFilteredWords = displayWords.filter(e => {
+            const wUpper = e.wordUpper;
+            const isAW = (addedSet && addedSet.has(wUpper)) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wUpper));
+            return (cswOnlySet && cswOnlySet.has(wUpper)) && !isAW;
         });
     } else if (selectedDict === 'NWL') {
         dictFilteredWords = displayWords.filter(e => {
             const wUpper = e.wordUpper;
-            const isAW = addedSet.has(wUpper) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wUpper));
-            return !cswOnlySet.has(wUpper) && !isAW;
+            const isAW = (addedSet && addedSet.has(wUpper)) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wUpper));
+            return (!cswOnlySet || !cswOnlySet.has(wUpper)) && !isAW;
         });
     } else if (selectedDict === 'AW') {
         dictFilteredWords = displayWords.filter(e => {
             const wUpper = e.wordUpper;
-            return addedSet.has(wUpper) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wUpper));
+            return (addedSet && addedSet.has(wUpper)) || (window.globalAddedWordsSet && window.globalAddedWordsSet.has(wUpper));
         });
     }
 

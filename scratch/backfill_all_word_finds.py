@@ -28,35 +28,8 @@ def format_ts(ts):
     return s
 
 def run_backfill(base_dir=None):
-    if not base_dir:
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    
-    main_db_path = os.path.join(base_dir, 'morpheme.db')
-    if not os.path.exists(main_db_path):
-        # Check subfolder or parent
-        alt_db = os.path.join(base_dir, 'morpheme', 'morpheme.db')
-        if os.path.exists(alt_db):
-            main_db_path = alt_db
-
-    print(f"=== Backfilling word_finds for database: {main_db_path} ===")
-    conn = sqlite3.connect(main_db_path, timeout=60)
-    c = conn.cursor()
-
-    # 1. Ensure word_finds table and indices exist
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS word_finds (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            word TEXT NOT NULL,
-            user_id INTEGER NOT NULL,
-            timestamp DATETIME NOT NULL,
-            room_id TEXT,
-            round_number INTEGER,
-            FOREIGN KEY(user_id) REFERENCES users(id)
-        )
-    ''')
-    c.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_word ON word_finds(word)')
-    c.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_user ON word_finds(user_id)')
-    conn.commit()
+    # Disabled: All word finds are kept clean and real-time without backfilling legacy snapshots
+    return
 
     # User mappings
     user_rows = c.execute('SELECT id, username FROM users').fetchall()
