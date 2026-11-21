@@ -1286,6 +1286,9 @@ function debounce(func, wait) {
         }
     };
 
+    window.switchSettingsTab = window.showSettingTab;
+    window.switchSettingTab = window.showSettingTab;
+
     window.showSettingSubTab = function(tabId, subPageId) {
         const pane = document.getElementById(`setting-tab-${tabId}`);
         if (!pane) return;
@@ -1439,13 +1442,20 @@ function debounce(func, wait) {
         // Mobile Layout snapping on navigation (immediate reset)
         const settingsPage = document.getElementById('page-settings');
         if (settingsPage) {
+            let wasActive = settingsPage.classList.contains('active');
             const observer = new MutationObserver(() => {
-                if (settingsPage.classList.contains('active')) {
+                const isActive = settingsPage.classList.contains('active');
+                if (isActive && !wasActive) {
+                    if (window._navigatingViaDefPopup) {
+                        wasActive = isActive;
+                        return;
+                    }
                     const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
                     if (isMobile && typeof window.resetSettingsTab === 'function') {
                         window.resetSettingsTab(true);
                     }
                 }
+                wasActive = isActive;
             });
             observer.observe(settingsPage, {
                 attributes: true,

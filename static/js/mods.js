@@ -1411,6 +1411,8 @@ window.showModTab = function(tabId) {
     }
 };
 
+window.switchModTab = window.showModTab;
+
 window.resetModsTab = function(immediate = false) {
     if (window._modsSlideTimeout) {
         clearTimeout(window._modsSlideTimeout);
@@ -1475,12 +1477,19 @@ function setupModsNavigation() {
     // Layout snapping and menu reset on navigation (immediate reset on all devices)
     const modsPage = document.getElementById('page-mods');
     if (modsPage) {
+        let wasActive = modsPage.classList.contains('active');
         const observer = new MutationObserver(() => {
-            if (modsPage.classList.contains('active')) {
+            const isActive = modsPage.classList.contains('active');
+            if (isActive && !wasActive) {
+                if (window._navigatingViaDefPopup) {
+                    wasActive = isActive;
+                    return;
+                }
                 if (typeof window.resetModsTab === 'function') {
                     window.resetModsTab(true);
                 }
             }
+            wasActive = isActive;
         });
         observer.observe(modsPage, {
             attributes: true,
@@ -2368,6 +2377,9 @@ async function loadTallyDivisionsExamples(isRepopulate = false) {
     const container = document.getElementById('tally-examples-container');
     const btn = document.getElementById('tally-repopulate-examples-btn');
     if (!container) return;
+    if (!isRepopulate && container.children.length > 0) {
+        return;
+    }
 
     if (btn) {
         btn.disabled = true;

@@ -661,26 +661,40 @@ window.toolsGoBack = function() {
             }
             if (navEntry.originPage === 'page-mods') {
                 const targetModTab = navEntry.originSubtab || 'tally-divisions';
-                if (targetModTab && typeof window.switchModTab === 'function') {
-                    window.switchModTab(targetModTab);
-                }
-                if (typeof navEntry.savedSubtabScrollTop === 'number') {
-                    const modContent = document.querySelector('#page-mods .tools-content');
-                    if (modContent) modContent.scrollTop = navEntry.savedSubtabScrollTop;
-                }
+                const restoreMod = () => {
+                    if (typeof window.showModTab === 'function') {
+                        window.showModTab(targetModTab);
+                    } else if (typeof window.switchModTab === 'function') {
+                        window.switchModTab(targetModTab);
+                    }
+                    if (typeof navEntry.savedSubtabScrollTop === 'number') {
+                        const modContent = document.querySelector('#page-mods .tools-content');
+                        if (modContent) modContent.scrollTop = navEntry.savedSubtabScrollTop;
+                    }
+                };
+                restoreMod();
+                requestAnimationFrame(restoreMod);
+                setTimeout(restoreMod, 60);
             } else if (navEntry.originPage === 'page-settings') {
                 const targetSettingsTab = navEntry.originSubtab || 'profile';
-                if (targetSettingsTab && typeof window.switchSettingsTab === 'function') {
-                    window.switchSettingsTab(targetSettingsTab);
-                }
-                if (typeof navEntry.savedSubtabScrollTop === 'number') {
-                    const settingsContent = document.querySelector('#page-settings .tools-content');
-                    if (settingsContent) settingsContent.scrollTop = navEntry.savedSubtabScrollTop;
-                }
+                const restoreSetting = () => {
+                    if (typeof window.showSettingTab === 'function') {
+                        window.showSettingTab(targetSettingsTab);
+                    } else if (typeof window.switchSettingsTab === 'function') {
+                        window.switchSettingsTab(targetSettingsTab);
+                    }
+                    if (typeof navEntry.savedSubtabScrollTop === 'number') {
+                        const settingsContent = document.querySelector('#page-settings .tools-content');
+                        if (settingsContent) settingsContent.scrollTop = navEntry.savedSubtabScrollTop;
+                    }
+                };
+                restoreSetting();
+                requestAnimationFrame(restoreSetting);
+                setTimeout(restoreSetting, 60);
             }
             setTimeout(() => {
                 window._navigatingViaDefPopup = false;
-            }, 350);
+            }, 400);
             return;
         }
 
@@ -773,26 +787,40 @@ window.toolsGoBack = function() {
             }
             if (originPage === 'page-mods') {
                 const targetModTab = window._defPopupOriginSubtab || 'tally-divisions';
-                if (targetModTab && typeof window.switchModTab === 'function') {
-                    window.switchModTab(targetModTab);
-                }
-                if (typeof window._defPopupSavedSubtabScrollTop === 'number') {
-                    const modContent = document.querySelector('#page-mods .tools-content');
-                    if (modContent) modContent.scrollTop = window._defPopupSavedSubtabScrollTop;
-                }
+                const restoreMod = () => {
+                    if (typeof window.showModTab === 'function') {
+                        window.showModTab(targetModTab);
+                    } else if (typeof window.switchModTab === 'function') {
+                        window.switchModTab(targetModTab);
+                    }
+                    if (typeof window._defPopupSavedSubtabScrollTop === 'number') {
+                        const modContent = document.querySelector('#page-mods .tools-content');
+                        if (modContent) modContent.scrollTop = window._defPopupSavedSubtabScrollTop;
+                    }
+                };
+                restoreMod();
+                requestAnimationFrame(restoreMod);
+                setTimeout(restoreMod, 60);
             } else if (originPage === 'page-settings') {
                 const targetSettingsTab = window._defPopupOriginSubtab || 'profile';
-                if (targetSettingsTab && typeof window.switchSettingsTab === 'function') {
-                    window.switchSettingsTab(targetSettingsTab);
-                }
-                if (typeof window._defPopupSavedSubtabScrollTop === 'number') {
-                    const settingsContent = document.querySelector('#page-settings .tools-content');
-                    if (settingsContent) settingsContent.scrollTop = window._defPopupSavedSubtabScrollTop;
-                }
+                const restoreSetting = () => {
+                    if (typeof window.showSettingTab === 'function') {
+                        window.showSettingTab(targetSettingsTab);
+                    } else if (typeof window.switchSettingsTab === 'function') {
+                        window.switchSettingsTab(targetSettingsTab);
+                    }
+                    if (typeof window._defPopupSavedSubtabScrollTop === 'number') {
+                        const settingsContent = document.querySelector('#page-settings .tools-content');
+                        if (settingsContent) settingsContent.scrollTop = window._defPopupSavedSubtabScrollTop;
+                    }
+                };
+                restoreSetting();
+                requestAnimationFrame(restoreSetting);
+                setTimeout(restoreSetting, 60);
             }
             setTimeout(() => {
                 window._navigatingViaDefPopup = false;
-            }, 350);
+            }, 400);
             return;
         }
 
