@@ -3,11 +3,11 @@
 ## 1. System Synchronization Status
 - **Date**: November 21, 2026
 - **Stable Point Tag**: `stable-2026-11-21`
-- **Latest Commit ID**: `12cd9b5c33f194b744334a9a8a0e1427944d1380`
+- **Latest Commit ID**: `3ebe6918a0889579dd130f51255d9d77217d9450`
 - **Synchronization State**: **100% Byte-for-Byte Synchronized**
-  - **Localhost**: Commit `12cd9b5c33f194b744334a9a8a0e1427944d1380` (Clean working tree)
-  - **GitHub (`origin/main`)**: Commit `12cd9b5c33f194b744334a9a8a0e1427944d1380`
-  - **Production VPS (`morpheme.games` / `132.148.72.249`)**: Commit `12cd9b5c33f194b744334a9a8a0e1427944d1380` (PM2 Process 0 online, 0 restarts)
+  - **Localhost**: Commit `3ebe6918a0889579dd130f51255d9d77217d9450` (Clean working tree)
+  - **GitHub (`origin/main`)**: Commit `3ebe6918a0889579dd130f51255d9d77217d9450`
+  - **Production VPS (`morpheme.games` / `132.148.72.249`)**: Commit `3ebe6918a0889579dd130f51255d9d77217d9450` (PM2 Process 0 online, 0 restarts)
 
 ---
 
@@ -65,6 +65,21 @@
   - Cleared database records in `word_finds`, `round_history`, `tournament_scores`, `private_match_turns`, and `daily_score_sums` while preserving all 24,354 user accounts, forum categories, private messages, and settings.
   - Disabled legacy snapshot scripts (`scratch/backfill_all_word_finds.py`) to prevent resurrection of unvalidated words.
   - Established `word_finds` and `word_stats.json` as the unified source of truth for both Find Count (Tools) and Tally Divisions (Mods).
+
+---
+
+### Feature 5: Context-Preserving Back Button Navigation Across Mods & Settings
+- **Problem / Need**:
+  - When opening a definition popup inside a specific subtab in **Mods** (e.g., *Tally Division Difficulty*) or **Settings** and pressing **FC** (Find Count) or **CC** (Combo Checker), pressing the **Back** button returned the user to the generic Mods tabs menu rather than returning directly into *Tally Division Difficulty in Mods*.
+- **Solution & Implementation**:
+  - In [`static/js/tools.js`](file:///Users/jeffbabiak/static/js/tools.js) (`navigateToFindCount` & `searchWordInComboChecker`):
+    - Added extraction and recording of active subtabs (`originSubtab`) and viewport scroll positions (`savedSubtabScrollTop`) for both `#page-mods` and `#page-settings`.
+    - Pushed `originSubtab` and `savedSubtabScrollTop` onto the `_defPopupNavStack`.
+  - In [`static/js/tools.js`](file:///Users/jeffbabiak/static/js/tools.js) (`toolsGoBack`):
+    - When popping an entry originating from `#page-mods`, calls `window.switchModTab(navEntry.originSubtab || 'tally-divisions')` and restores scroll position.
+    - Synchronizes top navigation header highlighting via `window.updateActiveNav`.
+  - In [`static/js/app.js`](file:///Users/jeffbabiak/static/js/app.js) (`showPage`):
+    - Guarded `resetModsTab(true)` and `resetSettingsTab(true)` behind `!window._navigatingViaDefPopup` so that subtabs and layouts are never prematurely wiped during popup navigation transitions.
 
 ---
 
