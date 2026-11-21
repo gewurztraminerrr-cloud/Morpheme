@@ -648,11 +648,39 @@ window.toolsGoBack = function() {
             }
         }
 
-        // Return to originating page outside Tools (Play, Lobby, Forum, Profile, etc.)
+        // Return to originating page outside Tools (Play, Lobby, Forum, Profile, Mods, Settings, etc.)
         if (navEntry.originPage && navEntry.originPage !== 'page-tools') {
+            window._navigatingViaDefPopup = true;
             if (typeof window.showPage === 'function') {
                 window.showPage(navEntry.originPage);
             }
+            const targetPageName = navEntry.originPage.replace('page-', '');
+            const navBtn = document.querySelector(`.nav-btn[data-page="${targetPageName}"]`);
+            if (navBtn && typeof window.updateActiveNav === 'function') {
+                window.updateActiveNav(navBtn);
+            }
+            if (navEntry.originPage === 'page-mods') {
+                const targetModTab = navEntry.originSubtab || 'tally-divisions';
+                if (targetModTab && typeof window.switchModTab === 'function') {
+                    window.switchModTab(targetModTab);
+                }
+                if (typeof navEntry.savedSubtabScrollTop === 'number') {
+                    const modContent = document.querySelector('#page-mods .tools-content');
+                    if (modContent) modContent.scrollTop = navEntry.savedSubtabScrollTop;
+                }
+            } else if (navEntry.originPage === 'page-settings') {
+                const targetSettingsTab = navEntry.originSubtab || 'profile';
+                if (targetSettingsTab && typeof window.switchSettingsTab === 'function') {
+                    window.switchSettingsTab(targetSettingsTab);
+                }
+                if (typeof navEntry.savedSubtabScrollTop === 'number') {
+                    const settingsContent = document.querySelector('#page-settings .tools-content');
+                    if (settingsContent) settingsContent.scrollTop = navEntry.savedSubtabScrollTop;
+                }
+            }
+            setTimeout(() => {
+                window._navigatingViaDefPopup = false;
+            }, 350);
             return;
         }
 
@@ -734,9 +762,37 @@ window.toolsGoBack = function() {
         }
 
         if (originPage && originPage !== 'page-tools') {
+            window._navigatingViaDefPopup = true;
             if (typeof window.showPage === 'function') {
                 window.showPage(originPage);
             }
+            const targetPageName = originPage.replace('page-', '');
+            const navBtn = document.querySelector(`.nav-btn[data-page="${targetPageName}"]`);
+            if (navBtn && typeof window.updateActiveNav === 'function') {
+                window.updateActiveNav(navBtn);
+            }
+            if (originPage === 'page-mods') {
+                const targetModTab = window._defPopupOriginSubtab || 'tally-divisions';
+                if (targetModTab && typeof window.switchModTab === 'function') {
+                    window.switchModTab(targetModTab);
+                }
+                if (typeof window._defPopupSavedSubtabScrollTop === 'number') {
+                    const modContent = document.querySelector('#page-mods .tools-content');
+                    if (modContent) modContent.scrollTop = window._defPopupSavedSubtabScrollTop;
+                }
+            } else if (originPage === 'page-settings') {
+                const targetSettingsTab = window._defPopupOriginSubtab || 'profile';
+                if (targetSettingsTab && typeof window.switchSettingsTab === 'function') {
+                    window.switchSettingsTab(targetSettingsTab);
+                }
+                if (typeof window._defPopupSavedSubtabScrollTop === 'number') {
+                    const settingsContent = document.querySelector('#page-settings .tools-content');
+                    if (settingsContent) settingsContent.scrollTop = window._defPopupSavedSubtabScrollTop;
+                }
+            }
+            setTimeout(() => {
+                window._navigatingViaDefPopup = false;
+            }, 350);
             return;
         }
 
@@ -11429,12 +11485,28 @@ window.searchWordInComboChecker = function (word, dictionary = null, originPage 
     const activePane = document.querySelector('#page-tools .tool-pane.active');
     const curId = (originPageId === 'page-tools' && activePane) ? activePane.id.replace('tool-', '') : (originPageId === 'page-tools' ? 'lists' : null);
 
+    let originSubtab = null;
+    let savedSubtabScrollTop = 0;
+    if (originPageId === 'page-mods') {
+        const activeModBtn = document.querySelector('#page-mods .tools-sidebar .tool-nav-btn.active');
+        originSubtab = activeModBtn ? activeModBtn.dataset.modTab : (document.querySelector('#page-mods .tool-pane.active') ? document.querySelector('#page-mods .tool-pane.active').id.replace('mod-tab-', '') : null);
+        const modContent = document.querySelector('#page-mods .tools-content');
+        savedSubtabScrollTop = modContent ? modContent.scrollTop : 0;
+    } else if (originPageId === 'page-settings') {
+        const activeSettingsBtn = document.querySelector('#page-settings .tools-sidebar .tool-nav-btn.active');
+        originSubtab = activeSettingsBtn ? activeSettingsBtn.dataset.settingsTab : (document.querySelector('#page-settings .tool-pane.active') ? document.querySelector('#page-settings .tool-pane.active').id.replace('settings-tab-', '') : null);
+        const settingsContent = document.querySelector('#page-settings .tools-content');
+        savedSubtabScrollTop = settingsContent ? settingsContent.scrollTop : 0;
+    }
+
     if (!Array.isArray(window._defPopupNavStack)) {
         window._defPopupNavStack = [];
     }
     window._defPopupNavStack.push({
         originPage: originPageId,
         originTool: curId,
+        originSubtab: originSubtab,
+        savedSubtabScrollTop: savedSubtabScrollTop,
         wasFullListModalOpen: !!window._wasFullListModalOpen,
         savedListsScrollTop: (typeof window._savedListsScrollTop === 'number') ? window._savedListsScrollTop : 0,
         savedWorkOnScrollTop: (typeof window._savedWorkOnScrollTop === 'number') ? window._savedWorkOnScrollTop : 0,
@@ -11450,6 +11522,8 @@ window.searchWordInComboChecker = function (word, dictionary = null, originPage 
     window._navigatedFromDefPopup = true;
     window._defPopupOriginTool = curId;
     window._defPopupOriginPage = originPageId;
+    window._defPopupOriginSubtab = originSubtab;
+    window._defPopupSavedSubtabScrollTop = savedSubtabScrollTop;
 
     if (typeof window.setDefBackNavVisibility === 'function') {
         window.setDefBackNavVisibility(true);
@@ -11579,12 +11653,28 @@ window.navigateToFindCount = function (word, originPage = null) {
     const activePane = document.querySelector('#page-tools .tool-pane.active');
     const curId = (originPageId === 'page-tools' && activePane) ? activePane.id.replace('tool-', '') : (originPageId === 'page-tools' ? 'lists' : null);
 
+    let originSubtab = null;
+    let savedSubtabScrollTop = 0;
+    if (originPageId === 'page-mods') {
+        const activeModBtn = document.querySelector('#page-mods .tools-sidebar .tool-nav-btn.active');
+        originSubtab = activeModBtn ? activeModBtn.dataset.modTab : (document.querySelector('#page-mods .tool-pane.active') ? document.querySelector('#page-mods .tool-pane.active').id.replace('mod-tab-', '') : null);
+        const modContent = document.querySelector('#page-mods .tools-content');
+        savedSubtabScrollTop = modContent ? modContent.scrollTop : 0;
+    } else if (originPageId === 'page-settings') {
+        const activeSettingsBtn = document.querySelector('#page-settings .tools-sidebar .tool-nav-btn.active');
+        originSubtab = activeSettingsBtn ? activeSettingsBtn.dataset.settingsTab : (document.querySelector('#page-settings .tool-pane.active') ? document.querySelector('#page-settings .tool-pane.active').id.replace('settings-tab-', '') : null);
+        const settingsContent = document.querySelector('#page-settings .tools-content');
+        savedSubtabScrollTop = settingsContent ? settingsContent.scrollTop : 0;
+    }
+
     if (!Array.isArray(window._defPopupNavStack)) {
         window._defPopupNavStack = [];
     }
     window._defPopupNavStack.push({
         originPage: originPageId,
         originTool: curId,
+        originSubtab: originSubtab,
+        savedSubtabScrollTop: savedSubtabScrollTop,
         wasFullListModalOpen: !!window._wasFullListModalOpen,
         savedListsScrollTop: (typeof window._savedListsScrollTop === 'number') ? window._savedListsScrollTop : 0,
         savedWorkOnScrollTop: (typeof window._savedWorkOnScrollTop === 'number') ? window._savedWorkOnScrollTop : 0,
@@ -11600,6 +11690,8 @@ window.navigateToFindCount = function (word, originPage = null) {
     window._navigatedFromDefPopup = true;
     window._defPopupOriginTool = curId;
     window._defPopupOriginPage = originPageId;
+    window._defPopupOriginSubtab = originSubtab;
+    window._defPopupSavedSubtabScrollTop = savedSubtabScrollTop;
 
     if (typeof window.setDefBackNavVisibility === 'function') {
         window.setDefBackNavVisibility(true);

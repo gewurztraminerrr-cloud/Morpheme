@@ -2364,11 +2364,11 @@ window.showPage = showPage;
             // Default immediately to blank content panel with side menus visible on all screen sizes
             if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function' && !window._navigatingViaDefPopup) {
                 window.resetToolsTab(true);
-            } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
+            } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function' && !window._navigatingViaDefPopup) {
                 window.resetModsTab(true);
-            } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
+            } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function' && !window._navigatingViaDefPopup) {
                 window.resetSettingsTab(true);
-            } else if (page.id === 'page-forums' && typeof window.resetForumTab === 'function') {
+            } else if (page.id === 'page-forums' && typeof window.resetForumTab === 'function' && !window._navigatingViaDefPopup) {
                 window.resetForumTab(true);
             }
             page.classList.add('active');
@@ -2387,17 +2387,19 @@ window.showPage = showPage;
         } else {
             page.classList.remove('active');
             page.style.display = 'none';
-            // When leaving Tools, Mods, Settings, or Forums, immediately reset tab state so previous tab never flashes upon return
-            if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
-                window.resetToolsTab(true);
-            } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
-                window.resetModsTab(true);
-            } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
-                window.resetSettingsTab(true);
-            } else if (page.id === 'page-forums' && typeof window.resetForumTab === 'function') {
-                window.resetForumTab(true);
-                if (typeof Forum !== 'undefined' && typeof Forum.onLeave === 'function') {
-                    Forum.onLeave();
+            // When leaving Tools, Mods, Settings, or Forums, immediately reset tab state so previous tab never flashes upon return (unless navigating via definition popup)
+            if (!window._navigatingViaDefPopup) {
+                if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function') {
+                    window.resetToolsTab(true);
+                } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function') {
+                    window.resetModsTab(true);
+                } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function') {
+                    window.resetSettingsTab(true);
+                } else if (page.id === 'page-forums' && typeof window.resetForumTab === 'function') {
+                    window.resetForumTab(true);
+                    if (typeof Forum !== 'undefined' && typeof Forum.onLeave === 'function') {
+                        Forum.onLeave();
+                    }
                 }
             }
         }
@@ -2704,6 +2706,7 @@ function navigateToPage(pageName) {
 window.navigateToPage = navigateToPage;
 
 function updateActiveNav(activeBtn) {
+window.updateActiveNav = updateActiveNav;
     // Whenever navigation changes, update states
     if (typeof window.updateManualToolState === 'function') {
         window.updateManualToolState();
