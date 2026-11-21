@@ -1027,6 +1027,14 @@ def seed_pregenerated_cache_bg():
             ("4x4", "CSW", (100, 200), "Normal", 4, "Medium", False),
             ("4x4", "NWL", (50, 100), "Normal", 5, "Medium", False),
             ("4x4", "CSW", (50, 100), "Normal", 5, "Medium", False),
+            ("4x4", "NWL", (100, 200), "Normal", 5, "Medium", False),
+            ("4x4", "CSW", (100, 200), "Normal", 5, "Medium", False),
+            ("4x4", "NWL", (200, 300), "Normal", 5, "Medium", False),
+            ("4x4", "CSW", (200, 300), "Normal", 5, "Medium", False),
+            ("4x4", "NWL", (300, 400), "Normal", 5, "Medium", False),
+            ("4x4", "CSW", (300, 400), "Normal", 5, "Medium", False),
+            ("4x4", "NWL + AW", (300, 400), "Normal", 5, "Medium", True),
+            ("4x4", "CSW + AW", (300, 400), "Normal", 5, "Medium", True),
             ("4x4", "NWL", (200, 300), "Normal", 3, "Hard", False),
             ("4x4", "CSW", (200, 300), "Normal", 3, "Easy", False),
             ("4x4", "NWL", (100, 200), "Checkerboard", 3, "Medium", False),
@@ -1060,6 +1068,14 @@ def seed_pregenerated_cache_bg():
             ("4x6", "CSW", (100, 200), "Normal", 5, "Hard", False),
             ("4x6", "NWL", (50, 100), "Normal", 6, "Medium", False),
             ("4x6", "CSW", (50, 100), "Normal", 6, "Hard", False),
+            ("4x6", "NWL", (100, 200), "Normal", 6, "Medium", False),
+            ("4x6", "CSW", (100, 200), "Normal", 6, "Medium", False),
+            ("4x6", "NWL", (200, 300), "Normal", 6, "Medium", False),
+            ("4x6", "CSW", (200, 300), "Normal", 6, "Medium", False),
+            ("4x6", "NWL", (300, 400), "Normal", 6, "Medium", False),
+            ("4x6", "CSW", (300, 400), "Normal", 6, "Medium", False),
+            ("4x6", "NWL + AW", (300, 400), "Normal", 6, "Medium", True),
+            ("4x6", "CSW + AW", (300, 400), "Normal", 6, "Medium", True),
             ("4x6", "NWL + AW", (300, 400), "Normal", 4, "Medium", True),
             ("4x6", "NWL + AW", (300, 400), "Normal", 5, "Medium", True),
             ("4x6", "CSW + AW", (300, 400), "Normal", 4, "Medium", True),
@@ -1191,7 +1207,25 @@ class BoardGenerator:
         is_6x8 = (rows == 6 and cols == 8) or (rows == 8 and cols == 6)
         is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
         is_cube = depth > 1
-        if rows * cols <= 24 and int(min_word_length) >= 4:
+        if rows * cols <= 16 and int(min_word_length) >= 5:
+            ranges = {
+                "Easy": (0.0, 0.06),
+                "Medium": (0.03, 0.22),
+                "Hard": (0.18, 1.0)
+            }
+        elif rows * cols <= 24 and int(min_word_length) >= 6:
+            ranges = {
+                "Easy": (0.0, 0.08),
+                "Medium": (0.05, 0.25),
+                "Hard": (0.22, 1.0)
+            }
+        elif rows * cols <= 35 and int(min_word_length) >= 7:
+            ranges = {
+                "Easy": (0.0, 0.12),
+                "Medium": (0.08, 0.30),
+                "Hard": (0.26, 1.0)
+            }
+        elif rows * cols <= 24 and int(min_word_length) >= 4:
             ranges = {
                 "Easy": (0.0, 0.15),
                 "Medium": (0.16, 0.29),

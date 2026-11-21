@@ -16758,32 +16758,28 @@ def check_board_config_feasibility(parameters):
 
     is_unfeasible = False
     if dims in ['6x8', '3x3x3']:
-        if min_len >= 8 and range_str in ['300-400', '400-500', '500+']:
+        if min_len >= 8 and range_str in ['400-500', '500+']:
             is_unfeasible = True
-        elif min_len >= 7 and range_str in ['400-500', '500+']:
-            is_unfeasible = True
-        elif min_len >= 6 and not is_aw and range_str == '500+':
+        elif min_len >= 7 and range_str == '500+' and not is_aw:
             is_unfeasible = True
     elif dims == '5x7':
-        if min_len >= 7 and range_str in ['200-300', '300-400', '400-500', '500+']:
+        if min_len >= 7 and range_str in ['400-500', '500+']:
             is_unfeasible = True
-        elif min_len >= 6 and range_str in ['300-400', '400-500', '500+']:
-            is_unfeasible = True
-        elif min_len >= 5 and range_str == '500+':
+        elif min_len >= 6 and range_str == '500+' and not is_aw:
             is_unfeasible = True
     elif dims == '4x6':
-        if min_len >= 6 and range_str in ['200-300', '300-400', '400-500', '500+']:
+        if min_len >= 6 and range_str in ['400-500', '500+']:
             is_unfeasible = True
-        elif min_len >= 5 and range_str in ['300-400', '400-500', '500+']:
+        elif min_len >= 5 and range_str == '500+' and not is_aw:
             is_unfeasible = True
-        elif min_len >= 4 and range_str == '500+':
+        elif min_len >= 4 and range_str == '500+' and not is_aw:
             is_unfeasible = True
     elif dims == '4x4':
-        if min_len >= 5 and range_str in ['200-300', '300-400', '400-500', '500+']:
+        if min_len >= 5 and range_str in ['400-500', '500+']:
             is_unfeasible = True
-        elif min_len >= 4 and range_str in ['300-400', '400-500', '500+']:
+        elif min_len >= 4 and range_str in ['400-500', '500+'] and not is_aw:
             is_unfeasible = True
-        elif range_str == '500+':
+        elif range_str == '500+' and not is_aw:
             is_unfeasible = True
 
     if is_unfeasible:
