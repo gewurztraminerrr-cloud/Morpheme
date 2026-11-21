@@ -2377,7 +2377,7 @@ async function loadTallyDivisionsExamples(isRepopulate = false) {
     const container = document.getElementById('tally-examples-container');
     const btn = document.getElementById('tally-repopulate-examples-btn');
     if (!container) return;
-    if (!isRepopulate && container.children.length > 0) {
+    if (!isRepopulate && window._tallyDivisionsExamplesLoaded && container.querySelector('.clickable-word-link')) {
         return;
     }
 
@@ -2468,6 +2468,7 @@ async function loadTallyDivisionsExamples(isRepopulate = false) {
         });
 
         container.innerHTML = html;
+        window._tallyDivisionsExamplesLoaded = true;
         if (isRepopulate) {
             showTallyStatus('✓ Division examples repopulated.', '#38bdf8');
         }
