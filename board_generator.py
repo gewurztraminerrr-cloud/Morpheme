@@ -454,6 +454,29 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                         playable_words = [w for w in playable_words if not word_validator.word_validator.is_csw_only(w)]
                 except Exception:
                     pass
+            else:
+                try:
+                    import word_validator
+                    if hasattr(word_validator, 'word_validator'):
+                        word_validator.word_validator.ensure_csw_loaded()
+                        csw_only_cnt = sum(1 for w in playable_words if word_validator.word_validator.is_csw_only(w))
+                        if csw_only_cnt == 0:
+                            print(f"[BoardGen] Discarding any_cached board for {dimensions}: 0 CSW-only words on board for CSW dictionary")
+                            continue
+                except Exception:
+                    pass
+
+            if is_aw is True:
+                try:
+                    import word_validator
+                    if hasattr(word_validator, 'word_validator'):
+                        aw_cnt = sum(1 for w in playable_words if word_validator.word_validator.is_added_word(w))
+                        if aw_cnt == 0:
+                            print(f"[BoardGen] Discarding any_cached board for {dimensions}: 0 Added Words on board for +AW dictionary")
+                            continue
+                except Exception:
+                    pass
+
             actual_count = len(playable_words)
 
             # For + AW, word count must strictly be >= 300
@@ -599,6 +622,35 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                             playable_words = [w for w in playable_words if not word_validator.word_validator.is_csw_only(w)]
                     except Exception:
                         pass
+                else:
+                    try:
+                        import word_validator
+                        if hasattr(word_validator, 'word_validator'):
+                            word_validator.word_validator.ensure_csw_loaded()
+                            csw_only_cnt = sum(1 for w in playable_words if word_validator.word_validator.is_csw_only(w))
+                            if csw_only_cnt == 0:
+                                print(f"[BoardGen] Discarding compatible cached board for {dimensions}: 0 CSW-only words on board for CSW dictionary")
+                                try: conn.close()
+                                except: pass
+                                conn = None
+                                return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
+                    except Exception:
+                        pass
+
+                if bool(use_added_words):
+                    try:
+                        import word_validator
+                        if hasattr(word_validator, 'word_validator'):
+                            aw_cnt = sum(1 for w in playable_words if word_validator.word_validator.is_added_word(w))
+                            if aw_cnt == 0:
+                                print(f"[BoardGen] Discarding compatible cached board for {dimensions}: 0 Added Words on board for +AW dictionary")
+                                try: conn.close()
+                                except: pass
+                                conn = None
+                                return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
+                    except Exception:
+                        pass
+
                 actual_count = len(playable_words)
 
                 if bool(use_added_words) and actual_count < 300:
@@ -1009,7 +1061,11 @@ def seed_pregenerated_cache_bg():
             ("4x6", "NWL", (50, 100), "Normal", 6, "Medium", False),
             ("4x6", "CSW", (50, 100), "Normal", 6, "Hard", False),
             ("4x6", "NWL + AW", (300, 400), "Normal", 4, "Medium", True),
+            ("4x6", "NWL + AW", (300, 400), "Normal", 5, "Medium", True),
+            ("4x6", "CSW + AW", (300, 400), "Normal", 4, "Medium", True),
+            ("4x6", "CSW + AW", (300, 400), "Normal", 5, "Medium", True),
             ("4x6", "CSW + AW", (400, 500), "Normal", 4, "Medium", True),
+            ("4x6", "CSW + AW", (400, 500), "Normal", 5, "Medium", True),
             ("5x7", "NWL", (200, 300), "Normal", 5, "Medium", False),
             ("5x7", "NWL", (300, 400), "Normal", 5, "Medium", False),
             ("5x7", "CSW", (300, 400), "Either/Or", 5, "Medium", False),
@@ -2255,6 +2311,67 @@ class BoardGenerator:
                 dictionary, 
                 depth
             )
+
+        # STRICT COUNT & DICTIONARY ENFORCEMENT BEFORE RETURN
+        try:
+            min_w_req, max_w_req = self._parse_word_count_range(word_count_range)
+            if val_ctx:
+                min_w_req = max(300, min_w_req)
+            matching_words = [w for w in all_words if len(w) >= min_word_length]
+            if len(matching_words) < min_w_req:
+                print(f"[BoardGen] Post-audit word count dropped to {len(matching_words)} (< {min_w_req}). Triggering rescue fill...")
+                b_rows = len(board[0]) if is_3d else len(board)
+                b_cols = len(board[0][0]) if is_3d else len(board[0])
+                board = self._perform_rescue_sweep(
+                    board, b_rows, b_cols, depth, dictionary, min_word_length, min_w_req, max_w_req,
+                    set(), difficulty, rescue_depth=25, is_checkerboard=("checkerboard" in str(board_format).lower()),
+                    board_format=board_format, use_added_words=val_ctx
+                )
+                all_words_dict = self._solve_board(
+                    board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+                )
+                all_words = sorted(list(all_words_dict.keys()))
+                matching_words = [w for w in all_words if len(w) >= min_word_length]
+
+            import word_validator
+            if hasattr(word_validator, 'word_validator'):
+                word_validator.word_validator.ensure_csw_loaded()
+                if dictionary == 'CSW':
+                    csw_cnt = sum(1 for w in matching_words if word_validator.word_validator.is_csw_only(w))
+                    if csw_cnt == 0:
+                        print(f"[BoardGen] CSW board had 0 CSW-only words. Injecting CSW letters into board...")
+                        # Embed a short CSW-only word (e.g. CWTCH or CRWTH)
+                        csw_to_inject = "CWTCH" if min_word_length <= 5 else "CRWTHS"
+                        for idx_c, ch in enumerate(csw_to_inject):
+                            if is_3d:
+                                if idx_c < len(board[0]) * len(board[0][0]):
+                                    board[0][idx_c // len(board[0][0])][idx_c % len(board[0][0])] = ch
+                            else:
+                                if idx_c < len(board) * len(board[0]):
+                                    board[idx_c // len(board[0])][idx_c % len(board[0])] = ch
+                        all_words_dict = self._solve_board(
+                            board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+                        )
+                        all_words = sorted(list(all_words_dict.keys()))
+
+                if val_ctx:
+                    aw_cnt = sum(1 for w in matching_words if word_validator.word_validator.is_added_word(w))
+                    if aw_cnt == 0:
+                        print(f"[BoardGen] +AW board had 0 Added Words. Injecting AW letters into board...")
+                        aw_to_inject = "AALII" if min_word_length <= 5 else "AALIIS"
+                        for idx_c, ch in enumerate(aw_to_inject):
+                            if is_3d:
+                                if idx_c < len(board[0]) * len(board[0][0]):
+                                    board[0][idx_c // len(board[0][0])][idx_c % len(board[0][0])] = ch
+                            else:
+                                if idx_c < len(board) * len(board[0]):
+                                    board[idx_c // len(board[0])][idx_c % len(board[0])] = ch
+                        all_words_dict = self._solve_board(
+                            board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+                        )
+                        all_words = sorted(list(all_words_dict.keys()))
+        except Exception as _post_audit_err:
+            print(f"[BoardGen] Warning in post-audit count/dict enforcement: {_post_audit_err}")
 
         # Trigger background refill to populate the cache up to 3
         refill_board_cache_bg(self, param_key_str, target_count=10)

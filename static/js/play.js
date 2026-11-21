@@ -6192,6 +6192,10 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
     if (countCswOnly > 0) isCSW = true;
     if (countAw > 0) useAW = true;
+    if (typeof dictStr !== 'undefined') {
+        if (dictStr.includes('CSW')) isCSW = true;
+        if (dictStr.includes('+ AW') || dictStr.includes('+AW') || dictStr.includes('ADDED')) useAW = true;
+    }
 
     // Configure and populate dictionary filter dropdown
     let dictOptions = [];

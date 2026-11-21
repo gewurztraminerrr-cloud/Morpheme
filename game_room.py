@@ -1920,8 +1920,7 @@ class GameRoom:
                 if '4x6' in self.board_dimensions: grid_floor = 4
                 elif '5x7' in self.board_dimensions: grid_floor = 5
                 elif '6x8' in self.board_dimensions or '3x3x3' in self.board_dimensions: grid_floor = 6
-                cand_min_l = min_l_val if pass_idx == 0 else (fparams.get('min_word_length', min_l_val) if fparams else min_l_val)
-                f_min_l = max(grid_floor, int(cand_min_l) if cand_min_l is not None else grid_floor)
+                f_min_l = max(grid_floor, int(min_l_val) if min_l_val is not None else grid_floor)
                 
                 fw_filtered = [w for w in fw if len(w) >= f_min_l]
                 if 'CSW' not in str(dict_val).upper() and hasattr(word_validator, 'word_validator'):
@@ -1938,9 +1937,21 @@ class GameRoom:
                     print(f"[GameRoom] ensure_next_board_ready: Candidate for +AW had only {actual_cnt} words (< 300). Discarding...")
                     continue
 
-                if req_range and not is_board_count_valid(actual_cnt, req_range):
-                    print(f"[GameRoom] ensure_next_board_ready: Candidate count {actual_cnt} outside target range {req_range}. Discarding...")
+                if target_range and not is_board_count_valid(actual_cnt, target_range):
+                    print(f"[GameRoom] ensure_next_board_ready: Candidate count {actual_cnt} outside target range {target_range}. Discarding...")
                     continue
+
+                if 'CSW' in str(dict_val).upper() and hasattr(word_validator, 'word_validator'):
+                    word_validator.word_validator.ensure_csw_loaded()
+                    if sum(1 for w in fw_filtered if word_validator.word_validator.is_csw_only(w)) == 0:
+                        print(f"[GameRoom] ensure_next_board_ready: Candidate had 0 CSW-only words for CSW dictionary. Discarding...")
+                        continue
+
+                if is_aw_effective and hasattr(word_validator, 'word_validator'):
+                    word_validator.word_validator.ensure_csw_loaded()
+                    if sum(1 for w in fw_filtered if word_validator.word_validator.is_added_word(w)) == 0:
+                        print(f"[GameRoom] ensure_next_board_ready: Candidate had 0 Added Words for +AW dictionary. Discarding...")
+                        continue
                 
                 f_wc = req_range or (fparams.get('word_count_range', '100-200') if fparams else '100-200')
                 min_accept = 50
@@ -3554,9 +3565,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             cache_candidates.append((min_l, r_item, fmt, base_dict, use_added_words))
             if str(fmt).lower() == 'normal':
                 cache_candidates.append((min_l, r_item, 'Normal', base_dict, use_added_words))
-                cache_candidates.append((floor_l, r_item, 'Normal', base_dict, use_added_words))
-                if not use_added_words:
-                    cache_candidates.append((floor_l, r_item, 'Normal', base_dict, False))
+                if min_l == floor_l:
+                    cache_candidates.append((floor_l, r_item, 'Normal', base_dict, use_added_words))
+                    if not use_added_words:
+                        cache_candidates.append((floor_l, r_item, 'Normal', base_dict, False))
         
         norm_target_diff = SpinnerSet.strip_difficulty_pct(difficulty) if difficulty else None
         diff_order = [norm_target_diff] if norm_target_diff else ['Medium', 'Easy', 'Hard']
@@ -3598,6 +3610,23 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                             if actual_wc < min_accept or actual_wc > max_accept:
                                 print(f"[get_emergency_fallback_board] Cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
                                 continue
+                            if target_range_resolved and not is_board_count_valid(actual_wc, target_range_resolved):
+                                print(f"[get_emergency_fallback_board] Cached board count {actual_wc} outside target_range_resolved {target_range_resolved}. REJECTING cached board...")
+                                continue
+
+                            import word_validator
+                            if hasattr(word_validator, 'word_validator'):
+                                word_validator.word_validator.ensure_csw_loaded()
+                                if base_dict == 'CSW':
+                                    csw_cnt = sum(1 for w in cwords_filtered if word_validator.word_validator.is_csw_only(w))
+                                    if csw_cnt == 0:
+                                        print(f"[get_emergency_fallback_board] Cached board has 0 CSW-only words for CSW dictionary. REJECTING...")
+                                        continue
+                                if is_aw:
+                                    aw_cnt = sum(1 for w in cwords_filtered if word_validator.word_validator.is_added_word(w))
+                                    if aw_cnt == 0:
+                                        print(f"[get_emergency_fallback_board] Cached board has 0 Added Words for +AW dictionary. REJECTING...")
+                                        continue
                                 
                             ctr_resolved = SpinnerSet.get_factchecked_wc_range(actual_wc, use_added_words=(is_aw or caw), dictionary=cdict)
                             caw_resolved = bool(caw or is_aw)
@@ -3617,6 +3646,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                             }
                             _rep, _rw, _rp = sync_board_checkerboard_and_resolve(bg, cboard, cfmt, final_min, cdict_resolved, caw_resolved, cbonus_cell)
                             if _rep and _rw:
+                                if target_range_resolved and not is_board_count_valid(len(_rw), target_range_resolved):
+                                    print(f"[get_emergency_fallback_board] sync_board re-solved words {len(_rw)} outside target_range_resolved {target_range_resolved}. REJECTING...")
+                                    continue
                                 cwords_filtered, cpaths_filtered = _rw, _rp
                             return cboard, cwords_filtered, cbonus_cell, cfmt_ret, cpaths_filtered, cratio, cbonus_word, ctr_resolved, eparams_dict
                 except Exception:
@@ -3646,12 +3678,24 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     
                     actual_wc = len(words_filtered)
                     matching_final_min = sum(1 for w in words_filtered if len(w) == final_min)
+                    import word_validator
+                    if hasattr(word_validator, 'word_validator'):
+                        word_validator.word_validator.ensure_csw_loaded()
+                    csw_cnt_ult = sum(1 for w in words_filtered if word_validator.word_validator.is_csw_only(w)) if ('CSW' in str(dictionary).upper() and hasattr(word_validator, 'word_validator')) else 1
+                    aw_cnt_ult = sum(1 for w in words_filtered if word_validator.word_validator.is_added_word(w)) if (is_aw and hasattr(word_validator, 'word_validator')) else 1
+
                     if matching_final_min < 3:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had only {matching_final_min} words of length {final_min} (needed >= 3). REJECTING cached board...")
                     elif is_aw and actual_wc < 300:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had only {actual_wc} words for +AW (needed >= 300). REJECTING cached board...")
                     elif actual_wc < min_accept or actual_wc > max_accept:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
+                    elif target_range and not is_board_count_valid(actual_wc, target_range):
+                        print(f"[get_emergency_fallback_board] Ultimate cached board had {actual_wc} words outside target_range {target_range}. REJECTING cached board...")
+                    elif 'CSW' in str(dictionary).upper() and csw_cnt_ult == 0:
+                        print(f"[get_emergency_fallback_board] Ultimate cached board has 0 CSW-only words for CSW dictionary. REJECTING...")
+                    elif is_aw and aw_cnt_ult == 0:
+                        print(f"[get_emergency_fallback_board] Ultimate cached board has 0 Added Words for +AW dictionary. REJECTING...")
                     else:
                         is_aw_ult = use_added_words or ('+ AW' in str(dictionary).upper()) or ('+AW' in str(dictionary).upper())
                         orig_base_dict = str(dictionary or 'NWL').replace('+ AW', '').replace('+AW', '').strip()
@@ -3746,12 +3790,20 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             rows, cols = map(int, parts[:2])
         except (ValueError, TypeError):
             rows, cols = 4, 4
-        # Randomly shuffled standard letter distribution to ensure unique boards
-        std_letters = ["S","T","A","R","E","D","L","I","N","E","R","S","A","N","T","I","C","S","T","R","A","I","N","S","C","A","P","T","U","R","E","S","O","U","N","D","S","F","A","R","W","O","R","D","S","E","T","S"]
-        offset = random.randint(0, len(std_letters) - 1)
-        shuffled = std_letters[offset:] + std_letters[:offset]
-        random.shuffle(shuffled)
-        board = [[shuffled[(r*cols + c) % len(shuffled)] for c in range(cols)] for r in range(rows)]
+        # Use high-density distribution for high-target or AW rounds to ensure word counts match requirements
+        from board_generator import LETTER_FREQ_SUPER_DENSITY
+        if (is_aw or min_accept >= 200) and hasattr(bg, '_create_normal_board'):
+            board = bg._create_normal_board(
+                rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=1 if not is_3d else 6,
+                difficulty='Easy', dictionary=dictionary, word_count_range=target_range_resolved, use_added_words=use_added_words
+            )
+        else:
+            # Randomly shuffled standard letter distribution to ensure unique boards
+            std_letters = ["S","T","A","R","E","D","L","I","N","E","R","S","A","N","T","I","C","S","T","R","A","I","N","S","C","A","P","T","U","R","E","S","O","U","N","D","S","F","A","R","W","O","R","D","S","E","T","S"]
+            offset = random.randint(0, len(std_letters) - 1)
+            shuffled = std_letters[offset:] + std_letters[:offset]
+            random.shuffle(shuffled)
+            board = [[shuffled[(r*cols + c) % len(shuffled)] for c in range(cols)] for r in range(rows)]
         bonus_cell = (random.randint(0, rows-1), random.randint(0, cols-1)) if is_bl_fmt else None
 
     if is_eo_fmt:
@@ -3780,25 +3832,60 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         paths_filtered = {w: p for w, p in emergency_solve_relaxed.items() if len(w) >= 3}
         min_word_length = 3
 
-    # CRITICAL SAFEGUARD FOR ADDED WORDS (+ AW):
-    # NWL + AW and CSW + AW word lists should NEVER have a word count below 300.
-    if is_aw and len(words_filtered) < 300:
-        print(f"[get_emergency_fallback_board] + AW emergency board had only {len(words_filtered)} words. Rescuing to guarantee >= 300 words...")
-        board = bg._perform_rescue_sweep(
-            board, rows, cols, 1 if not is_3d else 6, dictionary, min_word_length, 300, 500,
-            set(), difficulty or "Medium", board_format=fmt, use_added_words=True
-        )
-        emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=15, store_paths=True, timeout=5.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
-        words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
-        paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
-        if len(words_filtered) < 300 and min_word_length > 3:
-            for test_ml in range(min_word_length - 1, 2, -1):
-                test_w = [w for w in emergency_solve if len(w) >= test_ml]
-                if len(test_w) >= 300:
-                    min_word_length = test_ml
-                    words_filtered = test_w
-                    paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
-                    break
+    # CRITICAL SAFEGUARD FOR WORD COUNT (Strictly adhere to min_accept):
+    if len(words_filtered) < min_accept:
+        print(f"[get_emergency_fallback_board] Emergency board had only {len(words_filtered)} words (needed >= {min_accept}). Rescuing to guarantee word count...")
+        from board_generator import LETTER_FREQ_SUPER_DENSITY
+        for _dense_try in range(6):
+            dense_b = bg._create_normal_board(
+                rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=1 if not is_3d else 6,
+                difficulty='Easy', dictionary=dictionary, word_count_range=target_range_resolved, use_added_words=use_added_words
+            )
+            dense_s = bg._solve_board(dense_b, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
+            dense_w = [w for w in dense_s if len(w) >= min_word_length]
+            if len(dense_w) >= min_accept:
+                board = dense_b
+                emergency_solve = dense_s
+                words_filtered = dense_w
+                paths_filtered = {w: p for w, p in dense_s.items() if len(w) >= min_word_length}
+                print(f"[get_emergency_fallback_board] Super-density emergency board reached {len(words_filtered)} words (>= {min_accept}).")
+                break
+
+    # CRITICAL SAFEGUARD FOR CSW & ADDED WORDS:
+    import word_validator
+    if hasattr(word_validator, 'word_validator'):
+        word_validator.word_validator.ensure_csw_loaded()
+        if 'CSW' in str(dictionary).upper():
+            csw_cnt = sum(1 for w in words_filtered if word_validator.word_validator.is_csw_only(w))
+            if csw_cnt == 0:
+                print(f"[get_emergency_fallback_board] Emergency board has 0 CSW-only words. Injecting CSW letters...")
+                csw_to_inject = "CWTCH" if min_word_length <= 5 else "CRWTHS"
+                for idx_c, ch in enumerate(csw_to_inject):
+                    if is_3d:
+                        if idx_c < len(board[0]) * len(board[0][0]):
+                            board[0][idx_c // len(board[0][0])][idx_c % len(board[0][0])] = ch
+                    else:
+                        if idx_c < len(board) * len(board[0]):
+                            board[idx_c // len(board[0])][idx_c % len(board[0])] = ch
+                emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
+                words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
+                paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
+
+        if is_aw:
+            aw_cnt = sum(1 for w in words_filtered if word_validator.word_validator.is_added_word(w))
+            if aw_cnt == 0:
+                print(f"[get_emergency_fallback_board] Emergency board has 0 Added Words. Injecting AW letters...")
+                aw_to_inject = "AALII" if min_word_length <= 5 else "AALIIS"
+                for idx_c, ch in enumerate(aw_to_inject):
+                    if is_3d:
+                        if idx_c < len(board[0]) * len(board[0][0]):
+                            board[0][idx_c // len(board[0][0])][idx_c % len(board[0][0])] = ch
+                    else:
+                        if idx_c < len(board) * len(board[0]):
+                            board[idx_c // len(board[0])][idx_c % len(board[0])] = ch
+                emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
+                words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
+                paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
 
     # MANDATE: Bonus Word MUST match declared bonus_word_length if specified, or in [6..10], and never end in ING/INGS
     target_bw_len = sequence_length if sequence_length else None
@@ -4217,8 +4304,6 @@ class RoomManager:
                                         pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format=f_fmt, dictionary=f_dict, use_added_words=f_aw, word_count_range=f_wc)
                                     if not pre_pop:
                                         pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format=f_fmt, dictionary=f_dict, use_added_words=f_aw)
-                                    if not pre_pop and existing_room.time_limit < 7200:
-                                        pre_pop = pop_any_cached_board(existing_room.board_dimensions)
                                     if not pre_pop:
                                         pre_pop = get_emergency_fallback_board(existing_room.board_dimensions, f_fmt, existing_room.time_limit, dictionary=f_dict, use_added_words=f_aw, target_range=f_wc, min_word_length=f_min)
                                     if pre_pop:
@@ -4647,8 +4732,6 @@ class RoomManager:
                                 pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=k_min, target_format=k_fmt, dictionary=k_dict, use_added_words=k_aw, word_count_range=k_wc)
                             if not pre_pop:
                                 pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=k_min, target_format=k_fmt, dictionary=k_dict, use_added_words=k_aw)
-                            if not pre_pop and room.time_limit < 7200:
-                                pre_pop = pop_any_cached_board(room.board_dimensions)
                             if not pre_pop:
                                 pre_pop = get_emergency_fallback_board(
                                     room.board_dimensions, k_fmt, room.time_limit,
@@ -8502,6 +8585,7 @@ class RoomManager:
                 if hasattr(word_validator, 'word_validator'):
                     word_validator.word_validator.ensure_csw_loaded()
                     room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                    room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)] if room.use_added_words else []
                 
                 # ACTIVE INTEGRITY SHIELD: Auto-heal if active words ever mismatch active board
                 if getattr(room, 'game_type', None) != 'subanagrams' and room.board and room.all_words and not verify_board_words_consistency(room.board, room.all_words, room.all_words_paths):
@@ -8518,6 +8602,57 @@ class RoomManager:
                     if hasattr(word_validator, 'word_validator'):
                         word_validator.word_validator.ensure_csw_loaded()
                         room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+
+                # ACTIVE VALIDATION SHIELD: Prevent 0 CSW-only or 0 Added Words in CSW/AW rooms
+                if getattr(room, 'game_type', None) != 'subanagrams':
+                    needs_dict_healing = False
+                    if 'CSW' in str(getattr(room, 'current_dictionary', '')).upper() and len(getattr(room, 'csw_only_words', [])) == 0:
+                        needs_dict_healing = True
+                    if getattr(room, 'use_added_words', False) and len(getattr(room, 'added_words', [])) == 0:
+                        needs_dict_healing = True
+                    if needs_dict_healing and room.board:
+                        print(f"[RoomManager] CRITICAL WARNING: Active board for {room_id} has 0 CSW/AW words in {room.current_dictionary}! Re-solving...")
+                        _bg = self.board_generator
+                        _is_heal_aw = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                        _heal_dict = 'CSW' if 'CSW' in str(room.current_dictionary).upper() else 'NWL'
+                        solved_dict = _bg._solve_board(room.board, dictionary=_heal_dict, min_word_length=display_min, use_added_words=_is_heal_aw)
+                        if solved_dict:
+                            room.all_words_paths = {w: p for w, p in solved_dict.items() if len(w) >= display_min}
+                            room.all_words = set(room.all_words_paths.keys())
+                            room.total_words_count = len(room.all_words)
+                            room.initial_total_words = room.total_words_count
+                            if hasattr(word_validator, 'word_validator'):
+                                word_validator.word_validator.ensure_csw_loaded()
+                                room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                                room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+
+                # ACTIVE WORD COUNT SHIELD: Guarantee board word count strictly satisfies announced Spinner range
+                if getattr(room, 'game_type', None) != 'subanagrams' and (getattr(room, 'was_revealed_this_intermission', False) or getattr(room, 'spinner_params_revealed', False)):
+                    target_announced_wc = (getattr(room, 'frozen_revealed_params', {}) or {}).get('word_count_range') or (room.spinner_params or {}).get('word_count_range')
+                    if target_announced_wc and not is_board_count_valid(len(room.all_words), target_announced_wc):
+                        print(f"[RoomManager] CRITICAL WARNING: Active board word count {len(room.all_words)} violates announced range {target_announced_wc} for {room_id}! Healing...")
+                        h_fallback = get_emergency_fallback_board(
+                            room.board_dimensions, room.current_board_format, room.time_limit,
+                            dictionary=room.current_dictionary,
+                            use_added_words=getattr(room, 'use_added_words', False),
+                            target_range=target_announced_wc,
+                            min_word_length=display_min
+                        )
+                        if h_fallback and len(h_fallback) >= 8:
+                            h_b, h_w, h_c, h_f, h_p, h_r, h_bw = h_fallback[:7]
+                            h_words_filt = [w for w in h_w if len(w) >= display_min]
+                            if is_board_count_valid(len(h_words_filt), target_announced_wc):
+                                room.board = h_b
+                                room.all_words = set(h_words_filt)
+                                room.all_words_paths = {w: p for w, p in h_p.items() if w in room.all_words}
+                                room.total_words_count = len(room.all_words)
+                                room.initial_total_words = room.total_words_count
+                                room.bonus_cell = h_c
+                                if hasattr(word_validator, 'word_validator'):
+                                    word_validator.word_validator.ensure_csw_loaded()
+                                    room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                                    room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
+                                print(f"[RoomManager] Word count successfully healed to {len(room.all_words)} words matching {target_announced_wc}.")
 
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
                 if getattr(room, 'game_type', None) == 'subanagrams' and (not room.solved_words_with_scores or len(room.solved_words_with_scores) == 0):
@@ -9001,10 +9136,10 @@ class RoomManager:
             diff_target = sp_target.get('difficulty', 'Medium')
 
             pre = pop_compatible_cached_board(
-                room.board_dimensions, d_target, fmt_target, m_len_target, use_aw_target
+                room.board_dimensions, d_target, fmt_target, m_len_target, use_aw_target, word_count_range=wc_target
             )
             if not pre:
-                pre = pop_any_cached_board(room.board_dimensions, min_word_length=m_len_target, target_format=fmt_target, dictionary=d_target, use_added_words=use_aw_target)
+                pre = pop_any_cached_board(room.board_dimensions, min_word_length=m_len_target, target_format=fmt_target, dictionary=d_target, use_added_words=use_aw_target, word_count_range=wc_target)
             if not pre:
                 pre = get_emergency_fallback_board(
                     room.board_dimensions, fmt_target, room.time_limit,
@@ -9024,12 +9159,24 @@ class RoomManager:
                 elif '6x8' in str(room.board_dimensions) or '3x3x3' in str(room.board_dimensions): grid_floor = 6
                 board_min_l = max(grid_floor, int(board_min_l) if board_min_l is not None else grid_floor)
 
-                raw_dict = r_params.get('dictionary', 'NWL')
-                raw_aw = r_params.get('use_added_words', False)
+                raw_dict = d_target or r_params.get('dictionary', 'NWL')
+                raw_aw = use_aw_target if use_aw_target is not None else r_params.get('use_added_words', False)
                 _val = getattr(word_validator, 'word_validator', word_validator)
-                room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and _val.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+                if 'CSW' in str(d_target).upper() or use_aw_target:
+                    _bg = getattr(self, 'board_generator', None) or BoardGenerator()
+                    _solved = _bg._solve_board(r_board, dictionary=raw_dict, word_count_range=(0, 99999), min_word_length=board_min_l, store_paths=True, timeout=5.0, bonus_cell=r_bonus_c, use_added_words=raw_aw)
+                    if _solved:
+                        room.all_words_paths = {w: p for w, p in _solved.items() if len(w) >= board_min_l}
+                    else:
+                        room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and _val.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
+                else:
+                    room.all_words_paths = {w: p for w, p in (r_dict or {}).items() if len(w) >= board_min_l and _val.is_valid_word(w, raw_dict, use_added_words=raw_aw)}
                 room.all_words = set(room.all_words_paths.keys())
                 room.complete_words = list(room.all_words)
+                if hasattr(word_validator, 'word_validator'):
+                    word_validator.word_validator.ensure_csw_loaded()
+                    room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                    room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
                 if room.all_words:
                     actual_shortest = min(len(w) for w in room.all_words)
                     if actual_shortest > board_min_l:
