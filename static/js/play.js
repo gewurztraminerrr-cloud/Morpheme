@@ -12780,8 +12780,9 @@ async function fetchDefinition(word) {
 
     // 2. FC Button: Count finders from this round and total find count including this round
     if (fcBtn) {
+        fcBtn.dataset.word = cleanWord;
         if (is24H) {
-            fcBtn.textContent = 'FC';
+            fcBtn.innerHTML = 'FC';
             fcBtn.title = 'Search word in Find Count (Tools)';
             fcBtn.onclick = (e) => {
                 if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
@@ -12789,6 +12790,26 @@ async function fetchDefinition(word) {
                     window.navigateToFindCount(cleanWord, 'page-play');
                 }
             };
+            if (!window._wordTallyCache) window._wordTallyCache = {};
+            const updateFc24h = (cnt) => {
+                fcBtn.innerHTML = `FC <span class="fc-btn-count" style="font-size: 0.82em; font-weight: 600; margin-left: 2px;">(${cnt})</span>`;
+            };
+            if (window._wordTallyCache[cleanWord] !== undefined) {
+                const cnt = (window._wordTallyCache[cleanWord] && typeof window._wordTallyCache[cleanWord].count === 'number') ? window._wordTallyCache[cleanWord].count : 0;
+                updateFc24h(cnt);
+            } else {
+                fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        window._wordTallyCache[cleanWord] = data;
+                        if (window._currentDefWord === cleanWord && fcBtn.dataset.word === cleanWord) {
+                            updateFc24h(data && typeof data.count === 'number' ? data.count : 0);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('[fetchDefinition] Error fetching 24h word tally for FC:', err);
+                    });
+            }
         } else {
             let roundFinders = [];
             if (s && s.players) {
@@ -12807,7 +12828,7 @@ async function fetchDefinition(word) {
             );
 
             // Immediate label while tally fetches
-            fcBtn.textContent = `FC [${roundFindersCount}]`;
+            fcBtn.innerHTML = `FC <span class="fc-btn-count" style="font-size: 0.82em; font-weight: 600; margin-left: 2px;">[${roundFindersCount}]</span>`;
             fcBtn.title = isSub ? 'Find Count (FC: Room / Outside)' : 'Find Count (FC)';
 
             if (!window._wordTallyCache) window._wordTallyCache = {};
@@ -12815,16 +12836,16 @@ async function fetchDefinition(word) {
                 const tallyData = window._wordTallyCache[cleanWord];
                 const outsideCount = (tallyData && typeof tallyData.count === 'number') ? tallyData.count : 0;
                 const totalCombined = isSub ? outsideCount : calculateCombinedFindCount(tallyData, roundFinders);
-                fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
+                fcBtn.innerHTML = `FC <span class="fc-btn-count" style="font-size: 0.82em; font-weight: 600; margin-left: 2px;">[${roundFindersCount} / ${totalCombined}]</span>`;
             } else {
                 fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
                     .then(res => res.json())
                     .then(data => {
                         window._wordTallyCache[cleanWord] = data;
-                        if (window._currentDefWord === cleanWord) {
+                        if (window._currentDefWord === cleanWord && fcBtn.dataset.word === cleanWord) {
                             const outsideCount = (data && typeof data.count === 'number') ? data.count : 0;
                             const totalCombined = isSub ? outsideCount : calculateCombinedFindCount(data, roundFinders);
-                            fcBtn.textContent = `FC [${roundFindersCount} / ${totalCombined}]`;
+                            fcBtn.innerHTML = `FC <span class="fc-btn-count" style="font-size: 0.82em; font-weight: 600; margin-left: 2px;">[${roundFindersCount} / ${totalCombined}]</span>`;
                         }
                     })
                     .catch(err => {

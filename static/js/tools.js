@@ -8382,12 +8382,40 @@ window.setupWordDefActionButtons = function (prefix, word, dictionary = null) {
     }
 
     if (fcBtn) {
+        fcBtn.dataset.word = cleanWord;
+        fcBtn.innerHTML = 'FC';
+        fcBtn.title = 'Search word in Find Count (Tools)';
         fcBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
             if (typeof window.navigateToFindCount === 'function') {
                 window.navigateToFindCount(cleanWord, 'page-tools');
             }
         };
+
+        if (!window._wordTallyCache) window._wordTallyCache = {};
+        const updateFcBtn = (cnt) => {
+            fcBtn.innerHTML = `FC <span class="fc-btn-count" style="font-size: 0.82em; font-weight: 600; margin-left: 2px;">(${cnt})</span>`;
+            fcBtn.title = `Find Count (FC): found by ${cnt} player${cnt === 1 ? '' : 's'}`;
+        };
+
+        if (window._wordTallyCache[cleanWord] !== undefined) {
+            const tallyData = window._wordTallyCache[cleanWord];
+            const cnt = (tallyData && typeof tallyData.count === 'number') ? tallyData.count : 0;
+            updateFcBtn(cnt);
+        } else {
+            fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
+                .then(res => res.json())
+                .then(data => {
+                    window._wordTallyCache[cleanWord] = data;
+                    const cnt = (data && typeof data.count === 'number') ? data.count : 0;
+                    if (fcBtn.dataset.word === cleanWord) {
+                        updateFcBtn(cnt);
+                    }
+                })
+                .catch(err => {
+                    console.error('[setupWordDefActionButtons] Error fetching word tally for FC:', err);
+                });
+        }
     }
 
     const currentList = (typeof getWordsToWorkOn === 'function') ? getWordsToWorkOn() : [];
@@ -11764,10 +11792,38 @@ window.showWordDefinitionPopup = async function (word, event) {
 
     // FC (Find Count) Click Handler
     if (fcBtn) {
+        fcBtn.dataset.word = cleanWord;
+        fcBtn.innerHTML = 'FC';
+        fcBtn.title = 'Search word in Find Count (Tools)';
         fcBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
             window.navigateToFindCount(cleanWord);
         };
+
+        if (!window._wordTallyCache) window._wordTallyCache = {};
+        const updateFcPopover = (cnt) => {
+            fcBtn.innerHTML = `FC <span class="fc-btn-count" style="font-size: 0.82em; font-weight: 600; margin-left: 2px;">(${cnt})</span>`;
+            fcBtn.title = `Find Count (FC): found by ${cnt} player${cnt === 1 ? '' : 's'}`;
+        };
+
+        if (window._wordTallyCache[cleanWord] !== undefined) {
+            const tallyData = window._wordTallyCache[cleanWord];
+            const cnt = (tallyData && typeof tallyData.count === 'number') ? tallyData.count : 0;
+            updateFcPopover(cnt);
+        } else {
+            fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
+                .then(res => res.json())
+                .then(data => {
+                    window._wordTallyCache[cleanWord] = data;
+                    const cnt = (data && typeof data.count === 'number') ? data.count : 0;
+                    if (fcBtn.dataset.word === cleanWord) {
+                        updateFcPopover(cnt);
+                    }
+                })
+                .catch(err => {
+                    console.error('[showWordDefinitionPopup] Error fetching word tally for FC:', err);
+                });
+        }
     }
 
     // ADD / ADDED Click Handler & State Check

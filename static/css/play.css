@@ -18258,6 +18258,7 @@ body.is-mobile .loading-container {
     width: 100%;
     box-sizing: border-box;
     font-size: 0.75rem;
+    white-space: nowrap;
     font-weight: 700;
     color: #a78bfa;
     text-decoration: none;
