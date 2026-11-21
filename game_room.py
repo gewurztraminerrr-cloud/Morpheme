@@ -3880,7 +3880,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             m_cnt = sum(1 for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])) if board[f][r][c] == m_l)
         else:
             m_cnt = sum(1 for r in range(rows) for c in range(cols) if board[r][c] == m_l)
-        UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+        UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K'}
         target_ratio_m = 0.20 if m_l in UNCOMMON_MANIA_LETTERS else 0.33
         target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
         if m_cnt < target_m_cnt:
@@ -3913,7 +3913,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             m_cnt = sum(1 for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])) if board[f][r][c] == m_l)
         else:
             m_cnt = sum(1 for r in range(rows) for c in range(cols) if board[r][c] == m_l)
-        UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+        UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K'}
         target_ratio_m = 0.20 if m_l in UNCOMMON_MANIA_LETTERS else 0.33
         target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
         if m_cnt < target_m_cnt:
@@ -8770,7 +8770,7 @@ class RoomManager:
                                 _m_cnt = sum(1 for r in range(len(room.board)) for c in range(len(room.board[r])) if room.board[r][c] == _m_letter)
                                 _tot_cells = len(room.board) * len(room.board[0])
                             
-                            _UNCOMMON_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+                            _UNCOMMON_LETTERS = {'Q', 'Z', 'J', 'X', 'K'}
                             _target_ratio = 0.20 if _m_letter in _UNCOMMON_LETTERS else 0.33
                             _target_m_cnt = max(2, round(_tot_cells * _target_ratio))
                             
@@ -9809,7 +9809,7 @@ class RoomManager:
 
             # If Mania format, enforce exact required abundance (20% uncommon, 33% common)
             if is_mania and mania_letter:
-                UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+                UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K'}
                 target_ratio = 0.20 if mania_letter in UNCOMMON_MANIA_LETTERS else 0.33
                 target_m_cnt = max(2, round(total_cells * target_ratio))
                 actual_m_cnt = letter_counts.get(mania_letter, 0)

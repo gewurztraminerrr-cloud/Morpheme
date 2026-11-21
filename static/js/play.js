@@ -15200,7 +15200,7 @@ function generateProbeBoard(params) {
          const parts = format.trim().toUpperCase().split(/\s+/);
          if (parts.length >= 2 && parts[0].length === 1 && /[A-Z]/.test(parts[0])) {
              const maniaLetter = parts[0];
-             const uncommonLetters = new Set(['Q', 'Z', 'J', 'X', 'K', 'V']);
+             const uncommonLetters = new Set(['Q', 'Z', 'J', 'X', 'K']);
              const targetRatio = uncommonLetters.has(maniaLetter) ? 0.20 : 0.33;
              const targetCount = Math.max(2, Math.round(rows * cols * targetRatio));
 

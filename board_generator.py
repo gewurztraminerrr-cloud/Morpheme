@@ -2322,7 +2322,7 @@ class BoardGenerator:
                 else:
                     m_cnt = sum(1 for r in range(len(board)) for c in range(len(board[r])) if board[r][c] == m_letter)
                 total_cells_m = (len(board)*len(board[0])*len(board[0][0])) if is_3d_m else (len(board)*len(board[0]))
-                UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+                UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K'}
                 target_ratio_m = 0.20 if m_letter in UNCOMMON_MANIA_LETTERS else 0.33
                 target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
                 if m_cnt < target_m_cnt:
@@ -2429,7 +2429,7 @@ class BoardGenerator:
                         m_cnt = sum(1 for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])) if board[f][r][c] == m_letter)
                     else:
                         m_cnt = sum(1 for r in range(len(board)) for c in range(len(board[r])) if board[r][c] == m_letter)
-                    UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+                    UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K'}
                     target_ratio_m = 0.20 if m_letter in UNCOMMON_MANIA_LETTERS else 0.33
                     target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
                     if m_cnt < target_m_cnt:
@@ -5541,7 +5541,7 @@ class BoardGenerator:
         # User Mandate:
         # Uncommon letters: 20% of all letters on all uncommon-letter-manias should be on the board
         # Common letters: 33%
-        UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+        UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K'}
         if mania_letter.upper() in UNCOMMON_MANIA_LETTERS:
             target_ratio = 0.20
         else:
