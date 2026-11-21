@@ -10568,7 +10568,15 @@ WIKI_COMMON_NOUN_OVERRIDES = {
     'BENEDICT': ('Eggs Benedict', 'https://en.wikipedia.org/wiki/Eggs_Benedict'),
     'CAESAR': ('Caesar salad', 'https://en.wikipedia.org/wiki/Caesar_salad'),
     'ALEXANDER': ('Alexander (cocktail)', 'https://en.wikipedia.org/wiki/Alexander_(cocktail)'),
+    'ACER': ('Acer (plant)', 'https://en.wikipedia.org/wiki/Acer_(plant)'),
+    'ACERS': ('Acer (plant)', 'https://en.wikipedia.org/wiki/Acer_(plant)'),
+    'AMOLE': ('Chlorogalum', 'https://en.wikipedia.org/wiki/Chlorogalum'),
+    'AMOLES': ('Chlorogalum', 'https://en.wikipedia.org/wiki/Chlorogalum'),
+    'CAINITO': ('Chrysophyllum cainito', 'https://en.wikipedia.org/wiki/Chrysophyllum_cainito'),
+    'CAINITOS': ('Chrysophyllum cainito', 'https://en.wikipedia.org/wiki/Chrysophyllum_cainito'),
     # Words with NO common noun Wikipedia article (proper nouns only):
+    'SAMMO': (None, None),
+    'SAMMOS': (None, None),
     'VINELAND': (None, None),
     'BETHESDA': (None, None),
 }
@@ -10578,6 +10586,10 @@ _PROPER_NOUN_INDICATORS = [
     'song by', 'band', 'rock band', 'musical group', 'singer', 'musician',
     'actor', 'actress', 'politician', 'chemist and physicist', 'physicist',
     'english chemist', 'born ', 'died ', 'american writer', 'author',
+    'martial artist', 'choreographer', 'filmmaker', 'film director', 'film producer',
+    'screenwriter', 'stuntman', 'stunt performer', 'athlete', 'footballer',
+    'baseball player', 'basketball player', 'wrestler', 'professional wrestler',
+    'cricketer', 'tennis player', 'golfer',
     'city in', 'town in', 'village in', 'municipality in', 'county in',
     'capital of', 'country in', 'island in', 'river in', 'mountain in',
     'unincorporated community', 'census-designated place', 'commune in',
@@ -10687,13 +10699,15 @@ _NOUN_DEF_REGEX = re.compile(
     r'(?:'
     r'\[(?:[a-z\s,/]*\b)?n(?:oun)?\b|'
     r'^\s*\((?:noun|proper\s+noun|n\.)\)|'
+    r'\[inflections:\s+[a-z\-]+s\b|'
     r'\b(?:plural|agent noun|diminutive)\s+(?:of|for)\b|'
     r'\b(?:plural\s+form|noun)\b|'
     r'\b(?:someone|anyone|a\s+person|one|those|people)\s+who\b|'
     r'\b(?:citizen|inhabitant|native|member|resident|ruler|leader|official|follower|supporter|advocate|practitioner)\s+of\b|'
     r'\b(?:(?:an?|any|each|every|one|all|(?:any|one|each)\s+of\s+(?:several|five|four|three|two|[0-9]+)?)\s+(?:[a-z\-]+\s+)*(?:type|kind|species|genus|family|order|breed|variety|group|member|class)\s+of)\b|'
-    r'\b(?:(?:an?|any|each|one)\s+(?:[a-z\-]+\s+)*(?:enzyme|protein|hormone|chemical|substance|compound|mineral|metal|alloy|element|acid|alkaloid|polymer|lipid|sugar|vitamin|organism|plant|animal|tree|shrub|flower|bird|waterbird|seabird|songbird|fish|insect|beetle|reptile|mammal|crustacean|mollusk|device|instrument|tool|apparatus|machine|vessel|vehicle|garment|clothing|fabric|structure|building|settlement|town|city|region|shield|armor|armour|weapon|sword|blade|dagger|helm|helmet|buckler|breastplate|rock|stone|gem|gemstone))\b|'
+    r'\b(?:(?:an?|any|each|one)\s+(?:[a-z\-]+\s+)*(?:enzyme|protein|hormone|chemical|substance|compound|mineral|metal|alloy|element|acid|alkaloid|polymer|lipid|sugar|vitamin|organism|plant|animal|tree|shrub|flower|bird|waterbird|seabird|songbird|fish|insect|beetle|reptile|mammal|crustacean|mollusk|device|instrument|tool|apparatus|machine|vessel|vehicle|garment|clothing|fabric|structure|building|settlement|town|city|region|shield|armor|armour|weapon|sword|blade|dagger|helm|helmet|buckler|breastplate|rock|stone|gem|gemstone|fruit|berry|nut|vegetable|produce|seed|fungus|mushroom|herb|vine|crop|root))\b|'
     r'\b(?:in\s+the\s+(?:genus|family|order|class)\s+[A-Z][a-z]+)\b|'
+    r'\b(?:synonym|another name|alternative name)\s+of\b|'
     r'\b(?:the\s+)?(?:act|action|process|practice|state|condition|quality|property|study|science|art|doctrine|theory|belief|system)\s+of\b'
     r')',
     re.IGNORECASE
@@ -10736,7 +10750,7 @@ _CROSS_REF_POINTER_REGEX = re.compile(
     r'aka\b|a\.k\.a\.\b|'
     r'also|'
     r'see\s+(?:also\s+)?'
-    r')\s+(?:the\s+|a\s+|an\s+)?([A-Za-z\-]+)',
+    r')\s+(?:the\s+|a\s+|an\s+)?([A-Za-z\-]+(?:\s+[A-Za-z\-]+)?)',
     re.IGNORECASE
 )
 
@@ -11163,17 +11177,18 @@ def get_wikipedia_summary():
                 html = p_data.get('parse', {}).get('text', {}).get('*', '')
                 if html:
                     items = re.findall(r'<li>(.*?)</li>', html, re.DOTALL)
-                    words_in_def = set(re.findall(r'[a-zA-Z]{3,}', def_lower))
+                    raw_words = re.findall(r'[a-zA-Z]{3,}', def_lower)
+                    stemmed_def = {w.rstrip('s') for w in raw_words}
                     best_cand_title = None
                     for item in items:
-                        m_link = re.search(r'<a\s+href="/wiki/([^"#:]+)"[^>]*>([^<]+)</a>', item)
+                        m_link = re.search(r'<a\s+href="/wiki/([^"#:]+)"', item)
                         if m_link:
                             cand_page = urllib.parse.unquote(m_link.group(1)).replace('_', ' ')
                             cand_text = re.sub(r'<[^>]+>', '', item).lower()
-                            bullet_words = set(re.findall(r'[a-zA-Z]{3,}', cand_text))
-                            matching_kws = words_in_def & bullet_words
-                            meaningful_matches = {w for w in matching_kws if w not in ('the', 'and', 'for', 'with', 'that', 'this', 'from', 'also', 'may', 'refer', 'term')}
-                            if meaningful_matches:
+                            bullet_raw = re.findall(r'[a-zA-Z]{3,}', cand_text)
+                            bullet_stemmed = {w.rstrip('s') for w in bullet_raw}
+                            matching_kws = (stemmed_def & bullet_stemmed) - {'the', 'and', 'for', 'with', 'that', 'this', 'from', 'also', 'may', 'refer', 'term'}
+                            if matching_kws:
                                 best_cand_title = cand_page
                                 break
                     if best_cand_title:
@@ -11183,7 +11198,10 @@ def get_wikipedia_summary():
                         with urllib.request.urlopen(b_req, timeout=3.5) as b_resp:
                             b_data = json.loads(b_resp.read().decode('utf-8'))
                             if b_data.get('type') != 'disambiguation' and not is_proper_noun(b_data.get('description'), b_data.get('extract')):
-                                result['title'] = b_data.get('title') or best_cand_title
+                                if lookup_title.lower() != b_data.get('title', '').lower():
+                                    result['title'] = f"{lookup_title} ({b_data.get('title')})"
+                                else:
+                                    result['title'] = b_data.get('title') or best_cand_title
                                 result['description'] = b_data.get('description') or ''
                                 result['extract'] = b_data.get('extract') or ''
                                 result['url'] = b_data.get('content_urls', {}).get('desktop', {}).get('page') or f"https://en.wikipedia.org/wiki/{best_safe}"
@@ -11195,8 +11213,9 @@ def get_wikipedia_summary():
 
     # 4. If the article is still a disambiguation page or a proper noun, attempt resolution to common noun
     is_prop = is_proper_noun(result.get('description'), result.get('extract'))
-    if result.get('is_disambiguation') or is_prop:
+    if (result.get('is_disambiguation') or is_prop) and not result.get('is_proper_only'):
         is_cn, cn_url, cn_title = resolve_wiki_common_noun(target_word, def_text or '', lookup_title.lower())
+        resolved_common_noun = False
         if is_cn and cn_title and cn_title.lower() != lookup_title.lower():
             try:
                 cn_safe = urllib.parse.quote(cn_title.replace(' ', '_'), safe='')
@@ -11204,17 +11223,20 @@ def get_wikipedia_summary():
                 req = urllib.request.Request(cn_url_fetch, headers=headers)
                 with urllib.request.urlopen(req, timeout=3.5) as cn_resp:
                     cn_data = json.loads(cn_resp.read().decode('utf-8'))
-                    result['title'] = cn_data.get('title') or cn_title
-                    result['description'] = cn_data.get('description') or ''
-                    result['extract'] = cn_data.get('extract') or ''
-                    result['url'] = cn_data.get('content_urls', {}).get('desktop', {}).get('page') or cn_url
-                    result['thumbnail'] = cn_data.get('thumbnail', {}).get('source') if cn_data.get('thumbnail') else None
-                    result['is_disambiguation'] = False
-                    result['is_proper_only'] = False
+                    if not is_proper_noun(cn_data.get('description'), cn_data.get('extract')):
+                        result['title'] = cn_data.get('title') or cn_title
+                        result['description'] = cn_data.get('description') or ''
+                        result['extract'] = cn_data.get('extract') or ''
+                        result['url'] = cn_data.get('content_urls', {}).get('desktop', {}).get('page') or cn_url
+                        result['thumbnail'] = cn_data.get('thumbnail', {}).get('source') if cn_data.get('thumbnail') else None
+                        result['is_disambiguation'] = False
+                        result['is_proper_only'] = False
+                        resolved_common_noun = True
             except Exception:
                 pass
-        elif not is_cn and is_prop:
-            # Entirely proper noun with no common noun article on Wikipedia
+        
+        # If it was a proper noun and was not replaced by a confirmed common noun article:
+        if is_prop and not resolved_common_noun:
             result['is_proper_only'] = True
             result['description'] = 'Proper Noun Filter'
             result['extract'] = f'Wikipedia does not currently have an article explaining the noun meaning of this word. Available articles for "{lookup_title}" refer exclusively to proper nouns (such as works of fiction, geographic locations, or proper names).'
