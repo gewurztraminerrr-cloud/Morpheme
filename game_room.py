@@ -3841,6 +3841,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=1 if not is_3d else 6,
                 difficulty='Easy', dictionary=dictionary, word_count_range=target_range_resolved, use_added_words=use_added_words
             )
+            if is_mania_fmt:
+                bg._apply_mania_to_board(dense_b, m_l, set(), is_checkerboard=False)
             dense_s = bg._solve_board(dense_b, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
             dense_w = [w for w in dense_s if len(w) >= min_word_length]
             if len(dense_w) >= min_accept:
@@ -3871,6 +3873,23 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
                 paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
 
+    # FINAL MANIA GUARD FOR EMERGENCY BOARDS
+    if is_mania_fmt:
+        total_cells_m = (rows * cols * 6) if is_3d else (rows * cols)
+        if is_3d:
+            m_cnt = sum(1 for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])) if board[f][r][c] == m_l)
+        else:
+            m_cnt = sum(1 for r in range(rows) for c in range(cols) if board[r][c] == m_l)
+        UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+        target_ratio_m = 0.20 if m_l in UNCOMMON_MANIA_LETTERS else 0.33
+        target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
+        if m_cnt < target_m_cnt:
+            print(f"[get_emergency_fallback_board] Final Mania audit: board had only {m_cnt} '{m_l}' (needed {target_m_cnt}). Applying abundance...")
+            bg._apply_mania_to_board(board, m_l, set(), is_checkerboard=False)
+            emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
+            words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
+            paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
+
         if is_aw:
             aw_cnt = sum(1 for w in words_filtered if word_validator.word_validator.is_added_word(w))
             if aw_cnt == 0:
@@ -3886,6 +3905,23 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                 emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
                 words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
                 paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
+
+    # FINAL MANIA GUARD FOR EMERGENCY BOARDS
+    if is_mania_fmt:
+        total_cells_m = (rows * cols * 6) if is_3d else (rows * cols)
+        if is_3d:
+            m_cnt = sum(1 for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])) if board[f][r][c] == m_l)
+        else:
+            m_cnt = sum(1 for r in range(rows) for c in range(cols) if board[r][c] == m_l)
+        UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+        target_ratio_m = 0.20 if m_l in UNCOMMON_MANIA_LETTERS else 0.33
+        target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
+        if m_cnt < target_m_cnt:
+            print(f"[get_emergency_fallback_board] Final Mania audit: board had only {m_cnt} '{m_l}' (needed {target_m_cnt}). Applying abundance...")
+            bg._apply_mania_to_board(board, m_l, set(), is_checkerboard=False)
+            emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
+            words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
+            paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
 
     # MANDATE: Bonus Word MUST match declared bonus_word_length if specified, or in [6..10], and never end in ING/INGS
     target_bw_len = sequence_length if sequence_length else None
@@ -8719,6 +8755,38 @@ class RoomManager:
                 except Exception as _bg_err:
                     print(f"[RoomManager] Bonus cell guard error: {_bg_err}")
 
+                # MANIA GUARD: Ensure promoted board strictly contains the required number of Mania letters
+                try:
+                    _fmt_cur = str(room.current_board_format or '').strip().upper()
+                    if "MANIA" in _fmt_cur and room.board:
+                        _parts_m = _fmt_cur.split()
+                        if len(_parts_m) >= 2 and len(_parts_m[0]) == 1 and _parts_m[0].isalpha():
+                            _m_letter = _parts_m[0]
+                            _is_3d_m = isinstance(room.board, list) and len(room.board) > 0 and isinstance(room.board[0], list) and isinstance(room.board[0][0], list)
+                            if _is_3d_m:
+                                _m_cnt = sum(1 for f in range(len(room.board)) for r in range(len(room.board[f])) for c in range(len(room.board[f][r])) if room.board[f][r][c] == _m_letter)
+                                _tot_cells = len(room.board) * len(room.board[0]) * len(room.board[0][0])
+                            else:
+                                _m_cnt = sum(1 for r in range(len(room.board)) for c in range(len(room.board[r])) if room.board[r][c] == _m_letter)
+                                _tot_cells = len(room.board) * len(room.board[0])
+                            
+                            _UNCOMMON_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+                            _target_ratio = 0.20 if _m_letter in _UNCOMMON_LETTERS else 0.33
+                            _target_m_cnt = max(2, round(_tot_cells * _target_ratio))
+                            
+                            if _m_cnt < _target_m_cnt:
+                                print(f"[RoomManager] Mania Guard: Room {room_id} has format {_fmt_cur} but board only has {_m_cnt} '{_m_letter}' (needed {_target_m_cnt}). Applying mania letters...")
+                                self.board_generator._apply_mania_to_board(room.board, _m_letter, set(), is_checkerboard=False)
+                                _is_m_aw = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper()) or ('+AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                                _re_solved = self.board_generator._solve_board(room.board, getattr(room, 'current_dictionary', 'NWL'), (0, 99999), display_min, max_depth=25, store_paths=True, timeout=5.0, bonus_cell=room.bonus_cell, use_added_words=_is_m_aw)
+                                if _re_solved:
+                                    room.all_words = set(_re_solved.keys())
+                                    room.all_words_paths = _re_solved
+                                    room.total_words_count = len(room.all_words)
+                                    room.initial_total_words = room.total_words_count
+                except Exception as _mania_guard_err:
+                    print(f"[RoomManager] Mania guard error: {_mania_guard_err}")
+
                 # --- 4. ACCURACY ENFORCEMENT (inside lock — all_words must be consistent before state='active') ---
                 # These loops run over ~100-500 words and take < 5ms — not the bottleneck.
                 _sp     = dict(room.spinner_params) if isinstance(room.spinner_params, dict) else {}
@@ -9702,6 +9770,16 @@ class RoomManager:
                  return {"error": "Dimension mismatch", "success": False}
                  
             # 4. Enforce Ironclad Sanitization and Abundance Rules for Client Proposals
+            board_format = target.get('board_format', 'Normal')
+            safe_format = str(board_format or "Normal").strip().upper()
+            is_mania = "MANIA" in safe_format
+            mania_letter = None
+            if is_mania:
+                parts = safe_format.split()
+                if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
+                    mania_letter = parts[0]
+
+            total_cells = r_num * c_num
             rare_letters = {"Q", "Z", "J", "X", "K"}
             rare_counts = {rl: 0 for rl in rare_letters}
             total_rares = 0
@@ -9717,26 +9795,28 @@ class RoomManager:
                             letter_counts[part] = letter_counts.get(part, 0) + 1
                             if part in rare_letters:
                                 rare_counts[part] += 1
-                                total_rares += 1
+                                if not (is_mania and part == mania_letter):
+                                    total_rares += 1
                                 
-            # Check rare limits (max 1 of each, max 3 total)
+            # Check rare limits (max 1 of each, max 3 total) - Mania letter is exempt
             for rl, rc in rare_counts.items():
+                if is_mania and rl == mania_letter:
+                    continue
                 if rc > 1:
                     return {"error": f"Too many rare letters: '{rl}' occurs {rc} times (Max 1)", "success": False}
             if total_rares > 3:
                 return {"error": f"Too many total rare letters: {total_rares} (Max 3)", "success": False}
+
+            # If Mania format, enforce exact required abundance (20% uncommon, 33% common)
+            if is_mania and mania_letter:
+                UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+                target_ratio = 0.20 if mania_letter in UNCOMMON_MANIA_LETTERS else 0.33
+                target_m_cnt = max(2, round(total_cells * target_ratio))
+                actual_m_cnt = letter_counts.get(mania_letter, 0)
+                if actual_m_cnt < target_m_cnt:
+                    return {"error": f"Mania letter '{mania_letter}' occurs only {actual_m_cnt} times (needed {target_m_cnt})", "success": False}
                 
-            # Check standard abundance limits on non-Mania formats
-            board_format = target.get('board_format', 'Normal')
-            safe_format = str(board_format or "Normal").strip().upper()
-            is_mania = "MANIA" in safe_format
-            mania_letter = None
-            if is_mania:
-                parts = safe_format.split()
-                if len(parts) >= 2 and len(parts[0]) == 1 and parts[0].isalpha():
-                    mania_letter = parts[0]
-                    
-            total_cells = r_num * c_num
+            # Check standard abundance limits on non-Mania letters
             VOWELS = {"A", "E", "I", "O", "U"}
             COMMON_CONSONANTS = {"S", "T", "R", "N", "L", "D"}
             

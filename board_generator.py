@@ -2321,11 +2321,10 @@ class BoardGenerator:
                     m_cnt = sum(1 for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])) if board[f][r][c] == m_letter)
                 else:
                     m_cnt = sum(1 for r in range(len(board)) for c in range(len(board[r])) if board[r][c] == m_letter)
-                import math
                 total_cells_m = (len(board)*len(board[0])*len(board[0][0])) if is_3d_m else (len(board)*len(board[0]))
-                rare_m = {'Q', 'Z', 'J', 'X', 'K'}
-                target_ratio_m = (1.0 / 5.0) if m_letter in rare_m else (1.0 / 3.0)
-                target_m_cnt = max(3, math.ceil(total_cells_m * target_ratio_m))
+                UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+                target_ratio_m = 0.20 if m_letter in UNCOMMON_MANIA_LETTERS else 0.33
+                target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
                 if m_cnt < target_m_cnt:
                     self._apply_mania_to_board(board, m_letter, set(), is_checkerboard=False)
                     needs_final_resolve = True
@@ -2356,9 +2355,23 @@ class BoardGenerator:
                 print(f"[BoardGen] Post-audit word count dropped to {len(matching_words)} (< {min_w_req}). Triggering rescue fill...")
                 b_rows = len(board[0]) if is_3d else len(board)
                 b_cols = len(board[0][0]) if is_3d else len(board[0])
+                
+                # Protect Mania tiles from being overwritten by rescue fill
+                protected_rescue = set()
+                if "MANIA" in str(board_format).upper():
+                    parts_m = str(board_format).strip().upper().split()
+                    if len(parts_m) >= 2 and len(parts_m[0]) == 1 and parts_m[0].isalpha():
+                        m_char = parts_m[0]
+                        for f_idx in range(depth):
+                            for r_idx in range(b_rows):
+                                for c_idx in range(b_cols):
+                                    c_val = board[f_idx][r_idx][c_idx] if depth > 1 else board[r_idx][c_idx]
+                                    if c_val == m_char:
+                                        protected_rescue.add((f_idx, r_idx, c_idx) if depth > 1 else (r_idx, c_idx))
+
                 board = self._perform_rescue_sweep(
                     board, b_rows, b_cols, depth, dictionary, min_word_length, min_w_req, max_w_req,
-                    set(), difficulty, rescue_depth=25, is_checkerboard=("checkerboard" in str(board_format).lower()),
+                    protected_rescue, difficulty, rescue_depth=25, is_checkerboard=("checkerboard" in str(board_format).lower()),
                     board_format=board_format, use_added_words=val_ctx
                 )
                 all_words_dict = self._solve_board(
@@ -2400,6 +2413,28 @@ class BoardGenerator:
                             else:
                                 if idx_c < len(board) * len(board[0]):
                                     board[idx_c // len(board[0])][idx_c % len(board[0])] = ch
+                        all_words_dict = self._solve_board(
+                            board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+                        )
+                        all_words = sorted(list(all_words_dict.keys()))
+
+            # --- FINAL MANIA GUARANTEE: Never return a Mania board that lost its required tiles ---
+            if "MANIA" in str(board_format).upper():
+                parts_m = str(board_format).strip().upper().split()
+                if len(parts_m) >= 2 and len(parts_m[0]) == 1 and parts_m[0].isalpha():
+                    m_letter = parts_m[0]
+                    is_3d_m = isinstance(board, list) and len(board) > 0 and isinstance(board[0], list) and isinstance(board[0][0], list)
+                    total_cells_m = (len(board)*len(board[0])*len(board[0][0])) if is_3d_m else (len(board)*len(board[0]))
+                    if is_3d_m:
+                        m_cnt = sum(1 for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])) if board[f][r][c] == m_letter)
+                    else:
+                        m_cnt = sum(1 for r in range(len(board)) for c in range(len(board[r])) if board[r][c] == m_letter)
+                    UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+                    target_ratio_m = 0.20 if m_letter in UNCOMMON_MANIA_LETTERS else 0.33
+                    target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
+                    if m_cnt < target_m_cnt:
+                        print(f"[BoardGen] Final Mania audit: board had only {m_cnt} '{m_letter}' (needed {target_m_cnt}). Re-applying abundance...")
+                        self._apply_mania_to_board(board, m_letter, set(), is_checkerboard=False)
                         all_words_dict = self._solve_board(
                             board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
                         )
@@ -2742,10 +2777,11 @@ class BoardGenerator:
 
             # --- SANITIZE RARE LETTERS & ABUNDANCES BEFORE PUSH-PULL ---
             if "equality freq" not in safe_format:
-                self._sanitize_rare_letters(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard, difficulty=difficulty)
-                self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+                combined_protected = set(embedded_path or []) | set(all_excluded or [])
+                self._sanitize_rare_letters(board, depth, protected_positions=combined_protected, is_checkerboard=is_checkerboard, difficulty=difficulty, board_format=board_format, mania_letter=self.active_mania_letter)
+                self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=combined_protected, is_checkerboard=is_checkerboard)
                 if difficulty in ["Medium", "Hard"]:
-                    self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+                    self._sanitize_forbidden_sequences(board, depth, protected_positions=combined_protected, is_checkerboard=is_checkerboard)
 
             # --- SOLVE FOR INITIAL COUNT ---
             # PERFORMANCE: For Large/3D grids in emergency mode, depth 12 is enough to be rapid (Zero Wait)
@@ -2782,10 +2818,11 @@ class BoardGenerator:
 
             # --- FINAL CONFORMANCE DOUBLE-CHECK ---
             if "equality freq" not in safe_format:
-                self._sanitize_rare_letters(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard, difficulty=difficulty)
-                self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+                combined_protected = set(embedded_path or []) | set(all_excluded or [])
+                self._sanitize_rare_letters(board, depth, protected_positions=combined_protected, is_checkerboard=is_checkerboard, difficulty=difficulty, board_format=board_format, mania_letter=self.active_mania_letter)
+                self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=combined_protected, is_checkerboard=is_checkerboard)
                 if difficulty in ["Medium", "Hard"]:
-                    self._sanitize_forbidden_sequences(board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
+                    self._sanitize_forbidden_sequences(board, depth, protected_positions=combined_protected, is_checkerboard=is_checkerboard)
 
             # Final check to ensure the board strictly alternates C/V in checkerboard mode
             if is_checkerboard:
@@ -3479,7 +3516,7 @@ class BoardGenerator:
                 count = len(final_solve)
             
             # --- FINAL SANITIZATION (protecting format tiles) ---
-            self._sanitize_rare_letters(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
+            self._sanitize_rare_letters(board, depth, protected_positions=all_excluded, is_checkerboard=is_checkerboard, difficulty=difficulty, board_format=board_format, mania_letter=mania_letter)
             self._sanitize_letter_abundances(board, depth, board_format=board_format, protected_positions=all_excluded, is_checkerboard=is_checkerboard)
             
             # Solve to get intermediate ratio for sanitization decision
@@ -3884,7 +3921,7 @@ class BoardGenerator:
             
             # D. Sanitize rare letters and forbidden sequences
             if "equality freq" not in str(board_format).lower():
-                self._sanitize_rare_letters(final_board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard, difficulty=difficulty)
+                self._sanitize_rare_letters(final_board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard, difficulty=difficulty, board_format=board_format)
                 self._sanitize_letter_abundances(final_board, depth, board_format=board_format, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
                 if difficulty in ["Medium", "Hard"]:
                     self._sanitize_forbidden_sequences(final_board, depth, protected_positions=embedded_path, is_checkerboard=is_checkerboard)
@@ -5500,15 +5537,17 @@ class BoardGenerator:
         # Determine mania type
         is_mania_vowel = self._is_vowel(mania_letter)
 
-        # Determine target ratio based on letter rarity
-        rare_letters = {'Q', 'Z', 'J', 'X', 'K'}
-        import math
-        if mania_letter.upper() in rare_letters:
-            target_ratio = 1.0 / 5.0
+        # Determine target ratio based on letter rarity (Common vs Uncommon)
+        # User Mandate:
+        # Uncommon letters: 20% of all letters on all uncommon-letter-manias should be on the board
+        # Common letters: 33%
+        UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K', 'V'}
+        if mania_letter.upper() in UNCOMMON_MANIA_LETTERS:
+            target_ratio = 0.20
         else:
-            target_ratio = 1.0 / 3.0
+            target_ratio = 0.33
             
-        target_count = max(3, math.ceil(total_cells * target_ratio))
+        target_count = max(2, round(total_cells * target_ratio))
 
         if is_3d:
             current_count = sum(1 for f in range(depth_val) for r in range(rows) for c in range(cols) if board[f][r][c] == mania_letter)
@@ -5545,6 +5584,22 @@ class BoardGenerator:
                         if is_mania_vowel != is_cell_vowel_expected:
                             continue
                     all_positions.append((r, c))
+
+        # If strict exclusions left fewer positions than needed, expand to any non-slash positions
+        if len(all_positions) < needed:
+            if is_3d:
+                for f in range(depth_val):
+                    for r in range(rows):
+                        for c in range(cols):
+                            pos = (f, r, c)
+                            if pos not in all_positions and "/" not in str(board[f][r][c]):
+                                all_positions.append(pos)
+            else:
+                for r in range(rows):
+                    for c in range(cols):
+                        pos = (r, c)
+                        if pos not in all_positions and "/" not in str(board[r][c]):
+                            all_positions.append(pos)
 
         random.shuffle(all_positions)
 

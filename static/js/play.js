@@ -15196,6 +15196,31 @@ function generateProbeBoard(params) {
          }
     }
 
+    if (format && format.toUpperCase().includes('MANIA')) {
+         const parts = format.trim().toUpperCase().split(/\s+/);
+         if (parts.length >= 2 && parts[0].length === 1 && /[A-Z]/.test(parts[0])) {
+             const maniaLetter = parts[0];
+             const uncommonLetters = new Set(['Q', 'Z', 'J', 'X', 'K', 'V']);
+             const targetRatio = uncommonLetters.has(maniaLetter) ? 0.20 : 0.33;
+             const targetCount = Math.max(2, Math.round(rows * cols * targetRatio));
+
+             let availablePositions = [];
+             for (let r = 0; r < rows; r++) {
+                 for (let c = 0; c < cols; c++) {
+                     availablePositions.push([r, c]);
+                 }
+             }
+             for (let i = availablePositions.length - 1; i > 0; i--) {
+                 const j = Math.floor(Math.random() * (i + 1));
+                 [availablePositions[i], availablePositions[j]] = [availablePositions[j], availablePositions[i]];
+             }
+             for (let i = 0; i < Math.min(targetCount, availablePositions.length); i++) {
+                 const [r, c] = availablePositions[i];
+                 board[r][c] = maniaLetter;
+             }
+         }
+    }
+
     if (bonusWord) {
         board = embedBonusWordForProbe(board, bonusWord);
     }
