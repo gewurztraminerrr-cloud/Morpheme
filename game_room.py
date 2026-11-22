@@ -3079,8 +3079,6 @@ class GameRoom:
         """Authoritative refresher for word distribution metadata. 
         Calculates counts by length for all words present on the board."""
         min_l = int(getattr(self, 'current_min_length', 3) or 3)
-        if getattr(self, 'game_type', None) == 'subanagrams':
-            min_l = 3
         valid_words = [w for w in (self.all_words or []) if len(w) >= min_l]
         if len(valid_words) != len(self.all_words or []) and self.all_words:
             self.all_words = set(valid_words)
@@ -6256,7 +6254,7 @@ class RoomManager:
 
         with room._state_lock:
             # 1. Check if already revealed - if so, NOOP
-            if reveal and getattr(room, 'spinner_params_revealed', False):
+            if getattr(room, 'spinner_params_revealed', False) or getattr(room, '_spinner_params_locked', False):
                 return True
                 
             # 2. Check if already generated but not yet revealed
@@ -8648,7 +8646,7 @@ class RoomManager:
                     if is_invalid_sub:
                         print(f"[RoomManager] Promoted Subanagrams board was non-1D or not 6-10 letters ({room.board}). Healing...")
                         from subanagrams_generator import generate_subanagrams_board_and_words
-                        heal_p = dict(room.spinner_params or {})
+                        heal_p = dict(getattr(room, 'frozen_revealed_params', None) or room.spinner_params or {})
                         heal_p['board_dimensions'] = 'subanagrams'
                         heal_p['sequence_length'] = max(6, min(10, int(heal_p.get('sequence_length', 8))))
                         heal_res = generate_subanagrams_board_and_words(heal_p)
@@ -8660,13 +8658,18 @@ class RoomManager:
                             room.all_words_paths = {w: [] for w in hw}
                             room.sequence_length = len(hb[0])
                             room.next_round_bonus = hbw
+                            room.bonus_word = hbw
                             if isinstance(room.spinner_params, dict):
                                 room.spinner_params.update(hp)
+                            if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                                room.frozen_revealed_params.update(hp)
                     else:
                         actual_seq_len = len(room.board[0])
                         room.sequence_length = actual_seq_len
                         if isinstance(room.spinner_params, dict):
                             room.spinner_params['sequence_length'] = actual_seq_len
+                        if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                            room.frozen_revealed_params['sequence_length'] = actual_seq_len
                 room.current_board_format = 'Valued Letters' if room.time_limit >= 7200 else active_params.get('board_format', 'Normal')
                 
                 # USER REQUEST: Absolute consistency. Only include words that meet the round's scorable minimum.
@@ -8766,33 +8769,62 @@ class RoomManager:
                 
                 # Save to DB will occur at the end of promotion after all parameters are finalized
                 
-                current_bw = getattr(room, 'next_round_bonus', '')
-                revealed_bw_l = getattr(room, 'frozen_revealed_params', {}).get('bonus_word_length') if getattr(room, 'frozen_revealed_params', None) else None
-                bw_l = int(revealed_bw_l or room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
-                if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
-                    _solo_bw_l = room.initial_solo_params.get('bonus_word_length', 'random')
-                    if _solo_bw_l and str(_solo_bw_l).lower() not in ['random', '0', 'none', 'null', 'nan']:
-                        try:
-                            bw_l = int(_solo_bw_l)
-                        except Exception:
-                            pass
-                dict_val = room.spinner_params.get('dictionary', 'NWL') if isinstance(room.spinner_params, dict) else 'NWL'
-                target_words = room.next_round_words or room.all_words or []
-                is_chk_start = 'checkerboard' in str(room.current_board_format).lower()
-                room.bonus_word = pick_distinct_bonus_word(
-                    room, current_bw, target_words, bw_l,
-                    dictionary=dict_val, is_checkerboard=is_chk_start,
-                    room_manager=self, extra_exclude=[ghost_bonus, getattr(room, 'previous_bonus_word', None)]
-                )
-                if room.bonus_word:
-                    actual_bw_len = len(room.bonus_word)
+                if getattr(room, 'game_type', None) == 'subanagrams':
+                    # MULTIPLAYER SUBANAGRAMS: Strictly preserve the bonus word generated and declared at 0:45 intermission.
+                    # Never call pick_distinct_bonus_word for Subanagrams: it clamps target_len to [6..10],
+                    # rejects ING/INGS words, and mutates declared bonus_word_length.
+                    declared_bw = getattr(room, 'next_round_bonus', None) or (room.frozen_revealed_params.get('bonus_word') if getattr(room, 'frozen_revealed_params', None) else None)
+                    declared_bw_len = getattr(room, 'frozen_revealed_params', {}).get('bonus_word_length') if getattr(room, 'frozen_revealed_params', None) else None
+                    if not declared_bw_len and isinstance(room.spinner_params, dict):
+                        declared_bw_len = room.spinner_params.get('bonus_word_length')
+
+                    if declared_bw and (not declared_bw_len or len(declared_bw) == int(declared_bw_len)):
+                        room.bonus_word = declared_bw
+                    elif declared_bw_len and room.all_words:
+                        matching = [w for w in room.all_words if len(w) == int(declared_bw_len)]
+                        room.bonus_word = random.choice(matching) if matching else (declared_bw or random.choice(list(room.all_words)))
+                    else:
+                        room.bonus_word = declared_bw or (random.choice(list(room.all_words)) if room.all_words else '')
+
+                    actual_bw_len = len(room.bonus_word) if room.bonus_word else int(declared_bw_len or 8)
                     if isinstance(room.spinner_params, dict):
                         room.spinner_params['bonus_word_length'] = actual_bw_len
+                        room.spinner_params['bonus_word'] = room.bonus_word
                     if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                         room.frozen_revealed_params['bonus_word_length'] = actual_bw_len
+                        room.frozen_revealed_params['bonus_word'] = room.bonus_word
                     if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
                         room.next_spinner_params['bonus_word_length'] = actual_bw_len
-                sync_bonus_word_scores(room)
+                        room.next_spinner_params['bonus_word'] = room.bonus_word
+                    sync_bonus_word_scores(room)
+                else:
+                    current_bw = getattr(room, 'next_round_bonus', '')
+                    revealed_bw_l = getattr(room, 'frozen_revealed_params', {}).get('bonus_word_length') if getattr(room, 'frozen_revealed_params', None) else None
+                    bw_l = int(revealed_bw_l or room.spinner_params.get('bonus_word_length', 8) or 8) if isinstance(room.spinner_params, dict) else 8
+                    if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                        _solo_bw_l = room.initial_solo_params.get('bonus_word_length', 'random')
+                        if _solo_bw_l and str(_solo_bw_l).lower() not in ['random', '0', 'none', 'null', 'nan']:
+                            try:
+                                bw_l = int(_solo_bw_l)
+                            except Exception:
+                                pass
+                    dict_val = room.spinner_params.get('dictionary', 'NWL') if isinstance(room.spinner_params, dict) else 'NWL'
+                    target_words = room.next_round_words or room.all_words or []
+                    is_chk_start = 'checkerboard' in str(room.current_board_format).lower()
+                    room.bonus_word = pick_distinct_bonus_word(
+                        room, current_bw, target_words, bw_l,
+                        dictionary=dict_val, is_checkerboard=is_chk_start,
+                        room_manager=self, extra_exclude=[ghost_bonus, getattr(room, 'previous_bonus_word', None)]
+                    )
+                    if room.bonus_word:
+                        actual_bw_len = len(room.bonus_word)
+                        if isinstance(room.spinner_params, dict):
+                            room.spinner_params['bonus_word_length'] = actual_bw_len
+                        if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                            room.frozen_revealed_params['bonus_word_length'] = actual_bw_len
+                        if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
+                            room.next_spinner_params['bonus_word_length'] = actual_bw_len
+                    sync_bonus_word_scores(room)
                 
                 room.bonus_cell = getattr(room, 'next_round_bonus_cell', None)
 
@@ -8947,12 +8979,12 @@ class RoomManager:
 
                 # SUBANAGRAMS ACCURACY ENFORCEMENT: Strictly adhere to parameters declared at 0:45 intermission
                 if getattr(room, 'game_type', None) == 'subanagrams':
-                    declared_fmt = active_params.get('board_format', 'Word Guaranteed')
+                    declared_fmt = (getattr(room, 'frozen_revealed_params', None) or active_params).get('board_format', 'Word Guaranteed')
                     seq_len_chk = getattr(room, 'sequence_length', None) or (len(room.board[0]) if (room.board and len(room.board) > 0 and isinstance(room.board[0], list)) else 8)
                     has_full_word = any(len(w) == seq_len_chk for w in room.all_words)
                     if declared_fmt == 'Word Guaranteed' and not has_full_word:
                         from subanagrams_generator import generate_subanagrams_board_and_words
-                        heal_p = dict(active_params)
+                        heal_p = dict(getattr(room, 'frozen_revealed_params', None) or active_params)
                         heal_p['board_format'] = 'Word Guaranteed'
                         heal_p['mode'] = 'word'
                         heal_res = generate_subanagrams_board_and_words(heal_p)
@@ -8969,8 +9001,13 @@ class RoomManager:
                             room.current_word_count_range = hp.get('word_count_range') or SpinnerSet.get_subanagrams_factchecked_wc_range(len(hw))
                             if isinstance(room.spinner_params, dict):
                                 room.spinner_params['word_count_range'] = room.current_word_count_range
+                                room.spinner_params['bonus_word'] = hbw
+                                room.spinner_params['bonus_word_length'] = len(hbw)
                             if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                                 room.frozen_revealed_params['word_count_range'] = room.current_word_count_range
+                                room.frozen_revealed_params['bonus_word'] = hbw
+                                room.frozen_revealed_params['bonus_word_length'] = len(hbw)
+                            sync_bonus_word_scores(room)
                     else:
                         room.current_board_format = declared_fmt
 
@@ -8979,14 +9016,23 @@ class RoomManager:
                         room.spinner_params['board_format'] = room.current_board_format
                         room.spinner_params['mode'] = sub_mode
                         room.spinner_params['sequence_length'] = room.sequence_length
+                        if getattr(room, 'bonus_word', None):
+                            room.spinner_params['bonus_word'] = room.bonus_word
+                            room.spinner_params['bonus_word_length'] = len(room.bonus_word)
                     if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
                         room.frozen_revealed_params['board_format'] = room.current_board_format
                         room.frozen_revealed_params['mode'] = sub_mode
                         room.frozen_revealed_params['sequence_length'] = room.sequence_length
+                        if getattr(room, 'bonus_word', None):
+                            room.frozen_revealed_params['bonus_word'] = room.bonus_word
+                            room.frozen_revealed_params['bonus_word_length'] = len(room.bonus_word)
                     if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
                         room.next_spinner_params['board_format'] = room.current_board_format
                         room.next_spinner_params['mode'] = sub_mode
                         room.next_spinner_params['sequence_length'] = room.sequence_length
+                        if getattr(room, 'bonus_word', None):
+                            room.next_spinner_params['bonus_word'] = room.bonus_word
+                            room.next_spinner_params['bonus_word_length'] = len(room.bonus_word)
 
                 # Increment round counter BEFORE stamping total_counts_by_len['_round']
                 room.current_round += 1

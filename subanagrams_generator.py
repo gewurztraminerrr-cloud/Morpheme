@@ -159,16 +159,16 @@ def count_to_range_label(cnt):
 def is_count_in_range(cnt, range_label):
     """Check if word count matches target range strictly."""
     if range_label == '50-100':
-        return 50 <= cnt <= 100
+        return 50 <= cnt < 100
     elif range_label == '100-200':
-        return 100 <= cnt <= 200
+        return 100 <= cnt < 200
     elif range_label == '200-300':
-        return 200 <= cnt <= 300
+        return 200 <= cnt < 300
     elif range_label == '300-400':
-        return 300 <= cnt <= 400
+        return 300 <= cnt < 400
     elif range_label == '500+':
         return cnt >= 500
-    return 50 <= cnt <= 200
+    return 50 <= cnt < 200
 
 def generate_subanagrams_board_and_words(params):
     """
@@ -328,9 +328,20 @@ def generate_subanagrams_board_and_words(params):
         best_candidate = chosen_word
         best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
 
-    # Resolve bonus word: chosen at random from all valid subanagrams
+    # Resolve bonus word: honor target bonus_word_length if requested and available in valid subanagrams
+    target_bw_len = params.get('bonus_word_length')
+    if target_bw_len is not None:
+        try:
+            target_bw_len = int(target_bw_len)
+        except (ValueError, TypeError):
+            target_bw_len = None
+
     if best_results:
-        bonus_word = random.choice(best_results)
+        matching_len = [w for w in best_results if len(w) == target_bw_len] if target_bw_len else []
+        if matching_len:
+            bonus_word = random.choice(matching_len)
+        else:
+            bonus_word = random.choice(best_results)
     else:
         bonus_word = best_candidate
 

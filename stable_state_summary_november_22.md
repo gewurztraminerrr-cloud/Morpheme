@@ -89,7 +89,21 @@
   - Custom scrollbar tracks and blue gradient thumbs styled cleanly for light layouts.
   - Bumped cache busters: `play.css?v=1795224000` and `tools.js?v=1795224000`.
 
-### G. Architectural Integrity & Strict Boundaries
+### G. Multiplayer Subanagrams Spinner Set Parameter Preservation at Round Transition (`game_room.py`, `subanagrams_generator.py`)
+- **Root Cause Eliminated**:
+  - Previously, `pick_distinct_bonus_word` in `game_room.py` was unconditionally called during `start_next_round` for all game types. Because `pick_distinct_bonus_word` was designed for Boggle boards (hard-clamped target lengths to [6..10], rejected words ending in `ING`/`INGS`, and filtered out recent history), it rejected the pre-generated Subanagrams bonus word staged in `room.next_round_bonus`. It then selected a different word of a different length from the board, and overwrote `room.bonus_word` and `bonus_word_length` in both `room.spinner_params` and `room.frozen_revealed_params`.
+  - When the round transitioned from intermission to active (`!isIntermission`), the client UI in `static/js/play.js` read `state.bonus_word.length`, abruptly changing the Bonus Word letter length on the Spinner Set at `0:00`.
+- **Subanagrams Bonus Word Isolation**:
+  - In `game_room.py`, isolated `start_next_round` so Subanagrams does NOT call `pick_distinct_bonus_word`. It strictly preserves `room.bonus_word` from `room.next_round_bonus` (or `frozen_revealed_params['bonus_word']`).
+  - Guarantees that `room.bonus_word` and `bonus_word_length` in `room.spinner_params`, `room.frozen_revealed_params`, and `room.next_spinner_params` strictly retain the exact declared bonus word length revealed at 0:45.
+- **Bonus Word Length Honoring in Generator**:
+  - Updated `subanagrams_generator.py` so `generate_subanagrams_board_and_words` respects `params.get('bonus_word_length')`. It filters candidate words for the target length first, ensuring generated bonus words match the spun target length from inception.
+- **Complete Parameter Immutability**:
+  - Ensured all other parameters revealed at 0:45 intermission (**Sequence Length**, **Dictionary**, **Target Word Count Range**, **Minimum Word Length**, and **Board Format / Mode**) remain 100% frozen and immutable through the `0:00` round transition.
+  - Aligned `is_count_in_range` in `subanagrams_generator.py` to strictly use `< 100`, `< 200`, `< 300`, `< 400` so range boundary counts never trigger range re-classification.
+  - Added guard in `generate_spinner_params` so any background calls after 0:45 reveal cannot overwrite frozen parameters.
+
+### H. Architectural Integrity & Strict Boundaries
 - **Public Room Isolation**:
   - Standard public rooms (`accumulative`, 4x4, 4x6, 6x8, Split, 3D, Daily) remain completely untouched and unmodified.
 - **Zero Server Drift**:
