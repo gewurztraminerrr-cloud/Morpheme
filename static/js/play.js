@@ -9938,24 +9938,184 @@ window.findWordPathOnCube = function(word, board, targetCoord = null) {
 }
 
 /**
+ * Normalizes coordinates from solvers or pre-calculated path dictionaries.
+ * Accepts [{r, c}], [{f, r, c}], [[r, c]], or [[f, r, c]].
+ */
+function normalizePathCoords(rawPath) {
+    if (!Array.isArray(rawPath)) return null;
+    const res = [];
+    for (let i = 0; i < rawPath.length; i++) {
+        const coord = rawPath[i];
+        let r, c, f = undefined;
+        if (Array.isArray(coord)) {
+            if (coord.length >= 3) {
+                f = coord[0];
+                r = coord[1];
+                c = coord[2];
+            } else if (coord.length === 2) {
+                r = coord[0];
+                c = coord[1];
+            }
+        } else if (typeof coord === 'object' && coord !== null) {
+            r = coord.r !== undefined ? coord.r : coord.row;
+            c = coord.c !== undefined ? coord.c : coord.col;
+            if (coord.f !== undefined) f = coord.f;
+            else if (coord.face !== undefined) f = coord.face;
+        }
+        if (r !== undefined && c !== undefined) {
+            res.push({
+                r: Number(r),
+                c: Number(c),
+                f: f !== undefined ? Number(f) : undefined
+            });
+        }
+    }
+    return res;
+}
+window.normalizePathCoords = normalizePathCoords;
+
+/**
+ * Resolves the path of coordinates for a word during review / intermission.
+ * Checks pre-computed solved paths (preserving bonus coordinates) before falling back to DFS.
+ */
+function getReviewWordPath(word, board, state) {
+    if (!word) return null;
+    const cleanWord = String(word).trim().toUpperCase();
+    const st = state || window.lastGameState;
+
+    // 1. Check pre-solved dictionary paths first (preserves bonus coordinates and exact game paths)
+    if (st) {
+        const pathsMap = (st.state === 'intermission' || st.state === 'waiting')
+            ? (st.previous_all_words_paths || st.all_words_paths || {})
+            : (st.all_words_paths || {});
+        if (pathsMap && pathsMap[cleanWord]) {
+            const normalized = normalizePathCoords(pathsMap[cleanWord]);
+            if (normalized && normalized.length > 0) return normalized;
+        }
+    }
+
+    // 2. Fall back to DFS solver on the board
+    const b = board || (st ? (st.previous_board && (st.state === 'intermission' || st.state === 'waiting') ? st.previous_board : st.board) : null);
+    if (!b) return null;
+
+    const is3D = b.length === 6 && Array.isArray(b[0]) && Array.isArray(b[0][0]);
+    const solved = is3D ? (typeof findWordPathOnCube === 'function' ? findWordPathOnCube(cleanWord, b) : null)
+                        : (typeof findWordPathOnBoard === 'function' ? findWordPathOnBoard(cleanWord, b) : null);
+    return normalizePathCoords(solved);
+}
+window.getReviewWordPath = getReviewWordPath;
+
+window._reviewHighlightTimeouts = window._reviewHighlightTimeouts || [];
+window._isReviewAnimating = false;
+window._activeReviewWord = null;
+
+function clearReviewPathTimeouts() {
+    if (Array.isArray(window._reviewHighlightTimeouts)) {
+        window._reviewHighlightTimeouts.forEach(id => clearTimeout(id));
+        window._reviewHighlightTimeouts = [];
+    }
+    window._isReviewAnimating = false;
+}
+window.clearReviewPathTimeouts = clearReviewPathTimeouts;
+
+function animateReviewWordPath(cleanWord) {
+    clearReviewPathTimeouts();
+
+    // Clear existing review highlights
+    document.querySelectorAll('.board-cell.review-highlight').forEach(cell => {
+        cell.classList.remove('review-highlight');
+    });
+
+    if (!cleanWord) {
+        window._activeReviewWord = null;
+        window._lastAnimatedReviewWord = null;
+        return;
+    }
+
+    const path = getReviewWordPath(cleanWord, null, window.lastGameState);
+    if (!path || path.length === 0) {
+        window._activeReviewWord = cleanWord;
+        window._lastAnimatedReviewWord = cleanWord;
+        return;
+    }
+
+    window._isReviewAnimating = true;
+    window._activeReviewWord = cleanWord;
+    window._lastAnimatedReviewWord = cleanWord;
+
+    const stepDelay = 85; // ms per tile for clear, visible sequential tracing
+
+    path.forEach((coord, index) => {
+        const tid = setTimeout(() => {
+            if (highlightedFoundWord === cleanWord) {
+                let selector = `.board-cell[data-r="${coord.r}"][data-c="${coord.c}"]`;
+                if (coord.f !== undefined && coord.f !== null) {
+                    selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
+                }
+                const cell = document.querySelector(selector);
+                if (cell) {
+                    cell.classList.add('review-highlight');
+                }
+            }
+            if (index === path.length - 1) {
+                window._isReviewAnimating = false;
+            }
+        }, index * stepDelay);
+        window._reviewHighlightTimeouts.push(tid);
+    });
+}
+window.animateReviewWordPath = animateReviewWordPath;
+
+function updatePlayerCardFinderHighlights(targetWord) {
+    const isSub = (window.lastGameState && window.lastGameState.game_type === 'subanagrams');
+    const clean = targetWord ? String(targetWord).trim().toUpperCase() : null;
+    const players = (window.lastGameState && window.lastGameState.players) || [];
+
+    document.querySelectorAll('.player-card, .player-item').forEach(card => {
+        let username = (card.dataset.username || '').toLowerCase();
+        if (!username) {
+            const userEl = card.querySelector('.player-username, .username');
+            if (userEl) username = userEl.textContent.trim().toLowerCase();
+        }
+        let isFinder = false;
+        if (clean && !isSub && username) {
+            const p = players.find(pl => (pl.username || '').toLowerCase() === username);
+            if (p && p.submitted_words) {
+                isFinder = p.submitted_words.some(sw => {
+                    const w = (typeof sw === 'object' ? sw.word : sw) || '';
+                    return w.toUpperCase() === clean;
+                });
+            }
+        }
+        card.classList.toggle('finder-highlight', isFinder);
+    });
+}
+window.updatePlayerCardFinderHighlights = updatePlayerCardFinderHighlights;
+
+/**
  * Reapplies visual highlights (typing and mouse selection) to the board.
  * Useful after the board DOM has been rebuilt.
  */
 function reapplyBoardHighlights() {
-    let board = window.lastGameState ? window.lastGameState.board : null;
+    let board = window.lastGameState ? ((window.lastGameState.state === 'intermission' || window.lastGameState.state === 'waiting') && window.lastGameState.previous_board ? window.lastGameState.previous_board : window.lastGameState.board) : null;
     if (!board) return;
 
     const isCurrentActiveRound = window.lastGameState && window.lastGameState.state === 'active';
     if (isCurrentActiveRound) {
         // Clear stale intermission/review word selection when an active round is running
-        highlightedSplitWord = null;
+        clearReviewPathTimeouts();
+        highlightedFoundWord = null;
         window._lastAnimatedReviewWord = null;
+        window._activeReviewWord = null;
         window.intermissionTileFilter = null;
     }
 
-    // Clear PREVIOUS highlights of ALL types to avoid stale visuals
+    // Clear PREVIOUS highlights of ALL types to avoid stale visuals (preserve review-highlight while actively animating)
     document.querySelectorAll('.board-cell').forEach(cell => {
-        cell.classList.remove('selected', 'current', 'typing-highlight', 'review-highlight', 'intermission-highlight');
+        cell.classList.remove('selected', 'current', 'typing-highlight', 'intermission-highlight');
+        if (!window._isReviewAnimating) {
+            cell.classList.remove('review-highlight');
+        }
     });
 
     // Multiplayer Subanagrams: Reapply highlights
@@ -10032,34 +10192,27 @@ function reapplyBoardHighlights() {
 
     // 3. Reapply review highlights (All Words / Finder list)
     if (!isCurrentActiveRound && typeof highlightedFoundWord !== 'undefined' && highlightedFoundWord) {
-        const path = is3D ? findWordPathOnCube(highlightedFoundWord, board) : findWordPathOnBoard(highlightedFoundWord, board);
-        if (path) {
-            // Check if we need to animate (new selection) or just show (board refresh)
-            const isNewSelection = window._lastAnimatedReviewWord !== highlightedFoundWord;
-            
-            // CAPTURE the current word for the closure to avoid race conditions with window._lastAnimatedReviewWord
-            const currentHighlightedWord = highlightedFoundWord;
-
-            path.forEach((coord, index) => {
-                let selector = `.board-cell[data-r="${coord.r}"][data-c="${coord.c}"]`;
-                if (coord.f !== undefined) selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
-                const cell = document.querySelector(selector);
-                if (cell) {
-                    if (isNewSelection) {
-                        setTimeout(() => {
-                            if (highlightedFoundWord === currentHighlightedWord) {
-                                cell.classList.add('review-highlight');
-                            }
-                        }, index * 60);
-                    } else {
-                        cell.classList.add('review-highlight');
-                    }
-                }
-            });
-            window._lastAnimatedReviewWord = highlightedFoundWord;
+        if (window._isReviewAnimating && window._activeReviewWord === highlightedFoundWord) {
+            // Sequential animation is actively in progress - let it run smoothly
+        } else if (window._lastAnimatedReviewWord !== highlightedFoundWord) {
+            // New selection triggered outside toggleWordSelection
+            animateReviewWordPath(highlightedFoundWord);
+        } else {
+            // Animation has completed; ensure all tiles in the path remain highlighted statically
+            const path = getReviewWordPath(highlightedFoundWord, board, window.lastGameState);
+            if (path) {
+                path.forEach(coord => {
+                    let selector = `.board-cell[data-r="${coord.r}"][data-c="${coord.c}"]`;
+                    if (coord.f !== undefined && coord.f !== null) selector = `.board-cell[data-f="${coord.f}"][data-r="${coord.r}"][data-c="${coord.c}"]`;
+                    const cell = document.querySelector(selector);
+                    if (cell) cell.classList.add('review-highlight');
+                });
+            }
         }
     } else {
+        clearReviewPathTimeouts();
         window._lastAnimatedReviewWord = null;
+        window._activeReviewWord = null;
     }
 
     // 4. Reapply density shading (Density format) — must run after every highlight pass
@@ -12787,8 +12940,10 @@ function toggleWordSelection(word, clickedElement = null) {
     // Check if this word is ALREADY selected
     if (highlightedFoundWord === cleanWord) {
         // RETRACT / DESELECT THE WORD
+        clearReviewPathTimeouts();
         highlightedFoundWord = null;
         window._lastAnimatedReviewWord = null;
+        window._activeReviewWord = null;
         window.wordPressedDuringIntermission = false;
         window.userViewingDefinitionIntermission = false;
 
@@ -12803,7 +12958,7 @@ function toggleWordSelection(word, clickedElement = null) {
         });
 
         // Remove player roster finder highlights immediately
-        document.querySelectorAll('.player-card.finder-highlight').forEach(el => {
+        document.querySelectorAll('.player-card.finder-highlight, .player-item.finder-highlight').forEach(el => {
             el.classList.remove('finder-highlight');
         });
 
@@ -12812,15 +12967,6 @@ function toggleWordSelection(word, clickedElement = null) {
             window.clearDefinitionPanel();
         }
 
-        // If in intermission, sync UI so review state / player cards refresh
-        if (window.lastGameState && window.lastGameState.state === 'intermission') {
-            if (typeof reapplyBoardHighlights === 'function') {
-                reapplyBoardHighlights();
-            }
-            if (typeof updateGameState === 'function') {
-                updateGameState(window.lastGameState);
-            }
-        }
         return false; // Retracted
     } else {
         // SELECT THE WORD
@@ -12842,15 +12988,16 @@ function toggleWordSelection(word, clickedElement = null) {
             window.fetchDefinition(cleanWord);
         }
 
-        // If in intermission, trace board path and highlight finders
-        if (window.lastGameState && window.lastGameState.state === 'intermission') {
-            if (typeof reapplyBoardHighlights === 'function') {
-                reapplyBoardHighlights();
-            }
-            if (typeof updateGameState === 'function') {
-                updateGameState(window.lastGameState);
-            }
+        // Update player card finder highlights directly without full board rebuild
+        if (typeof updatePlayerCardFinderHighlights === 'function') {
+            updatePlayerCardFinderHighlights(cleanWord);
         }
+
+        // Sequentially trace and highlight the path tiles on the board
+        if (typeof animateReviewWordPath === 'function') {
+            animateReviewWordPath(cleanWord);
+        }
+
         return true; // Selected
     }
 }
