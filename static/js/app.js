@@ -4186,6 +4186,7 @@ document.addEventListener('visibilitychange', () => {
     }
 
     let initialFullscreenRequested = false;
+    let needsResumeFullscreen = false;
 
     function attemptFullscreen(force) {
         if (!isMobileDevice()) return;
@@ -4193,7 +4194,7 @@ document.addEventListener('visibilitychange', () => {
         // Return early if already in fullscreen
         if (document.fullscreenElement || document.webkitFullscreenElement) return;
 
-        // Only allow fullscreen when explicitly forced (user tapped gateway button to enter app)
+        // Only allow fullscreen when explicitly forced (user tapped gateway button to enter app, or returning from minimize)
         if (!force && initialFullscreenRequested) return;
 
         // On gateway screen, only allow fullscreen if explicitly forced (user tapped gateway button)
@@ -4211,15 +4212,49 @@ document.addEventListener('visibilitychange', () => {
             const req = docEl.requestFullscreen || docEl.webkitRequestFullscreen || docEl.mozRequestFullScreen || docEl.msRequestFullscreen;
             if (req) {
                 initialFullscreenRequested = true;
-                req.call(docEl, { navigationUI: 'hide' }).catch(() => {
-                    try { req.call(docEl).catch(() => {}); } catch(e) {}
-                });
+                const p = req.call(docEl, { navigationUI: 'hide' });
+                if (p && p.then) {
+                    p.then(() => {
+                        needsResumeFullscreen = false;
+                    }).catch(() => {
+                        try {
+                            const p2 = req.call(docEl);
+                            if (p2 && p2.then) {
+                                p2.then(() => { needsResumeFullscreen = false; }).catch(() => {});
+                            }
+                        } catch(e) {}
+                    });
+                }
             }
         } catch (e) {}
     }
 
+    // When returning from minimizing (e.g. swiping up from bottom and tapping squircle Home button),
+    // re-assert fullscreen and sync theme color to permanently eliminate black top row
+    function handleResumeFullscreen() {
+        if (!isMobileDevice()) return;
+        const pLoad = document.getElementById('page-loading');
+        if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed) return;
+        if (document.fullscreenElement || document.webkitFullscreenElement) return;
+        
+        needsResumeFullscreen = true;
+        attemptFullscreen(true);
+        if (typeof window.syncThemeColorMeta === 'function') {
+            window.syncThemeColorMeta();
+        }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            handleResumeFullscreen();
+        }
+    });
+    window.addEventListener('pageshow', handleResumeFullscreen, { passive: true });
+    window.addEventListener('focus', handleResumeFullscreen, { passive: true });
+
     // Safety check for all text inputs (game room word/chat inputs, modal inputs, search inputs, etc.)
-    // to ensure fullscreen is cleanly exited when interacting with or focusing text inputs to prevent Android virtual keyboard 2s black screen
+    // to ensure fullscreen is cleanly exited when interacting with or focusing text inputs to prevent Android virtual keyboard 2s black screen.
+    // ALSO: On first user touch anywhere after returning from minimize, immediately re-engage fullscreen if lost!
     ['pointerdown', 'touchstart'].forEach(evtType => {
         document.addEventListener(evtType, (e) => {
             if (!isMobileDevice()) return;
@@ -4229,8 +4264,19 @@ document.addEventListener('visibilitychange', () => {
                 target.tagName === 'TEXTAREA' || 
                 (target.closest && target.closest('#full-list-modal, #tool-combo, .chat-input-section, .word-input-section, .score-sum-controls, #lobby-chat-drawer'))
             );
-            if (isInput && (document.fullscreenElement || document.webkitFullscreenElement)) {
-                exitFullscreenForKeyboard();
+            if (isInput) {
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    exitFullscreenForKeyboard();
+                }
+                return;
+            }
+
+            // If returning from minimize or lost fullscreen, immediately re-engage on first user touch!
+            if (needsResumeFullscreen || (!document.fullscreenElement && !document.webkitFullscreenElement)) {
+                const pLoad = document.getElementById('page-loading');
+                if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed) return;
+                attemptFullscreen(true);
+                needsResumeFullscreen = false;
             }
         }, { passive: true });
     });
@@ -4249,6 +4295,7 @@ document.addEventListener('visibilitychange', () => {
         attemptFullscreen(force !== false);
     };
     window.exitFullscreenForKeyboard = exitFullscreenForKeyboard;
+    window.handleResumeFullscreen = handleResumeFullscreen;
 })();
 
 // Export utility for other files

@@ -5226,11 +5226,54 @@ def index():
             print(f"[index] Error loading initial settings: {e}")
     if 'lobby_guide_dismissed' in session and 'lobby_guide_dismissed' not in user_settings:
         user_settings['lobby_guide_dismissed'] = session['lobby_guide_dismissed']
-    resp = make_response(render_template('index.html', initial_timezone=user_tz, initial_theme=user_theme, initial_settings=user_settings))
+    resp = make_response(render_template('index.html', initial_timezone=user_tz, initial_theme=user_theme, initial_theme_color=THEME_COLOR_MAP.get(user_theme, '#1a1a2e'), initial_settings=user_settings))
     resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
     resp.headers['Pragma'] = 'no-cache'
     resp.headers['Expires'] = '0'
     return resp
+
+
+THEME_COLOR_MAP = {
+    'black': '#000000',
+    'white': '#ffffff',
+    'light-light-gray': '#ececec',
+    'light-gray': '#d8d8d8',
+    'gray': '#484848',
+    'dark-gray': '#242424',
+    'light-light-red': '#ffe5e5',
+    'light-red': '#ffcccc',
+    'red': '#801010',
+    'dark-red': '#440000',
+    'light-light-orange': '#fff0db',
+    'light-orange': '#ffe0b3',
+    'orange': '#8c3e00',
+    'dark-orange': '#4a2000',
+    'light-light-yellow': '#ffffe5',
+    'light-yellow': '#ffffcc',
+    'yellow': '#705f00',
+    'dark-yellow': '#3d3400',
+    'light-light-green': '#e6ffe6',
+    'light-green': '#ccffcc',
+    'green': '#0f590f',
+    'dark-green': '#002900',
+    'light-light-blue': '#e5f6ff',
+    'light-blue': '#cceeff',
+    'blue': '#0a3a78',
+    'dark-blue': '#001445',
+    'light-light-purple': '#f9f2fa',
+    'light-purple': '#f3e5f5',
+    'purple': '#591759',
+    'dark-purple': '#2e082e',
+    'light-light-pink': '#fef0f5',
+    'light-pink': '#fce4ec',
+    'pink': '#851b47',
+    'dark-pink': '#4a0a26',
+    'light-light-brown': '#f7efe5',
+    'light-brown': '#efe0cc',
+    'brown': '#52362b',
+    'dark-brown': '#2b1812',
+    'default': '#1a1a2e'
+}
 
 
 # Thread-safe CAPTCHA store to eliminate session-cookie race conditions

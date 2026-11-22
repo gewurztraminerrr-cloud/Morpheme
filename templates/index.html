@@ -10,11 +10,11 @@
     <meta name="author" content="Morpheme Games">
     
     <!-- PWA / iOS Standalone Web App Meta Tags -->
-    <link rel="manifest" href="/static/manifest.json?v=5">
+    <link rel="manifest" href="/static/manifest.json?v=6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Morpheme">
-    <meta name="theme-color" content="#171626">
+    <meta name="theme-color" content="{% if initial_theme_color %}{{ initial_theme_color }}{% else %}#1a1a2e{% endif %}">
     <link class="apple-touch-icon" rel="apple-touch-icon" href="/static/images/morpheme.png?v=2">
     
     <!-- Open Graph / Social Media Sharing -->
@@ -10568,11 +10568,11 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1794290000"></script>
+    <script src="/js/settings.js?v=1795160000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1795149000"></script>
+    <script src="/js/app.js?v=1795160000"></script>
     <script src="/js/lobby.js?v=1795149000"></script>
-    <script src="/js/play.js?v=1795149000"></script>
+    <script src="/js/play.js?v=1795160000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>

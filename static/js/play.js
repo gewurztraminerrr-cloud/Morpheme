@@ -1855,6 +1855,13 @@ function handleResumeWakeUp(source) {
     window.lastRenderedStateJSON = null; // Force full DOM re-render on wake-up
     window._lastLocalTimerTickTime = now; // Reset timer tick anchor to avoid false thaw gap trigger
 
+    if (typeof window.triggerMobileFullscreen === 'function') {
+        window.triggerMobileFullscreen(true);
+    }
+    if (typeof window.syncThemeColorMeta === 'function') {
+        window.syncThemeColorMeta();
+    }
+
     // TOURNAMENT MODE: Handle resume separately
     if (isTournamentPlay) {
         const nowSec = Date.now() / 1000;

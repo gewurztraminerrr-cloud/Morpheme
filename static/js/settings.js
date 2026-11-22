@@ -143,8 +143,62 @@ function debounce(func, wait) {
                 else b.classList.remove('active');
             });
         }
+        syncThemeColorMeta(t);
     }
     window.applyTheme = applyTheme;
+
+    function syncThemeColorMeta(themeName) {
+        try {
+            const meta = document.querySelector('meta[name="theme-color"]');
+            if (!meta) return;
+            const t = themeName || (window.userSettings && window.userSettings.app_theme) || localStorage.getItem('morpheme_app_theme') || 'default';
+            const themeColors = {
+                'black': '#000000',
+                'white': '#ffffff',
+                'light-light-gray': '#ececec',
+                'light-gray': '#d8d8d8',
+                'gray': '#484848',
+                'dark-gray': '#242424',
+                'light-light-red': '#ffe5e5',
+                'light-red': '#ffcccc',
+                'red': '#801010',
+                'dark-red': '#440000',
+                'light-light-orange': '#fff0db',
+                'light-orange': '#ffe0b3',
+                'orange': '#8c3e00',
+                'dark-orange': '#4a2000',
+                'light-light-yellow': '#ffffe5',
+                'light-yellow': '#ffffcc',
+                'yellow': '#705f00',
+                'dark-yellow': '#3d3400',
+                'light-light-green': '#e6ffe6',
+                'light-green': '#ccffcc',
+                'green': '#0f590f',
+                'dark-green': '#002900',
+                'light-light-blue': '#e5f6ff',
+                'light-blue': '#cceeff',
+                'blue': '#0a3a78',
+                'dark-blue': '#001445',
+                'light-light-purple': '#f9f2fa',
+                'light-purple': '#f3e5f5',
+                'purple': '#591759',
+                'dark-purple': '#2e082e',
+                'light-light-pink': '#fef0f5',
+                'light-pink': '#fce4ec',
+                'pink': '#851b47',
+                'dark-pink': '#4a0a26',
+                'light-light-brown': '#f7efe5',
+                'light-brown': '#efe0cc',
+                'brown': '#52362b',
+                'dark-brown': '#2b1812',
+                'default': '#1a1a2e'
+            };
+            const col = themeColors[t] || '#1a1a2e';
+            meta.setAttribute('content', col);
+        } catch (e) {}
+    }
+    window.syncThemeColorMeta = syncThemeColorMeta;
+    syncThemeColorMeta();
 
     // Immediately put into effect all settings and the correct layout color
     function applyAllSettingsImmediate(settingsOverride) {
