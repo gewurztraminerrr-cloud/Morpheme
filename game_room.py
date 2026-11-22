@@ -1856,7 +1856,6 @@ class GameRoom:
 
         if getattr(self, 'game_type', None) == 'subanagrams':
             from subanagrams_generator import generate_subanagrams_board_and_words
-            from spinner_set import SpinnerSet
             curr_p = getattr(self, 'spinner_params', None)
             p = getattr(self, 'next_spinner_params', None)
             if not p or not p.get('sequence_length') or (curr_p and p.get('sequence_length') == curr_p.get('sequence_length') and p.get('word_count_range') == curr_p.get('word_count_range') and p.get('dictionary') == curr_p.get('dictionary')):
