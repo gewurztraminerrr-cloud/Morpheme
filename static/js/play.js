@@ -3405,9 +3405,9 @@ async function _doUpdateGameState(incomingState = null) {
         const wordsStats = document.getElementById('words-stats');
         const tabsContainer = document.getElementById('words-tabs-container');
 
-        // Show tabs in standard rooms, but hide in tournament play and subanagrams
+        // Show tabs in standard rooms and subanagrams, but hide in tournament play
         if (tabsContainer) {
-            if (window.isTournamentPlay || isTournamentPlay || state.game_type === 'subanagrams') {
+            if (window.isTournamentPlay || isTournamentPlay) {
                 tabsContainer.style.display = 'none';
             } else {
                 tabsContainer.style.display = 'flex';
