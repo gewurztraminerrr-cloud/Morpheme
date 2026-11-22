@@ -4800,8 +4800,14 @@ function renderPlayers(players, currentUser = null, state = null) {
             playerMethod = currentInputMethod;
         }
         let inputIcon = '🖱️';
-        if (playerMethod === 'keyboard') inputIcon = '⌨️';
-        if (playerMethod === 'touch') inputIcon = '📱';
+        let inputTitle = 'Input Method: Mousing';
+        if (playerMethod === 'keyboard') {
+            inputIcon = '⌨️';
+            inputTitle = 'Input Method: Typing';
+        } else if (playerMethod === 'touch') {
+            inputIcon = '📱';
+            inputTitle = 'Input Method: Swiping';
+        }
 
         // Trophy Logic (Exceptional Performance) - User Directive: Displayed strictly during intermission
         const isIntermission = (state && state.state === 'intermission') || (window.lastGameState && window.lastGameState.state === 'intermission');
@@ -4842,7 +4848,7 @@ function renderPlayers(players, currentUser = null, state = null) {
             </div>
             <div class="player-row-bottom">
                 <span class="player-flag">${window.getFlagHtml ? window.getFlagHtml(p.country_flag) : (p.country_flag || '🏳️')}</span>
-                <span class="player-input-icon">${inputIcon}</span>
+                <span class="player-input-icon" title="${inputTitle}">${inputIcon}</span>
                 ${trophyHtml}
                 ${chatDisabledHtml}
                 <div style="flex:1;"></div>
