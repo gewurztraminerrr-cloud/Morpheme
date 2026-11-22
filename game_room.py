@@ -3299,10 +3299,12 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
                 _record_room_bonus_word(room, cand_str)
                 return cand_str
 
-    # 2. Check exact matches of target_len on the board (strictly excluding full history first, then immediate_exclude)
+    # 2. Check exact matches of target_len on the board (strictly excluding full history first, then immediate_exclude, then relaxing immediate_exclude)
     valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in exclude_set]
     if not valid_exact and words_list:
         valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in immediate_exclude]
+    if not valid_exact and words_list:
+        valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS'))]
     if valid_exact:
         chosen = random.choice(valid_exact).upper()
         _record_room_bonus_word(room, chosen)
@@ -3312,6 +3314,8 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
     valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in exclude_set]
     if not valid_range and words_list:
         valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in immediate_exclude]
+    if not valid_range and words_list:
+        valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS'))]
     if valid_range:
         valid_range.sort(key=lambda w: abs(len(w) - target_len))
         closest_l = len(valid_range[0])
@@ -3321,8 +3325,12 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
             _record_room_bonus_word(room, chosen)
             return chosen
 
-    # 4. Any valid word on board not in immediate_exclude
+    # 4. Any valid word on board not ending in ING/INGS, then literally any word on board
     any_valid = [w for w in words_list if not w.upper().endswith(('ING', 'INGS')) and w.upper() not in immediate_exclude]
+    if not any_valid and words_list:
+        any_valid = [w for w in words_list if not w.upper().endswith(('ING', 'INGS'))]
+    if not any_valid and words_list:
+        any_valid = list(words_list)
     if any_valid:
         any_valid.sort(key=lambda w: abs(len(w) - target_len))
         chosen = any_valid[0].upper()
@@ -3347,14 +3355,110 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
 
     return 'PLANETS'
 
+def ensure_bonus_word_on_board(room, target_len=8):
+    """
+    Ironclad guarantee: room.bonus_word MUST be a word that exists on room.board (in room.all_words).
+    If room.bonus_word is empty, 'PLANETS', ends in ING/INGS, or is not in room.all_words,
+    this function selects the best valid word from room.all_words (prioritizing exact length target_len,
+    then closest length in 6..10, then any word not ending in ING/INGS) and updates
+    room.bonus_word, room.spinner_params['bonus_word_length'], room.frozen_revealed_params, etc.
+    """
+    if not room or not getattr(room, 'all_words', None):
+        return
+    import random
+    all_words_upper_map = {str(w).upper().strip(): str(w) for w in room.all_words if w}
+    if not all_words_upper_map:
+        return
+
+    bw_up = str(getattr(room, 'bonus_word', '') or '').upper().strip()
+    is_valid = (
+        bw_up and 
+        bw_up in all_words_upper_map and 
+        bw_up not in ('NONE', 'NULL', 'PLANETS') and 
+        not bw_up.endswith(('ING', 'INGS'))
+    )
+    if is_valid:
+        return
+
+    try:
+        target_len = int(target_len or 8)
+    except (ValueError, TypeError):
+        target_len = 8
+
+    prev_bw = str(getattr(room, 'previous_bonus_word', '') or '').upper().strip()
+
+    # 1. Exact length matches on board (not ending in ING/INGS, not previous)
+    exact_cands = [w for w in all_words_upper_map.keys() if len(w) == target_len and not w.endswith(('ING', 'INGS')) and w != prev_bw]
+    if not exact_cands:
+        exact_cands = [w for w in all_words_upper_map.keys() if len(w) == target_len and not w.endswith(('ING', 'INGS'))]
+    if exact_cands:
+        room.bonus_word = random.choice(exact_cands)
+    else:
+        # 2. Closest length in [6..10] on board (not ending in ING/INGS, not previous)
+        range_cands = [w for w in all_words_upper_map.keys() if 6 <= len(w) <= 10 and not w.endswith(('ING', 'INGS')) and w != prev_bw]
+        if not range_cands:
+            range_cands = [w for w in all_words_upper_map.keys() if 6 <= len(w) <= 10 and not w.endswith(('ING', 'INGS'))]
+        if range_cands:
+            range_cands.sort(key=lambda w: abs(len(w) - target_len))
+            closest_len = len(range_cands[0])
+            pool = [w for w in range_cands if len(w) == closest_len]
+            room.bonus_word = random.choice(pool)
+        else:
+            # 3. Any non-ING word on board
+            any_cands = [w for w in all_words_upper_map.keys() if not w.endswith(('ING', 'INGS'))]
+            if any_cands:
+                any_cands.sort(key=lambda w: abs(len(w) - target_len))
+                room.bonus_word = any_cands[0]
+            else:
+                room.bonus_word = random.choice(list(all_words_upper_map.keys()))
+
+    actual_len = len(room.bonus_word)
+    if isinstance(getattr(room, 'spinner_params', None), dict):
+        room.spinner_params['bonus_word_length'] = actual_len
+        room.spinner_params['bonus_word'] = room.bonus_word
+    if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+        room.frozen_revealed_params['bonus_word_length'] = actual_len
+        room.frozen_revealed_params['bonus_word'] = room.bonus_word
+    if getattr(room, 'next_spinner_params', None) and isinstance(room.next_spinner_params, dict):
+        room.next_spinner_params['bonus_word_length'] = actual_len
+        room.next_spinner_params['bonus_word'] = room.bonus_word
+
+    print(f"[BonusWordIntegrity] Room {getattr(room, 'room_id', '?')} bonus word guaranteed: '{room.bonus_word}' ({actual_len}L) present on active board.")
+
 def sync_bonus_word_scores(room):
     """
     Ensure that ONLY room.bonus_word has bonus_word_points in room.solved_words_with_scores,
     and all other words have bonus_word_points = 0 and corrected total points.
+    If room.solved_words_with_scores is missing, empty, or missing room.bonus_word,
+    synchronously populate it from active board words.
     """
     if not room:
         return
     bw_up = str(getattr(room, 'bonus_word', '') or '').upper().strip()
+    active_words = getattr(room, 'all_words', None)
+    if active_words and (
+        not isinstance(getattr(room, 'solved_words_with_scores', None), dict)
+        or not room.solved_words_with_scores
+        or (bw_up and bw_up in {w.upper() for w in active_words} and bw_up not in room.solved_words_with_scores)
+    ):
+        from scoring import calculate_word_score
+        paths_map = getattr(room, 'all_words_paths', {}) or {}
+        b_fmt = 'Normal' if getattr(room, 'game_type', None) == 'subanagrams' else getattr(room, 'current_board_format', 'Normal')
+        b_cell = getattr(room, 'bonus_cell', None)
+        b_grid = getattr(room, 'board', None)
+        room.solved_words_with_scores = {
+            w: calculate_word_score(
+                w,
+                bonus_word=room.bonus_word,
+                board_format=b_fmt,
+                bonus_cell=b_cell,
+                board=b_grid,
+                path=_get_word_path(paths_map, w),
+                return_details=True,
+                strict_path=True
+            )
+            for w in active_words
+        }
     scores = getattr(room, 'solved_words_with_scores', None)
     if not scores or not isinstance(scores, dict):
         return
@@ -4419,6 +4523,7 @@ class RoomManager:
                                             dictionary=raw_dict, is_checkerboard=('checkerboard' in str(r_fmt).lower()),
                                             room_manager=self
                                         )
+                                        ensure_bonus_word_on_board(existing_room, len(r_bonus_word) if r_bonus_word else 8)
                                         existing_room.previous_bonus_word = ''
                                         # CRITICAL: Always keep spinner_params bonus_word_length, min_word_length, and word_count_range strictly synchronized with the actual board!
                                         existing_room.spinner_params['bonus_word_length'] = len(existing_room.bonus_word)
@@ -4866,6 +4971,7 @@ class RoomManager:
                                 dictionary=raw_dict, is_checkerboard=('checkerboard' in str(r_fmt).lower()),
                                 room_manager=self
                             )
+                            ensure_bonus_word_on_board(room, _target_bw_create)
                             room.previous_bonus_word = ''
                             # CRITICAL: Always keep spinner_params bonus_word_length, min_word_length, and word_count_range strictly synchronized with the actual board!
                             room.spinner_params['bonus_word_length'] = len(room.bonus_word)
@@ -6076,6 +6182,7 @@ class RoomManager:
                 dictionary=_dict_sr, is_checkerboard=_is_chk_sr,
                 room_manager=self, extra_exclude=[getattr(room, 'previous_bonus_word', None)]
             )
+            ensure_bonus_word_on_board(room, _target_bw_sr)
             if room.bonus_word:
                 actual_bw_len = len(room.bonus_word)
                 if isinstance(room.spinner_params, dict):
@@ -8797,6 +8904,8 @@ class RoomManager:
                     room.all_words = set(room.all_words_paths.keys())
                     room.total_words_count = len(room.all_words)
                     room.initial_total_words = room.total_words_count
+                    room.next_round_words = list(room.all_words)
+                    room.next_round_word_paths = dict(room.all_words_paths)
                     if _is_heal_aw and hasattr(word_validator, 'word_validator'):
                         room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
                     if hasattr(word_validator, 'word_validator'):
@@ -8821,6 +8930,8 @@ class RoomManager:
                             room.all_words = set(room.all_words_paths.keys())
                             room.total_words_count = len(room.all_words)
                             room.initial_total_words = room.total_words_count
+                            room.next_round_words = list(room.all_words)
+                            room.next_round_word_paths = dict(room.all_words_paths)
                             if hasattr(word_validator, 'word_validator'):
                                 word_validator.word_validator.ensure_csw_loaded()
                                 room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
@@ -8848,6 +8959,10 @@ class RoomManager:
                                 room.total_words_count = len(room.all_words)
                                 room.initial_total_words = room.total_words_count
                                 room.bonus_cell = h_c
+                                room.next_round_board = h_b
+                                room.next_round_words = list(room.all_words)
+                                room.next_round_word_paths = dict(room.all_words_paths)
+                                room.next_round_bonus = h_bw
                                 if hasattr(word_validator, 'word_validator'):
                                     word_validator.word_validator.ensure_csw_loaded()
                                     room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
@@ -8905,13 +9020,14 @@ class RoomManager:
                             except Exception:
                                 pass
                     dict_val = room.spinner_params.get('dictionary', 'NWL') if isinstance(room.spinner_params, dict) else 'NWL'
-                    target_words = room.next_round_words or room.all_words or []
+                    target_words = room.all_words or room.next_round_words or []
                     is_chk_start = 'checkerboard' in str(room.current_board_format).lower()
                     room.bonus_word = pick_distinct_bonus_word(
                         room, current_bw, target_words, bw_l,
                         dictionary=dict_val, is_checkerboard=is_chk_start,
                         room_manager=self, extra_exclude=[ghost_bonus, getattr(room, 'previous_bonus_word', None)]
                     )
+                    ensure_bonus_word_on_board(room, bw_l)
                     if room.bonus_word:
                         actual_bw_len = len(room.bonus_word)
                         if isinstance(room.spinner_params, dict):
@@ -9513,6 +9629,7 @@ class RoomManager:
                     dictionary=raw_dict, is_checkerboard=_is_chk_fib,
                     room_manager=self, extra_exclude=[_prev_bw_saved, getattr(room, 'previous_bonus_word', None)]
                 )
+                ensure_bonus_word_on_board(room, _fib_bw_l)
                 if _prev_bw_saved:
                     room.previous_bonus_word = _prev_bw_saved
                 sync_bonus_word_scores(room)

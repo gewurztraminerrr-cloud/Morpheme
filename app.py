@@ -8643,6 +8643,17 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
 
                 # Purge scores as well and ensure bonus_word_points strictly matches previous_bonus_word
                 prev_bw_san = str(getattr(room, 'previous_bonus_word', None) or getattr(room, 'bonus_word', '') or '').upper().strip()
+                if not prev_bw_san:
+                    # Check if any word in word_scores_to_return or previous_all_word_scores already had bonus_word_points > 0
+                    for _src in [word_scores_to_return, getattr(room, 'previous_all_word_scores', {})]:
+                        if isinstance(_src, dict):
+                            for _w, _s in _src.items():
+                                if isinstance(_s, dict) and _s.get('bonus_word_points', 0) > 0:
+                                    prev_bw_san = str(_w).upper().strip()
+                                    room.previous_bonus_word = prev_bw_san
+                                    break
+                        if prev_bw_san:
+                            break
                 clean_scores = {}
                 for w in words_to_return:
                     if w in word_scores_to_return:
