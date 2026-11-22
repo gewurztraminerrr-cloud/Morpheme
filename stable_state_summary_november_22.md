@@ -103,7 +103,24 @@
   - Aligned `is_count_in_range` in `subanagrams_generator.py` to strictly use `< 100`, `< 200`, `< 300`, `< 400` so range boundary counts never trigger range re-classification.
   - Added guard in `generate_spinner_params` so any background calls after 0:45 reveal cannot overwrite frozen parameters.
 
-### H. Architectural Integrity & Strict Boundaries
+### H. Multiplayer Subanagrams Real-Time Typing Letter Highlighting (`static/css/play.css`, `static/js/play.js`, `templates/index.html`)
+- **Real-Time 0ms Tile Highlighting As User Types**:
+  - In `static/js/play.js`, implemented `highlightSubanagramsInput(typedText)` and `isSubanagramsActive()` with instant 0ms latency.
+  - Matches typed characters directly against the rack's DOM cells (`.board-cell[data-letter]`), immediately applying `.typing-highlight` and `.selected` as the player types into `#word-input`.
+  - Backspacing, editing, or clearing the input immediately synchronizes or clears highlights across all tiles.
+  - Supports duplicate letters (e.g. rack with multiple 'A's accurately highlights distinct physical tiles) and 'QU'/'Q' sequence equivalence.
+  - Handles letters not on the rack gracefully without throwing or clearing matching rack letters.
+  - Preserves highlights and board mapping accurately across board tile shuffling (`window.shuffleSubanagramsBoard`).
+- **Eliminated `hasBoardSelection` Block**:
+  - Fixed root cause where `hasBoardSelection` in `play.js` detected `mouseState.selectedPath.length > 0` after the first typed letter and prematurely aborted/cleared highlights for all subsequent typed letters.
+  - Delegated Subanagrams typing directly to `highlightSubanagramsInput(word)` in the `word-input` input and keyup event listeners.
+- **Dedicated Highlighting Styles**:
+  - In `static/css/play.css`, added dedicated styles for `.board-cell.typing-highlight` in Subanagrams with high-contrast text and custom highlight colors (`var(--highlight-typing-color, #ffcc00)`).
+  - Maintained separation between mouse/touch selection (`.selected`, `.current`) and typing highlights (`.typing-highlight`).
+- **Cache Busters Bumped**:
+  - Bumped `play.css` and `play.js` to `?v=1795225000` in `templates/index.html`.
+
+### I. Architectural Integrity & Strict Boundaries
 - **Public Room Isolation**:
   - Standard public rooms (`accumulative`, 4x4, 4x6, 6x8, Split, 3D, Daily) remain completely untouched and unmodified.
 - **Zero Server Drift**:

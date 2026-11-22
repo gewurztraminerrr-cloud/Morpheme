@@ -1884,13 +1884,11 @@ body.is-mobile .game-board.is-subanagrams-board .board-cell {
     border-radius: calc(var(--subanagrams-cell-size, 64px) * 0.15) !important;
 }
 
-/* Multiplayer Subanagrams: Ensure ALL highlighted tiles during letter input share the exact same color, border, and glow */
+/* Multiplayer Subanagrams: Mouse/Touch tile selection */
 .game-board.is-subanagrams-board .board-cell.selected,
 .game-board.is-subanagrams-board .board-cell.current,
-.game-board.is-subanagrams-board .board-cell.typing-highlight,
 body.is-subanagrams .game-board .board-cell.selected,
-body.is-subanagrams .game-board .board-cell.current,
-body.is-subanagrams .game-board .board-cell.typing-highlight {
+body.is-subanagrams .game-board .board-cell.current {
     background: var(--highlight-mouse-color, #409cff) !important;
     border: 3px solid #ffffff !important;
     box-shadow: 0 0 16px var(--highlight-mouse-color, rgba(64, 156, 255, 0.7)) !important;
@@ -1903,11 +1901,27 @@ body.is-subanagrams .game-board .board-cell.typing-highlight {
 
 .game-board.is-subanagrams-board .board-cell.selected[data-letter],
 .game-board.is-subanagrams-board .board-cell.current[data-letter],
-.game-board.is-subanagrams-board .board-cell.typing-highlight[data-letter],
 body.is-subanagrams .game-board .board-cell.selected[data-letter],
-body.is-subanagrams .game-board .board-cell.current[data-letter],
-body.is-subanagrams .game-board .board-cell.typing-highlight[data-letter] {
+body.is-subanagrams .game-board .board-cell.current[data-letter] {
     color: var(--highlight-mouse-text-color, #000000) !important;
+}
+
+/* Multiplayer Subanagrams: Real-time typing highlight as letters are typed in textbox */
+.game-board.is-subanagrams-board .board-cell.typing-highlight,
+body.is-subanagrams .game-board .board-cell.typing-highlight {
+    background: var(--highlight-typing-color, #ffcc00) !important;
+    border: 3px solid #ffffff !important;
+    box-shadow: 0 0 16px var(--highlight-typing-color, rgba(255, 204, 0, 0.7)) !important;
+    color: var(--highlight-typing-text-color, #000000) !important;
+    filter: none !important;
+    transform: scale(1.06) !important;
+    z-index: 10 !important;
+    transition: none !important;
+}
+
+.game-board.is-subanagrams-board .board-cell.typing-highlight[data-letter],
+body.is-subanagrams .game-board .board-cell.typing-highlight[data-letter] {
+    color: var(--highlight-typing-text-color, #000000) !important;
 }
 
 body.is-subanagrams #game-color-bar,

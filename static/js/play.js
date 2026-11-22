@@ -9390,6 +9390,121 @@ function stopRotatingLetters() {
     });
 }
 
+function isSubanagramsActive() {
+    const state = window.lastGameState;
+    if (state && (state.game_type === 'subanagrams' || (state.room_id && String(state.room_id).includes('subanagrams')))) return true;
+    if (document.body && document.body.classList.contains('is-subanagrams')) return true;
+    const boardEl = document.getElementById('game-board');
+    if (boardEl && boardEl.classList.contains('is-subanagrams-board')) return true;
+    if (state && state.board && Array.isArray(state.board) && state.board.length === 1 && Array.isArray(state.board[0]) && state.board[0].length >= 6) return true;
+    return false;
+}
+
+function highlightSubanagramsInput(typedText) {
+    if (!isSubanagramsActive()) return false;
+
+    const boardEl = document.getElementById('game-board');
+    if (!boardEl) return false;
+
+    const cells = Array.from(boardEl.querySelectorAll('.board-cell'));
+    if (cells.length === 0) return false;
+
+    const isEnabled = !(window.userSettings && window.userSettings.highlight_typing === false);
+    if (!isEnabled) {
+        cells.forEach(c => {
+            c.classList.remove('typing-highlight');
+            if (typeof applyDensityToCell === 'function') applyDensityToCell(c);
+        });
+        return true;
+    }
+
+    const text = (typedText !== undefined && typedText !== null) ? String(typedText).trim().toUpperCase() : '';
+
+    // If text is empty, immediately clear all typing highlights and selection
+    if (!text) {
+        cells.forEach(c => {
+            c.classList.remove('typing-highlight', 'selected', 'current');
+            if (typeof applyDensityToCell === 'function') applyDensityToCell(c);
+        });
+        if (typeof mouseState !== 'undefined' && mouseState && !mouseState.isDown) {
+            mouseState.selectedPath = [];
+            mouseState.visitedCells = new Set();
+        }
+        return true;
+    }
+
+    // Match typed letters against board cells in DOM order (1-to-1 matching without reusing cells)
+    const usedIndices = new Set();
+    const matchedCells = [];
+    let i = 0;
+    while (i < text.length) {
+        let matchIdx = -1;
+        let matchLen = 1;
+        
+        // Handle QU sequence
+        if (text.substring(i, i + 2) === 'QU') {
+            for (let c = 0; c < cells.length; c++) {
+                if (!usedIndices.has(c)) {
+                    const l = (cells[c].dataset.letter || (cells[c].textContent || '')).toUpperCase().trim();
+                    if (l === 'Q' || l === 'QU') {
+                        matchIdx = c;
+                        matchLen = 2;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Handle single character
+        if (matchIdx === -1) {
+            const ch = text[i];
+            for (let c = 0; c < cells.length; c++) {
+                if (!usedIndices.has(c)) {
+                    const l = (cells[c].dataset.letter || (cells[c].textContent || '')).toUpperCase().trim();
+                    if (l === ch || (ch === 'Q' && l === 'QU')) {
+                        matchIdx = c;
+                        matchLen = 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (matchIdx !== -1) {
+            usedIndices.add(matchIdx);
+            matchedCells.push(cells[matchIdx]);
+            i += matchLen;
+        } else {
+            // Character does not match any unused tile on rack
+            i += 1;
+        }
+    }
+
+    // Apply typing-highlight & selected classes to matched cells, remove from unmatched
+    cells.forEach(c => {
+        if (matchedCells.includes(c)) {
+            c.classList.add('typing-highlight', 'selected');
+            c.classList.remove('current');
+        } else {
+            c.classList.remove('typing-highlight', 'selected', 'current');
+        }
+        if (typeof applyDensityToCell === 'function') applyDensityToCell(c);
+    });
+
+    // Synchronize mouseState so Enter-key submission and Enter button submission know the selected path
+    if (typeof mouseState !== 'undefined' && mouseState && !mouseState.isDown) {
+        mouseState.selectedPath = matchedCells.map(c => ({
+            row: parseInt(c.dataset.r || 0, 10),
+            col: parseInt(c.dataset.c || 0, 10),
+            letter: c.dataset.letter || '',
+            face: null
+        }));
+        mouseState.visitedCells = new Set(matchedCells.map(c => `${c.dataset.r || 0},${c.dataset.c || 0}`));
+    }
+
+    return true;
+}
+
 /**
  * Finds if a word can be formed on the board and returns the path of coordinates.
  * Supports the "Q" tile representing "QU".
@@ -9401,8 +9516,12 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
     const cols = board[0].length;
     const upperWord = word.toUpperCase();
 
-    if (window.lastGameState && window.lastGameState.game_type === 'subanagrams') {
-        const seq = (board && board[0]) ? board[0] : [];
+    if (isSubanagramsActive() || (board && board.length === 1 && Array.isArray(board[0]))) {
+        const boardEl = document.getElementById('game-board');
+        const domCells = boardEl ? Array.from(boardEl.querySelectorAll('.board-cell')) : [];
+        const seq = (domCells.length > 0)
+            ? domCells.map(c => (c.dataset.letter || (c.textContent || '')).trim())
+            : ((board && board[0]) ? board[0] : []);
         const used = new Set();
         const path = [];
         let i = 0;
@@ -9412,7 +9531,7 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
             let matchLen = 1;
             if (upperWord.substring(i, i + 2) === 'QU') {
                 for (let c = 0; c < seq.length; c++) {
-                    if (!used.has(c) && String(seq[c]).toUpperCase() === 'Q') {
+                    if (!used.has(c) && (String(seq[c]).toUpperCase() === 'Q' || String(seq[c]).toUpperCase() === 'QU')) {
                         foundIdx = c;
                         matchLen = 2;
                         break;
@@ -9422,7 +9541,7 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
             if (foundIdx === -1) {
                 const ch = upperWord[i];
                 for (let c = 0; c < seq.length; c++) {
-                    if (!used.has(c) && String(seq[c]).toUpperCase() === ch) {
+                    if (!used.has(c) && (String(seq[c]).toUpperCase() === ch || (ch === 'Q' && String(seq[c]).toUpperCase() === 'QU'))) {
                         foundIdx = c;
                         matchLen = 1;
                         break;
@@ -9431,7 +9550,10 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
             }
             if (foundIdx !== -1) {
                 used.add(foundIdx);
-                path.push({ r: 0, c: foundIdx });
+                const colCoord = (domCells[foundIdx] && domCells[foundIdx].dataset.c !== undefined)
+                    ? parseInt(domCells[foundIdx].dataset.c, 10)
+                    : foundIdx;
+                path.push({ r: 0, c: colCoord });
                 i += matchLen;
             } else {
                 possible = false;
@@ -9809,6 +9931,15 @@ function reapplyBoardHighlights() {
     document.querySelectorAll('.board-cell').forEach(cell => {
         cell.classList.remove('selected', 'current', 'typing-highlight', 'review-highlight', 'intermission-highlight');
     });
+
+    // Multiplayer Subanagrams: Reapply live typing highlight
+    if (typeof isSubanagramsActive === 'function' && isSubanagramsActive()) {
+        const wordInputEl = document.getElementById('word-input');
+        if (wordInputEl && wordInputEl.value.trim() && (!mouseState || !mouseState.isDown)) {
+            highlightSubanagramsInput(wordInputEl.value);
+            return;
+        }
+    }
 
     // 1. Reapply mouse selection highlights (drag)
     if (mouseState && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
@@ -10589,6 +10720,13 @@ document.addEventListener('keydown', (e) => {
             if (chatInput && !isMobile) setTimeout(() => chatInput.focus(), 150);
         }
 
+        // SUBANAGRAMS REAL-TIME TYPING HIGHLIGHT:
+        // Execute instantly with 0ms latency directly matching DOM cells
+        if (typeof isSubanagramsActive === 'function' && isSubanagramsActive()) {
+            highlightSubanagramsInput(word);
+            return;
+        }
+
         // Fast path: if empty, clear highlight instantly and cancel any pending search
         if (!word) {
             if (typingHighlightTimeout) {
@@ -10662,6 +10800,12 @@ document.addEventListener('keydown', (e) => {
             }
             cellsToUpdate.forEach(c => applyDensityToCell(c));
         }, 30);
+    });
+
+    wordInputEl.addEventListener('keyup', () => {
+        if (typeof isSubanagramsActive === 'function' && isSubanagramsActive() && !window.isUpdatingFromPath) {
+            highlightSubanagramsInput(wordInputEl.value);
+        }
     });
 }
 initWordSubmission();
@@ -12194,23 +12338,12 @@ window.shuffleSubanagramsBoard = function(e) {
     window.lastRenderedBoardJSON = null;
     renderBoard([shuffled], false, false, window.lastGameState);
 
-    // If word-input has a typed/selected word, remap mouseState to new tile coordinates
+    // If word-input has a typed/selected word, remap mouseState and live highlights to new tile coordinates
     const wordInputEl = document.getElementById('word-input');
     const word = wordInputEl ? wordInputEl.value.trim().toUpperCase() : '';
-    if (word && typeof findWordPathOnBoard === 'function') {
-        const path = findWordPathOnBoard(word, [shuffled]);
-        if (path && typeof mouseState !== 'undefined' && mouseState) {
-            mouseState.selectedPath = path.map(p => ({
-                row: p.r,
-                col: p.c,
-                letter: shuffled[p.c],
-                face: null
-            }));
-            mouseState.visitedCells = new Set(path.map(p => `${p.r},${p.c}`));
-        }
-    }
-
-    if (typeof reapplyBoardHighlights === 'function') {
+    if (word && typeof highlightSubanagramsInput === 'function') {
+        highlightSubanagramsInput(word);
+    } else if (typeof reapplyBoardHighlights === 'function') {
         reapplyBoardHighlights();
     }
 
