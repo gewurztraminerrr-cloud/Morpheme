@@ -2101,9 +2101,9 @@ def remove_definition_api():
             with _DEFS_FILE_LOCK:
                 try:
                     temp_path = DEFINITIONS_PATH + '.tmp'
-                    lines = [f"{k} - {DEFINITIONS_CACHE[k]}\n" for k in sorted(DEFINITIONS_CACHE.keys())]
                     with open(temp_path, 'w', encoding='utf-8') as f:
-                        f.writelines(lines)
+                        for k, v in sorted(DEFINITIONS_CACHE.items(), key=lambda x: x[0]):
+                            f.write(f"{k} - {v}\n")
                     os.replace(temp_path, DEFINITIONS_PATH)
                 except Exception as err:
                     print(f"Error asynchronously saving Definitions.txt after removal: {err}")
@@ -9234,6 +9234,160 @@ def update_input_method(room_id):
     return jsonify({'error': 'Player not found'}), 404
 
 # Definitions and Pronunciations Cache
+import collections
+
+class DefinitionsProxy(dict):
+    """
+    High-performance on-demand definitions cache backed by SQLite.
+    Maintains an in-memory LRU cache of recently accessed words (max 10,000 items, ~2MB RAM)
+    instead of allocating 827,000 strings in RAM (~1.8GB).
+    """
+    def __init__(self, db_path):
+        super().__init__()
+        self.db_path = db_path
+        self._lru = collections.OrderedDict()
+        self._max_lru = 10000
+        self._lock = threading.Lock()
+        self._count_cache = None
+        self._last_count_time = 0
+
+    def get(self, key, default=None):
+        if not key or not isinstance(key, str):
+            return default
+        w = key.strip().upper()
+        with self._lock:
+            if w in self._lru:
+                self._lru.move_to_end(w)
+                return self._lru[w]
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=1.0)
+            cur = conn.cursor()
+            cur.execute("SELECT definition FROM wiktionary_definitions WHERE word = ? LIMIT 1;", (w,))
+            row = cur.fetchone()
+            conn.close()
+            if row and row[0]:
+                defn = row[0].strip()
+                with self._lock:
+                    self._lru[w] = defn
+                    if len(self._lru) > self._max_lru:
+                        self._lru.popitem(last=False)
+                return defn
+        except Exception:
+            pass
+        return default
+
+    def __getitem__(self, key):
+        val = self.get(key)
+        if val is None:
+            raise KeyError(key)
+        return val
+
+    def __setitem__(self, key, value):
+        if not key or not isinstance(key, str):
+            return
+        w = key.strip().upper()
+        d = str(value).strip() if value else ''
+        with self._lock:
+            self._lru[w] = d
+            if len(self._lru) > self._max_lru:
+                self._lru.popitem(last=False)
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=2.0)
+            cur = conn.cursor()
+            cur.execute("INSERT OR REPLACE INTO wiktionary_definitions (word, definition) VALUES (?, ?);", (w, d))
+            conn.commit()
+            conn.close()
+            self._count_cache = None
+        except Exception:
+            pass
+
+    def __contains__(self, key):
+        if not key or not isinstance(key, str):
+            return False
+        w = key.strip().upper()
+        with self._lock:
+            if w in self._lru:
+                return True
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=1.0)
+            cur = conn.cursor()
+            cur.execute("SELECT 1 FROM wiktionary_definitions WHERE word = ? LIMIT 1;", (w,))
+            row = cur.fetchone()
+            conn.close()
+            return bool(row)
+        except Exception:
+            return False
+
+    def pop(self, key, default=None):
+        if not key or not isinstance(key, str):
+            return default
+        w = key.strip().upper()
+        val = None
+        with self._lock:
+            val = self._lru.pop(w, None)
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=2.0)
+            cur = conn.cursor()
+            cur.execute("DELETE FROM wiktionary_definitions WHERE word = ?;", (w,))
+            conn.commit()
+            conn.close()
+            self._count_cache = None
+        except Exception:
+            pass
+        return val or default
+
+    def __len__(self):
+        now = time.time()
+        if self._count_cache is not None and (now - self._last_count_time < 60):
+            return self._count_cache
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=1.0)
+            cur = conn.cursor()
+            cur.execute("SELECT count(*) FROM wiktionary_definitions;")
+            cnt = cur.fetchone()[0]
+            conn.close()
+            self._count_cache = cnt
+            self._last_count_time = now
+            return cnt
+        except Exception:
+            return len(self._lru)
+
+    def keys(self):
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=2.0)
+            cur = conn.cursor()
+            cur.execute("SELECT word FROM wiktionary_definitions;")
+            words = [r[0] for r in cur.fetchall()]
+            conn.close()
+            return words
+        except Exception:
+            return list(self._lru.keys())
+
+    def items(self):
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=2.0)
+            cur = conn.cursor()
+            cur.execute("SELECT word, definition FROM wiktionary_definitions;")
+            res = cur.fetchall()
+            conn.close()
+            return res
+        except Exception:
+            return list(self._lru.items())
+
+    def values(self):
+        try:
+            conn = sqlite3.connect(self.db_path, timeout=2.0)
+            cur = conn.cursor()
+            cur.execute("SELECT definition FROM wiktionary_definitions;")
+            res = [r[0] for r in cur.fetchall()]
+            conn.close()
+            return res
+        except Exception:
+            return list(self._lru.values())
+
+    def __iter__(self):
+        return iter(self.keys())
+
 DEFINITIONS_CACHE = None
 DEFINITIONS_PATH = None
 PRONUNCIATIONS_CACHE = None
@@ -9263,43 +9417,17 @@ def load_definitions():
                     print(f"Error loading words_missing_definitions: {ex}")
 
     # Skip reload only if cache is already populated
-    if DEFINITIONS_CACHE:
+    if DEFINITIONS_CACHE is not None:
         return
 
-    DEFINITIONS_CACHE = {}
-
-    # Search multiple locations for the definitions file
-    search_paths = [
-        os.path.expanduser('~/Desktop/Definitions.txt'),
-        os.path.join(os.path.dirname(__file__), 'dictionaries', 'Definitions.txt'),
-        os.path.join(os.path.dirname(__file__), 'Definitions.txt'),
-    ]
-
-    definitions_path = None
-    for path in search_paths:
-        if os.path.exists(path):
-            definitions_path = path
-            DEFINITIONS_PATH = path
-            break
-
-    if not definitions_path:
-        print(f"Definitions file not found. Searched: {search_paths}")
-        # Safeguard: set DEFINITIONS_PATH to a sensible default so writing works
-        DEFINITIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'Definitions.txt')
-        return
+    DEFINITIONS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'Definitions.txt')
 
     try:
-        print(f"Loading definitions from {definitions_path}...")
-        defs = {}
-        with open(definitions_path, 'r', encoding='utf-8', errors='ignore') as f:
-            for line in f:
-                sep = line.find(' - ')
-                if sep != -1:
-                    defs[line[:sep].strip().upper()] = line[sep+3:].rstrip('\r\n').strip()
-        DEFINITIONS_CACHE = defs
-        print(f"Loaded {len(DEFINITIONS_CACHE)} definitions")
+        print(f"[Definitions] Initializing on-demand SQLite definitions proxy from {DB_PATH}...")
+        DEFINITIONS_CACHE = DefinitionsProxy(DB_PATH)
+        print(f"[Definitions] Initialized on-demand definitions proxy ({len(DEFINITIONS_CACHE):,} definitions available in database)")
     except Exception as e:
-        print(f"Error loading definitions: {e}")
+        print(f"[Definitions] Error initializing DefinitionsProxy: {e}")
         DEFINITIONS_CACHE = {}
 
 def load_pronunciations():
