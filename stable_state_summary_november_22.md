@@ -2,15 +2,15 @@
 
 ## 1. System Synchronization State
 - **Date**: Sunday, November 22, 2026
-- **Latest Commit ID**: `618b638f42e472251a37803d36b80153f3dd1d29`
+- **Latest Commit ID**: `b321367dfe8e9df7c2a1b121a57ec0eccd5bc358`
 - **Git Tag**: `stable-2026-11-22`
 - **GitHub Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme` (`main` branch)
 - **Live Production URL**: `https://morpheme.games/` (HTTP 200 OK)
 - **VPS PM2 Process**: Online (Process ID 0, 0% CPU, normal memory)
 - **Byte-for-Byte Synchronization**:
-  - **Localhost**: Commit `618b638f42e472251a37803d36b80153f3dd1d29`
-  - **GitHub (`main`)**: Commit `618b638f42e472251a37803d36b80153f3dd1d29`
-  - **Production VPS (`morpheme.games`)**: Commit `618b638f42e472251a37803d36b80153f3dd1d29`
+  - **Localhost**: Commit `b321367dfe8e9df7c2a1b121a57ec0eccd5bc358`
+  - **GitHub (`main`)**: Commit `b321367dfe8e9df7c2a1b121a57ec0eccd5bc358`
+  - **Production VPS (`morpheme.games`)**: Commit `b321367dfe8e9df7c2a1b121a57ec0eccd5bc358`
 
 ---
 
@@ -62,7 +62,14 @@
 - **Theme Support**:
   - Ensured all moderation tables are readable and styled cleanly across all color themes: Default, Dark, Light, and White.
 
-### E. Architectural Integrity & Strict Boundaries
+### E. Automatic Lobby Player Count Updates (`static/js/lobby.js`, `templates/index.html`)
+- **Full Real-Time Polling for Every Game Button**:
+  - Updated `startStatsPolling` in `static/js/lobby.js` to invoke `fetchLobbyStats('all')` continuously on every 1-second interval tick when viewing the Lobby (`isOnLobby()`).
+  - Removed mode restrictions (`accumulative_only` and `fcfs_sp_only`) in `updateLobbyButtons`, allowing every game button (`accumulative`, `fcfs`, `split`, `3d`, `subanagrams`) across all times and board dimensions to update its player count in brackets (e.g. `[2]`, `[0]`) dynamically in real-time without requiring manual page reloads or clicking Refresh.
+  - Retained DOM update diffing (`rawText.trim() !== targetText.trim()`) to prevent unnecessary DOM reflows when player counts remain unchanged.
+  - Bumped the cache buster for `static/js/lobby.js` in `templates/index.html` to `?v=1795222000`.
+
+### F. Architectural Integrity & Strict Boundaries
 - **Public Room Isolation**:
   - Standard public rooms (`accumulative`, 4x4, 4x6, 6x8, Split, 3D, Daily) remain completely untouched and unmodified.
 - **Zero Server Drift**:

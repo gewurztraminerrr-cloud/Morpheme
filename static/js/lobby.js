@@ -1418,10 +1418,10 @@ function startStatsPolling() {
     // Immediately do a FULL update (all buttons)
     fetchLobbyStats('all');
 
-    // Auto-poll every 1 second — continuously updates Accumulative buttons
+    // Auto-poll every 1 second — continuously updates all buttons in the lobby
     lobbyStatsInterval = setInterval(() => {
         if (isOnLobby()) {
-            fetchLobbyStats('accumulative_only');
+            fetchLobbyStats('all');
         }
     }, 1000);
 }
@@ -1550,19 +1550,13 @@ window.handleLobbyRefresh = handleLobbyRefresh;
 
 function updateLobbyButtons(stats, mode = 'all') {
     // Stats format: "game_type|board|time": count
-    // mode = 'all'               → update all buttons (FCFS, SP, Accumulative)
-    // mode = 'accumulative_only' → only update Accumulative buttons (auto 1s poll)
-    // mode = 'fcfs_sp_only'      → only update FCFS and SP buttons (Refresh button click)
+    // Updates all lobby buttons (FCFS, Split, Cube, Accumulative, Subanagrams) automatically
     const buttons = document.querySelectorAll('.game-btn, .acc-btn, .fcfs-btn, .split-btn');
     buttons.forEach(btn => {
         const game = (btn.dataset.game || '').toLowerCase().replace('solo_', '');
         const board = (btn.dataset.board || '').toLowerCase();
         const time = btn.dataset.time;
         if (!game || !board || !time) return;
-
-        // Skip filtering based on mode
-        if (mode === 'accumulative_only' && game !== 'accumulative' && game !== 'subanagrams') return;
-        if (mode === 'fcfs_sp_only' && game === 'accumulative') return;
 
         const key = `${game}|${board}|${time}`;
         const count = (stats && stats[key] !== undefined) ? stats[key] : 0;
