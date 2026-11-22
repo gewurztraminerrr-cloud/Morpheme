@@ -6578,11 +6578,17 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
             return rA - rB;
         });
     } else {
-        // Alphabetical sort (Ascending A to Z)
+        // Alphabetical sort (Higher word lengths first, alphabetically within each length)
         filteredWords.sort((a, b) => {
             // Secret bonus word priority (if present)
             if (a.isBonus && !b.isBonus) return -1;
             if (!a.isBonus && b.isBonus) return 1;
+
+            const lenA = Number(a.len) || 0;
+            const lenB = Number(b.len) || 0;
+            if (lenB !== lenA) {
+                return lenB - lenA;
+            }
 
             if (a.wordUpper < b.wordUpper) return -1;
             if (a.wordUpper > b.wordUpper) return 1;
