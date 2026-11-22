@@ -914,6 +914,15 @@ class GameRoom:
             if str(s.user_id) == uid_str:
                 return s
         return None
+
+    def get_state(self, user_id=None):
+        """Get serialized room state snapshot dictionary for client consumption."""
+        try:
+            from app import get_room_state_dict
+            st_dict, _ = get_room_state_dict(self.room_id, uid=user_id)
+            return st_dict
+        except Exception as e:
+            return None
     
     @property
     def time_remaining(self):

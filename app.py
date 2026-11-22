@@ -7612,7 +7612,7 @@ def create_room():
         # Return full state directly on creation so client renders instantly on 1 single roundtrip
         state = None
         try:
-            state = room.get_state(session['user_id'])
+            state, _ = get_room_state_dict(room_id, uid=session.get('user_id'))
         except Exception as se:
             print(f"[create_room] warning getting state: {se}")
 
@@ -7680,7 +7680,7 @@ def join_room(room_id):
         room.add_spectator(user_id, session['username'], rating)
         room.update_player_activity(user_id)
         state = None
-        try: state = room.get_state(user_id)
+        try: state, _ = get_room_state_dict(room_id, uid=user_id)
         except Exception: pass
         return jsonify({'success': True, 'role': 'spectator', 'state': state})
 
@@ -7690,7 +7690,7 @@ def join_room(room_id):
         room.add_spectator(user_id, session['username'], rating)
         room.update_player_activity(user_id)
         state = None
-        try: state = room.get_state(user_id)
+        try: state, _ = get_room_state_dict(room_id, uid=user_id)
         except Exception: pass
         return jsonify({'success': True, 'role': 'spectator', 'notice': 'Rating outside room limit; spectator mode activated.', 'state': state})
 
@@ -7728,7 +7728,7 @@ def join_room(room_id):
         p.has_exceptional_round = has_exceptional 
         room.update_player_activity(user_id)
         state = None
-        try: state = room.get_state(user_id)
+        try: state, _ = get_room_state_dict(room_id, uid=user_id)
         except Exception: pass
         return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False, 'state': state})
     else:
@@ -7740,7 +7740,7 @@ def join_room(room_id):
         room.add_spectator(user_id, session['username'], rating)
         room.update_player_activity(user_id)
         state = None
-        try: state = room.get_state(user_id)
+        try: state, _ = get_room_state_dict(room_id, uid=user_id)
         except Exception: pass
         return jsonify({'success': True, 'role': 'spectator', 'state': state})
 
@@ -8121,11 +8121,16 @@ def send_lobby_chat():
         'messages': state['messages']
     })
 
-@app.route('/api/room/<room_id>/state')
-def get_room_state(room_id):
-    uid = session.get('user_id')
+def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
+    in_req = has_request_context()
+    if uid is None and in_req:
+        uid = session.get('user_id')
     user_rating_for_snapshot = None
-    is_bg_poll = (request.args.get('bg') == '1')
+    if in_req and not is_bg_poll:
+        try:
+            is_bg_poll = (request.args.get('bg') == '1')
+        except Exception:
+            is_bg_poll = False
     if uid:
         room_manager.update_presence(uid)
     
@@ -8135,23 +8140,23 @@ def get_room_state(room_id):
             if str(uid) in getattr(room, 'evicted_users', {}):
                 reason = room.evicted_users.get(str(uid), 'inactivity')
                 print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response (Reason: {reason}).")
-                return jsonify({'error': f'You have been evicted: {reason}', 'evicted': True, 'reason': reason}), 403
+                return None, (jsonify({'error': f'You have been evicted: {reason}', 'evicted': True, 'reason': reason}), 403)
             
             # Timeout check during room state polling
             is_to, _, rem_str, _, _, reason_val = check_user_timeout(uid)
             if is_to:
                 room.remove_player(uid)
                 r_text = reason_val or 'Moderator timeout'
-                return jsonify({
+                return None, (jsonify({
                     'error': f'You are currently timed out for another {rem_str}.',
                     'evicted': True,
                     'timed_out': True,
                     'remaining': rem_str,
                     'timeout_reason': r_text,
                     'reason': f'timeout:{rem_str}|{r_text}'
-                }), 403
+                }), 403)
             
-            is_guest = session.get('is_guest', False)
+            is_guest = session.get('is_guest', False) if in_req else False
 
             # Automatically sync active polling user into room.players OR room.spectators if not already present
             if not room.is_solo and not room.get_player(uid) and not room.get_spectator(uid):
@@ -8186,10 +8191,10 @@ def get_room_state(room_id):
                 is_full = (p_count >= getattr(room, 'max_players', 8)) and (room.game_type not in ['accumulative', 'solo_accumulative'])
 
                 if is_out_of_range or is_full:
-                    print(f"[get_room_state] Auto-syncing user {session.get('username')} as SPECTATOR (rating: {rating}, limits: {room.min_rating}-{room.max_rating}, full: {is_full})")
-                    room.add_spectator(uid, session.get('username', 'Player'), rating)
+                    print(f"[get_room_state] Auto-syncing user {session.get('username') if in_req else 'Player'} as SPECTATOR (rating: {rating}, limits: {room.min_rating}-{room.max_rating}, full: {is_full})")
+                    room.add_spectator(uid, session.get('username', 'Player') if in_req else 'Player', rating)
                 else:
-                    room.add_player(uid, session.get('username', 'Player'), rating, 
+                    room.add_player(uid, session.get('username', 'Player') if in_req else 'Player', rating, 
                                     games_played=games_played, country_flag=country_flag, 
                                     is_guest=is_guest,
                                     is_unrated=r_info['is_unrated'],
@@ -8199,31 +8204,21 @@ def get_room_state(room_id):
                                     config_games_played=r_info.get('config_games_played', 0))
 
             p_obj = room.get_player(uid)
-            if p_obj and not is_guest:
-                # User mandate: If the user in the room is present when the switch is toggled,
-                # keep them Unrated from thereon and let them finish their 10 rounds.
-                if getattr(p_obj, 'is_unrated', False) and getattr(p_obj, 'provisional_games', 0) < 10 and getattr(p_obj, 'rating', 1200) == 1200:
-                    r_info['is_unrated'] = True
-                    try:
-                        conn_up = sqlite3.connect(DB_PATH, timeout=5)
-                        conn_up.execute('UPDATE user_ratings SET is_unrated = 1 WHERE user_id = ? AND (config_key = ? OR config_key = ?)', (uid, config_key, config_key.replace('3d|', 'cube|', 1) if config_key.startswith('3d|') else config_key.replace('cube|', '3d|', 1)))
-                        conn_up.commit()
-                        conn_up.close()
-                    except Exception:
-                        pass
-                p_obj.is_unrated = r_info['is_unrated']
-                p_obj.provisional_games = r_info['provisional_games']
-                p_obj.provisional_ratings_sum = r_info['provisional_ratings_sum']
-                p_obj.provisional_rating = r_info['provisional_rating']
-
-            user_rating_for_snapshot = 'Unrated' if (r_info.get('is_unrated') or (p_obj and getattr(p_obj, 'is_unrated', False))) else rating
+            if p_obj:
+                user_rating_for_snapshot = 'Unrated' if getattr(p_obj, 'is_unrated', False) else getattr(p_obj, 'rating', 1200)
+            else:
+                s_obj = room.get_spectator(uid)
+                user_rating_for_snapshot = getattr(s_obj, 'rating', 1200) if s_obj else 1200
             if p_obj:
                 p_obj.game_room_chat = get_user_chat_setting(uid)
                 p_obj._last_seen_before_update = getattr(p_obj, 'last_active', time.time())
                 _gap = time.time() - p_obj._last_seen_before_update
                 if _gap >= 15.0:
-                    print(f"[Gap-Diag] t={time.time():.1f} uid={uid} room={room_id} gap={_gap:.1f}s wake_up={request.args.get('wake_up')} bg={request.args.get('bg')} state={room.state} ua={'mobile' if 'Mobi' in request.headers.get('User-Agent', '') else 'desktop'}")
-            idle_arg = request.args.get('idle')
+                    wake_arg_val = request.args.get('wake_up') if in_req else None
+                    bg_arg_val = request.args.get('bg') if in_req else None
+                    ua_val = ('mobile' if (in_req and 'Mobi' in request.headers.get('User-Agent', '')) else 'desktop')
+                    print(f"[Gap-Diag] t={time.time():.1f} uid={uid} room={room_id} gap={_gap:.1f}s wake_up={wake_arg_val} bg={bg_arg_val} state={room.state} ua={ua_val}")
+            idle_arg = request.args.get('idle') if in_req else None
             if p_obj and idle_arg is not None:
                 try:
                     idle_val = max(0.0, float(idle_arg))
@@ -8242,13 +8237,14 @@ def get_room_state(room_id):
             if str(uid) in getattr(room, 'evicted_users', {}):
                 reason = room.evicted_users.get(str(uid), 'inactivity')
                 print(f"[get_room_state] User {uid} detected in room.evicted_users after check_inactivity! Returning 403 eviction response (Reason: {reason}).")
-                return jsonify({'error': f'You have been evicted: {reason}', 'evicted': True, 'reason': reason}), 403
+                return None, (jsonify({'error': f'You have been evicted: {reason}', 'evicted': True, 'reason': reason}), 403)
 
         # 1. On-demand state updates & next round transitions safeguard
         # If room is paused in 'waiting' and a human player/spectator is present/polling, wake up immediately!
-        if request.args.get('wake_up') == '1':
+        if in_req and request.args.get('wake_up') == '1':
             _wp = room.get_player(uid) if uid else None
-            print(f"[WakeUp-Diag] uid={uid} room={room_id} state={room.state} tr={room.time_remaining:.1f} idle={(time.time() - getattr(_wp, '_last_seen_before_update', time.time())) if _wp else -1:.1f}s starting={getattr(room, 'starting_round', False)} ua={'mobile' if 'Mobi' in request.headers.get('User-Agent', '') else 'desktop'}")
+            ua_val = ('mobile' if (in_req and 'Mobi' in request.headers.get('User-Agent', '')) else 'desktop')
+            print(f"[WakeUp-Diag] uid={uid} room={room_id} state={room.state} tr={room.time_remaining:.1f} idle={(time.time() - getattr(_wp, '_last_seen_before_update', time.time())) if _wp else -1:.1f}s starting={getattr(room, 'starting_round', False)} ua={ua_val}")
         if is_bg_poll:
             pass  # Minimized-tab poll: never wake paused rooms or fast-forward rounds on its behalf
         elif room.state == 'waiting' and room.time_limit < 7200:
@@ -8487,9 +8483,9 @@ def get_room_state(room_id):
                     print(f"[app.py] Could not reconstruct public hub {room_id}: {re_err}")
 
         if not room:
-             return jsonify({'error': 'Room not found (expired due to inactivity)'}), 404
+             return None, (jsonify({'error': 'Room not found (expired due to inactivity)'}), 404)
             
-        user_id = session.get('user_id')
+        user_id = uid or (session.get('user_id') if in_req else None)
         if user_id and not is_bg_poll:
             room.is_closing = False
 
@@ -8830,8 +8826,8 @@ def get_room_state(room_id):
                 'round_end_time': room.round_end_time if room.state == 'active' else 0,
                 'intermission_end_time': room.intermission_end_time if room.state == 'intermission' else 0,
                 'server_time': time.time(),
-                'your_username': session.get('username'),
-                'your_user_id': session.get('user_id'),
+                'your_username': (session.get('username') if in_req else None) or (getattr(requesting_player, 'username', None) if requesting_player else None),
+                'your_user_id': (session.get('user_id') if in_req else None) or uid,
                 'your_rating': user_rating_for_snapshot,
                 'board': board_to_send,
                 'board_dimensions': room.board_dimensions,
@@ -8920,16 +8916,25 @@ def get_room_state(room_id):
                 'board_gen_error': getattr(room, 'board_gen_error', ''),
             }
         # END LOCK — JSON serialization happens outside to avoid holding lock during encoding
-        resp = jsonify(snapshot)
-        resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-        resp.headers['Pragma'] = 'no-cache'
-        resp.headers['Expires'] = '0'
-        return resp
+        return snapshot, None
 
     except Exception as e:
         import traceback
-        print(f"ERROR in get_room_state: {e}\n{traceback.format_exc()}")
-        return jsonify({'error': 'Server error'}), 500
+        print(f"ERROR in get_room_state_dict: {e}\n{traceback.format_exc()}")
+        return None, (jsonify({'error': 'Server error'}), 500)
+
+@app.route('/api/room/<room_id>/state')
+def get_room_state(room_id):
+    uid = session.get('user_id') if has_request_context() else None
+    is_bg_poll = (request.args.get('bg') == '1') if has_request_context() else False
+    snapshot, err = get_room_state_dict(room_id, uid=uid, is_bg_poll=is_bg_poll)
+    if err:
+        return err
+    resp = jsonify(snapshot)
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    resp.headers['Pragma'] = 'no-cache'
+    resp.headers['Expires'] = '0'
+    return resp
 
 @app.route('/api/room/<room_id>/propose-board', methods=['POST'])
 def propose_board(room_id):
