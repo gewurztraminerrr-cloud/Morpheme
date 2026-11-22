@@ -7479,8 +7479,6 @@ def cleanup_user_rooms_entirely(user_id):
 @app.route('/api/room/create', methods=['POST'])
 def create_room():
     try:
-        with open(DEBUG_FLOW_PATH, 'a') as f:
-            f.write(f"\n[app.py] create_room called at {time.time()}\n")
         if 'user_id' not in session:
             return jsonify({'error': 'Not authenticated'}), 401
         
@@ -7586,25 +7584,39 @@ def create_room():
         
         # Start first round immediately if room does not have a board
         if not room.board:
-            print(f"[app.py] Kickstarting first round for NEW room {room_id}")
-            room.state = 'loading'
-            room.starting_round = True
-            room._round_start_init_time = time.time()
-            if not getattr(room, '_start_round_thread_active', False):
-                room._start_round_thread_active = True
-                def _bg_start():
-                    try:
-                        room_manager.start_round(room_id)
-                    except Exception as e:
-                        print(f"[app.py] Error in background start_round for {room_id}: {e}")
-                    finally:
-                        room._start_round_thread_active = False
-                t = threading.Thread(target=_bg_start, daemon=True)
-                t.start()
+            print(f"[app.py] Kickstarting first round for NEW/EMPTY room {room_id}")
+            if getattr(room, 'game_type', None) == 'subanagrams':
+                # Subanagrams round generation takes < 5ms: execute synchronously so board is immediately ready!
+                try:
+                    room_manager.start_round(room_id)
+                except Exception as e:
+                    print(f"[app.py] Error in synchronous start_round for subanagrams room {room_id}: {e}")
+            else:
+                room.state = 'loading'
+                room.starting_round = True
+                room._round_start_init_time = time.time()
+                if not getattr(room, '_start_round_thread_active', False):
+                    room._start_round_thread_active = True
+                    def _bg_start():
+                        try:
+                            room_manager.start_round(room_id)
+                        except Exception as e:
+                            print(f"[app.py] Error in background start_round for {room_id}: {e}")
+                        finally:
+                            room._start_round_thread_active = False
+                    t = threading.Thread(target=_bg_start, daemon=True)
+                    t.start()
         else:
             print(f"[app.py] Room {room_id} already has a board. Skipping redundant start_round.")
-        
-        return jsonify({'success': True, 'room_id': room_id})
+
+        # Return full state directly on creation so client renders instantly on 1 single roundtrip
+        state = None
+        try:
+            state = room.get_state(session['user_id'])
+        except Exception as se:
+            print(f"[create_room] warning getting state: {se}")
+
+        return jsonify({'success': True, 'room_id': room_id, 'state': state})
     except Exception as e:
         import traceback
         print(f"[create_room] Error: {e}\n{traceback.format_exc()}")
@@ -7667,14 +7679,20 @@ def join_room(room_id):
     if as_spectator:
         room.add_spectator(user_id, session['username'], rating)
         room.update_player_activity(user_id)
-        return jsonify({'success': True, 'role': 'spectator'})
+        state = None
+        try: state = room.get_state(user_id)
+        except Exception: pass
+        return jsonify({'success': True, 'role': 'spectator', 'state': state})
 
     # Rating limit check for FCFS, SP, and rating-restricted rooms: force spectator mode if rating outside limits
     has_limits = (room.min_rating > 0 or room.max_rating < 9999)
     if has_limits and (rating < room.min_rating or rating > room.max_rating or session.get('is_guest', False)):
         room.add_spectator(user_id, session['username'], rating)
         room.update_player_activity(user_id)
-        return jsonify({'success': True, 'role': 'spectator', 'notice': 'Rating outside room limit; spectator mode activated.'})
+        state = None
+        try: state = room.get_state(user_id)
+        except Exception: pass
+        return jsonify({'success': True, 'role': 'spectator', 'notice': 'Rating outside room limit; spectator mode activated.', 'state': state})
 
     # Get extra stats (games_played, country_flag)
     games_played = 0
@@ -7709,7 +7727,10 @@ def join_room(room_id):
         p = room.players[-1] # Valid since we just added or updated
         p.has_exceptional_round = has_exceptional 
         room.update_player_activity(user_id)
-        return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False})
+        state = None
+        try: state = room.get_state(user_id)
+        except Exception: pass
+        return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False, 'state': state})
     else:
         # If room is full, automatically join as spectator instead of failing (except Accumulative and Subanagrams)
         if room.game_type in ['accumulative', 'solo_accumulative', 'subanagrams']:
@@ -7718,7 +7739,10 @@ def join_room(room_id):
         print(f"[app.py] Room {room_id} is full. Automatically joining {session['username']} as spectator.")
         room.add_spectator(user_id, session['username'], rating)
         room.update_player_activity(user_id)
-        return jsonify({'success': True, 'role': 'spectator'})
+        state = None
+        try: state = room.get_state(user_id)
+        except Exception: pass
+        return jsonify({'success': True, 'role': 'spectator', 'state': state})
 
 @app.route('/api/room/<room_id>/leave', methods=['POST', 'GET'])
 def leave_room(room_id):
@@ -8127,34 +8151,35 @@ def get_room_state(room_id):
                     'reason': f'timeout:{rem_str}|{r_text}'
                 }), 403
             
-            # Fetch user's rating for this room's configuration
-            rating = 1200
-            games_played = 0
-            country_flag = '🏳️'
             is_guest = session.get('is_guest', False)
-            r_info = {'rating': 1200, 'is_unrated': False, 'provisional_games': 0, 'provisional_ratings_sum': 0.0, 'provisional_rating': 1200.0}
-            if is_guest:
-                rating = 0
-            else:
-                conn = sqlite3.connect(DB_PATH, timeout=30)
-                try:
-                    game_type_base = str(room.game_type).replace('solo_', '')
-                    config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
-                    is_24h = (room.time_limit >= 7200)
-                    r_info = get_user_config_rating_data(conn, uid, config_key, is_24h=is_24h)
-                    rating = r_info['rating']
-                    cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (uid,))
-                    row2 = cur.fetchone()
-                    if row2:
-                        games_played = row2[0]
-                        if row2[1]: country_flag = row2[1]
-                except Exception as e:
-                    print(f"[get_room_state] Error fetching rating: {e}")
-                finally:
-                    conn.close()
 
             # Automatically sync active polling user into room.players OR room.spectators if not already present
             if not room.is_solo and not room.get_player(uid) and not room.get_spectator(uid):
+                # Fetch user's rating for this room's configuration ONLY when first syncing
+                rating = 1200
+                games_played = 0
+                country_flag = '🏳️'
+                r_info = {'rating': 1200, 'is_unrated': False, 'provisional_games': 0, 'provisional_ratings_sum': 0.0, 'provisional_rating': 1200.0}
+                if is_guest:
+                    rating = 0
+                else:
+                    conn = sqlite3.connect(DB_PATH, timeout=10)
+                    try:
+                        game_type_base = str(room.game_type).replace('solo_', '')
+                        config_key = f"{game_type_base}|{room.board_dimensions}|{room.time_limit}"
+                        is_24h = (room.time_limit >= 7200)
+                        r_info = get_user_config_rating_data(conn, uid, config_key, is_24h=is_24h)
+                        rating = r_info['rating']
+                        cur = conn.execute('SELECT games_played, country_flag FROM users WHERE id = ?', (uid,))
+                        row2 = cur.fetchone()
+                        if row2:
+                            games_played = row2[0]
+                            if row2[1]: country_flag = row2[1]
+                    except Exception as e:
+                        print(f"[get_room_state] Error fetching rating: {e}")
+                    finally:
+                        conn.close()
+
                 has_limits = (room.min_rating > 0 or room.max_rating < 9999)
                 is_out_of_range = has_limits and (rating < room.min_rating or rating > room.max_rating or is_guest)
                 p_count = len([p for p in room.players if not p.is_ai])
@@ -17557,7 +17582,7 @@ if __name__ == '__main__':
             port=5001,
             threads=64,
             connection_limit=1000,
-            channel_timeout=20,
+            channel_timeout=120,
             cleanup_interval=10,
             backlog=256
         )

@@ -5690,30 +5690,14 @@ class BoardGenerator:
 
         import time
 
-        try:
-            with open(DEBUG_FLOW_PATH, "a") as f:
-                f.write(f"[board_generator.py] _embed_bonus_word: Attempting to embed '{bonus_word}' at {time.time()}\n")
-        except Exception:
-            pass
-
         for start_r, start_c in possible_starts:
             path = backtrack([(start_r, start_c)])
             if path:
                 # Embed the processed letters
                 for i, (r, c) in enumerate(path):
                     board[r][c] = processed_word[i]
-                try:
-                    with open(DEBUG_FLOW_PATH, "a") as f:
-                        f.write(f"[board_generator.py] _embed_bonus_word: SUCCESS at {time.time()}\n")
-                except Exception:
-                    pass
                 return path
 
-        try:
-            with open(DEBUG_FLOW_PATH, "a") as f:
-                f.write(f"[board_generator.py] _embed_bonus_word: FAILED at {time.time()}\n")
-        except Exception:
-            pass
         return None
 
     def _has_either_or_ambiguity(self, board, dictionary, use_added_words=False):

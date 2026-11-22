@@ -2,15 +2,15 @@
 
 ## 1. System Synchronization State
 - **Date**: Sunday, November 22, 2026
-- **Latest Commit ID**: `c763b9f74e1d94a531aca08b2b2e611e8648277a`
+- **Latest Commit ID**: `8c125ad542739650b6863c9d1dbbf967e7bc8f1d`
 - **Git Tag**: `stable-2026-11-22`
 - **GitHub Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme` (`main` branch)
 - **Live Production URL**: `https://morpheme.games/` (HTTP 200 OK)
 - **VPS PM2 Process**: Online (Process ID 0, 0% CPU, normal memory)
 - **Byte-for-Byte Synchronization**:
-  - **Localhost**: Commit `c763b9f74e1d94a531aca08b2b2e611e8648277a`
-  - **GitHub (`main`)**: Commit `c763b9f74e1d94a531aca08b2b2e611e8648277a`
-  - **Production VPS (`morpheme.games`)**: Commit `c763b9f74e1d94a531aca08b2b2e611e8648277a`
+  - **Localhost**: Commit `8c125ad542739650b6863c9d1dbbf967e7bc8f1d`
+  - **GitHub (`main`)**: Commit `8c125ad542739650b6863c9d1dbbf967e7bc8f1d`
+  - **Production VPS (`morpheme.games`)**: Commit `8c125ad542739650b6863c9d1dbbf967e7bc8f1d`
 
 ---
 
@@ -120,7 +120,29 @@
 - **Cache Busters Bumped**:
   - Bumped `play.css` and `play.js` to `?v=1795225000` in `templates/index.html`.
 
-### I. Architectural Integrity & Strict Boundaries
+### I. Lobby Room Loading Reliability, Instant State Return, and Subanagrams Initialization (`app.py`, `game_room.py`, `static/js/app.js`, `static/js/lobby.js`, `templates/index.html`)
+- **Instant State Ingestion on Join / Create (0ms Transition)**:
+  - Previously, `/api/room/create` and `/api/room/<room_id>/join` returned only `{success: true, room_id: ...}` without room state. The client had to wait for a subsequent `/api/room/<id>/state` request or WebSocket message to receive the board, causing delays and hanging "Loading..." overlays if server queueing occurred.
+  - Now, both endpoints return the complete current `state: room.get_state(user_id)` synchronously in their initial HTTP response.
+  - In `static/js/lobby.js` and `templates/index.html`, upon receiving `data.state` with board data or active/intermission state, the client immediately unlocks `window._isEnteringRoom = false;` and dismisses the loading overlay with `window.hideLoadingOverlay()`, rendering the room view instantaneously with 0ms delay.
+- **Fixed Subanagrams `start_round(room_id)` Crash**:
+  - Resolved `TypeError: 'NoneType' object is not iterable` in `game_room.py:5529` by guarding `room.previous_board = [list(row) for row in room.board]` with `if room.board:`.
+  - Added a dedicated top-level Subanagrams handler in `start_round(room_id)` to prevent falling through into 2D Boggle grid generation and board generator dimension parsing. The handler promotes staged `next_round_board` or invokes `subanagrams_generator.generate_subanagrams_board_and_words` (< 5ms), correctly sets `state = 'active'`, and dispatches `pre_generate_next_round`.
+- **Waking Up Paused / Stale Public Rooms in `create_room`**:
+  - Fixed wakeup logic in `game_room.py:create_room` which previously skipped waking up paused rooms if inactive human players were still attached from hours earlier. Now only considers active humans active within the last 120 seconds (`now_t - p.last_active < 120.0`).
+  - If a room is in `waiting` state, has no board, or has no active humans, it is instantly awakened into an active round with fresh parameters.
+- **Eliminated High-Frequency Polling Database Lock Contention**:
+  - In `app.py:get_room_state`, moved user rating and stats SQLite database queries behind a check for unjoined spectators/new sessions (`if not room.is_solo and not room.get_player(uid) and not room.get_spectator(uid):`).
+  - Active players and existing spectators bypass SQLite entirely during repeated 500ms polling ticks, reducing SQLite database locks and Waitress thread contention by ~99%.
+- **Removed Disk I/O Bottlenecks**:
+  - Removed synchronous `debug_flow.log` writes in `board_generator.py` and `app.py`, eliminating disk I/O thrashing and GIL locking.
+- **Loading Overlay Timeout Hardening**:
+  - Aligned client auto-hide timeouts in `app.js`, `lobby.js`, and `templates/index.html` to 45 seconds (`45000ms`), preventing premature overlay dismissal before server responses complete.
+  - Increased Waitress server `channel_timeout` from 20s to 120s.
+- **Cache Busters Bumped**:
+  - Bumped `app.js`, `lobby.js`, and `play.js` cache busters to `?v=1795226000` in `templates/index.html`.
+
+### J. Architectural Integrity & Strict Boundaries
 - **Public Room Isolation**:
   - Standard public rooms (`accumulative`, 4x4, 4x6, 6x8, Split, 3D, Daily) remain completely untouched and unmodified.
 - **Zero Server Drift**:

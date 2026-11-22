@@ -4269,16 +4269,20 @@ class RoomManager:
                             not existing_room.is_solo and
                             not existing_room.is_private and
                             not str(existing_room.room_id).startswith('practice_')):
-                            # WAKE UP CHECK: If room is empty of human players and in waiting/intermission state, wake it up to active Round 1!
+                            # WAKE UP CHECK: If room is in waiting state or empty of active human players, wake it up to active Round 1!
                             humans = [p for p in existing_room.players if not p.is_ai]
-                            if len(humans) == 0 and existing_room.time_limit < 7200:
-                                if existing_room.state in ['waiting', 'intermission']:
+                            now_t = time.time()
+                            active_humans = [p for p in humans if (now_t - getattr(p, 'last_active', 0)) < 120.0]
+                            is_empty_or_inactive = (len(active_humans) == 0)
+                            needs_wakeup = (existing_room.state == 'waiting' or not existing_room.board or (is_empty_or_inactive and existing_room.state == 'intermission'))
+                            if needs_wakeup and existing_room.time_limit < 7200:
+                                if existing_room.state in ['waiting', 'intermission'] or not existing_room.board:
                                     if existing_room.game_type == 'subanagrams':
-                                        # If empty room was sitting in waiting state, always refresh with newly randomized board
-                                        if existing_room.state == 'waiting':
+                                        # If room was sitting in waiting state or board is missing, refresh with newly randomized board
+                                        if existing_room.state == 'waiting' or not existing_room.board:
                                             existing_room.board = None
                                             existing_room.next_round_board = None
-                                        elif existing_room.board and len(existing_room.board) > 0:
+                                        elif existing_room.board and len(existing_room.board) > 0 and existing_room.state == 'active':
                                             print(f"[RoomManager] Subanagrams singleton already has active board: {existing_room.room_id}")
                                             return existing_room
                                         # Fast-path 2: If next_round_board is already staged, promote it instantly in <1ms!
@@ -5520,7 +5524,7 @@ class RoomManager:
         try:
             # Save previous round data before generating new one
             has_prev = hasattr(room, 'previous_all_words') and room.previous_all_words
-            if not has_prev and room.all_words:
+            if not has_prev and room.all_words and room.board:
                 # USER REQUEST: Absolute filter for history. 
                 # Display Floor is 4L, but must also respect round minimum (e.g. 5L).
                 display_min_hist = getattr(room, 'current_min_length', 3)
@@ -5530,6 +5534,89 @@ class RoomManager:
                 print(f"[RoomManager] Saved {len(room.previous_all_words)} words to history (Fallback/Round {room.current_round})")
             elif has_prev:
                 print(f"[RoomManager] Using existing history snapshot (intermission) for Round {room.current_round}")
+
+            # SUBANAGRAMS ROUND INITIALIZATION: Dedicated fast path (< 5ms)
+            if getattr(room, 'game_type', None) == 'subanagrams':
+                print(f"[RoomManager] Starting Subanagrams round for {room_id}...")
+                b_board = None
+                b_words = None
+                b_bonus = None
+                fparams = None
+
+                # Fast-path 1: Promote next_round_board if already staged
+                if getattr(room, 'next_round_board', None) and getattr(room, 'next_round_words', None):
+                    print(f"[RoomManager] Promoting staged Subanagrams board for {room_id}")
+                    b_board = room.next_round_board
+                    b_words = room.next_round_words
+                    b_bonus = getattr(room, 'next_round_bonus', None)
+                    fparams = getattr(room, 'next_spinner_params', None) or dict(room.spinner_params or {})
+                    room.next_round_board = None
+                    room.next_round_words = None
+                    room.next_round_bonus = None
+                else:
+                    from subanagrams_generator import generate_subanagrams_board_and_words
+                    sp = getattr(room, 'next_spinner_params', None) or getattr(room, 'frozen_revealed_params', None) or room.spinner_params
+                    if not sp:
+                        sp = SpinnerSet.generate_subanagrams_params(previous_params=getattr(room, 'spinner_params', None))
+                    res = generate_subanagrams_board_and_words(sp)
+                    if res:
+                        b_board, b_words, b_bonus, fparams = res
+                    else:
+                        from subanagrams_generator import solve_subanagrams, get_subanagrams_dict
+                        fallback_seq = ['S', 'T', 'A', 'R', 'L', 'I', 'N', 'G']
+                        dict_data = get_subanagrams_dict('NWL', False)
+                        b_words = solve_subanagrams('STARLING', dict_data, min_length=3)
+                        b_board = [fallback_seq]
+                        b_bonus = 'STARLING'
+                        fparams = {
+                            'board_dimensions': 'subanagrams',
+                            'time_limit': 120,
+                            'min_word_length': 3,
+                            'sequence_length': 8,
+                            'dictionary': 'NWL',
+                            'board_format': 'Word Guaranteed',
+                            'mode': 'word',
+                            'word_count_range': '200-300',
+                            'difficulty': 'Practice'
+                        }
+
+                if b_board and b_words:
+                    room.board = b_board
+                    room.sequence_length = fparams.get('sequence_length', len(b_board[0]))
+                    room.all_words = set(b_words)
+                    room.all_words_paths = {w: [] for w in b_words}
+                    room.bonus_word = b_bonus
+                    seq_len_actual = len(b_board[0]) if (b_board and len(b_board) > 0 and isinstance(b_board[0], list)) else len(b_board)
+                    has_full = any(len(w) == seq_len_actual for w in b_words)
+                    final_fmt = 'Word Guaranteed' if (has_full and fparams.get('mode') == 'word') else 'Totally Random'
+                    room.current_board_format = final_fmt
+                    fparams['board_format'] = final_fmt
+                    fparams['mode'] = 'word' if final_fmt == 'Word Guaranteed' else 'random'
+                    room.current_min_length = fparams.get('min_word_length', 3)
+                    room.current_dictionary = fparams.get('dictionary', 'CSW')
+                    room.use_added_words = fparams.get('use_added_words', False)
+                    room.spinner_params = dict(fparams)
+                    room.frozen_revealed_params = dict(fparams)
+                    room.current_word_count_range = fparams.get('word_count_range', '100-200')
+                    room.spinner_params_generated = True
+                    from scoring import calculate_word_score
+                    room.solved_words_with_scores = {
+                        w: calculate_word_score(w, b_bonus, board_format='Normal', return_details=True)
+                        for w in b_words
+                    }
+                    room.total_words_count = len(b_words)
+                    room.initial_total_words = len(b_words)
+                    room.recalculate_total_points()
+                    room.state = 'active'
+                    room.round_start_time = time.time()
+                    room.current_round = max(1, getattr(room, 'current_round', 0) + 1)
+                    room._initial_board_delivered = True
+                    room.starting_round = False
+                    room.board_search_loading = False
+                    room.board_search_started = False
+                    self.pre_generate_next_round(room.room_id)
+                    print(f"[RoomManager] Subanagrams start_round completed successfully for {room_id} (Round {room.current_round})")
+                    return True
             
             # CLEAR BOARD & WORDS IMMEDIATELY for 500+ (IO) rounds to avoid flickering
             wc_range = room.spinner_params.get('word_count_range', '100-200')

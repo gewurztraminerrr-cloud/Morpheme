@@ -68,7 +68,7 @@ async function enterLobbyRoom(rawBtn) {
     window._isEnteringRoom = true;
     window._isEnteringRoomTime = now;
     window._userLeftRoom = false;
-    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 45000);
     if (window._lobbyEnterCooldown) {
         await new Promise(r => setTimeout(r, 100));
         window._lobbyEnterCooldown = false;
@@ -189,6 +189,10 @@ async function enterLobbyRoom(rawBtn) {
             if (data.state && typeof window.updateGameState === 'function') {
                 window.updateGameState(data.state);
             }
+            if (data.state && (data.state.board || data.state.state === 'intermission')) {
+                window._isEnteringRoom = false;
+                if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
+            }
 
             setTimeout(() => {
                 const input = document.getElementById('word-input');
@@ -235,7 +239,7 @@ async function enterLobbyRoom(rawBtn) {
 }
 
 async function handleAccumulativeClick(accBtn) {
-    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 45000);
     return enterLobbyRoom(accBtn);
 }
 window.handleAccumulativeClick = handleAccumulativeClick;
@@ -259,7 +263,7 @@ async function handleLobbyButtonClickCore(btn, evt) {
 
     if (realBtn && (realBtn.classList.contains('acc-btn') || gameType === 'accumulative' || gameType === 'subanagrams')) {
         if (typeof window.showLoadingOverlay === 'function') {
-            window.showLoadingOverlay('Loading...', 25000);
+            window.showLoadingOverlay('Loading...', 45000);
         }
         enterLobbyRoom(realBtn);
     } else {
@@ -318,7 +322,7 @@ async function createRoom(config, minRating, maxRating) {
     }
     window._isCreatingRoom = true;
     window._userLeftRoom = false;
-    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 25000);
+    if (typeof window.showLoadingOverlay === 'function') window.showLoadingOverlay('Loading...', 45000);
     if (typeof window.stopGamePolling === 'function') window.stopGamePolling();
     window.currentRoomId = null;
 
@@ -395,6 +399,10 @@ async function createRoom(config, minRating, maxRating) {
             
             if (data.state && typeof window.updateGameState === 'function') {
                 window.updateGameState(data.state);
+            }
+            if (data.state && (data.state.board || data.state.state === 'intermission')) {
+                window._isEnteringRoom = false;
+                if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
             }
 
             // Force focus
@@ -474,7 +482,7 @@ function setupLobbyEvents() {
             window._isEnteringRoom = true;
             window._isEnteringRoomTime = now;
             window._userLeftRoom = false;
-            if (window.showLoadingOverlay) window.showLoadingOverlay('Loading...', 25000);
+            if (window.showLoadingOverlay) window.showLoadingOverlay('Loading...', 45000);
             if (window._userIsTimedOut || (window._userTimeoutInfo && window._userTimeoutInfo.timed_out)) {
                 window._isEnteringRoom = false;
                 if (typeof window.hideLoadingOverlay === 'function') window.hideLoadingOverlay();
