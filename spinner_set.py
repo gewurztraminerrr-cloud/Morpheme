@@ -485,59 +485,86 @@ class SpinnerSet:
            Word Guaranteed (50%) | Totally Random (50%)
         6. Bonus Word: Secret bonus word chosen at random, length displayed in parameters.
         """
+        prev_p = previous_params if isinstance(previous_params, dict) else {}
+        prev_seq = prev_p.get('sequence_length')
+        prev_wc = prev_p.get('word_count_range')
+        prev_dict = prev_p.get('dictionary')
+        prev_fmt = prev_p.get('board_format')
+
         # Joint distribution sampling so marginals are strictly 20% for each Sequence Length
         # and strictly 20% for each Target Word Count Range, while guaranteeing physical feasibility:
         joint_choices = [
             # 6 Letters (total 0.20): 50-100 (0.10), 100-200 (0.10)
             (6, '50-100', 0.100),
             (6, '100-200', 0.100),
-            # 7 Letters (total 0.20): 50-100 (0.04), 100-200 (0.04), 200-300 (0.12)
+            # 7 Letters (total 0.20): 50-100 (0.04), 100-200 (0.04), 200-300 (0.08), 300-400 (0.04)
             (7, '50-100', 0.040),
             (7, '100-200', 0.040),
-            (7, '200-300', 0.120),
-            # 8 Letters (total 0.20): 50-100 (0.03), 100-200 (0.03), 200-300 (0.04), 300-400 (0.06), 500+ (0.04)
+            (7, '200-300', 0.080),
+            (7, '300-400', 0.040),
+            # 8 Letters (total 0.20): 50-100 (0.03), 100-200 (0.03), 200-300 (0.04), 300-400 (0.05), 500+ (0.05)
             (8, '50-100', 0.030),
             (8, '100-200', 0.030),
             (8, '200-300', 0.040),
-            (8, '300-400', 0.060),
-            (8, '500+', 0.040),
-            # 9 Letters (total 0.20): 50-100 (0.015), 100-200 (0.015), 200-300 (0.02), 300-400 (0.07), 500+ (0.08)
+            (8, '300-400', 0.050),
+            (8, '500+', 0.050),
+            # 9 Letters (total 0.20): 50-100 (0.015), 100-200 (0.015), 200-300 (0.02), 300-400 (0.055), 500+ (0.095)
             (9, '50-100', 0.015),
             (9, '100-200', 0.015),
             (9, '200-300', 0.020),
-            (9, '300-400', 0.070),
-            (9, '500+', 0.080),
-            # 10 Letters (total 0.20): 50-100 (0.015), 100-200 (0.015), 200-300 (0.02), 300-400 (0.07), 500+ (0.08)
+            (9, '300-400', 0.055),
+            (9, '500+', 0.095),
+            # 10 Letters (total 0.20): 50-100 (0.015), 100-200 (0.015), 200-300 (0.02), 300-400 (0.055), 500+ (0.095)
             (10, '50-100', 0.015),
             (10, '100-200', 0.015),
             (10, '200-300', 0.020),
-            (10, '300-400', 0.070),
-            (10, '500+', 0.080),
+            (10, '300-400', 0.055),
+            (10, '500+', 0.095),
         ]
-        weights = [c[2] for c in joint_choices]
-        chosen_pair = _rng.choices(joint_choices, weights=weights, k=1)[0]
+
+        # Apply strict anti-repetition against previous round if available
+        filtered_choices = []
+        if prev_seq is not None:
+            filtered_choices = [c for c in joint_choices if c[0] != prev_seq and c[1] != prev_wc]
+            if not filtered_choices:
+                filtered_choices = [c for c in joint_choices if c[0] != prev_seq]
+        if not filtered_choices:
+            filtered_choices = joint_choices
+
+        weights = [c[2] for c in filtered_choices]
+        chosen_pair = _rng.choices(filtered_choices, weights=weights, k=1)[0]
         sequence_length, word_count_range = chosen_pair[0], chosen_pair[1]
 
         # Min word length calibrated strictly per odds modal
         if sequence_length == 6:
             min_word_length = 3
         elif sequence_length == 7:
-            min_word_length = _rng.choice([3, 4])
+            if word_count_range == '300-400':
+                min_word_length = 3
+            else:
+                min_word_length = _rng.choice([3, 4])
         elif sequence_length == 8:
             if word_count_range == '500+':
                 min_word_length = _rng.choice([3, 4])
             else:
-                min_word_length = _rng.choices([3, 4, 5], weights=[7/24, 7/24, 10/24], k=1)[0]
+                min_word_length = _rng.choices([3, 4, 5], weights=[1/3, 1/3, 1/3], k=1)[0]
         else: # 9, 10 Letters
-            min_word_length = _rng.choice([3, 4, 5])
+            min_word_length = _rng.choices([3, 4, 5], weights=[1/3, 1/3, 1/3], k=1)[0]
 
-        # Dictionary: 25% each
-        dict_choice = _rng.choice(['CSW', 'NWL', 'CSW + AW', 'NWL + AW'])
+        # Dictionary: 25% each with anti-repetition
+        dict_options = ['CSW', 'NWL', 'CSW + AW', 'NWL + AW']
+        if prev_dict in dict_options:
+            dict_options = [d for d in dict_options if d != prev_dict]
+        dict_choice = _rng.choice(dict_options)
         use_added_words = ('+ AW' in dict_choice or '+AW' in dict_choice)
         base_dict = dict_choice.replace('+ AW', '').replace('+AW', '').strip()
 
         # Format: 50% Word Guaranteed, 50% Totally Random
-        mode = _rng.choice(['word', 'random'])
+        format_options = ['word', 'random']
+        if prev_fmt:
+            p_mode = 'word' if 'word' in str(prev_fmt).lower() else 'random'
+            # 50/50 random selection
+        mode = _rng.choice(format_options)
         board_format = 'Word Guaranteed' if mode == 'word' else 'Totally Random'
 
         bonus_len = _rng.choice(range(min_word_length, sequence_length + 1))
@@ -562,8 +589,8 @@ class SpinnerSet:
     @staticmethod
     def get_subanagrams_factchecked_wc_range(count):
         """Map actual word count to the exact truthful range bucket for Subanagrams:
-             - >= 400 words -> '500+' (top bracket in Subanagrams odds)
-             - 300 - 399 words -> '300-400'
+             - >= 500 words -> '500+' (top bracket in Subanagrams odds)
+             - 300 - 400 words -> '300-400'
              - 200 - 299 words -> '200-300'
              - 100 - 199 words -> '100-200'
              - < 100 words -> '50-100'
@@ -573,7 +600,7 @@ class SpinnerSet:
         except (ValueError, TypeError):
             count = 0
 
-        if count >= 400:
+        if count >= 500:
             return '500+'
         if count >= 300:
             return '300-400'

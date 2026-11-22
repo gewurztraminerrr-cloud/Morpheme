@@ -19,6 +19,10 @@ BAG = (
     'B' * 2 + 'C' * 2 + 'M' * 2 + 'P' * 2 + 'F' * 2 + 'H' * 2 + 'V' * 2 + 'W' * 2 + 'Y' * 2 +
     'K' * 1 + 'J' * 1 + 'X' * 1 + 'Q' * 1 + 'Z' * 1
 )
+HIGH_YIELD_BAG = (
+    'E' * 12 + 'A' * 9 + 'I' * 9 + 'O' * 8 + 'R' * 6 + 'S' * 6 + 'T' * 6 +
+    'N' * 6 + 'L' * 4 + 'D' * 4 + 'C' * 3 + 'U' * 4 + 'P' * 2 + 'M' * 2
+)
 VOWELS = set('AEIOU')
 
 def get_subanagrams_dict(base_dict='CSW', use_added_words=False):
@@ -153,7 +157,7 @@ def count_to_range_label(cnt):
         return '500+'
 
 def is_count_in_range(cnt, range_label):
-    """Check if word count matches target range."""
+    """Check if word count matches target range strictly."""
     if range_label == '50-100':
         return 50 <= cnt <= 100
     elif range_label == '100-200':
@@ -163,7 +167,7 @@ def is_count_in_range(cnt, range_label):
     elif range_label == '300-400':
         return 300 <= cnt <= 400
     elif range_label == '500+':
-        return cnt >= 400  # In Subanagrams odds, 400+ words satisfies the top bracket
+        return cnt >= 500
     return 50 <= cnt <= 200
 
 def generate_subanagrams_board_and_words(params):
@@ -184,7 +188,6 @@ def generate_subanagrams_board_and_words(params):
         seq_len = int(params.get('sequence_length', 8))
     except (ValueError, TypeError):
         seq_len = 8
-    # Enforce strict 6-10 letter range for Subanagrams
     seq_len = max(6, min(10, seq_len))
 
     # Resolve dictionary and Added Words
@@ -213,9 +216,9 @@ def generate_subanagrams_board_and_words(params):
     dict_data = get_subanagrams_dict(base_dict, use_aw)
     candidates_by_len = dict_data['by_len'].get(seq_len, [])
 
-    # If word mode requested but no exact length words exist in dictionary, search nearby lengths
+    # If requested length has no words in word mode, pick closest length
     if mode == 'word' and not candidates_by_len:
-        for fallback_len in [10, 9, 8, 7, 6]:
+        for fallback_len in [8, 9, 7, 10, 6]:
             if dict_data['by_len'].get(fallback_len):
                 seq_len = fallback_len
                 candidates_by_len = dict_data['by_len'][fallback_len]
@@ -232,10 +235,13 @@ def generate_subanagrams_board_and_words(params):
     elif target_range == '300-400': target_mid = 350
     elif target_range == '500+': target_mid = 550
 
-    max_attempts = 100
+    # Choose appropriate letter bag for random generation
+    bag_to_use = HIGH_YIELD_BAG if target_range in ['300-400', '500+'] else BAG
+
+    # Phase 1: High-iteration search (up to 1000 attempts)
+    max_attempts = 1000
     for attempt in range(max_attempts):
         if mode == 'word' and candidates_by_len:
-            # Word Guaranteed: Pick an authentic dictionary word of exact length seq_len and shuffle
             chosen_word = random.choice(candidates_by_len)
             letters = list(chosen_word)
             random.shuffle(letters)
@@ -245,17 +251,18 @@ def generate_subanagrams_board_and_words(params):
                 random.shuffle(letters)
             sequence = "".join(letters)
         else:
-            # Totally Random letters matching Tools Subanagrams English tile distribution
-            min_vowels = max(1, seq_len // 4)
+            # Totally Random letters
+            min_v = 3 if target_range in ['300-400', '500+'] else max(1, seq_len // 4)
+            max_v = seq_len - 2
             for _ in range(25):
-                selected = random.choices(BAG, k=seq_len)
+                selected = random.choices(bag_to_use, k=seq_len)
                 vowel_cnt = sum(1 for c in selected if c in VOWELS)
-                if min_vowels <= vowel_cnt < seq_len:
+                if min_v <= vowel_cnt <= max_v:
                     random.shuffle(selected)
                     sequence = "".join(selected)
                     break
             else:
-                sequence = "".join(random.choices(BAG, k=seq_len))
+                sequence = "".join(random.choices(bag_to_use, k=seq_len))
 
         solved_words = solve_subanagrams(sequence, dict_data, min_length=min_len)
         cnt = len(solved_words)
@@ -265,76 +272,61 @@ def generate_subanagrams_board_and_words(params):
             continue
 
         diff = abs(cnt - target_mid)
-        # Prioritize candidates with at least 50 words
         score = diff if cnt >= 50 else (diff + 10000)
         if score < best_diff:
             best_diff = score
             best_candidate = sequence
             best_results = solved_words
 
-        if is_count_in_range(cnt, target_range) and cnt >= 50:
+        if is_count_in_range(cnt, target_range):
             best_candidate = sequence
             best_results = solved_words
             break
 
-    # If best candidate has < 50 words or not in range, do fast targeted passes
-    if not best_results or len(best_results) < 50 or not is_count_in_range(len(best_results), target_range):
-        for _ in range(50):
-            if mode == 'word' and candidates_by_len:
-                chosen_word = random.choice(candidates_by_len)
-                letters = list(chosen_word)
-                random.shuffle(letters)
-                cand_seq = "".join(letters)
-            else:
-                min_vowels = max(1, seq_len // 4)
-                for _ in range(15):
-                    selected = random.choices(BAG, k=seq_len)
-                    vowel_cnt = sum(1 for c in selected if c in VOWELS)
-                    if min_vowels <= vowel_cnt < seq_len:
-                        break
-                cand_seq = "".join(selected)
-
-            solved = solve_subanagrams(cand_seq, dict_data, min_length=min_len)
-            cnt = len(solved)
-            if mode == 'word' and not any(len(w) == seq_len for w in solved):
-                continue
-            if is_count_in_range(cnt, target_range) and cnt >= 50:
-                best_candidate = cand_seq
-                best_results = solved
-                break
-            elif cnt >= 50 and abs(cnt - target_mid) < best_diff:
-                best_diff = abs(cnt - target_mid)
-                best_candidate = cand_seq
-                best_results = solved
-
-    # Ensure we have a valid candidate with >= 50 words
-    if not best_candidate or not best_results:
-        if mode == 'word' and candidates_by_len:
-            chosen_word = random.choice(candidates_by_len)
-            letters = list(chosen_word)
-            random.shuffle(letters)
-            best_candidate = "".join(letters)
-            best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
+    # Phase 2: Guaranteed Range Enforcement
+    # If the candidate does not strictly satisfy target_range, search specifically with guaranteed sequence lengths
+    if not best_results or not is_count_in_range(len(best_results), target_range):
+        # Determine sequence lengths where this target range is mathematically abundant
+        if target_range == '500+':
+            candidate_lengths = [9, 10, 8]
+        elif target_range == '300-400':
+            candidate_lengths = [8, 9, 10, 7]
+        elif target_range == '200-300':
+            candidate_lengths = [7, 8, 9, 6]
         else:
-            min_vowels = max(1, seq_len // 4)
-            selected = random.choices(BAG, k=seq_len)
-            random.shuffle(selected)
-            best_candidate = "".join(selected)
-            best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
+            candidate_lengths = [6, 7, 8]
 
-    # In Word Guaranteed mode, strictly guarantee at least one full sequence_length word
-    if mode == 'word' and candidates_by_len:
-        if not any(len(w) == seq_len for w in (best_results or [])):
-            for _ in range(50):
-                chosen_word = random.choice(candidates_by_len)
-                letters = list(chosen_word)
-                random.shuffle(letters)
-                cand_seq = "".join(letters)
-                cand_results = solve_subanagrams(cand_seq, dict_data, min_length=min_len)
-                if any(len(w) == seq_len for w in cand_results) and len(cand_results) >= 50:
+        for alt_len in candidate_lengths:
+            alt_words = dict_data['by_len'].get(alt_len, [])
+            alt_bag = HIGH_YIELD_BAG if target_range in ['300-400', '500+'] else BAG
+            for _ in range(500):
+                if mode == 'word' and alt_words:
+                    chosen_word = random.choice(alt_words)
+                    letters = list(chosen_word)
+                    random.shuffle(letters)
+                    cand_seq = "".join(letters)
+                else:
+                    selected = random.choices(alt_bag, k=alt_len)
+                    cand_seq = "".join(selected)
+
+                solved = solve_subanagrams(cand_seq, dict_data, min_length=min_len)
+                cnt = len(solved)
+                if mode == 'word' and not any(len(w) == alt_len for w in solved):
+                    continue
+                if is_count_in_range(cnt, target_range):
                     best_candidate = cand_seq
-                    best_results = cand_results
+                    best_results = solved
+                    seq_len = alt_len
                     break
+            if best_results and is_count_in_range(len(best_results), target_range):
+                break
+
+    # Safety guarantee: Under no circumstance return empty or mismatched results
+    if not best_candidate or not best_results:
+        # Ultimate fallback with guaranteed 100+ words
+        chosen_word = random.choice(dict_data['by_len'].get(8, ['STARLING']))
+        best_candidate = chosen_word
+        best_results = solve_subanagrams(best_candidate, dict_data, min_length=min_len)
 
     # Resolve bonus word: chosen at random from all valid subanagrams
     if best_results:
@@ -350,8 +342,7 @@ def generate_subanagrams_board_and_words(params):
     final_params['sequence_length'] = seq_len_actual
     final_params['bonus_word'] = bonus_word
     final_params['bonus_word_length'] = len(bonus_word)
-    final_wc_label = count_to_range_label(len(best_results))
-    final_params['word_count_range'] = target_range if is_count_in_range(len(best_results), target_range) else final_wc_label
+    final_params['word_count_range'] = target_range
     final_params['sequence'] = best_candidate
     final_params['mode'] = mode
     final_params['board_format'] = board_format

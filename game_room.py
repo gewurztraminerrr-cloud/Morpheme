@@ -4270,8 +4270,11 @@ class RoomManager:
                             if len(humans) == 0 and existing_room.time_limit < 7200:
                                 if existing_room.state in ['waiting', 'intermission']:
                                     if existing_room.game_type == 'subanagrams':
-                                        # Fast-path 1: If room already has a board, return it immediately without re-generating!
-                                        if existing_room.board and len(existing_room.board) > 0:
+                                        # If empty room was sitting in waiting state, always refresh with newly randomized board
+                                        if existing_room.state == 'waiting':
+                                            existing_room.board = None
+                                            existing_room.next_round_board = None
+                                        elif existing_room.board and len(existing_room.board) > 0:
                                             print(f"[RoomManager] Subanagrams singleton already has active board: {existing_room.room_id}")
                                             return existing_room
                                         # Fast-path 2: If next_round_board is already staged, promote it instantly in <1ms!
@@ -7204,8 +7207,10 @@ class RoomManager:
                 def subanagrams_search_worker():
                     try:
                         from subanagrams_generator import generate_subanagrams_board_and_words
-                        p = getattr(room, 'frozen_revealed_params', None) or getattr(room, 'next_spinner_params', None)
-                        if not p:
+                        # MULTIPLAYER SUBANAGRAMS: Strictly generate fresh random parameters for next round.
+                        # Do NOT inherit frozen_revealed_params from the currently active round!
+                        p = getattr(room, 'next_spinner_params', None)
+                        if not p or not p.get('sequence_length'):
                             p = SpinnerSet.generate_subanagrams_params(previous_params=getattr(room, 'spinner_params', None))
                             room.next_spinner_params = p
                         res = generate_subanagrams_board_and_words(p)
@@ -7232,8 +7237,8 @@ class RoomManager:
                                 room.next_spinner_params = fparams
                                 room.spinner_params_generated = True
                                 room.next_round_min_length = fparams.get('min_word_length', 3)
-                                if not getattr(room, 'frozen_revealed_params', None):
-                                    room.frozen_revealed_params = dict(fparams)
+                                if getattr(room, 'spinner_params_revealed', False) and getattr(room, 'state', None) == 'intermission':
+                                    room.frozen_revealed_params = copy.deepcopy(fparams)
                                 room.next_round_word_scores = b_scores
                                 room.next_round_total_words_count = len(b_words)
                                 room.solving_complete = True
@@ -8901,6 +8906,11 @@ class RoomManager:
                             room.total_words_count = len(hw)
                             room.initial_total_words = len(hw)
                             room.current_board_format = 'Word Guaranteed'
+                            room.current_word_count_range = hp.get('word_count_range') or SpinnerSet.get_subanagrams_factchecked_wc_range(len(hw))
+                            if isinstance(room.spinner_params, dict):
+                                room.spinner_params['word_count_range'] = room.current_word_count_range
+                            if getattr(room, 'frozen_revealed_params', None) and isinstance(room.frozen_revealed_params, dict):
+                                room.frozen_revealed_params['word_count_range'] = room.current_word_count_range
                     else:
                         room.current_board_format = declared_fmt
 
