@@ -8533,7 +8533,7 @@ def get_room_state(room_id):
             # FAIL-SAFE: If active but counts are missing, from a previous round, or out of sync with all_words, force a synchronous sync
             counts_obj = getattr(room, 'total_counts_by_len', {})
             counts_sum = sum(v for k, v in counts_obj.items() if str(k).isdigit()) if isinstance(counts_obj, dict) else 0
-            min_l_val = int(getattr(room, 'current_min_length', 3) or 3)
+            min_l_val = 3 if getattr(room, 'game_type', '') == 'subanagrams' else int(getattr(room, 'current_min_length', 3) or 3)
             min_l_key = str(min_l_val)
             if is_active and getattr(room, 'all_words', None) and getattr(room, 'game_type', '') != 'subanagrams':
                 actual_shortest = min(len(w) for w in room.all_words)

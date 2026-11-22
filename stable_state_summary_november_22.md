@@ -2,15 +2,15 @@
 
 ## 1. System Synchronization State
 - **Date**: Sunday, November 22, 2026
-- **Latest Commit ID**: `8e76967b55aeaf6ca27d42cf38a4d46772714c67`
+- **Latest Commit ID**: `618b638f42e472251a37803d36b80153f3dd1d29`
 - **Git Tag**: `stable-2026-11-22`
 - **GitHub Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme` (`main` branch)
 - **Live Production URL**: `https://morpheme.games/` (HTTP 200 OK)
 - **VPS PM2 Process**: Online (Process ID 0, 0% CPU, normal memory)
 - **Byte-for-Byte Synchronization**:
-  - **Localhost**: Commit `8e76967b55aeaf6ca27d42cf38a4d46772714c67`
-  - **GitHub (`main`)**: Commit `8e76967b55aeaf6ca27d42cf38a4d46772714c67`
-  - **Production VPS (`morpheme.games`)**: Commit `8e76967b55aeaf6ca27d42cf38a4d46772714c67`
+  - **Localhost**: Commit `618b638f42e472251a37803d36b80153f3dd1d29`
+  - **GitHub (`main`)**: Commit `618b638f42e472251a37803d36b80153f3dd1d29`
+  - **Production VPS (`morpheme.games`)**: Commit `618b638f42e472251a37803d36b80153f3dd1d29`
 
 ---
 
@@ -23,11 +23,12 @@
 - **Configured Subanagrams Word Tabs**:
   - Displays **`Words`** (`data-tab="found"`) and **`Remaining`** (`data-tab="remaining"`).
   - Hides non-applicable tabs (`clues`, `previous`, `score-sum`, `history`).
-- **Dynamic Length-Based Remaining Breakdown**:
+- **Dynamic Length-Based Remaining Breakdown & Instant Live Re-render**:
   - Calculates `maxLen` dynamically for Subanagrams based on the board's sequence length (e.g. 6 to 10 letters), avoiding blank rows beyond the board sequence.
   - Leaves `maxLen = 30` strictly intact for all standard public rooms.
   - Renders the exact same `#remaining-words-table` with `.len-cell` and `.count-cell` (`[found] + [missed] = [total] ([pct]%)`) and legend.
-  - Updates in real-time as words are submitted and preserves round persistence during intermission.
+  - **Dynamic Real-Time Re-rendering on Submission**: Connected `submitWord` (both instant 0ms optimistic path and server confirmation callback) directly to `updateGameState(currentState)`, allowing `#remaining-words-table` counts and percentages to update dynamically with every word entered.
+  - Preserves round persistence during intermission.
 
 ### B. Multiplayer Subanagrams Dynamic Spinner Set Randomization (`game_room.py`, `spinner_set.py`)
 - **Joint Odds Window Enforcement**:

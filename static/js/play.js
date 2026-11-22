@@ -3919,13 +3919,25 @@ async function _doUpdateGameState(incomingState = null) {
             const isIntermission = state.state === 'intermission';
             if (state.game_type === 'fcfs') {
                 myFoundStrs = allPlayerFoundStrs;
-            } else if (currentUser) {
-                const me = state.players.find(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
+            } else {
+                const me = state.players && Array.isArray(state.players) ? state.players.find(p => 
+                    (currentUser && p.username && p.username.toLowerCase().trim() === currentUser.toLowerCase().trim()) ||
+                    (window.currentUserId && p.user_id && String(p.user_id) === String(window.currentUserId)) ||
+                    (state.your_user_id && p.user_id && String(p.user_id) === String(state.your_user_id))
+                ) : null;
                 if (me) {
                     const pWords = (isIntermission && me.previous_submitted_words && me.previous_submitted_words.length > 0)
                         ? me.previous_submitted_words
                         : (me.submitted_words || me.previous_submitted_words || []);
                     myFoundStrs = pWords.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase());
+                }
+                if (!isIntermission && window._localSubmittedWords && window._localSubmittedWords.size > 0) {
+                    window._localSubmittedWords.forEach(w => {
+                        const wUpper = (w || '').toUpperCase().trim();
+                        if (wUpper && !myFoundStrs.includes(wUpper)) {
+                            myFoundStrs.push(wUpper);
+                        }
+                    });
                 }
             }
 
@@ -11213,8 +11225,27 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                                 time: Date.now() / 1000
                             });
 
+                            const myPlayer = preState.players && preState.players.find(p =>
+                                (currentUser && p.username && p.username.toLowerCase().trim() === currentUser.toLowerCase().trim()) ||
+                                (window.currentUserId && p.user_id && String(p.user_id) === String(window.currentUserId)) ||
+                                (preState.your_user_id && p.user_id && String(p.user_id) === String(preState.your_user_id))
+                            );
+                            if (myPlayer) {
+                                myPlayer.submitted_words = myPlayer.submitted_words || [];
+                                const wUpper = word.toUpperCase();
+                                if (!myPlayer.submitted_words.some(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase() === wUpper)) {
+                                    myPlayer.submitted_words.push({
+                                        word: word,
+                                        points: localPts,
+                                        score_details: isBonusWord ? { base: Math.max(0, localPts - word.length), bonus_word_points: word.length, total: localPts } : { base: localPts, total: localPts },
+                                        is_bonus: isBonusWord,
+                                        time: Date.now() / 1000
+                                    });
+                                }
+                            }
+
                             if (typeof updateGameState === 'function') {
-                                updateGameState();
+                                updateGameState(preState);
                             }
                         }
                     }
@@ -11476,10 +11507,15 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     renderPlayers(currentState.players, currentUser, currentState);
                 }
 
-                // USER: INSTANT DENSITY UPDATE
+                // USER: INSTANT DENSITY UPDATE & SUBANAGRAMS DYNAMIC REMAINING UPDATE
                 if (data.cell_density) {
                     currentState.cell_density = data.cell_density;
                     currentState.max_cell_density = data.max_cell_density;
+                }
+                const isSubanagrams = (currentState.game_type === 'subanagrams') ||
+                    (currentState.room_id && currentState.room_id.includes('subanagrams')) ||
+                    document.body.classList.contains('is-subanagrams');
+                if (isSubanagrams || activeWordsTab === 'remaining' || data.cell_density) {
                     updateGameState(currentState);
                 }
 
