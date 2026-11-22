@@ -69,7 +69,7 @@
   - Retained DOM update diffing (`rawText.trim() !== targetText.trim()`) to prevent unnecessary DOM reflows when player counts remain unchanged.
   - Bumped the cache buster for `static/js/lobby.js` in `templates/index.html` to `?v=1795222000`.
 
-### F. Tools: Word Charts Desktop & Laptop Screen Fit and Scrollers (`templates/index.html`, `static/css/play.css`, `static/js/tools.js`)
+### F. Tools: Word Charts Desktop & Laptop Screen Fit, Scrollers, and Light Theme Styling (`templates/index.html`, `static/css/play.css`, `static/js/tools.js`)
 - **Fit All Content Onto Screen**:
   - Enforced full-height flex column layout on desktops and laptops (`@media (min-width: 901px)`) for `#tool-word-chart` across all 3 sub-tabs:
     1. Sub-tab 1: Point Values & Divisions (`#subtab-pane-wc-points`)
@@ -80,7 +80,14 @@
   - Wrapped each sub-tab's table/content in custom scrollable wrappers (`.word-chart-table-container.list-scroll-area-wrapper`, `.word-chart-table-scroll`, `.wc-lookup-scroll-wrapper`, `.wc-lookup-scroll-area`) with custom draggable scrollbar tracks and gradient thumbs.
   - Initialized via `initCustomScrollbarForElement` and refreshed on every sub-tab switch, data load, and search via `window.updateWordChartScrollbars()`.
   - Configured sticky table headers (`position: sticky; top: 0; z-index: 10`) with 100% solid, fully opaque backgrounds (`var(--bg-primary, #181920)`) and bottom box-shadows, completely eliminating scrolled row text bleed-through across all themes.
-  - Bumped cache busters: `play.css?v=1795223000` and `tools.js?v=1795223000`.
+- **Pure White Tables & Cards for Light-Colored Layouts**:
+  - Configured pure white backgrounds (`#ffffff !important;`) and light subtle borders (`#cbd5e1` / `#e2e8f0`) across all 3 sub-tabs for light themes (`theme-white` and all `theme-light-*`), replacing dark gray:
+    1. Sub-tab 1: Table container, scroll wrapper, table body, sticky headers, and rows are crisp white with high-contrast text columns and light blue info banner.
+    2. Sub-tab 2: Stat boxes at the top and dictionary word count table are pure white with distinct colored numbers and clear column headers.
+    3. Sub-tab 3: Search bar input, live lookup result card, metric cards, division example cards, and division pill boxes are pure white and soft light gray, eliminating all dark gray styling in light themes.
+  - Inactive sub-tab buttons in light layouts are styled with white backgrounds and crisp borders.
+  - Custom scrollbar tracks and blue gradient thumbs styled cleanly for light layouts.
+  - Bumped cache busters: `play.css?v=1795224000` and `tools.js?v=1795224000`.
 
 ### G. Architectural Integrity & Strict Boundaries
 - **Public Room Isolation**:

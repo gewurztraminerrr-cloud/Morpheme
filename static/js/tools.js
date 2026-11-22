@@ -13307,7 +13307,7 @@ window.renderWordChartExamples = function(examples) {
             }).join(' ');
 
             divsHtml += `
-                <div style="background: rgba(var(--text-primary-rgb), 0.02); border: 1px solid rgba(var(--text-primary-rgb), 0.08); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px;">
+                <div class="wc-division-row" style="background: rgba(var(--text-primary-rgb), 0.02); border: 1px solid rgba(var(--text-primary-rgb), 0.08); border-radius: 6px; padding: 8px 10px; margin-bottom: 6px;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 4px;">
                         <span style="font-weight: 700; font-size: 0.8rem; color: ${isHard ? '#fb923c' : '#38bdf8'};">
                             Division ${d} of ${item.max_divisions} (${divData.points} pts)
@@ -13324,7 +13324,7 @@ window.renderWordChartExamples = function(examples) {
         }
 
         html += `
-            <div style="background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 8px; padding: 12px;">
+            <div class="wc-example-card" style="background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 8px; padding: 12px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <strong style="font-size: 0.9rem; color: var(--text-primary);">${len} Letters</strong>
                     <span style="font-size: 0.75rem; color: #a78bfa; font-weight: 600;">Max Finds: ${item.max_count || 0}</span>
@@ -13397,25 +13397,25 @@ window.lookupWordChartWord = async function() {
 
             <!-- Metric Cards Grid -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px;">
-                <div style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
+                <div class="wc-metric-card" style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
                     <div style="font-size: 1.25rem; font-weight: 800; color: #38bdf8;">${data.points} pts</div>
                     <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Dynamic Value</div>
                 </div>
-                <div style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
+                <div class="wc-metric-card" style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
                     <div style="font-size: 1.25rem; font-weight: 800; color: #a78bfa;">Div ${data.division} / ${data.max_divisions}</div>
                     <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Division Status</div>
                 </div>
-                <div style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
+                <div class="wc-metric-card" style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
                     <div style="font-size: 1.25rem; font-weight: 800; color: #fbbf24;">${data.find_count} finds</div>
                     <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Tally History</div>
                 </div>
-                <div style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
+                <div class="wc-metric-card" style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
                     <div style="font-size: 1.25rem; font-weight: 800; color: #34d399;">${data.bonus_word_points} pts</div>
                     <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">As Bonus Word</div>
                 </div>
             </div>
 
-            <div style="font-size: 0.83rem; line-height: 1.5; color: var(--muted-text); background: rgba(var(--text-primary-rgb), 0.02); padding: 8px 12px; border-radius: 6px;">
+            <div class="wc-details-box" style="font-size: 0.83rem; line-height: 1.5; color: var(--muted-text); background: rgba(var(--text-primary-rgb), 0.02); padding: 8px 12px; border-radius: 6px;">
                 <strong>Division Details:</strong> ${escapeHtml(data.division_str || '')}. Base score: ${data.base_points} pt${data.base_points !== 1 ? 's' : ''}. Maximum for ${data.length}-letter words in tally is ${data.max_count} finds.
                 ${data.definition ? `<div style="margin-top: 6px; color: var(--text-primary); font-style: italic;">&ldquo;${escapeHtml(data.definition)}&rdquo;</div>` : ''}
             </div>

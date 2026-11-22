@@ -24976,95 +24976,381 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     }
 }
 
-/* Light & White Theme Overrides for Word Chart */
-body.theme-white #tool-word-chart .word-chart-table,
-body[class*="theme-light-"] #tool-word-chart .word-chart-table,
-[class*="theme-white"] #tool-word-chart .word-chart-table,
-[class*="theme-light-"] #tool-word-chart .word-chart-table {
-    color: #1e293b !important;
-}
-
-body.theme-white #tool-word-chart .word-chart-table thead tr,
-body[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr,
-[class*="theme-white"] #tool-word-chart .word-chart-table thead tr,
-[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr {
-    background: #f1f5f9 !important;
-    border-bottom-color: #cbd5e1 !important;
-}
-
-body.theme-white #tool-word-chart .word-chart-table th,
-body[class*="theme-light-"] #tool-word-chart .word-chart-table th,
-[class*="theme-white"] #tool-word-chart .word-chart-table th,
-[class*="theme-light-"] #tool-word-chart .word-chart-table th {
+/* Light & White Theme Overrides for Word Chart (All 3 Sub-tabs: Pure White Tables & Cards) */
+body.theme-white #tool-word-chart,
+body[class*="theme-white"] #tool-word-chart,
+[class*="theme-white"] #tool-word-chart,
+body[class*="theme-light-"] #tool-word-chart,
+[class*="theme-light-"] #tool-word-chart {
     color: #0f172a !important;
 }
 
-body.theme-white #tool-word-chart .word-chart-table td,
-body[class*="theme-light-"] #tool-word-chart .word-chart-table td,
-[class*="theme-white"] #tool-word-chart .word-chart-table td,
-[class*="theme-light-"] #tool-word-chart .word-chart-table td {
-    border-bottom-color: #e2e8f0 !important;
+/* Sub-tab Navigation Buttons */
+body.theme-white #tool-word-chart .word-chart-subtab-btn:not(.active),
+body[class*="theme-white"] #tool-word-chart .word-chart-subtab-btn:not(.active),
+[class*="theme-white"] #tool-word-chart .word-chart-subtab-btn:not(.active),
+body[class*="theme-light-"] #tool-word-chart .word-chart-subtab-btn:not(.active),
+[class*="theme-light-"] #tool-word-chart .word-chart-subtab-btn:not(.active) {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
 }
 
+body.theme-white #tool-word-chart .word-chart-subtab-btn:not(.active):hover,
+body[class*="theme-white"] #tool-word-chart .word-chart-subtab-btn:not(.active):hover,
+[class*="theme-white"] #tool-word-chart .word-chart-subtab-btn:not(.active):hover,
+body[class*="theme-light-"] #tool-word-chart .word-chart-subtab-btn:not(.active):hover,
+[class*="theme-light-"] #tool-word-chart .word-chart-subtab-btn:not(.active):hover {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+
+/* Sub-tab 1 & Sub-tab 2: Tables & Containers (Pure White) */
+body.theme-white #tool-word-chart .word-chart-table-container,
+body[class*="theme-white"] #tool-word-chart .word-chart-table-container,
+[class*="theme-white"] #tool-word-chart .word-chart-table-container,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table-container,
+[class*="theme-light-"] #tool-word-chart .word-chart-table-container,
+body.theme-white #tool-word-chart .word-chart-table-scroll,
+body[class*="theme-white"] #tool-word-chart .word-chart-table-scroll,
+[class*="theme-white"] #tool-word-chart .word-chart-table-scroll,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table-scroll,
+[class*="theme-light-"] #tool-word-chart .word-chart-table-scroll,
+body.theme-white #tool-word-chart .word-chart-table,
+body[class*="theme-white"] #tool-word-chart .word-chart-table,
+[class*="theme-white"] #tool-word-chart .word-chart-table,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table,
+[class*="theme-light-"] #tool-word-chart .word-chart-table {
+    background: #ffffff !important;
+    border-color: #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+/* Sticky Header on White Tables */
+body.theme-white #tool-word-chart .word-chart-table thead,
+body.theme-white #tool-word-chart .word-chart-table thead tr,
+body.theme-white #tool-word-chart .word-chart-table thead tr th,
+body[class*="theme-white"] #tool-word-chart .word-chart-table thead tr th,
+[class*="theme-white"] #tool-word-chart .word-chart-table thead tr th,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table thead,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr th,
+[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr th {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+    box-shadow: 0 1px 0 #e2e8f0 !important;
+}
+
+/* Table Body, Rows, and Cells */
+body.theme-white #tool-word-chart .word-chart-table tbody,
+body.theme-white #tool-word-chart .word-chart-table tbody tr,
+body.theme-white #tool-word-chart .word-chart-table tbody td,
+body[class*="theme-white"] #tool-word-chart .word-chart-table tbody tr,
+body[class*="theme-white"] #tool-word-chart .word-chart-table tbody td,
+[class*="theme-white"] #tool-word-chart .word-chart-table tbody tr,
+[class*="theme-white"] #tool-word-chart .word-chart-table tbody td,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table tbody,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table tbody td,
+[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr,
+[class*="theme-light-"] #tool-word-chart .word-chart-table tbody td {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+}
+
+/* Hover Row */
 body.theme-white #tool-word-chart .word-chart-table tbody tr:hover,
-body[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr:hover,
+body.theme-white #tool-word-chart .word-chart-table tbody tr:hover td,
+body[class*="theme-white"] #tool-word-chart .word-chart-table tbody tr:hover,
+body[class*="theme-white"] #tool-word-chart .word-chart-table tbody tr:hover td,
 [class*="theme-white"] #tool-word-chart .word-chart-table tbody tr:hover,
-[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr:hover {
+[class*="theme-white"] #tool-word-chart .word-chart-table tbody tr:hover td,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr:hover,
+body[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr:hover td,
+[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr:hover,
+[class*="theme-light-"] #tool-word-chart .word-chart-table tbody tr:hover td {
     background: #f8fafc !important;
 }
 
-body.theme-white #tool-word-chart .word-chart-info-banner,
-body[class*="theme-light-"] #tool-word-chart .word-chart-info-banner,
-[class*="theme-white"] #tool-word-chart .word-chart-info-banner,
-[class*="theme-light-"] #tool-word-chart .word-chart-info-banner {
-    background: #f0f9ff !important;
-    border-left-color: #0284c7 !important;
+/* Sub-tab 1: High-Contrast Column Accents on White */
+body.theme-white #tool-word-chart #wc-points-table td:nth-child(1),
+body[class*="theme-light-"] #tool-word-chart #wc-points-table td:nth-child(1) {
     color: #0f172a !important;
+    font-weight: 700 !important;
+}
+body.theme-white #tool-word-chart #wc-points-table td:nth-child(2),
+body[class*="theme-light-"] #tool-word-chart #wc-points-table td:nth-child(2) {
+    color: #334155 !important;
+}
+body.theme-white #tool-word-chart #wc-points-table td:nth-child(3),
+body[class*="theme-light-"] #tool-word-chart #wc-points-table td:nth-child(3) {
+    color: #0284c7 !important;
+    font-weight: 600 !important;
+}
+body.theme-white #tool-word-chart #wc-points-table td:nth-child(4),
+body[class*="theme-light-"] #tool-word-chart #wc-points-table td:nth-child(4) {
+    color: #7c3aed !important;
+    font-weight: 600 !important;
+}
+body.theme-white #tool-word-chart #wc-points-table td:nth-child(6),
+body[class*="theme-light-"] #tool-word-chart #wc-points-table td:nth-child(6) {
+    color: #059669 !important;
+    font-weight: 600 !important;
+}
+body.theme-white #tool-word-chart #wc-points-table td:nth-child(7),
+body[class*="theme-light-"] #tool-word-chart #wc-points-table td:nth-child(7) {
+    color: #059669 !important;
+    font-weight: 700 !important;
 }
 
+/* Sub-tab 1: Banner & Footnote */
+body.theme-white #tool-word-chart .word-chart-info-banner,
+body[class*="theme-white"] #tool-word-chart .word-chart-info-banner,
+[class*="theme-white"] #tool-word-chart .word-chart-info-banner,
+body[class*="theme-light-"] #tool-word-chart .word-chart-info-banner,
+[class*="theme-light-"] #tool-word-chart .word-chart-info-banner {
+    background: #f0f9ff !important;
+    border: 1px solid #bae6fd !important;
+    border-left: 4px solid #0284c7 !important;
+    color: #0c4a6e !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-footnote,
+body[class*="theme-light-"] #tool-word-chart .word-chart-footnote {
+    color: #64748b !important;
+}
+
+/* Sub-tab 2: Stat Boxes (Pure White) */
+body.theme-white #tool-word-chart .new-users-stats-grid .stat-box,
+body[class*="theme-white"] #tool-word-chart .new-users-stats-grid .stat-box,
+[class*="theme-white"] #tool-word-chart .new-users-stats-grid .stat-box,
+body[class*="theme-light-"] #tool-word-chart .new-users-stats-grid .stat-box,
+[class*="theme-light-"] #tool-word-chart .new-users-stats-grid .stat-box {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-white #tool-word-chart .new-users-stats-grid .stat-desc,
+body[class*="theme-white"] #tool-word-chart .new-users-stats-grid .stat-desc,
+[class*="theme-white"] #tool-word-chart .new-users-stats-grid .stat-desc,
+body[class*="theme-light-"] #tool-word-chart .new-users-stats-grid .stat-desc,
+[class*="theme-light-"] #tool-word-chart .new-users-stats-grid .stat-desc {
+    color: #64748b !important;
+    font-weight: 600 !important;
+}
+
+body.theme-white #tool-word-chart #wc-nwl-total, body[class*="theme-light-"] #tool-word-chart #wc-nwl-total { color: #0284c7 !important; }
+body.theme-white #tool-word-chart #wc-csw-total, body[class*="theme-light-"] #tool-word-chart #wc-csw-total { color: #b45309 !important; }
+body.theme-white #tool-word-chart #wc-aw-total, body[class*="theme-light-"] #tool-word-chart #wc-aw-total { color: #9333ea !important; }
+body.theme-white #tool-word-chart #wc-long-total, body[class*="theme-light-"] #tool-word-chart #wc-long-total { color: #dc2626 !important; }
+body.theme-white #tool-word-chart #wc-all-total, body[class*="theme-light-"] #tool-word-chart #wc-all-total { color: #059669 !important; }
+
+/* Sub-tab 2: Dictionary Table Column Accents on White */
+body.theme-white #tool-word-chart #wc-dicts-table td:nth-child(1),
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table td:nth-child(1) {
+    color: #0f172a !important;
+    font-weight: 700 !important;
+}
+body.theme-white #tool-word-chart #wc-dicts-table td:nth-child(2),
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table td:nth-child(2) {
+    color: #0284c7 !important;
+    font-weight: 600 !important;
+}
+body.theme-white #tool-word-chart #wc-dicts-table td:nth-child(3),
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table td:nth-child(3) {
+    color: #b45309 !important;
+    font-weight: 600 !important;
+}
+body.theme-white #tool-word-chart #wc-dicts-table td:nth-child(4),
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table td:nth-child(4) {
+    color: #9333ea !important;
+    font-weight: 600 !important;
+}
+body.theme-white #tool-word-chart #wc-dicts-table td:nth-child(5),
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table td:nth-child(5) {
+    color: #dc2626 !important;
+    font-weight: 600 !important;
+}
+body.theme-white #tool-word-chart #wc-dicts-table td:nth-child(6),
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table td:nth-child(6) {
+    color: #059669 !important;
+    font-weight: 700 !important;
+}
+
+/* Sub-tab 2: Grand Total Row */
+body.theme-white #tool-word-chart #wc-dicts-table tbody tr:last-child,
+body.theme-white #tool-word-chart #wc-dicts-table tbody tr:last-child td,
+body[class*="theme-white"] #tool-word-chart #wc-dicts-table tbody tr:last-child,
+body[class*="theme-white"] #tool-word-chart #wc-dicts-table tbody tr:last-child td,
+[class*="theme-white"] #tool-word-chart #wc-dicts-table tbody tr:last-child,
+[class*="theme-white"] #tool-word-chart #wc-dicts-table tbody tr:last-child td,
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child,
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child td,
+[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child,
+[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child td {
+    background: #f8fafc !important;
+    border-top: 2px solid #cbd5e1 !important;
+}
+body.theme-white #tool-word-chart #wc-dicts-table tbody tr:last-child td:first-child,
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child td:first-child {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+}
+
+/* Sub-tab 3: Dynamic Word Lookup (Pure White Tables & Cards) */
 body.theme-white #tool-word-chart .word-chart-search-bar input,
-body[class*="theme-light-"] #tool-word-chart .word-chart-search-bar input,
+body[class*="theme-white"] #tool-word-chart .word-chart-search-bar input,
 [class*="theme-white"] #tool-word-chart .word-chart-search-bar input,
+body[class*="theme-light-"] #tool-word-chart .word-chart-search-bar input,
 [class*="theme-light-"] #tool-word-chart .word-chart-search-bar input {
     background: #ffffff !important;
     color: #0f172a !important;
+    border: 1px solid #cbd5e1 !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-search-bar button,
+body[class*="theme-white"] #tool-word-chart .word-chart-search-bar button,
+[class*="theme-white"] #tool-word-chart .word-chart-search-bar button,
+body[class*="theme-light-"] #tool-word-chart .word-chart-search-bar button,
+[class*="theme-light-"] #tool-word-chart .word-chart-search-bar button {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+body.theme-white #tool-word-chart .wc-lookup-scroll-wrapper,
+body[class*="theme-white"] #tool-word-chart .wc-lookup-scroll-wrapper,
+[class*="theme-white"] #tool-word-chart .wc-lookup-scroll-wrapper,
+body[class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-wrapper,
+[class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-wrapper,
+body.theme-white #tool-word-chart .wc-lookup-scroll-area,
+body[class*="theme-white"] #tool-word-chart .wc-lookup-scroll-area,
+[class*="theme-white"] #tool-word-chart .wc-lookup-scroll-area,
+body[class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-area,
+[class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-area {
+    background: #ffffff !important;
     border-color: #cbd5e1 !important;
 }
 
 body.theme-white #tool-word-chart #wc-word-result-card,
-body[class*="theme-light-"] #tool-word-chart #wc-word-result-card,
+body[class*="theme-white"] #tool-word-chart #wc-word-result-card,
 [class*="theme-white"] #tool-word-chart #wc-word-result-card,
+body[class*="theme-light-"] #tool-word-chart #wc-word-result-card,
 [class*="theme-light-"] #tool-word-chart #wc-word-result-card {
-    background: #f8fafc !important;
-    border-color: #e2e8f0 !important;
-    color: #0f172a !important;
-}
-
-body.theme-white #tool-word-chart .word-chart-table-container,
-body[class*="theme-light-"] #tool-word-chart .word-chart-table-container,
-[class*="theme-white"] #tool-word-chart .word-chart-table-container,
-[class*="theme-light-"] #tool-word-chart .word-chart-table-container {
-    border-color: #e2e8f0 !important;
-}
-
-body.theme-white #tool-word-chart .word-chart-table thead tr th,
-[class*="theme-white"] #tool-word-chart .word-chart-table thead tr th {
     background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
     color: #0f172a !important;
 }
 
-body[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr th,
-[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr th {
+body.theme-white #tool-word-chart .wc-metric-card,
+body[class*="theme-white"] #tool-word-chart .wc-metric-card,
+[class*="theme-white"] #tool-word-chart .wc-metric-card,
+body[class*="theme-light-"] #tool-word-chart .wc-metric-card,
+[class*="theme-light-"] #tool-word-chart .wc-metric-card,
+body.theme-white #tool-word-chart #wc-word-result-card > div > div[style*="background"],
+body[class*="theme-white"] #tool-word-chart #wc-word-result-card > div > div[style*="background"],
+[class*="theme-white"] #tool-word-chart #wc-word-result-card > div > div[style*="background"],
+body[class*="theme-light-"] #tool-word-chart #wc-word-result-card > div > div[style*="background"],
+[class*="theme-light-"] #tool-word-chart #wc-word-result-card > div > div[style*="background"] {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-white #tool-word-chart .wc-details-box,
+body[class*="theme-white"] #tool-word-chart .wc-details-box,
+[class*="theme-white"] #tool-word-chart .wc-details-box,
+body[class*="theme-light-"] #tool-word-chart .wc-details-box,
+[class*="theme-light-"] #tool-word-chart .wc-details-box {
     background: #f1f5f9 !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #334155 !important;
+}
+
+/* Division Example Cards (Pure White Tables/Cards) */
+body.theme-white #tool-word-chart .wc-example-card,
+body[class*="theme-white"] #tool-word-chart .wc-example-card,
+[class*="theme-white"] #tool-word-chart .wc-example-card,
+body[class*="theme-light-"] #tool-word-chart .wc-example-card,
+[class*="theme-light-"] #tool-word-chart .wc-example-card,
+body.theme-white #tool-word-chart #wc-examples-container > div,
+body[class*="theme-white"] #tool-word-chart #wc-examples-container > div,
+[class*="theme-white"] #tool-word-chart #wc-examples-container > div,
+body[class*="theme-light-"] #tool-word-chart #wc-examples-container > div,
+[class*="theme-light-"] #tool-word-chart #wc-examples-container > div {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.theme-white #tool-word-chart #wc-examples-container strong,
+body[class*="theme-light-"] #tool-word-chart #wc-examples-container strong {
     color: #0f172a !important;
 }
 
+body.theme-white #tool-word-chart .wc-division-row,
+body[class*="theme-white"] #tool-word-chart .wc-division-row,
+[class*="theme-white"] #tool-word-chart .wc-division-row,
+body[class*="theme-light-"] #tool-word-chart .wc-division-row,
+[class*="theme-light-"] #tool-word-chart .wc-division-row,
+body.theme-white #tool-word-chart #wc-examples-container div[style*="background: rgba(var(--text-primary-rgb), 0.02)"],
+body[class*="theme-white"] #tool-word-chart #wc-examples-container div[style*="background: rgba(var(--text-primary-rgb), 0.02)"],
+[class*="theme-white"] #tool-word-chart #wc-examples-container div[style*="background: rgba(var(--text-primary-rgb), 0.02)"],
+body[class*="theme-light-"] #tool-word-chart #wc-examples-container div[style*="background: rgba(var(--text-primary-rgb), 0.02)"],
+[class*="theme-light-"] #tool-word-chart #wc-examples-container div[style*="background: rgba(var(--text-primary-rgb), 0.02)"] {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+body.theme-white #tool-word-chart .wc-word-pill,
+body[class*="theme-white"] #tool-word-chart .wc-word-pill,
+[class*="theme-white"] #tool-word-chart .wc-word-pill,
+body[class*="theme-light-"] #tool-word-chart .wc-word-pill,
+[class*="theme-light-"] #tool-word-chart .wc-word-pill {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0284c7 !important;
+}
+
+body.theme-white #tool-word-chart .wc-word-pill:hover,
+body[class*="theme-white"] #tool-word-chart .wc-word-pill:hover,
+[class*="theme-white"] #tool-word-chart .wc-word-pill:hover,
+body[class*="theme-light-"] #tool-word-chart .wc-word-pill:hover,
+[class*="theme-light-"] #tool-word-chart .wc-word-pill:hover {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+body.theme-white #tool-word-chart button[onclick*="loadWordChartTool"],
+body[class*="theme-white"] #tool-word-chart button[onclick*="loadWordChartTool"],
+[class*="theme-white"] #tool-word-chart button[onclick*="loadWordChartTool"],
+body[class*="theme-light-"] #tool-word-chart button[onclick*="loadWordChartTool"],
+[class*="theme-light-"] #tool-word-chart button[onclick*="loadWordChartTool"] {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #475569 !important;
+}
+
+/* Custom Scrollbars in Light Themes */
 body.theme-white #tool-word-chart .custom-scrollbar-track,
+body[class*="theme-white"] #tool-word-chart .custom-scrollbar-track,
 [class*="theme-white"] #tool-word-chart .custom-scrollbar-track,
 body[class*="theme-light-"] #tool-word-chart .custom-scrollbar-track,
 [class*="theme-light-"] #tool-word-chart .custom-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05) !important;
-    border-color: rgba(0, 0, 0, 0.1) !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-white #tool-word-chart .custom-scrollbar-thumb,
+body[class*="theme-white"] #tool-word-chart .custom-scrollbar-thumb,
+[class*="theme-white"] #tool-word-chart .custom-scrollbar-thumb,
+body[class*="theme-light-"] #tool-word-chart .custom-scrollbar-thumb,
+[class*="theme-light-"] #tool-word-chart .custom-scrollbar-thumb {
+    background: linear-gradient(180deg, #38bdf8, #0284c7) !important;
+    border: 1px solid #0284c7 !important;
+    box-shadow: 0 1px 4px rgba(2, 132, 199, 0.25) !important;
 }
 
 
