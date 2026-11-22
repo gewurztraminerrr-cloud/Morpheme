@@ -1910,11 +1910,6 @@ body.is-subanagrams .game-board .board-cell.typing-highlight[data-letter] {
     color: var(--highlight-mouse-text-color, #000000) !important;
 }
 
-body.is-subanagrams #words-tabs-container,
-body.is-subanagrams .words-tabs {
-    display: none !important;
-}
-
 body.is-subanagrams #game-color-bar,
 body.is-subanagrams .global-rating-bar,
 body.is-subanagrams .left-panel-container #game-color-bar,

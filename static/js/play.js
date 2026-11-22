@@ -1633,11 +1633,7 @@ function clearGameUIAndCache() {
 
     const tabsContainer = document.getElementById('words-tabs-container');
     if (tabsContainer) {
-        if (window.lastGameState && window.lastGameState.game_type === 'subanagrams') {
-            tabsContainer.style.display = 'none';
-        } else {
-            tabsContainer.style.display = 'flex';
-        }
+        tabsContainer.style.display = 'flex';
     }
 
     const wordsList = document.getElementById('submitted-words-list');
@@ -3447,7 +3443,15 @@ async function _doUpdateGameState(incomingState = null) {
         tabBtns.forEach(btn => {
             const tab = btn.dataset.tab;
             if (state.game_type === 'subanagrams') {
-                btn.style.display = 'none';
+                if (tab === 'found') {
+                    btn.textContent = 'Words';
+                    btn.style.display = 'block';
+                } else if (tab === 'remaining') {
+                    btn.textContent = 'Remaining';
+                    btn.style.display = 'block';
+                } else {
+                    btn.style.display = 'none';
+                }
             } else if (is24H) {
                 // 24H: Found, Clues, Previous, Score Sum
                 if (tab === 'found') {
@@ -3473,7 +3477,9 @@ async function _doUpdateGameState(incomingState = null) {
 
         // Ensure activeWordsTab is valid for current room type
         if (state.game_type === 'subanagrams') {
-            activeWordsTab = 'found';
+            if (activeWordsTab !== 'remaining') {
+                activeWordsTab = 'found';
+            }
         } else if (is24H && (activeWordsTab === 'remaining' || activeWordsTab === 'history')) {
             activeWordsTab = 'found';
         } else if (!is24H && (activeWordsTab === 'clues' || activeWordsTab === 'previous' || activeWordsTab === 'score-sum')) {
@@ -4042,7 +4048,21 @@ async function _doUpdateGameState(incomingState = null) {
                     }
                 }
             }
-            for (let i = minLen; i <= 30; i++) {
+            let maxLen = 30;
+            if (state.game_type === 'subanagrams') {
+                if (isIntermission) {
+                    if (state.previous_board && state.previous_board[0]) {
+                        maxLen = state.previous_board[0].length;
+                    } else if (state.previous_all_words && state.previous_all_words.length > 0) {
+                        maxLen = Math.max(...state.previous_all_words.map(w => (typeof w === 'string' ? w.length : ((w && w.word) ? w.word.length : 0))));
+                    } else {
+                        maxLen = state.sequence_length || 10;
+                    }
+                } else {
+                    maxLen = (state.board && state.board[0] ? state.board[0].length : (state.sequence_length || 10));
+                }
+            }
+            for (let i = minLen; i <= maxLen; i++) {
                 const total = totalByLenMap[i] || 0;
                 const found = foundByLenMap[i] || 0;
                 const missed = countsByLen[i] || 0;
