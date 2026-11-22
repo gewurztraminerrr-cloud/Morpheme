@@ -4081,20 +4081,40 @@ body.theme-white .header {
     width: 100%;
 }
 
-.mod-action-btn.mod-timeout {
-    background: rgba(245, 158, 11, 0.15);
-    border: 1px solid #f59e0b;
-    color: #f59e0b;
+.mod-action-btn.mod-timeout,
+#mini-profile-timeout-btn {
+    background: rgba(250, 204, 21, 0.18);
+    border: 1.5px solid #facc15;
+    color: #facc15;
     flex: 1;
     font-weight: 600;
 }
 
-.mod-action-btn.mod-ban {
-    background: rgba(244, 63, 94, 0.15);
-    border: 1px solid #f43f5e;
-    color: #f43f5e;
+.mod-action-btn.mod-ban,
+#mini-profile-ban-btn {
+    background: rgba(239, 68, 68, 0.18);
+    border: 1.5px solid #ef4444;
+    color: #f87171;
     flex: 1;
     font-weight: 600;
+}
+
+body[class*="theme-white"] .mod-action-btn.mod-timeout,
+body[class*="theme-light-"] .mod-action-btn.mod-timeout,
+body[class*="theme-white"] #mini-profile-timeout-btn,
+body[class*="theme-light-"] #mini-profile-timeout-btn {
+    background: rgba(234, 179, 8, 0.16) !important;
+    border: 1.5px solid #ca8a04 !important;
+    color: #854d0e !important;
+}
+
+body[class*="theme-white"] .mod-action-btn.mod-ban,
+body[class*="theme-light-"] .mod-action-btn.mod-ban,
+body[class*="theme-white"] #mini-profile-ban-btn,
+body[class*="theme-light-"] #mini-profile-ban-btn {
+    background: rgba(239, 68, 68, 0.14) !important;
+    border: 1.5px solid #dc2626 !important;
+    color: #b91c1c !important;
 }
 
 /* Visibility utilities for responsive stats */
@@ -4140,6 +4160,7 @@ body.is-mobile .mobile-only {
     #mini-profile-games-box { order: 1 !important; }
     #mini-profile-wins-box { order: 2 !important; }
     #mini-profile-words-box { order: 3 !important; }
+    #mini-profile-top-10-box,
     #mini-profile-top-10-rate-box { order: 4 !important; }
     #mini-profile-avg-wpm-box { order: 5 !important; }
     #mini-profile-pt-sum-box { order: 6 !important; }
@@ -4204,29 +4225,38 @@ body.is-mobile .mobile-only {
     .mini-action-btn {
         flex: 1 1 calc(50% - 4px) !important;
         min-width: 110px !important;
-        font-size: 0.82rem !important;
-        padding: 8px 6px !important;
+        font-size: 0.78rem !important;
+        padding: 0 8px !important;
+        min-height: 26px !important;
+        height: 26px !important;
+        max-height: 26px !important;
+        line-height: 24px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
         text-align: center !important;
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
+        border-radius: 7px !important;
+        box-sizing: border-box !important;
     }
     #mini-profile-mod-actions,
     .mod-actions-row {
-        margin-top: 3px !important;
+        margin-top: 8px !important;
         padding-top: 0 !important;
         border-top: none !important;
-        gap: 6px !important;
+        gap: 8px !important;
     }
-    #mini-profile-timeout-btn,
-    #mini-profile-ban-btn,
-    .mod-action-btn {
-        padding: 3px 8px !important;
-        min-height: 25px !important;
-        height: 25px !important;
-        font-size: 0.78rem !important;
-        line-height: 1 !important;
-        border-radius: 7px !important;
+    #mini-profile-timeout-btn {
+        background: rgba(250, 204, 21, 0.18) !important;
+        border: 1.5px solid #facc15 !important;
+        color: #facc15 !important;
+    }
+    #mini-profile-ban-btn {
+        background: rgba(239, 68, 68, 0.18) !important;
+        border: 1.5px solid #ef4444 !important;
+        color: #f87171 !important;
     }
 }
 
@@ -4310,23 +4340,49 @@ body.is-mobile:not([class*="theme-white"]):not([class*="theme-light-"]) .mini-me
     color: #ffffff !important;
 }
 
-body.is-mobile #mini-profile-mod-actions,
-body.is-mobile .mod-actions-row {
-    margin-top: 3px !important;
-    padding-top: 0 !important;
-    border-top: none !important;
-    gap: 6px !important;
+body.is-mobile .mini-profile-actions {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
 }
 
-body.is-mobile #mini-profile-timeout-btn,
-body.is-mobile #mini-profile-ban-btn,
-body.is-mobile .mod-action-btn {
-    padding: 3px 8px !important;
-    min-height: 25px !important;
-    height: 25px !important;
+body.is-mobile .mini-action-btn {
+    flex: 1 1 calc(50% - 4px) !important;
+    min-width: 110px !important;
     font-size: 0.78rem !important;
-    line-height: 1 !important;
+    padding: 0 8px !important;
+    min-height: 26px !important;
+    height: 26px !important;
+    max-height: 26px !important;
+    line-height: 24px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     border-radius: 7px !important;
+    box-sizing: border-box !important;
+}
+
+body.is-mobile #mini-profile-mod-actions,
+body.is-mobile .mod-actions-row {
+    margin-top: 8px !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+    gap: 8px !important;
+}
+
+body.is-mobile #mini-profile-timeout-btn {
+    background: rgba(250, 204, 21, 0.18) !important;
+    border: 1.5px solid #facc15 !important;
+    color: #facc15 !important;
+}
+
+body.is-mobile #mini-profile-ban-btn {
+    background: rgba(239, 68, 68, 0.18) !important;
+    border: 1.5px solid #ef4444 !important;
+    color: #f87171 !important;
 }
 
 /* Responsive overrides for laptop screens and viewports with limited vertical height */
@@ -10240,6 +10296,7 @@ select option,
     #profile-wins-box { order: 2 !important; }
     #profile-words-box { order: 3 !important; }
     #profile-avg-wpm-box { order: 4 !important; }
+    #profile-top-10-box,
     #profile-top-10-rate-box { order: 5 !important; }
     #profile-pt-sum-box { order: 6 !important; }
     .stat-box {

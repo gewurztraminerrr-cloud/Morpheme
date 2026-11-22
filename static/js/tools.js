@@ -2350,23 +2350,11 @@ window.showMiniProfile = async function (username) {
             avgWpmEl.title = "Average Words Per Minute in boards with 100+ potential words (requires finding 20+ words in a round)";
         }
 
-        const top10RateEl = document.getElementById('mini-profile-top-10-rate');
-        if (top10RateEl) {
-            if (data.top_10_games && data.top_10_games > 0) {
-                const rate = (typeof data.top_10_rate === 'number') ? data.top_10_rate.toFixed(1) : (data.top_10_rate || '0.0');
-                top10RateEl.innerText = `${rate}%`;
-                top10RateEl.title = `Finished within the top 10 placements in ${data.top_10_count || 0} of ${data.top_10_games} games with 20+ players (Accumulative)`;
-            } else {
-                top10RateEl.innerText = '-';
-                top10RateEl.title = 'Requires Accumulative rooms with 20+ players';
-            }
-        }
-
-        const miniTop10CountEl = document.getElementById('mini-profile-top-10-count');
-        if (miniTop10CountEl) {
+        const miniTop10El = document.getElementById('mini-profile-top-10') || document.getElementById('mini-profile-top-10-count') || document.getElementById('mini-profile-top-10-rate');
+        if (miniTop10El) {
             const count = data.top_10_count || 0;
-            miniTop10CountEl.innerText = count.toLocaleString();
-            miniTop10CountEl.title = `Finished within the top 10 placements in ${count} games with 20+ players (Accumulative)`;
+            miniTop10El.innerText = count.toLocaleString();
+            miniTop10El.title = `Finished within the top 10 placements in ${count} games with 20+ players (Accumulative)`;
         }
 
         // Demographics: Age and Gender
@@ -3417,23 +3405,11 @@ async function renderProfile(user) {
         }
     }
 
-    const top10RateEl = document.getElementById('profile-top-10-rate');
-    if (top10RateEl) {
-        if (user.top_10_games && user.top_10_games > 0) {
-            const rate = (typeof user.top_10_rate === 'number') ? user.top_10_rate.toFixed(1) : (user.top_10_rate || '0.0');
-            top10RateEl.innerText = `${rate}%`;
-            top10RateEl.title = `Finished within the top 10 placements in ${user.top_10_count || 0} of ${user.top_10_games} games with 20+ players (Accumulative)`;
-        } else {
-            top10RateEl.innerText = '-';
-            top10RateEl.title = 'Requires Accumulative rooms with 20+ players';
-        }
-    }
-
-    const profileTop10CountEl = document.getElementById('profile-top-10-count');
-    if (profileTop10CountEl) {
+    const profileTop10El = document.getElementById('profile-top-10') || document.getElementById('profile-top-10-count') || document.getElementById('profile-top-10-rate');
+    if (profileTop10El) {
         const count = user.top_10_count || 0;
-        profileTop10CountEl.innerText = count.toLocaleString();
-        profileTop10CountEl.title = `Finished within the top 10 placements in ${count} games with 20+ players (Accumulative)`;
+        profileTop10El.innerText = count.toLocaleString();
+        profileTop10El.title = `Finished within the top 10 placements in ${count} games with 20+ players (Accumulative)`;
     }
 
     const wpmEl = document.getElementById('profile-avg-wpm');
