@@ -2316,26 +2316,51 @@ window.showMiniProfile = async function (username) {
             fullNEl.title = cleanProfileText(data.full_name);
         }
 
-        // Stats: Games, Wins, Words, PT Sum
+        // Stats: Games, Wins, Words, PT Sum, Avg WPM, Top 10 Rate
         const gamesEl = document.getElementById('mini-profile-games');
-        if (gamesEl) gamesEl.innerText = (data.games_played || 0).toLocaleString();
+        if (gamesEl) {
+            const gCount = (data.games_played || 0).toLocaleString();
+            gamesEl.innerText = gCount;
+            gamesEl.title = `Games: ${gCount}`;
+        }
         const winsEl = document.getElementById('mini-profile-wins');
-        if (winsEl) winsEl.innerText = (data.wins || 0).toLocaleString();
+        if (winsEl) {
+            const wCount = (data.wins || 0).toLocaleString();
+            winsEl.innerText = wCount;
+            winsEl.title = `Wins: ${wCount}`;
+        }
 
         const wordsEl = document.getElementById('mini-profile-words');
-        if (wordsEl) wordsEl.innerText = (data.total_words || 0).toLocaleString();
-
-        const winRateEl = document.getElementById('mini-profile-winrate');
-        if (winRateEl) {
-            const games = data.games_played || 0;
-            const wins = data.wins || 0;
-            let rate = games > 0 ? ((wins / games) * 100) : 0;
-            if (rate > 100) rate = 100;
-            winRateEl.innerText = `${rate.toFixed(1)}%`;
+        if (wordsEl) {
+            const wordsCount = (data.total_words || 0).toLocaleString();
+            wordsEl.innerText = wordsCount;
+            wordsEl.title = `Total Words Found: ${wordsCount}`;
         }
 
         const ptSumEl = document.getElementById('mini-profile-pt-sum');
-        if (ptSumEl) ptSumEl.innerText = (data.pt_sum || 0).toLocaleString();
+        if (ptSumEl) {
+            const pts = (data.pt_sum || 0).toLocaleString();
+            ptSumEl.innerText = pts;
+            ptSumEl.title = `Total Points Sum: ${pts}`;
+        }
+
+        const avgWpmEl = document.getElementById('mini-profile-avg-wpm');
+        if (avgWpmEl) {
+            avgWpmEl.innerText = data.avg_wpm_300 || 0;
+            avgWpmEl.title = "Average Words Per Minute in boards with 100+ potential words (requires finding 20+ words in a round)";
+        }
+
+        const top10RateEl = document.getElementById('mini-profile-top-10-rate');
+        if (top10RateEl) {
+            if (data.top_10_games && data.top_10_games > 0) {
+                const rate = (typeof data.top_10_rate === 'number') ? data.top_10_rate.toFixed(1) : (data.top_10_rate || '0.0');
+                top10RateEl.innerText = `${rate}%`;
+                top10RateEl.title = `Finished within the top 10 placements in ${data.top_10_count || 0} of ${data.top_10_games} games with 20+ players (Accumulative)`;
+            } else {
+                top10RateEl.innerText = '-';
+                top10RateEl.title = 'Requires Accumulative rooms with 20+ players';
+            }
+        }
 
         // Demographics: Age and Gender
         const demoEl = document.getElementById('mini-profile-demographics');

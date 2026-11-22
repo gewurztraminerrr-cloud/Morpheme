@@ -10637,14 +10637,21 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
 
     /* Profile stats grid responsive columns */
     .profile-stats-grid {
-        grid-template-columns: repeat(2, 1fr) !important; /* Stacks cleanly in pairs */
+        grid-template-columns: repeat(3, 1fr) !important;
         gap: 8px !important;
     }
+    #profile-games-box { order: 1 !important; }
+    #profile-wins-box { order: 2 !important; }
+    #profile-words-box { order: 3 !important; }
+    #profile-top-10-rate-box { order: 4 !important; }
+    #profile-avg-wpm-box { order: 5 !important; }
+    #profile-pt-sum-box { order: 6 !important; }
     .stat-box {
         padding: 10px !important;
     }
     .stat-num {
-        font-size: 1.1rem !important;
+        font-size: clamp(0.75rem, 2.7vw, 0.95rem) !important;
+        letter-spacing: -0.5px !important;
     }
 
     /* profile-tabs-header styling on mobile scroll */
