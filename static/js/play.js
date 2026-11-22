@@ -9525,6 +9525,7 @@ function highlightSubanagramsInput(typedText) {
             face: null
         }));
         mouseState.visitedCells = new Set(matchedCells.map(c => `${c.dataset.r || 0},${c.dataset.c || 0}`));
+        mouseState.isBoardTileSelection = false;
     }
 
     return true;
@@ -9957,8 +9958,26 @@ function reapplyBoardHighlights() {
         cell.classList.remove('selected', 'current', 'typing-highlight', 'review-highlight', 'intermission-highlight');
     });
 
-    // Multiplayer Subanagrams: Reapply live typing highlight
+    // Multiplayer Subanagrams: Reapply highlights
     if (typeof isSubanagramsActive === 'function' && isSubanagramsActive()) {
+        if (mouseState && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
+            const isEnabled = !(window.userSettings && window.userSettings.highlight_mouse === false);
+            if (isEnabled) {
+                mouseState.selectedPath.forEach(p => {
+                    let selector = `.board-cell[data-r="${p.row}"][data-c="${p.col}"]`;
+                    if (p.face !== undefined && p.face !== null) {
+                        selector = `.board-cell[data-f="${p.face}"][data-r="${p.row}"][data-c="${p.col}"]`;
+                    }
+                    const cell = document.querySelector(selector);
+                    if (cell) {
+                        cell.classList.add('selected');
+                        applyDensityToCell(cell);
+                    }
+                });
+            }
+            return;
+        }
+
         const wordInputEl = document.getElementById('word-input');
         if (wordInputEl && wordInputEl.value.trim() && (!mouseState || !mouseState.isDown)) {
             highlightSubanagramsInput(wordInputEl.value);
@@ -10748,6 +10767,13 @@ document.addEventListener('keydown', (e) => {
         // SUBANAGRAMS REAL-TIME TYPING HIGHLIGHT:
         // Execute instantly with 0ms latency directly matching DOM cells
         if (typeof isSubanagramsActive === 'function' && isSubanagramsActive()) {
+            if (mouseState && mouseState.isBoardTileSelection && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
+                const currentBoardWord = mouseState.selectedPath.map((p, i) => getLetterFromPathIndex(mouseState.selectedPath, i, true)).join('').toUpperCase();
+                if (word.toUpperCase() === currentBoardWord) {
+                    return;
+                }
+            }
+            if (mouseState) mouseState.isBoardTileSelection = false;
             highlightSubanagramsInput(word);
             return;
         }
@@ -10829,6 +10855,13 @@ document.addEventListener('keydown', (e) => {
 
     wordInputEl.addEventListener('keyup', () => {
         if (typeof isSubanagramsActive === 'function' && isSubanagramsActive() && !window.isUpdatingFromPath) {
+            if (mouseState && mouseState.isBoardTileSelection && mouseState.selectedPath && mouseState.selectedPath.length > 0) {
+                const currentBoardWord = mouseState.selectedPath.map((p, i) => getLetterFromPathIndex(mouseState.selectedPath, i, true)).join('').toUpperCase();
+                if (wordInputEl.value.trim().toUpperCase() === currentBoardWord) {
+                    return;
+                }
+            }
+            if (mouseState) mouseState.isBoardTileSelection = false;
             highlightSubanagramsInput(wordInputEl.value);
         }
     });
@@ -11119,6 +11152,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         mouseState.selectedPath = [];
         mouseState.visitedCells = new Set();
         mouseState.isDown = false;
+        mouseState.isBoardTileSelection = false;
     }
     document.querySelectorAll('.board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(c => {
         c.classList.remove('selected', 'current', 'typing-highlight');
@@ -13305,6 +13339,8 @@ function handleSubanagramsTileClick(cell, r, c, f, letter, key) {
         applyDensityToCell(c);
     });
 
+    mouseState.isBoardTileSelection = true;
+
     // Check if clicking the MOST RECENT letter entered in the sequence
     if (pathLen > 0) {
         const lastCell = mouseState.selectedPath[pathLen - 1];
@@ -13318,6 +13354,10 @@ function handleSubanagramsTileClick(cell, r, c, f, letter, key) {
             mouseState.visitedCells.delete(key);
             cell.classList.remove('selected', 'current', 'typing-highlight');
             applyDensityToCell(cell);
+
+            if (mouseState.selectedPath.length === 0) {
+                mouseState.isBoardTileSelection = false;
+            }
 
             updateWordInputFromPath();
             BoardAudio.playTileSound(mouseState.selectedPath.length);
@@ -13355,6 +13395,7 @@ function clearWordInputAndSelection() {
         mouseState.selectedPath = [];
         mouseState.visitedCells = new Set();
         mouseState.isDown = false;
+        mouseState.isBoardTileSelection = false;
     }
     document.querySelectorAll('.board-cell.selected, .board-cell.current, .board-cell.typing-highlight').forEach(c => {
         c.classList.remove('selected', 'current', 'typing-highlight');
@@ -13711,6 +13752,7 @@ let lastTouchY = -1;
 
 function handleCellTouchStart(e) {
     if (window.isPopupVisible) return;
+    lastTouchTime = Date.now();
     initAudioOnUserInteraction();
     
     // Unconditionally prevent default scroll/gestures immediately on any board touch start
