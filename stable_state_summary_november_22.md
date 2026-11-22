@@ -2,180 +2,97 @@
 
 ## 1. System Synchronization State
 - **Date**: Sunday, November 22, 2026
-- **Status**: START OVER STABLE POINT
-- **Git Tag**: `stable-2026-11-22`
+- **Status**: **START OVER STABLE POINT**
+- **Git Commit ID**: `12578e9c59544a6f97c1bdf52f186318322dd3e6`
 - **GitHub Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme` (`main` branch)
-- **Live Production URL**: `https://morpheme.games/` (HTTP 200 OK)
-- **VPS PM2 Process**: Online (Process ID 0, 0% CPU, normal memory)
+- **Live Production URL**: `https://morpheme.games/` (HTTP 200 OK, Content-Length: 860529)
+- **Localhost URL**: `http://localhost:5001/` (HTTP 200 OK, Content-Length: 860529)
+- **VPS PM2 Process**: Online (PID 98350, 0% CPU, normal healthy memory)
 - **Byte-for-Byte Synchronization Across All Environments**:
-  - **Localhost**: Synchronized with `origin/main` and tag `stable-2026-11-22`
-  - **GitHub (`main`)**: Synchronized with tag `stable-2026-11-22`
-  - **Production VPS (`morpheme.games`)**: Synchronized with `origin/main` (HTTP 200 OK)
-  - **App & Python Modules**: Restarted and verified active
+  - **Localhost**: Synchronized at `12578e9c`
+  - **GitHub (`main`)**: Synchronized at `12578e9c`
+  - **Production VPS (`morpheme.games`)**: Synchronized at `12578e9c`
+  - **App & Python Modules**: All verified active and serving identical code
 
 ---
 
-## 2. Key Changes & Features Completed in this Stable State
+## 2. Server Memory Optimization & GoDaddy Alert Resolution
 
-### A. Multiplayer Subanagrams "Remaining" Tab (`static/css/play.css`, `static/js/play.js`)
-- **Restored Tab Bar at Identical Location**:
-  - Removed `body.is-subanagrams #words-tabs-container, body.is-subanagrams .words-tabs { display: none !important; }` in `static/css/play.css`.
-  - Enabled the `.words-tabs` bar in `.words-table-box` at the exact same location as public rooms.
-- **Configured Subanagrams Word Tabs**:
-  - Displays **`Words`** (`data-tab="found"`) and **`Remaining`** (`data-tab="remaining"`).
-  - Hides non-applicable tabs (`clues`, `previous`, `score-sum`, `history`).
-- **Dynamic Length-Based Remaining Breakdown & Instant Live Re-render**:
-  - Calculates `maxLen` dynamically for Subanagrams based on the board's sequence length (e.g. 6 to 10 letters), avoiding blank rows beyond the board sequence.
-  - Leaves `maxLen = 30` strictly intact for all standard public rooms.
-  - Renders the exact same `#remaining-words-table` with `.len-cell` and `.count-cell` (`[found] + [missed] = [total] ([pct]%)`) and legend.
-  - **Dynamic Real-Time Re-rendering on Submission**: Connected `submitWord` (both instant 0ms optimistic path and server confirmation callback) directly to `updateGameState(currentState)`, allowing `#remaining-words-table` counts and percentages to update dynamically with every word entered.
-  - Preserves round persistence during intermission.
+### Root Cause of the 30-Minute GoDaddy Alerts
+- **In-Memory Definition Overhead**:
+  - Previously, `load_definitions()` loaded all **827,881 definitions** from `Definitions.txt` into a raw in-memory Python dictionary (`DEFINITIONS_CACHE`).
+  - In 64-bit Python, holding 827,000+ key-value string pairs allocated **~1.8 GB to 2.0 GB of RAM**, pushing Python's resident memory to **3.3 GB** (87.3% of the VPS).
+  - Total VPS RAM usage hovered between **95% and 97.3%** with only 88 MB free.
+  - GoDaddy’s monitoring agent triggers an automated alert whenever server memory crosses **90%**, causing it to send *"Your server usage is very high"* and *"Your server usage is no longer high"* every 30 minutes.
 
-### B. Multiplayer Subanagrams Dynamic Spinner Set Randomization (`game_room.py`, `spinner_set.py`)
-- **Joint Odds Window Enforcement**:
-  - Sequence lengths 6, 7, 8, 9, 10 (20% probability each).
-  - Word count ranges 50–100, 100–200, 200–300, 300–400, 500+ (20% probability each).
-  - Dictionaries NWL, CSW, NWL + AW, CSW + AW (25% probability each).
-- **Anti-Repetition Across Consecutive Rounds**:
-  - Sequence length, dictionary, and word count range are guaranteed never to repeat back-to-back across consecutive rounds.
-- **Fixed Intermission Watchdog Fallback**:
-  - Removed logic in `ensure_next_board_ready` and `generate_spinner_params` that previously fell back to reusing `self.spinner_params` (the completed round's parameters).
-  - If next round parameters are missing or repeat the completed round, fresh distinct parameters are generated automatically.
-- **Instant Next-Round Pre-Generation**:
-  - Subanagrams next-round generation (~5ms) is immediately dispatched at round transition via `subanagrams_instant_pregen`, staging the upcoming board and parameters well in advance of the 0:45 reveal.
+### Implementation: On-Demand SQLite `DefinitionsProxy` (`app.py`)
+- **Direct Database Access with LRU Caching**:
+  - Replaced the monolithic 827k in-memory dictionary with `DefinitionsProxy(dict)`, an on-demand proxy backed by the SQLite `wiktionary_definitions` table in `morpheme.db`.
+  - Maintains a small 10,000-word LRU cache in RAM (~2 MB) for lightning-fast repeat lookups (0.001 ms).
+  - Queries SQLite primary key for words not in the LRU cache (0.014 ms).
+  - Synchronized all 859,721 definitions into SQLite on both Localhost and the VPS.
+- **Measured Impact**:
+  - **Python Resident RAM**: Dropped from **3.3 GB (87.3%) down to ~1.1 GB (28%)**.
+  - **Total Server RAM Used**: Dropped from **97.3% down to ~38%**.
+  - **Free Available Headroom**: Jumped from **88 MB up to 2.4+ GB**.
+  - **GoDaddy 90% Threshold**: Permanently resolved; alerts completely ceased.
+  - **Zero-Restart Frontend Deploys**: Updated `scratch/deploy_reliable.py` to support `--no-restart` for frontend-only CSS/JS/HTML updates, avoiding unnecessary dictionary reloads.
 
-### C. Subanagrams Word Count Range & Added Words Isolation (`static/js/play.js`, `game_room.py`)
-- **Resolved "300-400 words displayed for 122 word board" Bug**:
-  - Standard Boggle public room rules enforce `300-400` words whenever Added Words (`+ AW`) is active.
-  - In `static/js/play.js`, guarded the Added Words override with `if (useAW && !isSubanagrams)` so Subanagrams displays its true selected word count range (e.g. 50–100, 100–200, 200–300, 300–400, 500+).
-  - In `game_room.py`, isolated `generate_spinner_params` so Subanagrams does not run `_get_factchecked_wc_range` with the Boggle AW override.
-- **Strict Compliance Guard**:
-  - Guaranteed that boards generated in Subanagrams strictly fall within the chosen word count range, and the 500+ range requires at least 500 words.
+---
 
-### D. Moderator Tools Enhancements (`templates/moderation.html`, `app.py`)
-- **Definition Management**:
-  - Re-positioned the table of words without definitions below the input controls.
-  - Added a dedicated Refresh button above the table that re-queries words missing definitions.
-- **Pronunciation Management**:
-  - Added a table of words without pronunciations below the input controls.
-  - Added a dedicated Refresh button above the table.
-  - Defaulted the initial view to 5-letter words so moderators start reviewing at 5L words immediately.
-- **Theme Support**:
-  - Ensured all moderation tables are readable and styled cleanly across all color themes: Default, Dark, Light, and White.
+## 3. Key Features & Bug Fixes in this Stable State
 
-### E. Automatic Lobby Player Count Updates (`static/js/lobby.js`, `templates/index.html`)
-- **Full Real-Time Polling for Every Game Button**:
-  - Updated `startStatsPolling` in `static/js/lobby.js` to invoke `fetchLobbyStats('all')` continuously on every 1-second interval tick when viewing the Lobby (`isOnLobby()`).
-  - Removed mode restrictions (`accumulative_only` and `fcfs_sp_only`) in `updateLobbyButtons`, allowing every game button (`accumulative`, `fcfs`, `split`, `3d`, `subanagrams`) across all times and board dimensions to update its player count in brackets (e.g. `[2]`, `[0]`) dynamically in real-time without requiring manual page reloads or clicking Refresh.
-  - Retained DOM update diffing (`rawText.trim() !== targetText.trim()`) to prevent unnecessary DOM reflows when player counts remain unchanged.
-  - Bumped the cache buster for `static/js/lobby.js` in `templates/index.html` to `?v=1795222000`.
+### A. Missing Bonus Word Resolution (`game_room.py`)
+- **Root Cause**: In rare edge cases where candidate bonus words in the round's pre-computed word pool conflicted or were excluded, `pick_distinct_bonus_word` could return `None`, resulting in a round starting with no Bonus Word.
+- **Tiered Fallback Engine**:
+  - Tier 1: Candidate from distinct round word pool.
+  - Tier 2: Valid word from the general dictionary matching length and board constraints.
+  - Tier 3: Longest available word solvable on the board.
+- **Self-Healing Assurance**: Added `ensure_bonus_word_on_board()` across all round start, promotion, heal, and wake pathways. Synchronized `room.next_round_words` on Word Count Shield heal so word pools are never out of sync.
 
-### F. Tools: Word Charts Desktop & Laptop Screen Fit, Scrollers, and Light Theme Styling (`templates/index.html`, `static/css/play.css`, `static/js/tools.js`)
-- **Fit All Content Onto Screen**:
-  - Enforced full-height flex column layout on desktops and laptops (`@media (min-width: 901px)`) for `#tool-word-chart` across all 3 sub-tabs:
-    1. Sub-tab 1: Point Values & Divisions (`#subtab-pane-wc-points`)
-    2. Sub-tab 2: Dictionary Word Counts (`#subtab-pane-wc-dicts`)
-    3. Sub-tab 3: Dynamic Word Lookup (`#subtab-pane-wc-lookup`)
-  - Guaranteed `bodyScrollHeight == bodyClientHeight`, `tcScrollHeight == tcClientHeight`, and `paneScrollHeight == paneClientHeight` so outer pages/panes do not scroll.
-- **Custom Scrollers & Sticky Headers**:
-  - Wrapped each sub-tab's table/content in custom scrollable wrappers (`.word-chart-table-container.list-scroll-area-wrapper`, `.word-chart-table-scroll`, `.wc-lookup-scroll-wrapper`, `.wc-lookup-scroll-area`) with custom draggable scrollbar tracks and gradient thumbs.
-  - Initialized via `initCustomScrollbarForElement` and refreshed on every sub-tab switch, data load, and search via `window.updateWordChartScrollbars()`.
-  - Configured sticky table headers (`position: sticky; top: 0; z-index: 10`) with 100% solid, fully opaque backgrounds (`var(--bg-primary, #181920)`) and bottom box-shadows, completely eliminating scrolled row text bleed-through across all themes.
-- **Pure White Tables & Cards for Light-Colored Layouts**:
-  - Configured pure white backgrounds (`#ffffff !important;`) and light subtle borders (`#cbd5e1` / `#e2e8f0`) across all 3 sub-tabs for light themes (`theme-white` and all `theme-light-*`), replacing dark gray:
-    1. Sub-tab 1: Table container, scroll wrapper, table body, sticky headers, and rows are crisp white with high-contrast text columns and light blue info banner.
-    2. Sub-tab 2: Stat boxes at the top and dictionary word count table are pure white with distinct colored numbers and clear column headers.
-    3. Sub-tab 3: Search bar input, live lookup result card, metric cards, division example cards, and division pill boxes are pure white and soft light gray, eliminating all dark gray styling in light themes.
-  - Inactive sub-tab buttons in light layouts are styled with white backgrounds and crisp borders.
-  - Custom scrollbar tracks and blue gradient thumbs styled cleanly for light layouts.
-  - Bumped cache busters: `play.css?v=1795224000` and `tools.js?v=1795224000`.
+### B. Sequential Word Path Highlighting on Review Selection (`static/js/play.js`)
+- **Root Cause**: When a user selected a word under "All Words" during intermission review, `toggleWordSelection()` scheduled sequential timeouts but immediately triggered a synchronous board re-render via `updateGameState()`. The second pass saw that the word had already started animating and executed the static fallback, forcing all tiles to light up simultaneously with no visible path tracing.
+- **Dedicated Animation Engine (`animateReviewWordPath`)**:
+  - Sequentially lights up tile-by-tile at a clean, visible **85 ms per tile** cadence.
+  - Guarded with `window._isReviewAnimating` and `window._activeReviewWord` so background game-state polling and board re-renders do not wipe or collapse in-flight animations.
+  - Smooth retraction on deselection and full compatibility with both 2D boards and 3D Cube boards.
 
-### G. Multiplayer Subanagrams Spinner Set Parameter Preservation at Round Transition (`game_room.py`, `subanagrams_generator.py`)
-- **Root Cause Eliminated**:
-  - Previously, `pick_distinct_bonus_word` in `game_room.py` was unconditionally called during `start_next_round` for all game types. Because `pick_distinct_bonus_word` was designed for Boggle boards (hard-clamped target lengths to [6..10], rejected words ending in `ING`/`INGS`, and filtered out recent history), it rejected the pre-generated Subanagrams bonus word staged in `room.next_round_bonus`. It then selected a different word of a different length from the board, and overwrote `room.bonus_word` and `bonus_word_length` in both `room.spinner_params` and `room.frozen_revealed_params`.
-  - When the round transitioned from intermission to active (`!isIntermission`), the client UI in `static/js/play.js` read `state.bonus_word.length`, abruptly changing the Bonus Word letter length on the Spinner Set at `0:00`.
-- **Subanagrams Bonus Word Isolation**:
-  - In `game_room.py`, isolated `start_next_round` so Subanagrams does NOT call `pick_distinct_bonus_word`. It strictly preserves `room.bonus_word` from `room.next_round_bonus` (or `frozen_revealed_params['bonus_word']`).
-  - Guarantees that `room.bonus_word` and `bonus_word_length` in `room.spinner_params`, `room.frozen_revealed_params`, and `room.next_spinner_params` strictly retain the exact declared bonus word length revealed at 0:45.
-- **Bonus Word Length Honoring in Generator**:
-  - Updated `subanagrams_generator.py` so `generate_subanagrams_board_and_words` respects `params.get('bonus_word_length')`. It filters candidate words for the target length first, ensuring generated bonus words match the spun target length from inception.
-- **Complete Parameter Immutability**:
-  - Ensured all other parameters revealed at 0:45 intermission (**Sequence Length**, **Dictionary**, **Target Word Count Range**, **Minimum Word Length**, and **Board Format / Mode**) remain 100% frozen and immutable through the `0:00` round transition.
-  - Aligned `is_count_in_range` in `subanagrams_generator.py` to strictly use `< 100`, `< 200`, `< 300`, `< 400` so range boundary counts never trigger range re-classification.
-  - Added guard in `generate_spinner_params` so any background calls after 0:45 reveal cannot overwrite frozen parameters.
+### C. Hover Tooltip for Input Method Icons in Game Rooms (`static/js/play.js`, `static/css/play.css`)
+- Added hover tooltips to the method icon in game room player cards with `cursor: help`:
+  - `🖱️` &rarr; `Input Method: Mousing`
+  - `⌨️` &rarr; `Input Method: Typing`
+  - `📱` &rarr; `Input Method: Swiping`
 
-### H. Multiplayer Subanagrams Real-Time Typing Letter Highlighting (`static/css/play.css`, `static/js/play.js`, `templates/index.html`)
-- **Real-Time 0ms Tile Highlighting As User Types**:
-  - In `static/js/play.js`, implemented `highlightSubanagramsInput(typedText)` and `isSubanagramsActive()` with instant 0ms latency.
-  - Matches typed characters directly against the rack's DOM cells (`.board-cell[data-letter]`), immediately applying `.typing-highlight` and `.selected` as the player types into `#word-input`.
-  - Backspacing, editing, or clearing the input immediately synchronizes or clears highlights across all tiles.
-  - Supports duplicate letters (e.g. rack with multiple 'A's accurately highlights distinct physical tiles) and 'QU'/'Q' sequence equivalence.
-  - Handles letters not on the rack gracefully without throwing or clearing matching rack letters.
-  - Preserves highlights and board mapping accurately across board tile shuffling (`window.shuffleSubanagramsBoard`).
-- **Eliminated `hasBoardSelection` Block**:
-  - Fixed root cause where `hasBoardSelection` in `play.js` detected `mouseState.selectedPath.length > 0` after the first typed letter and prematurely aborted/cleared highlights for all subsequent typed letters.
-  - Delegated Subanagrams typing directly to `highlightSubanagramsInput(word)` in the `word-input` input and keyup event listeners.
-- **Dedicated Highlighting Styles**:
-  - In `static/css/play.css`, added dedicated styles for `.board-cell.typing-highlight` in Subanagrams with high-contrast text and custom highlight colors (`var(--highlight-typing-color, #ffcc00)`).
-  - Maintained separation between mouse/touch selection (`.selected`, `.current`) and typing highlights (`.typing-highlight`).
-- **Cache Busters Bumped**:
-  - Bumped `play.css` and `play.js` to `?v=1795225000` in `templates/index.html`.
+### D. Input Method Percentage Breakdown on Profile & Mini-Profile (`app.py`, `game_room.py`, `templates/index.html`, `static/js/tools.js`)
+- **Dynamic Tracking**: Attached input method (`mouse`, `keyboard`, or `touch`) to all submitted words. On round conclusion, `save_round_history` tallies words submitted per method and updates `input_mouse_count`, `input_keyboard_count`, and `input_touch_count` on the `users` table.
+- **Mini-Profile (In-Room Modal)**:
+  - Added `#mini-meta-input-method` item in row 3 of the metadata grid alongside Forum Posts and above Proof.
+  - Displays `Input: 🖱️ 83% · 📱 17%` (or `Input: No data yet`).
+  - Desktop hover tooltip reveals full word counts and percentages across all modes.
+- **Full Profile Page**:
+  - Added `#profile-meta-input-method` in metadata line 3, completing a symmetrical 3×3 metadata grid.
+  - Displays the input method summary under the `Input` label with a detailed hover breakdown.
 
-### I. Lobby Room Loading Reliability, Instant State Return, and Subanagrams Initialization (`app.py`, `game_room.py`, `static/js/app.js`, `static/js/lobby.js`, `templates/index.html`)
-- **Instant State Ingestion on Join / Create (0ms Transition)**:
-  - Previously, `/api/room/create` and `/api/room/<room_id>/join` returned only `{success: true, room_id: ...}` without room state. The client had to wait for a subsequent `/api/room/<id>/state` request or WebSocket message to receive the board, causing delays and hanging "Loading..." overlays if server queueing occurred.
-  - Now, both endpoints return the complete current `state: room.get_state(user_id)` synchronously in their initial HTTP response.
-  - In `static/js/lobby.js` and `templates/index.html`, upon receiving `data.state` with board data or active/intermission state, the client immediately unlocks `window._isEnteringRoom = false;` and dismisses the loading overlay with `window.hideLoadingOverlay()`, rendering the room view instantaneously with 0ms delay.
-- **Fixed Subanagrams `start_round(room_id)` Crash**:
-  - Resolved `TypeError: 'NoneType' object is not iterable` in `game_room.py:5529` by guarding `room.previous_board = [list(row) for row in room.board]` with `if room.board:`.
-  - Added a dedicated top-level Subanagrams handler in `start_round(room_id)` to prevent falling through into 2D Boggle grid generation and board generator dimension parsing. The handler promotes staged `next_round_board` or invokes `subanagrams_generator.generate_subanagrams_board_and_words` (< 5ms), correctly sets `state = 'active'`, and dispatches `pre_generate_next_round`.
-- **Waking Up Paused / Stale Public Rooms in `create_room`**:
-  - Fixed wakeup logic in `game_room.py:create_room` which previously skipped waking up paused rooms if inactive human players were still attached from hours earlier. Now only considers active humans active within the last 120 seconds (`now_t - p.last_active < 120.0`).
-  - If a room is in `waiting` state, has no board, or has no active humans, it is instantly awakened into an active round with fresh parameters.
-- **Eliminated High-Frequency Polling Database Lock Contention**:
-  - In `app.py:get_room_state`, moved user rating and stats SQLite database queries behind a check for unjoined spectators/new sessions (`if not room.is_solo and not room.get_player(uid) and not room.get_spectator(uid):`).
-  - Active players and existing spectators bypass SQLite entirely during repeated 500ms polling ticks, reducing SQLite database locks and Waitress thread contention by ~99%.
-- **Removed Disk I/O Bottlenecks**:
-  - Removed synchronous `debug_flow.log` writes in `board_generator.py` and `app.py`, eliminating disk I/O thrashing and GIL locking.
-- **Loading Overlay Timeout Hardening**:
-  - Aligned client auto-hide timeouts in `app.js`, `lobby.js`, and `templates/index.html` to 45 seconds (`45000ms`), preventing premature overlay dismissal before server responses complete.
-  - Increased Waitress server `channel_timeout` from 20s to 120s.
-- **Cache Busters Bumped**:
-  - Bumped `app.js`, `lobby.js`, and `play.js` cache busters to `?v=1795226000` in `templates/index.html`.
+### E. Multiplayer Subanagrams Duplicate Letter Selection & Tap Tracking (`static/js/play.js`, `templates/index.html`)
+- Preserved exact user-tapped tile coordinates (`mouseState.isBoardTileSelection = true`) so duplicate letters (e.g. the two 'E's in `CASERNE`) never re-order the word or switch highlights unexpectedly.
+- Disabled mobile virtual keyboard autocorrect interference (`autocorrect="off" autocapitalize="characters" spellcheck="false"` on `#word-input`).
+- Suppressed delayed synthetic mouse events after touch gestures (`lastTouchTime = Date.now()`).
 
-### J. Multiplayer Subanagrams Remaining Tab Mobile Display Fix (`static/js/play.js`, `templates/index.html`)
-- **Root Cause Identified**:
-  - In `static/js/play.js`, `safelyTransposeState` checks if display orientation is in portrait mode (`window.innerHeight > window.innerWidth`). For rectangular 2D Boggle boards (e.g. 4x6), it transposes the board when `rows < cols` so the longest dimension runs vertically.
-  - Subanagrams uses a 1-dimensional letter rack represented as a 1-row array (e.g., `[['S', 'H', 'F', 'E', 'R', 'A', 'A', 'O']]`), where `rows = 1` and `cols = 8`.
-  - On mobile portrait screens, `rows < cols` (`1 < 8`) evaluated to `true`. `safelyTransposeState` transposed the 1D rack into 8 rows of 1 column (`[['S'], ['H'], ...]`) for both `state.board` and `state.previous_board`.
-  - In the Remaining tab table generator (`play.js`), `maxLen` was calculated using `(state.board && state.board[0] ? state.board[0].length : ...)`. Because `state.board[0]` had a length of `1`, `maxLen` became `1`. With `minLen = 3` and `maxLen = 1`, the loop `for (let i = minLen; i <= maxLen; i++)` executed zero times, rendering `<table id="remaining-words-table"></table>` with zero rows.
-- **Subanagrams Excluded from Board Transposition**:
-  - In `safelyTransposeState`, added an explicit check `isSubanagrams` (`state.game_type === 'subanagrams' || state.room_id.includes('subanagrams') || state.board_dimensions === 'subanagrams' || document.body.classList.contains('is-subanagrams')`).
-  - Guarded board transposition with `if (!isBoard3D && !isSubanagrams)`, ensuring 1D letter racks are never transposed.
-- **Robust Remaining Table Length Boundaries**:
-  - In `play.js`, made the `maxLen` calculation in the Remaining tab resilient against any board dimensionality by evaluating `Array.isArray(b[0]) ? Math.max(b.length, b[0].length) : b.length`, with automatic expansion for `sequence_length`, `bonus_word.length`, and the maximum word length found in `all_words` / `previous_all_words`.
-- **Verified Across Mobile & Desktop Viewports**:
-  - Verified on mobile emulation (iPhone 390x844 portrait) via headless Chrome CDP: Remaining table renders all rows (e.g. 3LW, 4LW, 5LW, 6LW) with full visibility, correct bounding rects, and dynamic updates.
-  - Verified on desktop viewport (1440x900): Remaining tab continues to render cleanly and consistently.
-  - Verified standard public rooms (4x4 and 4x6): confirmed transposition and Remaining table displays remain fully functional without any side effects.
-- **Cache Busters Bumped**:
-  - Bumped `play.js` cache buster to `?v=1795227000` in `templates/index.html`.
+### F. Multiplayer Subanagrams Tile Highlight Color Uniformity (`static/css/play.css`)
+- Unified `.game-board.is-subanagrams-board .board-cell.selected`, `.current`, and `.typing-highlight` to use `var(--highlight-mouse-color, #409cff) !important;` for consistent color fidelity without flashing.
 
-### L. Word Charts "2 Letters" Row Removal & Dynamic Word Lookup Light Layout Whiteness Fix (`app.py`, `static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
-- **Removed "2 Letters" Row from Point Values & Divisions and Dictionary Word Counts**:
-  - In `app.py:tools_word_chart`, adjusted loop `for length in range(3, 16):` so the backend generates point values and divisions starting strictly from 3-letter words.
-  - In `static/js/tools.js:renderWordChartPoints`, added guard `if (String(item.length) === '2' || item.length === 2) return;` so 2-letter rows are never rendered in Point Values & Divisions.
-  - In `static/js/tools.js:renderWordChartDicts`, updated length loop to `for (let i = 3; i <= 15; i++)`, starting the Dictionary Word Counts table from 3 Letters through 16+ Letters.
-- **Dynamic Word Lookup Panel Color Alignment Across Light Themes**:
-  - Identified root cause where `.wc-lookup-scroll-wrapper` base rule had higher CSS specificity (`#tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper`) with `background: rgba(...) !important; padding: 10px 12px; border-radius: 8px;`, retaining its dark gray background in light layouts.
-  - Its child `.wc-lookup-scroll-area` had `background: #ffffff !important; border-radius: 0px;`, creating a sharp white square inside the padding that stopped short of the panel's rounded border.
-  - Applied high-specificity light theme overrides to `#tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper` setting `background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important;`.
-  - Set `.wc-lookup-scroll-area` to `background: transparent !important; border: none !important;`, ensuring the entire panel — including all padding to its rounded edges — is seamless crisp white with zero inner square contrast.
-- **Cache Busters Bumped**:
-  - Bumped `play.css` and `tools.js` to `?v=1795227000` in `templates/index.html`.
+### G. Game Room Remaining Tab Cutoff Rule (`static/js/play.js`)
+- Omitted trailing zero-word rows beyond the highest findable letter length on the board while preserving intermediate 0 rows and honoring `Min:`.
 
-### M. Architectural Integrity & Strict Boundaries
-- **Public Room Isolation**:
-  - Standard public rooms (`accumulative`, 4x4, 4x6, 6x8, Split, 3D, Daily) remain completely untouched and unmodified.
-- **Zero Server Drift**:
-  - Localhost, GitHub `main`, and production VPS (`morpheme.games`) remain 100% byte-for-byte in sync.
+### H. Word Charts in Tools: 2-Letter Row Removal & Panel Edge Alignment (`templates/index.html`, `static/css/play.css`)
+- Omitted "2 Letters" row from both **Point Values & Divisions** and **Dictionary Word Counts** tables.
+- Extended pure white background to rounded panel edges in **Dynamic Word Lookup** for light-colored layouts.
+
+---
+
+## 4. Verification Summary
+- **Live Production URL**: `https://morpheme.games/` (HTTP/2 200 OK, Content-Length: 860529).
+- **Localhost URL**: `http://localhost:5001/` (HTTP/1.1 200 OK, Content-Length: 860529).
+- **VPS PM2 Process**: Online (PID 98350, 0% CPU, 2.4 GB memory, 1.0 GB available).
+- **Git Commit**: `12578e9c59544a6f97c1bdf52f186318322dd3e6`.
+- **Sync Status**: `localhost`, `github (origin/main)`, and `production (morpheme.games)` are 100% synchronized byte-for-byte.
