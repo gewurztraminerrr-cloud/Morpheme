@@ -2469,15 +2469,17 @@ window.showMiniProfile = async function (username) {
         const rating = data.rating || 0;
         if (avatar) {
             if (data.avatar_url) {
+                avatar.classList.add('has-image');
                 avatar.style.background = 'none';
                 avatar.style.backgroundImage = `url('${data.avatar_url}')`;
                 avatar.style.backgroundSize = 'cover';
                 avatar.style.backgroundPosition = 'center';
-                avatar.style.backgroundColor = 'rgba(0,0,0,0.3)';
+                avatar.style.backgroundColor = 'rgba(0,0,0,0.05)';
                 avatar.innerText = '';
                 avatar.style.cursor = 'pointer';
                 avatar.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
             } else {
+                avatar.classList.remove('has-image');
                 avatar.style.cursor = 'default';
                 avatar.onclick = null;
                 avatar.style.backgroundImage = 'none';
@@ -3132,29 +3134,44 @@ async function uploadAvatar(file) {
             body: formData
         });
 
+        if (!response.ok) {
+            let errorMsg = "Upload failed";
+            try {
+                const errData = await response.json();
+                if (errData && errData.error) errorMsg = errData.error;
+            } catch (e) {
+                if (response.status === 413) errorMsg = "Image file is too large to upload.";
+                else if (response.status === 502) errorMsg = "Server is updating. Please try again in a moment.";
+            }
+            alert(errorMsg);
+            if (avatarEl) avatarEl.innerHTML = originalContent;
+            return;
+        }
+
         const data = await response.json();
 
         if (data.error) {
             alert(data.error);
-            avatarEl.innerHTML = originalContent;
+            if (avatarEl) avatarEl.innerHTML = originalContent;
             return;
         }
 
         if (data.avatar_url) {
             // Update UI with new image
+            avatarEl.classList.add('has-image');
             avatarEl.style.backgroundImage = `url('${data.avatar_url}?t=${Date.now()}')`;
             avatarEl.style.backgroundSize = 'contain';
             avatarEl.style.backgroundRepeat = 'no-repeat';
             avatarEl.style.backgroundPosition = 'center';
-            avatarEl.style.backgroundColor = 'rgba(0,0,0,0.3)';
+            avatarEl.style.backgroundColor = 'rgba(0,0,0,0.05)';
             avatarEl.innerText = '';
             avatarEl.style.backgroundBlendMode = 'normal';
         }
 
     } catch (err) {
         console.error("Upload failed", err);
-        alert("Upload failed");
-        avatarEl.innerHTML = originalContent;
+        alert("Upload failed. Please check your network and try again.");
+        if (avatarEl) avatarEl.innerHTML = originalContent;
     }
 }
 
@@ -3304,7 +3321,8 @@ async function renderProfile(user) {
     // Avatar Handling
     if (avatar) {
         if (user.avatar_url) {
-            avatar.style.backgroundColor = 'rgba(0,0,0,0.3)';
+            avatar.classList.add('has-image');
+            avatar.style.backgroundColor = 'rgba(0,0,0,0.05)';
             avatar.style.backgroundImage = `url('${user.avatar_url}')`;
             avatar.style.backgroundSize = 'contain';
             avatar.style.backgroundRepeat = 'no-repeat';
@@ -3318,6 +3336,7 @@ async function renderProfile(user) {
                 avatar.onclick = () => showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
             }
         } else {
+            avatar.classList.remove('has-image');
             avatar.style.cursor = isOwner ? 'pointer' : 'default';
             avatar.onclick = null;
             avatar.style.backgroundImage = 'none';

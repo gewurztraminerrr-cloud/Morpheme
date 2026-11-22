@@ -1752,11 +1752,24 @@ body:not(.is-mobile) .tool-word-badges-row,
     border-color: var(--card-border, rgba(0, 0, 0, 0.08)) !important;
 }
 
-[class*="theme-white"] .profile-avatar.large,
-[class*="theme-light-"] .profile-avatar.large {
+[class*="theme-white"] .profile-avatar.large:not(.has-image),
+[class*="theme-light-"] .profile-avatar.large:not(.has-image) {
     background: var(--bg-primary) !important;
     border: 1.5px solid var(--card-border) !important;
     color: var(--text-primary) !important;
+}
+
+.profile-avatar.large.has-image {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    background-size: contain !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+}
+
+[class*="theme-white"] .profile-avatar.large.has-image,
+[class*="theme-light-"] .profile-avatar.large.has-image {
+    border: 1.5px solid var(--card-border) !important;
+    background-color: rgba(0, 0, 0, 0.03) !important;
 }
 
 [class*="theme-white"] .meta-text,

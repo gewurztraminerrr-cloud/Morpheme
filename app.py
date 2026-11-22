@@ -186,6 +186,8 @@ def moderate_content(text=None, image_bytes=None, mime_type=None, is_username=Fa
             mime_type = "image/jpeg"
         elif not mime_type.startswith("image/"):
             mime_type = f"image/{mime_type}"
+        if mime_type in ("image/jpg", "image/jfif"):
+            mime_type = "image/jpeg"
             
         b64_data = base64.b64encode(image_bytes).decode('utf-8')
         parts.append({
@@ -4787,7 +4789,7 @@ reload_ip_timeouts()
 # Configuration for Uploads
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads/avatars')
 FORUM_UPLOAD_FOLDER = os.path.join(app.root_path, 'static/uploads/forum')
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'jfif', 'heic', 'avif'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['FORUM_UPLOAD_FOLDER'] = FORUM_UPLOAD_FOLDER
@@ -7421,10 +7423,11 @@ def upload_avatar():
             # Read bytes for AI content moderation
             file_bytes = file.read()
             file.seek(0)
-            ext = file.filename.rsplit('.', 1)[1].lower()
+            ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else 'jpg'
+            mime_type = 'image/jpeg' if ext in ('jpg', 'jpeg', 'jfif') else f'image/{ext}'
             
             # Run AI moderation check
-            moderation_res = moderate_content(image_bytes=file_bytes, mime_type=ext)
+            moderation_res = moderate_content(image_bytes=file_bytes, mime_type=mime_type)
             if moderation_res.get("inappropriate"):
                 penalty = apply_automated_penalty(session['user_id'], session.get('username'), client_ip, reason=f"Inappropriate avatar image: {moderation_res.get('reason')}")
                 dur_msg = f" You have been placed on timeout for {penalty['duration_str']}." if penalty else ""
