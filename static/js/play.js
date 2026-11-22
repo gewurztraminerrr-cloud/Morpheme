@@ -4068,35 +4068,38 @@ async function _doUpdateGameState(incomingState = null) {
                 }
             }
             let maxLen = 30;
-            if (isSubanagramsRoom || state.game_type === 'subanagrams') {
-                if (isIntermission) {
-                    if (state.previous_board && state.previous_board[0]) {
-                        maxLen = Array.isArray(state.previous_board[0]) ? Math.max(state.previous_board.length, state.previous_board[0].length) : state.previous_board.length;
-                    } else if (state.previous_all_words && state.previous_all_words.length > 0) {
-                        maxLen = Math.max(...state.previous_all_words.map(w => (typeof w === 'string' ? w.length : ((w && w.word) ? w.word.length : 0))));
-                    } else {
-                        maxLen = state.sequence_length || 10;
+            // Highest letter length findable on the board across all game rooms
+            let highestFindableLen = 0;
+            for (let i = 30; i >= 1; i--) {
+                if ((totalByLenMap[i] || 0) > 0) {
+                    highestFindableLen = i;
+                    break;
+                }
+            }
+            const wordListForMax = isIntermission ? (state.previous_all_words || state.all_words) : (state.all_words || state.previous_all_words);
+            if (wordListForMax && (Array.isArray(wordListForMax) ? wordListForMax.length > 0 : Object.keys(wordListForMax).length > 0)) {
+                const wordsArr = Array.isArray(wordListForMax) ? wordListForMax : Object.keys(wordListForMax);
+                for (let wIdx = 0; wIdx < wordsArr.length; wIdx++) {
+                    const w = wordsArr[wIdx];
+                    const len = typeof w === 'string' ? w.length : ((w && w.word) ? w.word.length : 0);
+                    if (len > highestFindableLen) highestFindableLen = len;
+                }
+            }
+            if (highestFindableLen > 0) {
+                maxLen = Math.max(minLen, highestFindableLen);
+            } else {
+                if (isSubanagramsRoom || state.game_type === 'subanagrams') {
+                    if (state.sequence_length) {
+                        maxLen = state.sequence_length;
+                    } else if (state.board && state.board.length > 0) {
+                        maxLen = Array.isArray(state.board[0]) ? Math.max(state.board.length, state.board[0].length) : state.board.length;
                     }
+                } else if (state.board && state.board.length > 0) {
+                    const rows = state.board.length;
+                    const cols = Array.isArray(state.board[0]) ? state.board[0].length : 1;
+                    maxLen = Math.min(16, rows * cols);
                 } else {
-                    const b = state.board;
-                    if (b && b.length > 0) {
-                        maxLen = Array.isArray(b[0]) ? Math.max(b.length, b[0].length) : b.length;
-                    } else {
-                        maxLen = state.sequence_length || 10;
-                    }
-                }
-                if (state.sequence_length && state.sequence_length > maxLen) {
-                    maxLen = state.sequence_length;
-                }
-                if (state.bonus_word && state.bonus_word.length > maxLen) {
-                    maxLen = state.bonus_word.length;
-                }
-                const wordListForMax = isIntermission ? (state.previous_all_words || state.all_words) : (state.all_words || state.previous_all_words);
-                if (wordListForMax && wordListForMax.length > 0) {
-                    for (let wIdx = 0; wIdx < wordListForMax.length; wIdx++) {
-                        const wStr = typeof wordListForMax[wIdx] === 'string' ? wordListForMax[wIdx] : ((wordListForMax[wIdx] && wordListForMax[wIdx].word) || '');
-                        if (wStr.length > maxLen) maxLen = wStr.length;
-                    }
+                    maxLen = minLen;
                 }
             }
             for (let i = minLen; i <= maxLen; i++) {
