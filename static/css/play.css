@@ -19537,13 +19537,137 @@ body.theme-light-gray #current-notice-preview {
     color: #1e293b !important;
 }
 
-/* Mod Tables (IP bans, donations, undefined words) */
+/* ==========================================================================
+   MOD DEFINITIONS & PRONUNCIATIONS WORD TABLES (ALL THEMES)
+   ========================================================================== */
+.mod-words-box {
+    margin-top: 15px;
+    margin-bottom: 20px;
+    border: 1px solid var(--input-border, rgba(255, 255, 255, 0.15));
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.25);
+    padding: 14px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.mod-words-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-weight: 700;
+    font-size: 0.88rem;
+}
+
+.mod-words-title {
+    color: var(--text-primary, #ffffff);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.mod-words-count {
+    opacity: 0.75;
+    font-weight: 500;
+    font-size: 0.8rem;
+    color: var(--text-primary, #ffffff);
+}
+
+.mod-refresh-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: #a5b4fc;
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mod-refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: #c7d2fe;
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.mod-words-search-input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--input-border, rgba(255, 255, 255, 0.15));
+    background: var(--input-bg, rgba(0, 0, 0, 0.3));
+    color: var(--text-primary, #ffffff);
+    font-size: 0.88rem;
+    box-sizing: border-box;
+    margin-bottom: 10px;
+}
+
+.mod-words-list-scroll {
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.mod-words-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.mod-length-header {
+    background: rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.mod-length-header td {
+    padding: 6px 12px;
+    font-weight: 800;
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.65);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.mod-word-row {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.mod-word-row:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.mod-word-row td {
+    padding: 7px 12px 7px 24px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #a5b4fc;
+}
+
+/* Mod Tables - White Theme */
 [class*="theme-white"] #ip-bans-list-container,
 [class*="theme-white"] #mod-donations-list-container,
+[class*="theme-white"] .mod-words-box,
+[class*="theme-white"] .mod-words-list-scroll,
 [class*="theme-white"] .undef-words-box,
 [class*="theme-white"] .undef-words-list-scroll,
 body.theme-white #ip-bans-list-container,
 body.theme-white #mod-donations-list-container,
+body.theme-white .mod-words-box,
+body.theme-white .mod-words-list-scroll,
 body.theme-white .undef-words-box,
 body.theme-white .undef-words-list-scroll {
     background: #ffffff !important;
@@ -19551,14 +19675,159 @@ body.theme-white .undef-words-list-scroll {
     color: #0f172a !important;
 }
 
+[class*="theme-white"] .mod-words-box,
+body.theme-white .mod-words-box {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+[class*="theme-white"] .mod-words-title,
+body.theme-white .mod-words-title {
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] .mod-words-count,
+body.theme-white .mod-words-count {
+    color: #64748b !important;
+    opacity: 1 !important;
+}
+
+[class*="theme-white"] .mod-refresh-btn,
+body.theme-white .mod-refresh-btn {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #2563eb !important;
+}
+
+[class*="theme-white"] .mod-refresh-btn:hover,
+body.theme-white .mod-refresh-btn:hover {
+    background: #e2e8f0 !important;
+    color: #1d4ed8 !important;
+    border-color: #94a3b8 !important;
+}
+
+[class*="theme-white"] .mod-words-search-input,
+body.theme-white .mod-words-search-input {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+[class*="theme-white"] .mod-words-list-scroll,
+body.theme-white .mod-words-list-scroll {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+[class*="theme-white"] .mod-length-header,
+body.theme-white .mod-length-header {
+    background: #e2e8f0 !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+
+[class*="theme-white"] .mod-length-header td,
+body.theme-white .mod-length-header td {
+    color: #334155 !important;
+    font-weight: 800 !important;
+}
+
+[class*="theme-white"] .mod-word-row,
+body.theme-white .mod-word-row {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+[class*="theme-white"] .mod-word-row:hover,
+body.theme-white .mod-word-row:hover {
+    background: #eff6ff !important;
+}
+
+[class*="theme-white"] .mod-word-row td,
+body.theme-white .mod-word-row td {
+    color: #1d4ed8 !important;
+}
+
+/* Mod Tables - Light Themes */
 [class*="theme-light-"] #ip-bans-list-container,
 [class*="theme-light-"] #mod-donations-list-container,
+[class*="theme-light-"] .mod-words-box,
+[class*="theme-light-"] .mod-words-list-scroll,
 [class*="theme-light-"] .undef-words-box,
-[class*="theme-light-"] .undef-words-list-scroll {
+[class*="theme-light-"] .undef-words-list-scroll,
+body[class*="theme-light-"] .mod-words-box,
+body[class*="theme-light-"] .mod-words-list-scroll {
     background: var(--bg-primary) !important;
     background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
     border: 1px solid var(--card-border) !important;
     color: var(--text-primary) !important;
+}
+
+[class*="theme-light-"] .mod-words-box,
+body[class*="theme-light-"] .mod-words-box {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+[class*="theme-light-"] .mod-words-title,
+body[class*="theme-light-"] .mod-words-title {
+    color: var(--text-primary) !important;
+}
+
+[class*="theme-light-"] .mod-words-count,
+body[class*="theme-light-"] .mod-words-count {
+    color: var(--text-secondary, #475569) !important;
+    opacity: 0.85 !important;
+}
+
+[class*="theme-light-"] .mod-refresh-btn,
+body[class*="theme-light-"] .mod-refresh-btn {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid var(--card-border) !important;
+    color: #1d4ed8 !important;
+}
+
+[class*="theme-light-"] .mod-refresh-btn:hover,
+body[class*="theme-light-"] .mod-refresh-btn:hover {
+    background: rgba(0, 0, 0, 0.1) !important;
+    color: #1e40af !important;
+    border-color: #94a3b8 !important;
+}
+
+[class*="theme-light-"] .mod-words-search-input,
+body[class*="theme-light-"] .mod-words-search-input {
+    background: #f8fafc !important;
+    border: 1px solid var(--card-border) !important;
+    color: #0f172a !important;
+}
+
+[class*="theme-light-"] .mod-words-list-scroll,
+body[class*="theme-light-"] .mod-words-list-scroll {
+    background: rgba(255, 255, 255, 0.7) !important;
+    border: 1px solid var(--card-border) !important;
+}
+
+[class*="theme-light-"] .mod-length-header,
+body[class*="theme-light-"] .mod-length-header {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-bottom: 1px solid var(--card-border) !important;
+}
+
+[class*="theme-light-"] .mod-length-header td,
+body[class*="theme-light-"] .mod-length-header td {
+    color: #1e293b !important;
+    font-weight: 800 !important;
+}
+
+[class*="theme-light-"] .mod-word-row,
+body[class*="theme-light-"] .mod-word-row {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+[class*="theme-light-"] .mod-word-row:hover,
+body[class*="theme-light-"] .mod-word-row:hover {
+    background: rgba(37, 99, 235, 0.08) !important;
+}
+
+[class*="theme-light-"] .mod-word-row td,
+body[class*="theme-light-"] .mod-word-row td {
+    color: #1e3a8a !important;
 }
 
 [class*="theme-white"] #ip-bans-table th,

@@ -53,6 +53,9 @@ async function checkModStatus() {
             if (typeof loadUndefinedWords === 'function') {
                 loadUndefinedWords();
             }
+            if (typeof loadUnpronouncedWords === 'function') {
+                loadUnpronouncedWords();
+            }
             document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'inline-block');
         } else {
             document.querySelectorAll('.mod-only-btn').forEach(btn => btn.style.display = 'none');
@@ -229,6 +232,11 @@ async function addPronunciation() {
             if (wordInput) wordInput.value = '';
             if (pronInput) pronInput.value = '';
             showModStatus(`Pronunciation for ${word} added successfully.`, false, 'pron-status-area');
+            if (Array.isArray(unpronouncedWordsList) && unpronouncedWordsList.length > 0) {
+                const uWord = word.toUpperCase();
+                unpronouncedWordsList = unpronouncedWordsList.filter(w => w !== uWord);
+                renderUnpronouncedWords();
+            }
         } else {
             showModStatus(data.error || "Failed to add pronunciation.", true, 'pron-status-area');
         }
@@ -259,6 +267,14 @@ async function removePronunciation() {
         if (data.success) {
             if (wordInput) wordInput.value = '';
             showModStatus(`Pronunciation for ${word} removed successfully.`, false, 'pron-status-area');
+            if (Array.isArray(unpronouncedWordsList)) {
+                const uWord = word.toUpperCase();
+                if (!unpronouncedWordsList.includes(uWord)) {
+                    unpronouncedWordsList.push(uWord);
+                    unpronouncedWordsList.sort((a, b) => a.length - b.length || a.localeCompare(b));
+                    renderUnpronouncedWords();
+                }
+            }
         } else {
             showModStatus(data.error || "Failed to remove pronunciation.", true, 'pron-status-area');
         }
@@ -683,6 +699,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const refreshUnpronBtn = document.getElementById('refresh-unpron-btn');
+    if (refreshUnpronBtn) {
+        refreshUnpronBtn.addEventListener('click', () => loadUnpronouncedWords(true));
+    }
+
+    const unpronSearchInput = document.getElementById('unpron-search-input');
+    if (unpronSearchInput) {
+        unpronSearchInput.addEventListener('input', renderUnpronouncedWords);
+    }
+
+    const unpronScrollArea = document.querySelector('.unpron-words-list-scroll');
+    if (unpronScrollArea) {
+        unpronScrollArea.addEventListener('scroll', () => {
+            if (unpronScrollArea.scrollTop + unpronScrollArea.clientHeight >= unpronScrollArea.scrollHeight - 150) {
+                appendUnpronBatch();
+            }
+        });
+    }
+
     // Ban / Timeout User
     const timeoutUserBtn = document.getElementById('timeout-user-btn');
     if (timeoutUserBtn) {
@@ -1067,6 +1102,13 @@ async function addDefinition() {
                 undefinedWordsList = undefinedWordsList.filter(w => !wordsSet.has(w));
                 renderUndefinedWords();
             }
+
+            // If a pronunciation was also declared, update unpronounced list in-memory
+            if (pron && Array.isArray(unpronouncedWordsList) && unpronouncedWordsList.length > 0) {
+                const wordsSet = new Set((data.words || [word]).map(w => w.toUpperCase()));
+                unpronouncedWordsList = unpronouncedWordsList.filter(w => !wordsSet.has(w));
+                renderUnpronouncedWords();
+            }
         } else {
             const errMsg = "❌ Error: " + (data.error || "Failed to set definition.");
             showModStatus(errMsg, true, 'def-inline-status');
@@ -1264,7 +1306,7 @@ function renderUndefinedWords() {
     }
     
     if (currentFilteredUndef.length === 0) {
-        tbody.innerHTML = `<tr><td style="padding: 10px; color: rgba(255,255,255,0.4); font-size: 0.85rem; text-align: center;">No undefined words found.</td></tr>`;
+        tbody.innerHTML = `<tr><td style="padding: 10px; color: var(--text-secondary, #94a3b8); font-size: 0.85rem; text-align: center;">No undefined words found.</td></tr>`;
         return;
     }
     
@@ -1301,8 +1343,8 @@ function appendUndefBatch() {
         const existingHeader = tbody.querySelector(`.undef-header-${len}`);
         if (!existingHeader) {
             rowsHTML.push(`
-                <tr class="undef-header-${len}" style="background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(255,255,255,0.08); pointer-events: none;">
-                    <td style="padding: 6px 12px; font-weight: 800; font-size: 0.65rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">${len} Letters</td>
+                <tr class="undef-header-${len} mod-length-header">
+                    <td>${len} Letters</td>
                 </tr>
             `);
         }
@@ -1310,8 +1352,8 @@ function appendUndefBatch() {
         // Word Rows
         groups[len].forEach(word => {
             rowsHTML.push(`
-                <tr onclick="selectUndefinedWord('${word}')" style="border-bottom: 1px solid rgba(255,255,255,0.04); cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">
-                    <td style="padding: 6px 12px; padding-left: 24px; font-weight: 600; font-size: 0.85rem; color: #a5b4fc;">${word}</td>
+                <tr class="mod-word-row" onclick="selectUndefinedWord('${word}')">
+                    <td>${word}</td>
                 </tr>
             `);
         });
@@ -1335,6 +1377,139 @@ window.selectUndefinedWord = function(word) {
 window.loadUndefinedWords = loadUndefinedWords;
 window.renderUndefinedWords = renderUndefinedWords;
 window.appendUndefBatch = appendUndefBatch;
+
+// Unpronounced Words Table Support
+let unpronouncedWordsList = [];
+let unpronRenderedCount = 0;
+const UNPRON_BATCH_SIZE = 500;
+let currentFilteredUnpron = [];
+
+async function loadUnpronouncedWords(force = false) {
+    const container = document.getElementById('unpron-words-container');
+    if (!container) return;
+    
+    if (!window.currentUserIsMod) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.style.display = 'block';
+    
+    if (!force && Array.isArray(unpronouncedWordsList) && unpronouncedWordsList.length > 0) {
+        renderUnpronouncedWords();
+        return;
+    }
+    
+    const countEl = document.getElementById('unpron-words-count');
+    const tbody = document.getElementById('unpron-words-tbody');
+    
+    if (countEl) countEl.textContent = '(Loading...)';
+    
+    try {
+        const url = force ? '/api/mods/pronunciations/unpronounced?force=true' : '/api/mods/pronunciations/unpronounced';
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        if (data.success && Array.isArray(data.words)) {
+            unpronouncedWordsList = data.words;
+            renderUnpronouncedWords();
+        } else {
+            if (tbody) tbody.innerHTML = `<tr><td style="padding: 10px; color: #f43f5e; font-size: 0.85rem;">Failed to load words.</td></tr>`;
+        }
+    } catch (err) {
+        console.error("Error loading unpronounced words:", err);
+        if (tbody) tbody.innerHTML = `<tr><td style="padding: 10px; color: #f43f5e; font-size: 0.85rem;">Error loading words.</td></tr>`;
+    }
+}
+
+function renderUnpronouncedWords() {
+    const countEl = document.getElementById('unpron-words-count');
+    const tbody = document.getElementById('unpron-words-tbody');
+    const searchInput = document.getElementById('unpron-search-input');
+    const query = searchInput ? searchInput.value.trim().toUpperCase() : '';
+    
+    if (!tbody) return;
+    
+    currentFilteredUnpron = query 
+        ? unpronouncedWordsList.filter(w => w.includes(query))
+        : unpronouncedWordsList;
+        
+    if (countEl) {
+        countEl.textContent = `(${currentFilteredUnpron.length.toLocaleString()} unpronounced)`;
+    }
+    
+    if (currentFilteredUnpron.length === 0) {
+        tbody.innerHTML = `<tr><td style="padding: 10px; color: var(--text-secondary, #94a3b8); font-size: 0.85rem; text-align: center;">No unpronounced words found.</td></tr>`;
+        return;
+    }
+    
+    unpronRenderedCount = 0;
+    tbody.innerHTML = '';
+    appendUnpronBatch();
+}
+
+function appendUnpronBatch() {
+    const tbody = document.getElementById('unpron-words-tbody');
+    if (!tbody || unpronRenderedCount >= currentFilteredUnpron.length) return;
+    
+    const nextWords = currentFilteredUnpron.slice(unpronRenderedCount, unpronRenderedCount + UNPRON_BATCH_SIZE);
+    if (nextWords.length === 0) return;
+    
+    // Group words by length
+    const groups = {};
+    nextWords.forEach(word => {
+        const len = word.length;
+        if (!groups[len]) groups[len] = [];
+        groups[len].push(word);
+    });
+    
+    // Sort lengths ascending (fewest letters first)
+    const lengths = Object.keys(groups).map(Number).sort((a, b) => a - b);
+    
+    // Build HTML rows with category headers
+    const rowsHTML = [];
+    lengths.forEach(len => {
+        // Sort words within this length group alphabetically
+        groups[len].sort((a, b) => a.localeCompare(b));
+        
+        // Check if header for this length already exists in DOM
+        const existingHeader = tbody.querySelector(`.unpron-header-${len}`);
+        if (!existingHeader) {
+            rowsHTML.push(`
+                <tr class="unpron-header-${len} mod-length-header">
+                    <td>${len} Letters</td>
+                </tr>
+            `);
+        }
+        
+        // Word Rows
+        groups[len].forEach(word => {
+            rowsHTML.push(`
+                <tr class="mod-word-row" onclick="selectUnpronouncedWord('${word}')">
+                    <td>${word}</td>
+                </tr>
+            `);
+        });
+    });
+    
+    tbody.insertAdjacentHTML('beforeend', rowsHTML.join(''));
+    unpronRenderedCount += nextWords.length;
+}
+
+window.selectUnpronouncedWord = function(word) {
+    const wordInput = document.getElementById('pron-word-input');
+    const pronInput = document.getElementById('pron-value-input');
+    if (wordInput) {
+        wordInput.value = word;
+    }
+    if (pronInput) {
+        pronInput.focus();
+    }
+};
+
+window.loadUnpronouncedWords = loadUnpronouncedWords;
+window.renderUnpronouncedWords = renderUnpronouncedWords;
+window.appendUnpronBatch = appendUnpronBatch;
 
 window.showModTab = function(tabId) {
     if (window._modsSlideTimeout) {
@@ -1386,6 +1561,8 @@ window.showModTab = function(tabId) {
         if (!window._donationsLoaded) loadModDonations();
     } else if (tabId === 'def') {
         loadUndefinedWords(false);
+    } else if (tabId === 'pron') {
+        loadUnpronouncedWords(false);
     } else if (tabId === 'access') {
         if (!window._modListLoaded) loadModList();
     } else if (tabId === 'added') {

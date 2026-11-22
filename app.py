@@ -826,10 +826,11 @@ def add_pronunciation():
     
     try:
         # Update Cache
-        global PRONUNCIATIONS_CACHE
+        global PRONUNCIATIONS_CACHE, _UNPRONOUNCED_WORDS_CACHE
         if PRONUNCIATIONS_CACHE is None:
             load_pronunciations()
         PRONUNCIATIONS_CACHE[word] = pronunciation
+        _UNPRONOUNCED_WORDS_CACHE = None
         
         # Check if already exists in mapping or file to avoid duplicates.
         # Simple append for now.
@@ -858,12 +859,13 @@ def remove_pronunciation():
     
     try:
         # Update Cache
-        global PRONUNCIATIONS_CACHE
+        global PRONUNCIATIONS_CACHE, _UNPRONOUNCED_WORDS_CACHE
         if PRONUNCIATIONS_CACHE is None:
             load_pronunciations()
             
         if PRONUNCIATIONS_CACHE and word in PRONUNCIATIONS_CACHE:
             del PRONUNCIATIONS_CACHE[word]
+        _UNPRONOUNCED_WORDS_CACHE = None
             
         # Rewrite file without that word
         if os.path.exists(pron_path):
@@ -1876,7 +1878,7 @@ def add_definition_api():
         
         if pronunciation:
             pron_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dictionaries', 'pronunciations.txt')
-            global PRONUNCIATIONS_CACHE
+            global PRONUNCIATIONS_CACHE, _UNPRONOUNCED_WORDS_CACHE
             if PRONUNCIATIONS_CACHE is None:
                 load_pronunciations()
             try:
@@ -1884,6 +1886,7 @@ def add_definition_api():
                     for w in words:
                         PRONUNCIATIONS_CACHE[w] = pronunciation
                         f_pron.write(f"{w} - {pronunciation}\n")
+                _UNPRONOUNCED_WORDS_CACHE = None
             except Exception as e_pron:
                 print(f"Error saving pronunciation: {e_pron}")
 
@@ -1972,6 +1975,71 @@ def get_undefined_words_api():
         
     force = request.args.get('force', 'false').lower() == 'true'
     result = compute_undefined_words(force=force)
+    status_code = 200 if result.get('success') else 500
+    return jsonify(result), status_code
+
+_UNPRONOUNCED_WORDS_CACHE = None
+_UNPRONOUNCED_WORDS_LOCK = threading.Lock()
+
+def compute_unpronounced_words(force=False):
+    global _UNPRONOUNCED_WORDS_CACHE, PRONUNCIATIONS_CACHE
+    with _UNPRONOUNCED_WORDS_LOCK:
+        if not force and _UNPRONOUNCED_WORDS_CACHE is not None:
+            return _UNPRONOUNCED_WORDS_CACHE
+            
+        try:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            dicts_dir = os.path.join(base_dir, 'dictionaries')
+
+            if PRONUNCIATIONS_CACHE is None:
+                load_pronunciations()
+            pronounced_words = set(PRONUNCIATIONS_CACHE.keys()) if PRONUNCIATIONS_CACHE else set()
+
+            def _read_wordlist(path):
+                words = set()
+                if os.path.exists(path):
+                    with open(path, 'r', encoding='utf-8', errors='ignore') as fh:
+                        for ln in fh:
+                            ln = ln.strip()
+                            if ln and not ln.startswith('#'):
+                                words.add(ln.split()[0].upper())
+                return words
+
+            nwl_words   = _read_wordlist(os.path.join(dicts_dir, 'NWL.txt'))
+            csw_words   = _read_wordlist(os.path.join(dicts_dir, 'CSW.txt'))
+            long_words  = _read_wordlist(os.path.join(dicts_dir, '16plus.txt'))
+            added_words = _read_wordlist(os.path.join(dicts_dir, 'added_words.txt'))
+            new_nwl     = _read_wordlist(os.path.join(dicts_dir, 'new_NWL.txt'))
+            new_csw     = _read_wordlist(os.path.join(dicts_dir, 'new_CSW.txt'))
+
+            all_vocab = nwl_words | csw_words | long_words | added_words | new_nwl | new_csw
+
+            # All words without a pronunciation, sorted by length (shortest first) then alphabetically
+            unpronounced_words = [w for w in all_vocab if w not in pronounced_words]
+            unpronounced_words.sort(key=lambda x: (len(x), x))
+
+            _UNPRONOUNCED_WORDS_CACHE = {
+                'success': True,
+                'words': unpronounced_words,
+                '_debug': {
+                    'total_vocab_count': len(all_vocab),
+                    'pronounced_count': len(pronounced_words),
+                    'unpronounced_count': len(unpronounced_words),
+                }
+            }
+            return _UNPRONOUNCED_WORDS_CACHE
+        except Exception as e:
+            print(f"Error computing unpronounced words: {e}")
+            return {'success': False, 'error': str(e), 'words': []}
+
+@app.route('/api/mods/pronunciations/unpronounced', methods=['GET'])
+@login_required
+def get_unpronounced_words_api():
+    if not is_mod(session.get('username')):
+        return jsonify({'error': 'Unauthorized'}), 403
+        
+    force = request.args.get('force', 'false').lower() == 'true'
+    result = compute_unpronounced_words(force=force)
     status_code = 200 if result.get('success') else 500
     return jsonify(result), status_code
 
