@@ -6191,8 +6191,18 @@
                                 <span class="mod-words-title">Words Without Pronunciations <span id="unpron-words-count" class="mod-words-count">(Loading...)</span></span>
                                 <button id="refresh-unpron-btn" class="mod-refresh-btn" type="button">🔄 Refresh</button>
                             </div>
-                            <div>
-                                <input type="text" id="unpron-search-input" class="mod-words-search-input" placeholder="Search unpronounced words...">
+                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                                <input type="text" id="unpron-search-input" class="mod-words-search-input" placeholder="Search unpronounced words..." style="flex: 1; margin-bottom: 0;">
+                                <select id="unpron-min-len-select" class="mod-words-search-input" style="width: auto; min-width: 125px; margin-bottom: 0; padding: 8px 10px; cursor: pointer;">
+                                    <option value="5" selected>5+ Letters</option>
+                                    <option value="1">All (1+)</option>
+                                    <option value="2">2+ Letters</option>
+                                    <option value="3">3+ Letters</option>
+                                    <option value="4">4+ Letters</option>
+                                    <option value="6">6+ Letters</option>
+                                    <option value="7">7+ Letters</option>
+                                    <option value="8">8+ Letters</option>
+                                </select>
                             </div>
                             <div class="unpron-words-list-scroll mod-words-list-scroll">
                                 <table class="mod-words-table">
@@ -10637,7 +10647,7 @@
     <script src="/js/tools.js?v=1795150000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1794380008"></script>
+    <script src="/js/mods.js?v=1794380009"></script>
     <script src="/js/private_matches.js?v=1794380000"></script>
     <script src="/js/donate.js?v=33806"></script>
     

@@ -709,6 +709,11 @@ document.addEventListener('DOMContentLoaded', () => {
         unpronSearchInput.addEventListener('input', renderUnpronouncedWords);
     }
 
+    const unpronMinLenSelect = document.getElementById('unpron-min-len-select');
+    if (unpronMinLenSelect) {
+        unpronMinLenSelect.addEventListener('change', renderUnpronouncedWords);
+    }
+
     const unpronScrollArea = document.querySelector('.unpron-words-list-scroll');
     if (unpronScrollArea) {
         unpronScrollArea.addEventListener('scroll', () => {
@@ -1426,16 +1431,22 @@ function renderUnpronouncedWords() {
     const countEl = document.getElementById('unpron-words-count');
     const tbody = document.getElementById('unpron-words-tbody');
     const searchInput = document.getElementById('unpron-search-input');
+    const minLenSelect = document.getElementById('unpron-min-len-select');
+    const minLen = minLenSelect ? parseInt(minLenSelect.value, 10) : 5;
     const query = searchInput ? searchInput.value.trim().toUpperCase() : '';
     
     if (!tbody) return;
     
-    currentFilteredUnpron = query 
-        ? unpronouncedWordsList.filter(w => w.includes(query))
-        : unpronouncedWordsList;
+    currentFilteredUnpron = unpronouncedWordsList.filter(w => {
+        if (query) {
+            return w.includes(query) && (minLen <= 1 || w.length >= minLen || w.length >= query.length);
+        }
+        return w.length >= minLen;
+    });
         
     if (countEl) {
-        countEl.textContent = `(${currentFilteredUnpron.length.toLocaleString()} unpronounced)`;
+        const lenLabel = minLen > 1 ? `, ${minLen}+ letters` : '';
+        countEl.textContent = `(${currentFilteredUnpron.length.toLocaleString()} unpronounced${query ? '' : lenLabel})`;
     }
     
     if (currentFilteredUnpron.length === 0) {
