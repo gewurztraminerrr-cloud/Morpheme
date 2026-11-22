@@ -48,6 +48,8 @@ class MorphemeApp extends StatelessWidget {
   }
 }
 
+const MethodChannel _vibrateChannel = MethodChannel('com.example.morpheme_word_game/vibrate');
+
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
 
@@ -94,6 +96,12 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         systemNavigationBarDividerColor: Colors.transparent,
         systemNavigationBarIconBrightness: Brightness.light,
       ));
+      Future.delayed(const Duration(milliseconds: 50), () {
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      });
+      Future.delayed(const Duration(milliseconds: 250), () {
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      });
     }
   }
 
@@ -254,6 +262,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             final String sound = data['sound'] ?? '';
             final String action = data['action'] ?? '';
             if (action == 'vibrate' || sound == 'vibrate') {
+              try {
+                _vibrateChannel.invokeMethod('vibrate', {'duration': 500});
+              } catch (_) {}
               HapticFeedback.vibrate();
             } else if (sound == 'tile') {
               int pathLen = data['pathLen'] ?? 1;
@@ -321,11 +332,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: WebViewWidget(controller: controller),
-      ),
+      body: WebViewWidget(controller: controller),
     );
   }
 }

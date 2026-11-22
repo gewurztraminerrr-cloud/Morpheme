@@ -7458,6 +7458,13 @@ function triggerIntermissionVibration() {
         }
     } catch (e) {}
 
+    // 6.5 Vibration Sound Alert (vibrate.wav)
+    try {
+        const vibAudio = window.vibrationAudio || new Audio('/static/audio/vibrate.wav?v=1794250000');
+        vibAudio.currentTime = 0;
+        vibAudio.play().catch(() => {});
+    } catch (_) {}
+
     // 7. Visual Tactile Haptic Pulse across mobile viewport
     try {
         const timerVal = document.getElementById('timer-value');
@@ -7490,6 +7497,8 @@ function playIntermissionBell(bellType) {
             console.error("MorphemeAudioBridge bell error:", e);
         }
     }
+    // Prevent double bell echo if already handled natively by Flutter/mobile wrapper
+    if (bridgeHandled) return;
 
     // 2. Web Audio API via BoardAudio (Pre-unlocked AudioContext - primary browser playback)
     let playedViaWebAudio = false;
