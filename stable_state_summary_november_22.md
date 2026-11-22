@@ -3,15 +3,15 @@
 ## 1. System Synchronization State
 - **Date**: Sunday, November 22, 2026
 - **Status**: **START OVER STABLE POINT**
-- **Git Commit ID**: `12578e9c59544a6f97c1bdf52f186318322dd3e6`
+- **Git Commit ID**: `3cc848116255af5f0a11983ba3c708bca4285a01`
 - **GitHub Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme` (`main` branch)
 - **Live Production URL**: `https://morpheme.games/` (HTTP 200 OK, Content-Length: 860529)
 - **Localhost URL**: `http://localhost:5001/` (HTTP 200 OK, Content-Length: 860529)
 - **VPS PM2 Process**: Online (PID 98350, 0% CPU, normal healthy memory)
 - **Byte-for-Byte Synchronization Across All Environments**:
-  - **Localhost**: Synchronized at `12578e9c`
-  - **GitHub (`main`)**: Synchronized at `12578e9c`
-  - **Production VPS (`morpheme.games`)**: Synchronized at `12578e9c`
+  - **Localhost**: Synchronized at `3cc84811`
+  - **GitHub (`main`)**: Synchronized at `3cc84811`
+  - **Production VPS (`morpheme.games`)**: Synchronized at `3cc84811`
   - **App & Python Modules**: All verified active and serving identical code
 
 ---
@@ -63,14 +63,16 @@
   - `⌨️` &rarr; `Input Method: Typing`
   - `📱` &rarr; `Input Method: Swiping`
 
-### D. Input Method Percentage Breakdown on Profile & Mini-Profile (`app.py`, `game_room.py`, `templates/index.html`, `static/js/tools.js`)
+### D. Input Method Percentage Breakdown on Profile & Mini-Profile (`app.py`, `game_room.py`, `templates/index.html`, `static/js/tools.js`, `static/css/style.css`)
 - **Dynamic Tracking**: Attached input method (`mouse`, `keyboard`, or `touch`) to all submitted words. On round conclusion, `save_round_history` tallies words submitted per method and updates `input_mouse_count`, `input_keyboard_count`, and `input_touch_count` on the `users` table.
 - **Mini-Profile (In-Room Modal)**:
   - Added `#mini-meta-input-method` item in row 3 of the metadata grid alongside Forum Posts and above Proof.
+  - On mobile devices, positioned directly below Forum Posts (`order: 6`).
   - Displays `Input: 🖱️ 83% · 📱 17%` (or `Input: No data yet`).
   - Desktop hover tooltip reveals full word counts and percentages across all modes.
 - **Full Profile Page**:
   - Added `#profile-meta-input-method` in metadata line 3, completing a symmetrical 3×3 metadata grid.
+  - On mobile devices, positioned directly below Forum Posts (`order: 9`, full-width centered card).
   - Displays the input method summary under the `Input` label with a detailed hover breakdown.
 
 ### E. Multiplayer Subanagrams Duplicate Letter Selection & Tap Tracking (`static/js/play.js`, `templates/index.html`)
