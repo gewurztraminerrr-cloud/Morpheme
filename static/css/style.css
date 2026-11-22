@@ -3061,7 +3061,7 @@ body.theme-white .header {
 
 .profile-stats-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 12px;
     margin-bottom: 25px;
 }
@@ -3079,7 +3079,7 @@ body.theme-white .header {
 }
 
 .stat-num {
-    font-size: 1.3rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--text-primary);
     white-space: nowrap;
@@ -3920,9 +3920,10 @@ body.theme-white .header {
 }
 
 .mini-stat-value {
-    font-size: 1.1rem;
+    font-size: 0.98rem;
     font-weight: 700;
     color: var(--text-primary);
+    white-space: nowrap;
 }
 
 .mini-profile-metadata {
@@ -4245,7 +4246,8 @@ body.is-mobile:not([class*="theme-white"]):not([class*="theme-light-"]) .mini-me
         margin-bottom: 2px !important;
     }
     .mini-stat-value {
-        font-size: 1rem !important;
+        font-size: 0.9rem !important;
+        white-space: nowrap !important;
     }
     .mini-profile-metadata {
         grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr) !important;
@@ -10118,7 +10120,7 @@ select option,
         border-radius: 12px !important;
     }
     .stat-num {
-        font-size: 1.1rem !important;
+        font-size: 0.95rem !important;
     }
     .stat-desc {
         font-size: 0.65rem !important;

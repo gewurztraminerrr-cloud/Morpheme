@@ -2316,11 +2316,14 @@ window.showMiniProfile = async function (username) {
             fullNEl.title = cleanProfileText(data.full_name);
         }
 
-        // Stats: Games, Wins, Win Rate
+        // Stats: Games, Wins, Words, PT Sum
         const gamesEl = document.getElementById('mini-profile-games');
         if (gamesEl) gamesEl.innerText = (data.games_played || 0).toLocaleString();
         const winsEl = document.getElementById('mini-profile-wins');
         if (winsEl) winsEl.innerText = (data.wins || 0).toLocaleString();
+
+        const wordsEl = document.getElementById('mini-profile-words');
+        if (wordsEl) wordsEl.innerText = (data.total_words || 0).toLocaleString();
 
         const winRateEl = document.getElementById('mini-profile-winrate');
         if (winRateEl) {
@@ -3342,9 +3345,15 @@ async function renderProfile(user) {
         }
     }
 
-    // Stats
+    // Stats: GAMES, WINS, WORDS, PT SUM
     const gamesEl = document.getElementById('profile-games');
     if (gamesEl) gamesEl.innerText = (user.games_played || 0).toLocaleString();
+
+    const winsEl = document.getElementById('profile-wins');
+    if (winsEl) winsEl.innerText = (user.wins || 0).toLocaleString();
+
+    const wordsEl = document.getElementById('profile-words');
+    if (wordsEl) wordsEl.innerText = (user.total_words || 0).toLocaleString();
 
     const winRateEl = document.getElementById('profile-win-rate');
     if (winRateEl) {

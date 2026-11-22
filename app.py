@@ -6789,6 +6789,35 @@ def get_public_profile(username):
         wins_period = max(wins_period, u_wins)
         pt_sum_period = max(pt_sum_period, u_pts)
 
+    # WORDS: Total count of words the user got regardless of what room they are in
+    cursor_all_words = conn.execute(f'''
+        SELECT words_json FROM round_history
+        WHERE user_id = ? {time_filter}
+    ''', (user_id,))
+    total_words_count = 0
+    for (w_json,) in cursor_all_words.fetchall():
+        try:
+            if not w_json: continue
+            w_list = json.loads(w_json)
+            if isinstance(w_list, list):
+                total_words_count += sum(1 for w in w_list if not (isinstance(w, dict) and (w.get('is_penalty') or w.get('points', 0) < 0)))
+        except Exception:
+            continue
+
+    # Also include any historical word finds preserved in word_finds if non-visible rounds were pruned
+    try:
+        cursor_wf = conn.execute(f'''
+            SELECT COUNT(*) FROM word_finds WHERE user_id = ? AND round_history_id IS NULL {time_filter}
+        ''', (user_id,))
+        wf_row = cursor_wf.fetchone()
+        if wf_row and wf_row[0]:
+            total_words_count += wf_row[0]
+    except Exception:
+        pass
+
+    if period == 'all' and tot_input_words > total_words_count:
+        total_words_count = tot_input_words
+
     # TOP 10 RATE rule:
     # If the number of players is greater than or equal to 20, and if the room is ACCUMULATIVE, include TOP 10 RATE.
     # TOP 10 RATE simply means the user scored within the top 10 placements (placement <= 10).
@@ -6953,6 +6982,7 @@ def get_public_profile(username):
         'rating': user[2],
         'games_played': games_played_period, # PER-PERIOD (multiplayer >= 2)
         'wins': wins_period,                 # PER-PERIOD (multiplayer >= 2)
+        'total_words': total_words_count,   # PER-PERIOD (all rooms)
         'pt_sum': pt_sum_period,             # PER-PERIOD (multiplayer >= 2)
         'best_score': best_score_period,     # PER-PERIOD
         'top_10_rate': top_10_rate,          # PER-PERIOD (accumulative >= 20)
