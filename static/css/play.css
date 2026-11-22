@@ -12882,8 +12882,10 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     #page-tools .tools-content:has(#tool-work-on.active),
     #page-tools .tools-content.has-work-on-active,
     #page-tools .tools-content:has(#tool-reverse-dictionary.active),
-    #page-tools .tools-content.has-reverse-dictionary-active {
-        padding: 12px !important;
+    #page-tools .tools-content.has-reverse-dictionary-active,
+    #page-tools .tools-content:has(#tool-word-chart.active),
+    #page-tools .tools-content.has-word-chart-active {
+        padding: 12px 14px !important;
         overflow-y: hidden !important;
     }
 
@@ -12895,6 +12897,7 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     #tool-work-on.tool-pane.active,
     #tool-store.tool-pane.active,
     #tool-reverse-dictionary.tool-pane.active,
+    #tool-word-chart.tool-pane.active,
     .tools-content.no-outer-scroll .tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
@@ -12913,7 +12916,8 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     #tool-lists .tool-header,
     #tool-work-on .tool-header,
     #tool-store .tool-header,
-    #tool-reverse-dictionary .tool-header {
+    #tool-reverse-dictionary .tool-header,
+    #tool-word-chart .tool-header {
         flex: 0 0 auto !important;
         margin-bottom: 4px !important;
         padding: 0 !important;
@@ -24618,36 +24622,22 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
 #tool-word-chart .word-chart-table-container {
     width: 100% !important;
     max-width: 100% !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-x pan-y !important;
-    overscroll-behavior-x: contain !important;
-    overscroll-behavior-y: auto !important;
-    display: block !important;
     position: relative !important;
     box-sizing: border-box !important;
     border: 1px solid rgba(var(--text-primary-rgb), 0.12);
     border-radius: 8px;
     margin-bottom: 12px;
-    scrollbar-width: thin !important;
-    scrollbar-color: rgba(var(--text-primary-rgb), 0.3) rgba(var(--text-primary-rgb), 0.06) !important;
 }
 
-#tool-word-chart .word-chart-table-container::-webkit-scrollbar {
-    height: 7px !important;
-    display: block !important;
-    -webkit-appearance: none !important;
-}
-
-#tool-word-chart .word-chart-table-container::-webkit-scrollbar-track {
-    background: rgba(var(--text-primary-rgb), 0.06) !important;
-    border-radius: 4px !important;
-}
-
-#tool-word-chart .word-chart-table-container::-webkit-scrollbar-thumb {
-    background: rgba(var(--text-primary-rgb), 0.28) !important;
-    border-radius: 4px !important;
+#tool-word-chart .word-chart-table-scroll {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-x pan-y !important;
+    overscroll-behavior-x: contain !important;
+    box-sizing: border-box !important;
 }
 
 #tool-word-chart .word-chart-table {
@@ -24699,6 +24689,291 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     outline: none;
     border-color: var(--accent-color, #38bdf8) !important;
     box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}
+
+/* Desktop and Laptop Screen Fit & Scrollers (min-width: 901px) */
+@media (min-width: 901px) {
+    #tool-word-chart.tool-pane.active {
+        display: flex !important;
+        flex-direction: column !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+        padding: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-word-chart .tool-header {
+        flex: 0 0 auto !important;
+        margin-bottom: 4px !important;
+        padding: 0 !important;
+    }
+
+    #tool-word-chart .tool-header h2 {
+        font-size: 1.25rem !important;
+        margin: 0 0 2px 0 !important;
+    }
+
+    #tool-word-chart .tool-header p {
+        font-size: 0.8rem !important;
+        margin: 0 0 6px 0 !important;
+        line-height: 1.2 !important;
+    }
+
+    #tool-word-chart .word-chart-subtabs {
+        flex: 0 0 auto !important;
+        margin-bottom: 8px !important;
+        display: flex !important;
+        gap: 6px !important;
+    }
+
+    #tool-word-chart .word-chart-subtab-btn {
+        padding: 6px 14px !important;
+        font-size: 0.82rem !important;
+    }
+
+    /* Subtab Panes on Desktop: flex column filling available vertical space */
+    #tool-word-chart .word-chart-subtab-pane {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-word-chart .word-chart-subtab-pane.active,
+    #tool-word-chart #subtab-pane-wc-points[style*="display: block"],
+    #tool-word-chart #subtab-pane-wc-points[style*="display: flex"],
+    #tool-word-chart #subtab-pane-wc-dicts[style*="display: block"],
+    #tool-word-chart #subtab-pane-wc-dicts[style*="display: flex"],
+    #tool-word-chart #subtab-pane-wc-lookup[style*="display: block"],
+    #tool-word-chart #subtab-pane-wc-lookup[style*="display: flex"] {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Subtab 1: Point Values & Divisions */
+    #tool-word-chart #subtab-pane-wc-points .word-chart-info-banner {
+        flex: 0 0 auto !important;
+        margin-bottom: 8px !important;
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+        line-height: 1.35 !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-points .word-chart-table-container {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        border-radius: 8px !important;
+        margin-bottom: 6px !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-points .word-chart-footnote {
+        flex: 0 0 auto !important;
+        margin-top: 4px !important;
+        font-size: 0.74rem !important;
+        line-height: 1.25 !important;
+        color: var(--muted-text);
+    }
+
+    /* Subtab 2: Dictionary Word Counts */
+    #tool-word-chart #subtab-pane-wc-dicts .new-users-stats-grid {
+        flex: 0 0 auto !important;
+        margin-bottom: 8px !important;
+        gap: 6px !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-dicts .new-users-stats-grid .stat-box {
+        padding: 6px 8px !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-dicts .new-users-stats-grid .stat-num {
+        font-size: 1.25rem !important;
+        line-height: 1.1 !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-dicts .new-users-stats-grid .stat-desc {
+        font-size: 0.65rem !important;
+        letter-spacing: 0.3px !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-dicts .word-chart-table-container {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        border-radius: 8px !important;
+        margin-bottom: 0 !important;
+    }
+
+    /* Table Scroll Areas on Desktop */
+    #tool-word-chart .word-chart-table-scroll {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        width: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.3) rgba(var(--text-primary-rgb), 0.05) !important;
+    }
+
+    /* Sticky Headers for Desktop Tables */
+    #tool-word-chart .word-chart-table thead {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10 !important;
+    }
+
+    #tool-word-chart .word-chart-table thead tr th {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 10 !important;
+        background: var(--bg-primary, #181920) !important;
+        padding: 8px 12px !important;
+        font-size: 0.78rem !important;
+        box-shadow: 0 1px 0 rgba(var(--text-primary-rgb), 0.15) !important;
+    }
+
+    #tool-word-chart .word-chart-table tbody td {
+        padding: 7px 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Subtab 3: Dynamic Word Lookup */
+    #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar {
+        flex: 0 0 auto !important;
+        margin-bottom: 8px !important;
+        gap: 6px !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar input {
+        height: 36px !important;
+        font-size: 0.85rem !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar button {
+        height: 36px !important;
+        padding: 0 14px !important;
+        font-size: 0.82rem !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
+        border-radius: 8px !important;
+        background: rgba(var(--text-primary-rgb), 0.02) !important;
+        padding: 10px 12px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-area {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        width: 100% !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        padding-right: 18px !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.3) rgba(var(--text-primary-rgb), 0.05) !important;
+    }
+
+    /* Word Chart Custom Scrollbar Track & Thumb for Desktops and Laptops */
+    #tool-word-chart .custom-scrollbar-track {
+        position: absolute !important;
+        top: 4px !important;
+        bottom: 4px !important;
+        right: 3px !important;
+        width: 14px !important;
+        background: rgba(255, 255, 255, 0.04) !important;
+        border-radius: 7px !important;
+        z-index: 50 !important;
+        backdrop-filter: blur(2px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        display: none;
+        touch-action: none !important;
+        user-select: none !important;
+        cursor: pointer !important;
+    }
+
+    #tool-word-chart .custom-scrollbar-thumb {
+        position: absolute !important;
+        top: 0 !important;
+        left: 2px !important;
+        width: 8px !important;
+        background: linear-gradient(180deg, rgba(56, 189, 248, 0.85), rgba(37, 99, 235, 0.85)) !important;
+        border-radius: 4px !important;
+        cursor: grab !important;
+        border: 1px solid rgba(56, 189, 248, 0.6) !important;
+        box-shadow: 0 0 6px rgba(56, 189, 248, 0.4) !important;
+        touch-action: none !important;
+        user-select: none !important;
+        min-height: 28px !important;
+        pointer-events: auto !important;
+    }
+
+    #tool-word-chart .custom-scrollbar-thumb:active,
+    #tool-word-chart .custom-scrollbar-thumb.dragging {
+        cursor: grabbing !important;
+        background: linear-gradient(180deg, rgba(56, 189, 248, 1), rgba(37, 99, 235, 1)) !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.8) !important;
+    }
+
+    #tool-word-chart .word-chart-table-scroll::-webkit-scrollbar,
+    #tool-word-chart .wc-lookup-scroll-area::-webkit-scrollbar {
+        width: 7px !important;
+        height: 7px !important;
+        display: block !important;
+    }
+
+    #tool-word-chart .word-chart-table-scroll::-webkit-scrollbar-track,
+    #tool-word-chart .wc-lookup-scroll-area::-webkit-scrollbar-track {
+        background: rgba(var(--text-primary-rgb), 0.04) !important;
+        border-radius: 4px !important;
+    }
+
+    #tool-word-chart .word-chart-table-scroll::-webkit-scrollbar-thumb,
+    #tool-word-chart .wc-lookup-scroll-area::-webkit-scrollbar-thumb {
+        background: rgba(var(--text-primary-rgb), 0.25) !important;
+        border-radius: 4px !important;
+    }
+
+    #tool-word-chart .word-chart-table-scroll::-webkit-scrollbar-thumb:hover,
+    #tool-word-chart .wc-lookup-scroll-area::-webkit-scrollbar-thumb:hover {
+        background: rgba(var(--text-primary-rgb), 0.4) !important;
+    }
 }
 
 /* Light & White Theme Overrides for Word Chart */
@@ -24770,6 +25045,26 @@ body[class*="theme-light-"] #tool-word-chart .word-chart-table-container,
 [class*="theme-white"] #tool-word-chart .word-chart-table-container,
 [class*="theme-light-"] #tool-word-chart .word-chart-table-container {
     border-color: #e2e8f0 !important;
+}
+
+body.theme-white #tool-word-chart .word-chart-table thead tr th,
+[class*="theme-white"] #tool-word-chart .word-chart-table thead tr th {
+    background: #ffffff !important;
+    color: #0f172a !important;
+}
+
+body[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr th,
+[class*="theme-light-"] #tool-word-chart .word-chart-table thead tr th {
+    background: #f1f5f9 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white #tool-word-chart .custom-scrollbar-track,
+[class*="theme-white"] #tool-word-chart .custom-scrollbar-track,
+body[class*="theme-light-"] #tool-word-chart .custom-scrollbar-track,
+[class*="theme-light-"] #tool-word-chart .custom-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
 

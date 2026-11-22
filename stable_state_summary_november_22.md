@@ -2,15 +2,13 @@
 
 ## 1. System Synchronization State
 - **Date**: Sunday, November 22, 2026
-- **Latest Commit ID**: `b321367dfe8e9df7c2a1b121a57ec0eccd5bc358`
-- **Git Tag**: `stable-2026-11-22`
 - **GitHub Repository**: `https://github.com/gewurztraminerrr-cloud/Morpheme` (`main` branch)
 - **Live Production URL**: `https://morpheme.games/` (HTTP 200 OK)
 - **VPS PM2 Process**: Online (Process ID 0, 0% CPU, normal memory)
 - **Byte-for-Byte Synchronization**:
-  - **Localhost**: Commit `b321367dfe8e9df7c2a1b121a57ec0eccd5bc358`
-  - **GitHub (`main`)**: Commit `b321367dfe8e9df7c2a1b121a57ec0eccd5bc358`
-  - **Production VPS (`morpheme.games`)**: Commit `b321367dfe8e9df7c2a1b121a57ec0eccd5bc358`
+  - **Localhost**: Synchronized
+  - **GitHub (`main`)**: Synchronized
+  - **Production VPS (`morpheme.games`)**: Synchronized
 
 ---
 
@@ -69,7 +67,20 @@
   - Retained DOM update diffing (`rawText.trim() !== targetText.trim()`) to prevent unnecessary DOM reflows when player counts remain unchanged.
   - Bumped the cache buster for `static/js/lobby.js` in `templates/index.html` to `?v=1795222000`.
 
-### F. Architectural Integrity & Strict Boundaries
+### F. Tools: Word Charts Desktop & Laptop Screen Fit and Scrollers (`templates/index.html`, `static/css/play.css`, `static/js/tools.js`)
+- **Fit All Content Onto Screen**:
+  - Enforced full-height flex column layout on desktops and laptops (`@media (min-width: 901px)`) for `#tool-word-chart` across all 3 sub-tabs:
+    1. Sub-tab 1: Point Values & Divisions (`#subtab-pane-wc-points`)
+    2. Sub-tab 2: Dictionary Word Counts (`#subtab-pane-wc-dicts`)
+    3. Sub-tab 3: Dynamic Word Lookup (`#subtab-pane-wc-lookup`)
+  - Guaranteed `bodyScrollHeight == bodyClientHeight`, `tcScrollHeight == tcClientHeight`, and `paneScrollHeight == paneClientHeight` so outer pages/panes do not scroll.
+- **Custom Scrollers & Sticky Headers**:
+  - Wrapped each sub-tab's table/content in custom scrollable wrappers (`.word-chart-table-container.list-scroll-area-wrapper`, `.word-chart-table-scroll`, `.wc-lookup-scroll-wrapper`, `.wc-lookup-scroll-area`) with custom draggable scrollbar tracks and gradient thumbs.
+  - Initialized via `initCustomScrollbarForElement` and refreshed on every sub-tab switch, data load, and search via `window.updateWordChartScrollbars()`.
+  - Configured sticky table headers (`position: sticky; top: 0; z-index: 10`) with 100% solid, fully opaque backgrounds (`var(--bg-primary, #181920)`) and bottom box-shadows, completely eliminating scrolled row text bleed-through across all themes.
+  - Bumped cache busters: `play.css?v=1795223000` and `tools.js?v=1795223000`.
+
+### G. Architectural Integrity & Strict Boundaries
 - **Public Room Isolation**:
   - Standard public rooms (`accumulative`, 4x4, 4x6, 6x8, Split, 3D, Daily) remain completely untouched and unmodified.
 - **Zero Server Drift**:

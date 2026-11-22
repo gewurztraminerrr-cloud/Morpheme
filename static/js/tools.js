@@ -310,7 +310,7 @@ window.showTool = function(toolId) {
                 p.style.display = 'none';
             }
         });
-        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on' || toolId === 'store' || toolId === 'reverse-dictionary') {
+        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on' || toolId === 'store' || toolId === 'reverse-dictionary' || toolId === 'word-chart') {
             content.classList.add('no-outer-scroll');
         } else {
             content.classList.remove('no-outer-scroll');
@@ -380,6 +380,14 @@ window.showTool = function(toolId) {
             }
         } else {
             content.classList.remove('has-store-active');
+        }
+        if (toolId === 'word-chart') {
+            content.classList.add('has-word-chart-active');
+            if (typeof window.updateWordChartScrollbars === 'function') {
+                window.updateWordChartScrollbars();
+            }
+        } else {
+            content.classList.remove('has-word-chart-active');
         }
     }
 
@@ -13061,6 +13069,9 @@ window.performReverseDictSearch = async function() {
         }
     } finally {
         if (searchBtn) searchBtn.disabled = false;
+        if (typeof window.updateWordChartScrollbars === 'function') {
+            setTimeout(window.updateWordChartScrollbars, 50);
+        }
     }
 };
 
@@ -13084,14 +13095,47 @@ window.switchWordChartSubtab = function(tabKey) {
     if (btnDicts) btnDicts.classList.toggle('active', tabKey === 'dicts');
     if (btnLookup) btnLookup.classList.toggle('active', tabKey === 'lookup');
 
-    if (panePoints) panePoints.style.display = tabKey === 'points' ? 'block' : 'none';
-    if (paneDicts) paneDicts.style.display = tabKey === 'dicts' ? 'block' : 'none';
-    if (paneLookup) paneLookup.style.display = tabKey === 'lookup' ? 'block' : 'none';
+    const isDesktop = window.innerWidth > 900;
+    const showDisplay = isDesktop ? 'flex' : 'block';
+
+    if (panePoints) {
+        panePoints.style.display = tabKey === 'points' ? showDisplay : 'none';
+        panePoints.classList.toggle('active', tabKey === 'points');
+    }
+    if (paneDicts) {
+        paneDicts.style.display = tabKey === 'dicts' ? showDisplay : 'none';
+        paneDicts.classList.toggle('active', tabKey === 'dicts');
+    }
+    if (paneLookup) {
+        paneLookup.style.display = tabKey === 'lookup' ? showDisplay : 'none';
+        paneLookup.classList.toggle('active', tabKey === 'lookup');
+    }
+
+    if (typeof window.updateWordChartScrollbars === 'function') {
+        setTimeout(window.updateWordChartScrollbars, 40);
+        setTimeout(window.updateWordChartScrollbars, 150);
+    }
 
     if (tabKey === 'lookup') {
         const inp = document.getElementById('wc-word-input');
         if (inp) setTimeout(() => inp.focus(), 60);
     }
+};
+
+window.updateWordChartScrollbars = function() {
+    if (typeof initCustomScrollbarForElement !== 'function') return;
+    initCustomScrollbarForElement('wc-points-table-scroll', 'wc-points-scrollbar-track', 'wc-points-scrollbar-thumb');
+    initCustomScrollbarForElement('wc-dicts-table-scroll', 'wc-dicts-scrollbar-track', 'wc-dicts-scrollbar-thumb');
+    initCustomScrollbarForElement('wc-lookup-scroll-area', 'wc-lookup-scrollbar-track', 'wc-lookup-scrollbar-thumb');
+
+    const s1 = document.getElementById('wc-points-table-scroll');
+    if (s1 && typeof s1._updateCustomScrollbar === 'function') s1._updateCustomScrollbar();
+
+    const s2 = document.getElementById('wc-dicts-table-scroll');
+    if (s2 && typeof s2._updateCustomScrollbar === 'function') s2._updateCustomScrollbar();
+
+    const s3 = document.getElementById('wc-lookup-scroll-area');
+    if (s3 && typeof s3._updateCustomScrollbar === 'function') s3._updateCustomScrollbar();
 };
 
 window.loadWordChartTool = async function(forceRefresh = false) {
@@ -13173,6 +13217,9 @@ window.renderWordChartPoints = function(pointsList) {
     });
 
     tbody.innerHTML = html;
+    if (typeof window.updateWordChartScrollbars === 'function') {
+        window.updateWordChartScrollbars();
+    }
 };
 
 window.renderWordChartDicts = function(totals, dists) {
@@ -13232,6 +13279,9 @@ window.renderWordChartDicts = function(totals, dists) {
     `;
 
     tbody.innerHTML = html;
+    if (typeof window.updateWordChartScrollbars === 'function') {
+        window.updateWordChartScrollbars();
+    }
 };
 
 window.renderWordChartExamples = function(examples) {
@@ -13285,6 +13335,9 @@ window.renderWordChartExamples = function(examples) {
     });
 
     container.innerHTML = html;
+    if (typeof window.updateWordChartScrollbars === 'function') {
+        window.updateWordChartScrollbars();
+    }
 };
 
 window.lookupWordChartWord = async function() {
@@ -13375,6 +13428,9 @@ window.lookupWordChartWord = async function() {
         `;
     } finally {
         if (searchBtn) searchBtn.disabled = false;
+        if (typeof window.updateWordChartScrollbars === 'function') {
+            setTimeout(window.updateWordChartScrollbars, 50);
+        }
     }
 };
 
