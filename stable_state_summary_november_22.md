@@ -160,7 +160,20 @@
 - **Cache Busters Bumped**:
   - Bumped `play.js` cache buster to `?v=1795227000` in `templates/index.html`.
 
-### K. Architectural Integrity & Strict Boundaries
+### L. Word Charts "2 Letters" Row Removal & Dynamic Word Lookup Light Layout Whiteness Fix (`app.py`, `static/js/tools.js`, `static/css/play.css`, `templates/index.html`)
+- **Removed "2 Letters" Row from Point Values & Divisions and Dictionary Word Counts**:
+  - In `app.py:tools_word_chart`, adjusted loop `for length in range(3, 16):` so the backend generates point values and divisions starting strictly from 3-letter words.
+  - In `static/js/tools.js:renderWordChartPoints`, added guard `if (String(item.length) === '2' || item.length === 2) return;` so 2-letter rows are never rendered in Point Values & Divisions.
+  - In `static/js/tools.js:renderWordChartDicts`, updated length loop to `for (let i = 3; i <= 15; i++)`, starting the Dictionary Word Counts table from 3 Letters through 16+ Letters.
+- **Dynamic Word Lookup Panel Color Alignment Across Light Themes**:
+  - Identified root cause where `.wc-lookup-scroll-wrapper` base rule had higher CSS specificity (`#tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper`) with `background: rgba(...) !important; padding: 10px 12px; border-radius: 8px;`, retaining its dark gray background in light layouts.
+  - Its child `.wc-lookup-scroll-area` had `background: #ffffff !important; border-radius: 0px;`, creating a sharp white square inside the padding that stopped short of the panel's rounded border.
+  - Applied high-specificity light theme overrides to `#tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper` setting `background: #ffffff !important; border: 1px solid #cbd5e1 !important; border-radius: 8px !important;`.
+  - Set `.wc-lookup-scroll-area` to `background: transparent !important; border: none !important;`, ensuring the entire panel — including all padding to its rounded edges — is seamless crisp white with zero inner square contrast.
+- **Cache Busters Bumped**:
+  - Bumped `play.css` and `tools.js` to `?v=1795227000` in `templates/index.html`.
+
+### M. Architectural Integrity & Strict Boundaries
 - **Public Room Isolation**:
   - Standard public rooms (`accumulative`, 4x4, 4x6, 6x8, Split, 3D, Daily) remain completely untouched and unmodified.
 - **Zero Server Drift**:

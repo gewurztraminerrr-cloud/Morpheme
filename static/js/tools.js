@@ -13179,6 +13179,7 @@ window.renderWordChartPoints = function(pointsList) {
 
     let html = '';
     pointsList.forEach(item => {
+        if (String(item.length) === '2' || item.length === 2) return;
         const baseScoreStr = typeof item.base_score === 'number' ? `${item.base_score} pt${item.base_score !== 1 ? 's' : ''}` : item.base_score;
         const numDivsStr = item.num_divisions === 1 ? '1 Division' : `${item.num_divisions} Divisions`;
 
@@ -13239,7 +13240,7 @@ window.renderWordChartDicts = function(totals, dists) {
     if (!tbody || !dists) return;
 
     const lengths = [];
-    for (let i = 2; i <= 15; i++) {
+    for (let i = 3; i <= 15; i++) {
         lengths.push(String(i));
     }
     lengths.push('16+');

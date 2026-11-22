@@ -14548,7 +14548,7 @@ def tools_word_chart():
         points_and_divisions = []
         td.get_word_stats()
 
-        for length in range(2, 16):
+        for length in range(3, 16):
             base_pts = td.get_base_points(length)
             num_divs = td.get_num_divisions(length)
             max_pts = td.get_max_points(length)

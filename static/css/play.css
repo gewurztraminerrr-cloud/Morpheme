@@ -25025,6 +25025,16 @@ body[class*="theme-white"] #tool-word-chart .word-chart-table-container,
 [class*="theme-white"] #tool-word-chart .word-chart-table-container,
 body[class*="theme-light-"] #tool-word-chart .word-chart-table-container,
 [class*="theme-light-"] #tool-word-chart .word-chart-table-container,
+body.theme-white #tool-word-chart #subtab-pane-wc-points .word-chart-table-container,
+body[class*="theme-white"] #tool-word-chart #subtab-pane-wc-points .word-chart-table-container,
+[class*="theme-white"] #tool-word-chart #subtab-pane-wc-points .word-chart-table-container,
+body[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-points .word-chart-table-container,
+[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-points .word-chart-table-container,
+body.theme-white #tool-word-chart #subtab-pane-wc-dicts .word-chart-table-container,
+body[class*="theme-white"] #tool-word-chart #subtab-pane-wc-dicts .word-chart-table-container,
+[class*="theme-white"] #tool-word-chart #subtab-pane-wc-dicts .word-chart-table-container,
+body[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-dicts .word-chart-table-container,
+[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-dicts .word-chart-table-container,
 body.theme-white #tool-word-chart .word-chart-table-scroll,
 body[class*="theme-white"] #tool-word-chart .word-chart-table-scroll,
 [class*="theme-white"] #tool-word-chart .word-chart-table-scroll,
@@ -25036,7 +25046,7 @@ body[class*="theme-white"] #tool-word-chart .word-chart-table,
 body[class*="theme-light-"] #tool-word-chart .word-chart-table,
 [class*="theme-light-"] #tool-word-chart .word-chart-table {
     background: #ffffff !important;
-    border-color: #cbd5e1 !important;
+    border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
 }
 
@@ -25234,18 +25244,41 @@ body[class*="theme-light-"] #tool-word-chart .word-chart-search-bar button,
     color: #ffffff !important;
 }
 
+body.theme-white #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper,
+body[class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper,
+[class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper,
+body[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper,
+[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper,
 body.theme-white #tool-word-chart .wc-lookup-scroll-wrapper,
 body[class*="theme-white"] #tool-word-chart .wc-lookup-scroll-wrapper,
 [class*="theme-white"] #tool-word-chart .wc-lookup-scroll-wrapper,
 body[class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-wrapper,
-[class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-wrapper,
+[class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-wrapper {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+}
+
+body.theme-white #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-area,
+body[class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-area,
+[class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-area,
+body[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-area,
+[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-area,
 body.theme-white #tool-word-chart .wc-lookup-scroll-area,
 body[class*="theme-white"] #tool-word-chart .wc-lookup-scroll-area,
 [class*="theme-white"] #tool-word-chart .wc-lookup-scroll-area,
 body[class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-area,
 [class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-area {
-    background: #ffffff !important;
-    border-color: #cbd5e1 !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+body.theme-white #tool-word-chart #subtab-pane-wc-lookup h4,
+body[class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup h4,
+[class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup h4,
+body[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup h4,
+[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup h4 {
+    color: #0f172a !important;
 }
 
 body.theme-white #tool-word-chart #wc-word-result-card,
