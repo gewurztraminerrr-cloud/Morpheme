@@ -2610,11 +2610,8 @@ window.showPage = showPage;
                 input.focus();
             }
 
-            // Mobile carousel: Ensure board is centered by default, top menu is hidden, and fullscreen is cleanly exited to prevent 2s black screen
+            // Mobile carousel: Ensure board is centered by default and top menu is hidden
             if (window.innerWidth <= 992) {
-                if (typeof window.exitFullscreenForKeyboard === 'function') {
-                    window.exitFullscreenForKeyboard();
-                }
                 if (typeof window.switchPlayPanel === 'function') {
                     window.switchPlayPanel('board', false);
                 } else {
@@ -4174,15 +4171,7 @@ document.addEventListener('visibilitychange', () => {
     }
 
     function exitFullscreenForKeyboard() {
-        if (document.fullscreenElement || document.webkitFullscreenElement) {
-            try {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen().catch(() => {});
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen().catch(() => {});
-                }
-            } catch(e) {}
-        }
+        // No-op: Fullscreen is strictly maintained to prevent Android status bar / black strip from appearing
     }
 
     let initialFullscreenRequested = false;
@@ -4264,13 +4253,6 @@ document.addEventListener('visibilitychange', () => {
                 target.tagName === 'TEXTAREA' || 
                 (target.closest && target.closest('#full-list-modal, #tool-combo, .chat-input-section, .word-input-section, .score-sum-controls, #lobby-chat-drawer'))
             );
-            if (isInput) {
-                if (document.fullscreenElement || document.webkitFullscreenElement) {
-                    exitFullscreenForKeyboard();
-                }
-                return;
-            }
-
             // If returning from minimize or lost fullscreen, immediately re-engage on first user touch!
             if (needsResumeFullscreen || (!document.fullscreenElement && !document.webkitFullscreenElement)) {
                 const pLoad = document.getElementById('page-loading');
@@ -4280,16 +4262,6 @@ document.addEventListener('visibilitychange', () => {
             }
         }, { passive: true });
     });
-
-    document.addEventListener('focusin', (e) => {
-        if (!isMobileDevice()) return;
-        const target = e.target;
-        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                exitFullscreenForKeyboard();
-            }
-        }
-    }, { capture: true, passive: true });
 
     window.triggerMobileFullscreen = function(force) {
         attemptFullscreen(force !== false);

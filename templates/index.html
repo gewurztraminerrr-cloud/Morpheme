@@ -10,11 +10,47 @@
     <meta name="author" content="Morpheme Games">
     
     <!-- PWA / iOS Standalone Web App Meta Tags -->
-    <link rel="manifest" href="/static/manifest.json?v=6">
+    <link rel="manifest" href="/static/manifest.json?v=7">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Morpheme">
     <meta name="theme-color" content="{% if initial_theme_color %}{{ initial_theme_color }}{% else %}#1a1a2e{% endif %}">
+    <script>
+    (function() {
+        try {
+            var t = localStorage.getItem('morpheme_app_theme');
+            if (!t || t === 'default') {
+                var u = (localStorage.getItem('morpheme_username') || '').trim();
+                var sKey = u ? ('morpheme_settings_' + u.toLowerCase()) : 'morpheme_settings_guest';
+                var sData = localStorage.getItem(sKey);
+                if (sData) {
+                    var p = JSON.parse(sData);
+                    if (p && p.app_theme && p.app_theme !== 'default') t = p.app_theme;
+                }
+            }
+            var themeColors = {
+                'black': '#000000', 'white': '#ffffff', 'light-light-gray': '#ececec', 'light-gray': '#d8d8d8',
+                'gray': '#484848', 'dark-gray': '#2b2b2b', 'light-light-red': '#ffebee', 'light-red': '#ffcdd2',
+                'red': '#c62828', 'dark-red': '#8e0000', 'light-light-orange': '#fff3e0', 'light-orange': '#ffe0b2',
+                'orange': '#ef6c00', 'dark-orange': '#b23c00', 'light-light-yellow': '#fffde7', 'light-yellow': '#fff9c4',
+                'yellow': '#fbc02d', 'dark-yellow': '#c49000', 'light-light-green': '#e8f5e9', 'light-green': '#c8e6c9',
+                'green': '#2e7d32', 'dark-green': '#005005', 'light-light-cyan': '#e0f7fa', 'light-cyan': '#b2ebf2',
+                'cyan': '#00838f', 'dark-cyan': '#005662', 'light-light-blue': '#e3f2fd', 'light-blue': '#bbdefb',
+                'blue': '#1565c0', 'dark-blue': '#003c8f', 'light-light-purple': '#f3e5f5', 'light-purple': '#e1bee7',
+                'purple': '#6a1b9a', 'dark-purple': '#38006b', 'light-light-magenta': '#fce4ec', 'light-magenta': '#f8bbd0',
+                'magenta': '#ad1457', 'dark-magenta': '#78002e', 'light-light-pink': '#fce4ec', 'light-pink': '#f8bbd0',
+                'pink': '#c2185b', 'dark-pink': '#8c0032', 'light-light-brown': '#f7efe5', 'light-brown': '#efe0cc',
+                'brown': '#52362b', 'dark-brown': '#2b1812', 'default': '#1a1a2e'
+            };
+            var col = (t && themeColors[t]) ? themeColors[t] : '#1a1a2e';
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', col);
+            if (t && t !== 'default') {
+                document.documentElement.className = (document.documentElement.className || '').replace(/\btheme-\S+/g, '').trim() + ' theme-' + t;
+            }
+        } catch(e) {}
+    })();
+    </script>
     <link class="apple-touch-icon" rel="apple-touch-icon" href="/static/images/morpheme.png?v=2">
     
     <!-- Open Graph / Social Media Sharing -->
@@ -10574,7 +10610,7 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1795160000"></script>
     <script src="/js/forum.js?v=1794022000"></script>
-    <script src="/js/app.js?v=1795160000"></script>
+    <script src="/js/app.js?v=1795190000"></script>
     <script src="/js/lobby.js?v=1795149000"></script>
     <script src="/js/play.js?v=1795190000"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
