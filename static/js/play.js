@@ -957,7 +957,11 @@ function safelyTransposeState(state) {
     try {
         if (isPortraitMode && state.board && state.board.length > 0 && Array.isArray(state.board[0])) {
             const isBoard3D = state.board_dimensions === '3x3x3' || (state.board.length === 6 && Array.isArray(state.board[0]) && Array.isArray(state.board[0][0]));
-            if (!isBoard3D) {
+            const isSubanagrams = (state.game_type === 'subanagrams') ||
+                                  (state.room_id && String(state.room_id).toLowerCase().includes('subanagrams')) ||
+                                  (state.board_dimensions === 'subanagrams') ||
+                                  (document.body && document.body.classList.contains('is-subanagrams'));
+            if (!isBoard3D && !isSubanagrams) {
                 const rows = state.board.length;
                 const cols = state.board[0].length;
                 if (rows < cols) {
@@ -4067,14 +4071,32 @@ async function _doUpdateGameState(incomingState = null) {
             if (isSubanagramsRoom || state.game_type === 'subanagrams') {
                 if (isIntermission) {
                     if (state.previous_board && state.previous_board[0]) {
-                        maxLen = state.previous_board[0].length;
+                        maxLen = Array.isArray(state.previous_board[0]) ? Math.max(state.previous_board.length, state.previous_board[0].length) : state.previous_board.length;
                     } else if (state.previous_all_words && state.previous_all_words.length > 0) {
                         maxLen = Math.max(...state.previous_all_words.map(w => (typeof w === 'string' ? w.length : ((w && w.word) ? w.word.length : 0))));
                     } else {
                         maxLen = state.sequence_length || 10;
                     }
                 } else {
-                    maxLen = (state.board && state.board[0] ? state.board[0].length : (state.sequence_length || 10));
+                    const b = state.board;
+                    if (b && b.length > 0) {
+                        maxLen = Array.isArray(b[0]) ? Math.max(b.length, b[0].length) : b.length;
+                    } else {
+                        maxLen = state.sequence_length || 10;
+                    }
+                }
+                if (state.sequence_length && state.sequence_length > maxLen) {
+                    maxLen = state.sequence_length;
+                }
+                if (state.bonus_word && state.bonus_word.length > maxLen) {
+                    maxLen = state.bonus_word.length;
+                }
+                const wordListForMax = isIntermission ? (state.previous_all_words || state.all_words) : (state.all_words || state.previous_all_words);
+                if (wordListForMax && wordListForMax.length > 0) {
+                    for (let wIdx = 0; wIdx < wordListForMax.length; wIdx++) {
+                        const wStr = typeof wordListForMax[wIdx] === 'string' ? wordListForMax[wIdx] : ((wordListForMax[wIdx] && wordListForMax[wIdx].word) || '');
+                        if (wStr.length > maxLen) maxLen = wStr.length;
+                    }
                 }
             }
             for (let i = minLen; i <= maxLen; i++) {

@@ -142,7 +142,25 @@
 - **Cache Busters Bumped**:
   - Bumped `app.js`, `lobby.js`, and `play.js` cache busters to `?v=1795226000` in `templates/index.html`.
 
-### J. Architectural Integrity & Strict Boundaries
+### J. Multiplayer Subanagrams Remaining Tab Mobile Display Fix (`static/js/play.js`, `templates/index.html`)
+- **Root Cause Identified**:
+  - In `static/js/play.js`, `safelyTransposeState` checks if display orientation is in portrait mode (`window.innerHeight > window.innerWidth`). For rectangular 2D Boggle boards (e.g. 4x6), it transposes the board when `rows < cols` so the longest dimension runs vertically.
+  - Subanagrams uses a 1-dimensional letter rack represented as a 1-row array (e.g., `[['S', 'H', 'F', 'E', 'R', 'A', 'A', 'O']]`), where `rows = 1` and `cols = 8`.
+  - On mobile portrait screens, `rows < cols` (`1 < 8`) evaluated to `true`. `safelyTransposeState` transposed the 1D rack into 8 rows of 1 column (`[['S'], ['H'], ...]`) for both `state.board` and `state.previous_board`.
+  - In the Remaining tab table generator (`play.js`), `maxLen` was calculated using `(state.board && state.board[0] ? state.board[0].length : ...)`. Because `state.board[0]` had a length of `1`, `maxLen` became `1`. With `minLen = 3` and `maxLen = 1`, the loop `for (let i = minLen; i <= maxLen; i++)` executed zero times, rendering `<table id="remaining-words-table"></table>` with zero rows.
+- **Subanagrams Excluded from Board Transposition**:
+  - In `safelyTransposeState`, added an explicit check `isSubanagrams` (`state.game_type === 'subanagrams' || state.room_id.includes('subanagrams') || state.board_dimensions === 'subanagrams' || document.body.classList.contains('is-subanagrams')`).
+  - Guarded board transposition with `if (!isBoard3D && !isSubanagrams)`, ensuring 1D letter racks are never transposed.
+- **Robust Remaining Table Length Boundaries**:
+  - In `play.js`, made the `maxLen` calculation in the Remaining tab resilient against any board dimensionality by evaluating `Array.isArray(b[0]) ? Math.max(b.length, b[0].length) : b.length`, with automatic expansion for `sequence_length`, `bonus_word.length`, and the maximum word length found in `all_words` / `previous_all_words`.
+- **Verified Across Mobile & Desktop Viewports**:
+  - Verified on mobile emulation (iPhone 390x844 portrait) via headless Chrome CDP: Remaining table renders all rows (e.g. 3LW, 4LW, 5LW, 6LW) with full visibility, correct bounding rects, and dynamic updates.
+  - Verified on desktop viewport (1440x900): Remaining tab continues to render cleanly and consistently.
+  - Verified standard public rooms (4x4 and 4x6): confirmed transposition and Remaining table displays remain fully functional without any side effects.
+- **Cache Busters Bumped**:
+  - Bumped `play.js` cache buster to `?v=1795227000` in `templates/index.html`.
+
+### K. Architectural Integrity & Strict Boundaries
 - **Public Room Isolation**:
   - Standard public rooms (`accumulative`, 4x4, 4x6, 6x8, Split, 3D, Daily) remain completely untouched and unmodified.
 - **Zero Server Drift**:
