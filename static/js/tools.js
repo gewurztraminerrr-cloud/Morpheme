@@ -2415,6 +2415,29 @@ window.showMiniProfile = async function (username) {
             };
         }
 
+        // Input Method Breakdown
+        const miniInputEl = document.getElementById('mini-profile-input-method');
+        const miniInputContainer = document.getElementById('mini-meta-input-method');
+        if (miniInputEl) {
+            const imData = data.input_methods || {};
+            const summary = imData.summary_text || data.input_method_summary || 'No data yet';
+            miniInputEl.innerText = `Input: ${summary}`;
+            
+            if (imData.total_words > 0) {
+                const details = [];
+                if (imData.mouse_count > 0 || imData.mouse_pct > 0) details.push(`Mousing: ${imData.mouse_pct}% (${(imData.mouse_count || 0).toLocaleString()} words)`);
+                if (imData.touch_count > 0 || imData.touch_pct > 0) details.push(`Swiping: ${imData.touch_pct}% (${(imData.touch_count || 0).toLocaleString()} words)`);
+                if (imData.keyboard_count > 0 || imData.keyboard_pct > 0) details.push(`Typing: ${imData.keyboard_pct}% (${(imData.keyboard_count || 0).toLocaleString()} words)`);
+                const titleStr = `Input Methods (${(imData.total_words || 0).toLocaleString()} words total):\n` + details.join('\n');
+                if (miniInputContainer) miniInputContainer.title = titleStr;
+                miniInputEl.title = titleStr;
+            } else {
+                const titleStr = 'Input Method: No input data recorded yet';
+                if (miniInputContainer) miniInputContainer.title = titleStr;
+                miniInputEl.title = titleStr;
+            }
+        }
+
         // Proof
         const proofEl = document.getElementById('mini-profile-proof');
         if (proofEl) {
@@ -3447,6 +3470,29 @@ async function renderProfile(user) {
     } else {
         if (proofLink) proofLink.classList.add('hidden');
         if (proofPlaceholder) proofPlaceholder.classList.remove('hidden');
+    }
+
+    // Input Method Breakdown Rendering
+    const profileInputEl = document.getElementById('profile-input-method-val');
+    const profileInputContainer = document.getElementById('profile-meta-input-method');
+    if (profileInputEl) {
+        const imData = user.input_methods || {};
+        const summary = imData.summary_text || user.input_method_summary || 'No data yet';
+        profileInputEl.innerText = summary;
+        
+        if (imData.total_words > 0) {
+            const details = [];
+            if (imData.mouse_count > 0 || imData.mouse_pct > 0) details.push(`Mousing: ${imData.mouse_pct}% (${(imData.mouse_count || 0).toLocaleString()} words)`);
+            if (imData.touch_count > 0 || imData.touch_pct > 0) details.push(`Swiping: ${imData.touch_pct}% (${(imData.touch_count || 0).toLocaleString()} words)`);
+            if (imData.keyboard_count > 0 || imData.keyboard_pct > 0) details.push(`Typing: ${imData.keyboard_pct}% (${(imData.keyboard_count || 0).toLocaleString()} words)`);
+            const titleStr = `Input Methods (${(imData.total_words || 0).toLocaleString()} words total):\n` + details.join('\n');
+            if (profileInputContainer) profileInputContainer.title = titleStr;
+            profileInputEl.title = titleStr;
+        } else {
+            const titleStr = 'Input Method: No input data recorded yet';
+            if (profileInputContainer) profileInputContainer.title = titleStr;
+            profileInputEl.title = titleStr;
+        }
     }
 
     // Online Status & Follow Button

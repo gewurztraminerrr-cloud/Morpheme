@@ -4481,6 +4481,18 @@ def init_db():
             conn.execute('ALTER TABLE users ADD COLUMN total_forum_posts INTEGER DEFAULT 0')
         except Exception:
             pass
+
+        # MIGRATION: Ensure users table has input method statistics columns
+        for col_name in ['input_mouse_count', 'input_keyboard_count', 'input_touch_count']:
+            try:
+                conn.execute(f'ALTER TABLE users ADD COLUMN {col_name} INTEGER DEFAULT 0')
+            except Exception:
+                pass
+
+        try:
+            conn.execute('ALTER TABLE round_history ADD COLUMN input_method TEXT')
+        except Exception:
+            pass
         try:
             conn.execute('''
                 UPDATE users 
@@ -6543,7 +6555,8 @@ def get_public_profile(username):
     cursor = conn.execute('''
         SELECT id, username, rating, games_played, avatar_url, country_flag, 
                full_name, age, gender, location, quote, description, proof_url, wins,
-               max_pe, avg_pe, pe_count, created_at, last_visited, timezone, COALESCE(total_points, 0)
+               max_pe, avg_pe, pe_count, created_at, last_visited, timezone, COALESCE(total_points, 0),
+               COALESCE(input_mouse_count, 0), COALESCE(input_keyboard_count, 0), COALESCE(input_touch_count, 0)
         FROM users WHERE username = ? COLLATE NOCASE
     ''', (username,))
     user = cursor.fetchone()
@@ -6557,6 +6570,46 @@ def get_public_profile(username):
         touch_user_last_visited(user[0])
 
     user_id = user[0]
+
+    # Input Method Breakdown Calculation
+    mouse_cnt = user[21] if len(user) > 21 and user[21] is not None else 0
+    keyboard_cnt = user[22] if len(user) > 22 and user[22] is not None else 0
+    touch_cnt = user[23] if len(user) > 23 and user[23] is not None else 0
+    tot_input_words = mouse_cnt + keyboard_cnt + touch_cnt
+
+    if tot_input_words > 0:
+        mouse_pct = round((mouse_cnt / tot_input_words) * 100)
+        keyboard_pct = round((keyboard_cnt / tot_input_words) * 100)
+        touch_pct = round((touch_cnt / tot_input_words) * 100)
+
+        diff = 100 - (mouse_pct + keyboard_pct + touch_pct)
+        if diff != 0:
+            top_k = max([('mouse', mouse_cnt), ('keyboard', keyboard_cnt), ('touch', touch_cnt)], key=lambda x: x[1])[0]
+            if top_k == 'mouse': mouse_pct += diff
+            elif top_k == 'keyboard': keyboard_pct += diff
+            elif top_k == 'touch': touch_pct += diff
+
+        parts = []
+        if mouse_pct > 0: parts.append(f"🖱️ {mouse_pct}%")
+        if touch_pct > 0: parts.append(f"📱 {touch_pct}%")
+        if keyboard_pct > 0: parts.append(f"⌨️ {keyboard_pct}%")
+        summary_text = " · ".join(parts) if parts else "No data yet"
+    else:
+        mouse_pct = 0
+        keyboard_pct = 0
+        touch_pct = 0
+        summary_text = "No data yet"
+
+    input_methods_payload = {
+        'mouse_pct': mouse_pct,
+        'keyboard_pct': keyboard_pct,
+        'touch_pct': touch_pct,
+        'mouse_count': mouse_cnt,
+        'keyboard_count': keyboard_cnt,
+        'touch_count': touch_cnt,
+        'total_words': tot_input_words,
+        'summary_text': summary_text
+    }
 
     # Forum Posts Count (permanent lifetime count that never decreases when threads fall out of the conveyor belt)
     forum_posts_count = 0
@@ -6922,6 +6975,8 @@ def get_public_profile(username):
         'timezone': user_tz or 'auto',
         'allow_pm': allow_pm,
         'forum_posts_count': forum_posts_count,
+        'input_methods': input_methods_payload,
+        'input_method_summary': summary_text,
         'recent_rounds': recent_rounds,
         'exceptional_rounds': exceptional_rounds,
         'best_words': profile_best_words,

@@ -1114,7 +1114,8 @@ class GameRoom:
                 'points': points,
                 'score_details': points_data,
                 'path': None,
-                'is_bonus': is_bonus
+                'is_bonus': is_bonus,
+                'input_method': getattr(player, 'input_method', 'mouse') or 'mouse'
             }
             player.submitted_words.append(word_metadata)
             try:
@@ -1305,7 +1306,8 @@ class GameRoom:
                     'word': word,
                     'time': time.time(),
                     'points': penalty_points,
-                    'is_penalty': True
+                    'is_penalty': True,
+                    'input_method': getattr(player, 'input_method', 'mouse') or 'mouse'
                 })
                 
                 # Update score (Sequential floor at 0 to avoid negative debt)
@@ -1354,7 +1356,8 @@ class GameRoom:
             'points': points,
             'score_details': points_data,
             'path': path,
-            'is_bonus': is_bonus
+            'is_bonus': is_bonus,
+            'input_method': getattr(player, 'input_method', 'mouse') or 'mouse'
         }
         
         # USER: Update Density (Only after word is fully validated and scored)
@@ -9885,10 +9888,15 @@ class RoomManager:
                         if not raw_time or isinstance(raw_time, str):
                             raw_time = actual_start_time
                         
+                        w_im = w.get('input_method') if isinstance(w, dict) else None
+                        if not w_im:
+                            w_im = getattr(p, 'input_method', 'mouse') if hasattr(p, 'input_method') else p.get('input_method', 'mouse')
+
                         words_data.append({
                             'word': w['word'],
                             'points': w.get('points', 0),
-                            'timestamp': raw_time
+                            'timestamp': raw_time,
+                            'input_method': w_im or 'mouse'
                         })
                     
                     # Calculate Best Word (Using Base Points Only - strictly excluding bonus word extra points)
@@ -9955,6 +9963,34 @@ class RoomManager:
                                     ''', (w_text, u_id, timestamp, room.room_id, target_round, rh_id))
                         except Exception:
                             pass
+
+                    # Increment user input method statistics based on words submitted in this round
+                    if u_id > 0 and u_name != 'System' and not str(u_name).startswith('Guest_'):
+                        m_cnt = 0
+                        k_cnt = 0
+                        t_cnt = 0
+                        player_im = getattr(p, 'input_method', 'mouse') if hasattr(p, 'input_method') else p.get('input_method', 'mouse')
+                        for entry in words_data:
+                            im = (entry.get('input_method') if isinstance(entry, dict) else None) or player_im
+                            im_str = str(im).lower()
+                            if im_str == 'keyboard':
+                                k_cnt += 1
+                            elif im_str == 'touch':
+                                t_cnt += 1
+                            else:
+                                m_cnt += 1
+
+                        if m_cnt > 0 or k_cnt > 0 or t_cnt > 0:
+                            try:
+                                conn.execute('''
+                                    UPDATE users 
+                                    SET input_mouse_count = COALESCE(input_mouse_count, 0) + ?,
+                                        input_keyboard_count = COALESCE(input_keyboard_count, 0) + ?,
+                                        input_touch_count = COALESCE(input_touch_count, 0) + ?
+                                    WHERE id = ?
+                                ''', (m_cnt, k_cnt, t_cnt, u_id))
+                            except Exception as _im_err:
+                                print(f"[save_round_history] Error updating input method counts: {_im_err}")
 
                     if room.time_limit >= 7200 and u_id != -1 and u_name != 'System' and u_score > 0:
                         canonical_id = f"24h_{room.board_dimensions}"
