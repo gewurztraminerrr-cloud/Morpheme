@@ -1581,8 +1581,12 @@ function clearGameUIAndCache() {
     window._wasEverInRoster = false;
     window.selectedAllWordsDict = 'all';
     window.selectedAllWordsLength = 'all';
-    window.allWordsSortMode = 'length';
+    window.selectedAllWordsOrder = 'alphabetical';
+    window.allWordsSortMode = 'alphabetical';
     window.lastIntermissionRoundId = null;
+    if (window._intermissionRandomOrderMap) {
+        window._intermissionRandomOrderMap.clear();
+    }
     if (typeof cleanupGuessingPopup === 'function') cleanupGuessingPopup();
     wrongGuessesOnBoardCount = 0;
     stopBounceFormat();
@@ -3202,8 +3206,12 @@ async function _doUpdateGameState(incomingState = null) {
             window.lastRenderedIntermissionKey = null; // Clear render cache key outside intermission
             window.selectedAllWordsDict = 'all';
             window.selectedAllWordsLength = 'all';
-            window.allWordsSortMode = 'length';
+            window.selectedAllWordsOrder = 'alphabetical';
+            window.allWordsSortMode = 'alphabetical';
             window.lastIntermissionRoundId = null;
+            if (window._intermissionRandomOrderMap) {
+                window._intermissionRandomOrderMap.clear();
+            }
             const filterContainer = document.getElementById('length-filter-container');
             if (filterContainer) filterContainer.style.display = 'none';
             const findersContainer = document.getElementById('finders-button-container');
@@ -3627,17 +3635,22 @@ async function _doUpdateGameState(incomingState = null) {
                 if (window.lastIntermissionRoundId !== roundId) {
                     window.selectedAllWordsDict = 'all';
                     window.selectedAllWordsLength = 'all';
-                    window.allWordsSortMode = 'length';
+                    window.selectedAllWordsOrder = 'alphabetical';
+                    window.allWordsSortMode = 'alphabetical';
                     window.lastIntermissionRoundId = roundId;
+                    if (window._intermissionRandomOrderMap) {
+                        window._intermissionRandomOrderMap.clear();
+                    }
                 }
                 const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
                 const selectedLen = window.selectedAllWordsLength || 'all';
                 const selectedDict = window.selectedAllWordsDict || 'all';
-                const sortMode = window.allWordsSortMode || 'length';
+                const selectedOrder = window.selectedAllWordsOrder || 'alphabetical';
+                const sortMode = window.allWordsSortMode || 'alphabetical';
                 const wordsLen = allWords ? allWords.length : 0;
                 const cswLen = cswForList ? cswForList.length : 0;
                 const addedLen = addedForList ? addedForList.length : 0;
-                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}_${cswLen}_${addedLen}`;
+                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}_${cswLen}_${addedLen}`;
 
                 if (window.lastRenderedIntermissionKey !== currentRenderKey) {
                     try {
@@ -5996,11 +6009,12 @@ function updateIntermissionRenderKey() {
     const filterJSON = JSON.stringify(window.intermissionTileFilter || null);
     const selectedLen = window.selectedAllWordsLength || 'all';
     const selectedDict = window.selectedAllWordsDict || 'all';
-    const sortMode = window.allWordsSortMode || 'length';
+    const selectedOrder = window.selectedAllWordsOrder || 'alphabetical';
+    const sortMode = window.allWordsSortMode || 'alphabetical';
     const wordsLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[0]) ? window.lastDisplayAllWordsArgs[0].length : 0;
     const cswLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[5]) ? window.lastDisplayAllWordsArgs[5].length : 0;
     const addedLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[6]) ? window.lastDisplayAllWordsArgs[6].length : 0;
-    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}_${cswLen}_${addedLen}`;
+    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}_${cswLen}_${addedLen}`;
 }
 
 window.LETTER_VALUES = window.LETTER_VALUES || {
@@ -6148,6 +6162,7 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const filterContainer = document.getElementById('length-filter-container');
     const filterDropdown = document.getElementById('length-filter-dropdown');
     const dictDropdown = document.getElementById('dictionary-filter-dropdown');
+    const orderDropdown = document.getElementById('order-filter-dropdown') || document.getElementById('all-words-order-dropdown');
 
     if (filterContainer) {
         filterContainer.style.display = 'flex';
@@ -6328,7 +6343,29 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         }
     }
 
-    window.allWordsSortMode = 'length';
+    if (orderDropdown) {
+        const prevOrder = window.selectedAllWordsOrder || 'alphabetical';
+        orderDropdown.value = prevOrder;
+        window.selectedAllWordsOrder = prevOrder;
+
+        if (!orderDropdown.dataset.listenerAdded) {
+            orderDropdown.addEventListener('change', (e) => {
+                window.selectedAllWordsOrder = e.target.value;
+                if (window.selectedAllWordsOrder === 'random') {
+                    if (window._intermissionRandomOrderMap) {
+                        window._intermissionRandomOrderMap.clear();
+                    }
+                }
+                updateIntermissionRenderKey();
+                if (window.lastDisplayAllWordsArgs) {
+                    displayAllWords(...window.lastDisplayAllWordsArgs);
+                }
+            });
+            orderDropdown.dataset.listenerAdded = 'true';
+        }
+    }
+
+    window.allWordsSortMode = window.selectedAllWordsOrder || 'alphabetical';
 
     // Filter by length
     const selectedLength = window.selectedAllWordsLength || 'all';
@@ -6517,47 +6554,41 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         entry.bonusIndicator = bonusIndicator;
     }
 
-    const isSortByPoints = (window.allWordsSortMode === 'points');
+    if (!window._intermissionRandomOrderMap) {
+        window._intermissionRandomOrderMap = new Map();
+    }
 
-    // Sort the filtered subset only (using authoritative pre-calculated values)
-    filteredWords.sort((a, b) => {
-        const ptsA = Number(a.totalPts) || 0;
-        const ptsB = Number(b.totalPts) || 0;
-        const lenA = Number(a.len) || 0;
-        const lenB = Number(b.len) || 0;
+    const currentOrder = window.selectedAllWordsOrder || 'alphabetical';
 
-        if (isSortByPoints) {
-            // Primary: Point Value (Desc)
-            if (ptsB !== ptsA) {
-                return ptsB - ptsA;
-            }
-            // Secondary tie-break: Secret bonus word priority
-            if (a.isBonus && !b.isBonus) return -1;
-            if (!a.isBonus && b.isBonus) return 1;
-            // Tertiary tie-break: Length (Desc)
-            if (lenB !== lenA) {
-                return lenB - lenA;
-            }
-        } else {
-            // Default: Sort by Letter Length
-            // 0. Bonus Word (Absolute Top Priority)
-            if (a.isBonus && !b.isBonus) return -1;
-            if (!a.isBonus && b.isBonus) return 1;
-            // Primary: Length (Desc)
-            if (lenB !== lenA) {
-                return lenB - lenA;
-            }
-            // Secondary: Point Value (Desc)
-            if (ptsB !== ptsA) {
-                return ptsB - ptsA;
+    if (currentOrder === 'random') {
+        for (let i = 0; i < filteredWords.length; i++) {
+            const wU = filteredWords[i].wordUpper;
+            if (!window._intermissionRandomOrderMap.has(wU)) {
+                window._intermissionRandomOrderMap.set(wU, Math.random());
             }
         }
 
-        // Alphabetical (Asc) - (ASCII operators are 10-20x faster than localeCompare)
-        if (a.wordUpper < b.wordUpper) return -1;
-        if (a.wordUpper > b.wordUpper) return 1;
-        return 0;
-    });
+        filteredWords.sort((a, b) => {
+            // Secret bonus word priority (if present)
+            if (a.isBonus && !b.isBonus) return -1;
+            if (!a.isBonus && b.isBonus) return 1;
+
+            const rA = window._intermissionRandomOrderMap.get(a.wordUpper) || 0;
+            const rB = window._intermissionRandomOrderMap.get(b.wordUpper) || 0;
+            return rA - rB;
+        });
+    } else {
+        // Alphabetical sort (Ascending A to Z)
+        filteredWords.sort((a, b) => {
+            // Secret bonus word priority (if present)
+            if (a.isBonus && !b.isBonus) return -1;
+            if (!a.isBonus && b.isBonus) return 1;
+
+            if (a.wordUpper < b.wordUpper) return -1;
+            if (a.wordUpper > b.wordUpper) return 1;
+            return 0;
+        });
+    }
 
     console.log('[renderWordsList] Rendering words:', filteredWords.length);
 
