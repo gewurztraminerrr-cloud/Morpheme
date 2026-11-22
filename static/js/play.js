@@ -3439,10 +3439,13 @@ async function _doUpdateGameState(incomingState = null) {
         // 1. Configure Tab Buttons Visibility & Labels
         // const is24H = ... (already declared above)
         const tabBtns = document.querySelectorAll('.word-tab');
+        const isSubanagramsRoom = (state.game_type === 'subanagrams') ||
+            (state.room_id && state.room_id.includes('subanagrams')) ||
+            document.body.classList.contains('is-subanagrams');
 
         tabBtns.forEach(btn => {
             const tab = btn.dataset.tab;
-            if (state.game_type === 'subanagrams') {
+            if (isSubanagramsRoom) {
                 if (tab === 'found') {
                     btn.textContent = 'Words';
                     btn.style.display = 'block';
@@ -3476,7 +3479,7 @@ async function _doUpdateGameState(incomingState = null) {
         });
 
         // Ensure activeWordsTab is valid for current room type
-        if (state.game_type === 'subanagrams') {
+        if (isSubanagramsRoom) {
             if (activeWordsTab !== 'remaining') {
                 activeWordsTab = 'found';
             }
@@ -4049,7 +4052,7 @@ async function _doUpdateGameState(incomingState = null) {
                 }
             }
             let maxLen = 30;
-            if (state.game_type === 'subanagrams') {
+            if (isSubanagramsRoom || state.game_type === 'subanagrams') {
                 if (isIntermission) {
                     if (state.previous_board && state.previous_board[0]) {
                         maxLen = state.previous_board[0].length;
