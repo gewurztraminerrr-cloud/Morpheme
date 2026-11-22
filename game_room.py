@@ -6241,6 +6241,7 @@ class RoomManager:
 
     def generate_spinner_params(self, room_id, reveal=False):
         """Generate and optionally reveal next round's game parameters"""
+        from spinner_set import SpinnerSet
         from scoring import calculate_word_score
         room = self.get_room(room_id)
         if not room:
@@ -8024,6 +8025,7 @@ class RoomManager:
     def start_next_round(self, room_id):
         """Start next round with pre-generated board (called at 0s remaining)"""
         import time
+        from spinner_set import SpinnerSet
         from scoring import calculate_word_score
         room = self.get_room(room_id)
         if not room:
