@@ -2362,6 +2362,13 @@ window.showMiniProfile = async function (username) {
             }
         }
 
+        const miniTop10CountEl = document.getElementById('mini-profile-top-10-count');
+        if (miniTop10CountEl) {
+            const count = data.top_10_count || 0;
+            miniTop10CountEl.innerText = count.toLocaleString();
+            miniTop10CountEl.title = `Finished within the top 10 placements in ${count} games with 20+ players (Accumulative)`;
+        }
+
         // Demographics: Age and Gender
         const demoEl = document.getElementById('mini-profile-demographics');
         if (demoEl) {
@@ -3420,6 +3427,13 @@ async function renderProfile(user) {
             top10RateEl.innerText = '-';
             top10RateEl.title = 'Requires Accumulative rooms with 20+ players';
         }
+    }
+
+    const profileTop10CountEl = document.getElementById('profile-top-10-count');
+    if (profileTop10CountEl) {
+        const count = user.top_10_count || 0;
+        profileTop10CountEl.innerText = count.toLocaleString();
+        profileTop10CountEl.title = `Finished within the top 10 placements in ${count} games with 20+ players (Accumulative)`;
     }
 
     const wpmEl = document.getElementById('profile-avg-wpm');
