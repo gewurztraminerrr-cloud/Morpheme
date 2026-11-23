@@ -2541,7 +2541,6 @@ class BoardGenerator:
                 word_count_range = f"{min_words}-{max_words}" if max_words < 99999 else "500+"
                 print(f"[BoardGen] + AW Dictionary ({original_dict_name}): Force clamped target range to {word_count_range} words.")
         target_min_words, target_max_words = min_words, max_words
-        print(f"[BoardGen] generate_board called for {dimensions} | Range: {word_count_range} ({min_words}-{max_words}) | MinLen: {min_word_length}L")
         
         # 1. Dimension Parsing
         if dimensions == "3x3x3":
@@ -2551,6 +2550,20 @@ class BoardGenerator:
             depth, rows, cols = (map(int, parts) if len(parts) == 3 else (1, int(parts[0]), int(parts[1])))
         
         num_tiles = rows * cols * depth
+
+        # Strict physical feasibility clamping for small boards
+        if num_tiles <= 16:
+            if min_words > 300 or max_words > 400 or word_count_range in ['400-500', '500+']:
+                min_words, max_words = (300, 400) if is_any_aw else (200, 300)
+                word_count_range = f"{min_words}-{max_words}"
+                target_min_words, target_max_words = min_words, max_words
+        elif num_tiles <= 24:
+            if min_words > 400 or max_words > 500 or word_count_range == '500+':
+                min_words, max_words = (400, 500) if is_any_aw else (300, 400)
+                word_count_range = f"{min_words}-{max_words}"
+                target_min_words, target_max_words = min_words, max_words
+
+        print(f"[BoardGen] generate_board called for {dimensions} | Range: {word_count_range} ({min_words}-{max_words}) | MinLen: {min_word_length}L")
         
         # (Special procedure for large boards removed per user request to use standard algorithm)
         
@@ -3376,6 +3389,17 @@ class BoardGenerator:
         else:
             parts = dimensions.split("x")
             depth, rows, cols = (map(int, parts) if len(parts) == 3 else (1, int(parts[0]), int(parts[1])))
+
+        # Strict physical feasibility clamping for small boards in emergency generator
+        num_tiles = depth * rows * cols
+        if num_tiles <= 16:
+            if min_words > 300 or max_words > 400 or word_count_range in ['400-500', '500+']:
+                min_words, max_words = (300, 400) if (use_aw_flag or has_aw_suffix) else (200, 300)
+                word_count_range = f"{min_words}-{max_words}"
+        elif num_tiles <= 24:
+            if min_words > 400 or max_words > 500 or word_count_range == '500+':
+                min_words, max_words = (400, 500) if (use_aw_flag or has_aw_suffix) else (300, 400)
+                word_count_range = f"{min_words}-{max_words}"
             
         safe_format = str(board_format or "").lower()
         if "equality freq" in safe_format:
@@ -3435,6 +3459,10 @@ class BoardGenerator:
         
         _attempt = 0
         import random
+        import time as _emergency_time
+        _emergency_deadline = _emergency_time.time() + 4.0
+        best_candidate = None
+        best_candidate_dist = float('inf')
         while True:
             _attempt += 1
             print(f"[BoardGen] 🆘 EMERGENCY LOOP ATTEMPT {_attempt} (Target: {min_words}-{max_words})")
@@ -3703,56 +3731,39 @@ class BoardGenerator:
                     count = len(final_solve)
             
             matching_min_cnt = sum(1 for w in final_solve if len(w) == display_min)
-            if matching_min_cnt < 3 and _attempt < 50:
+            is_timed_out = (_emergency_time.time() >= _emergency_deadline) or (_attempt >= 5)
+
+            # Track closest candidate
+            if min_words <= count <= max_words:
+                dist = 0
+            elif count < min_words:
+                dist = min_words - count
+            else:
+                dist = count - max_words
+            if dist < best_candidate_dist:
+                best_candidate_dist = dist
+                best_candidate = (board, final_solve, count)
+
+            if matching_min_cnt < 3 and not is_timed_out:
                 print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Board has only {matching_min_cnt} words of length {display_min} (needed >= 3). Retrying...")
                 continue
 
-            if min_words <= count <= max_words or _attempt >= 50:
+            if min_words <= count <= max_words or is_timed_out:
                 if min_words <= count <= max_words:
                     ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
                     min_ratio, max_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=min_word_length)
                     max_ratio_tries = 1
-                    if _attempt <= max_ratio_tries:
+                    if _attempt <= max_ratio_tries and not is_timed_out:
                         relaxation = 0.05 * _attempt
                         adj_min = max(0.0, min_ratio - relaxation)
                         adj_max = min(1.0, max_ratio + relaxation)
                         if not (adj_min <= ratio <= adj_max):
                             print(f"[BoardGen] [Emergency] ATTEMPT {_attempt}: Uniqueness ratio {ratio:.2f} is outside range {adj_min:.2f}-{adj_max:.2f} (base: {min_ratio:.2f}-{max_ratio:.2f}) for target {difficulty}. Retrying...")
                             continue
-                if _attempt >= 50:
-                    if count < min_words or (use_aw_flag and count < 300):
-                        print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Count {count} < target min {min_words} (AW={use_aw_flag}). Running fast density rescue sweep...")
-                        try:
-                            rescue_board = self._create_normal_board(
-                                rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=depth,
-                                difficulty='Easy', dictionary=dictionary, word_count_range=word_count_range, use_added_words=use_aw_flag
-                            )
-                            rescue_solve = self._solve_board(
-                                rescue_board, dictionary, (0, 99999), display_min, store_paths=True, timeout=10.0, use_added_words=use_aw_flag
-                            )
-                            if len(rescue_solve) >= (300 if use_aw_flag else min_words) or len(rescue_solve) > count:
-                                print(f"[BoardGen] ✅ RESCUE SUCCESSFUL: Hit {len(rescue_solve)} words.")
-                                board = rescue_board
-                                final_solve = rescue_solve
-                                count = len(final_solve)
-                            if use_aw_flag and count < 300:
-                                print(f"[BoardGen] ⚠️ AW board still < 300 words ({count}). Forcing super-density generation...")
-                                for _aw_try in range(15):
-                                    dense_b = self._create_normal_board(
-                                        rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=depth,
-                                        difficulty='Easy', dictionary=dictionary, word_count_range='300-400', use_added_words=True
-                                    )
-                                    dense_s = self._solve_board(dense_b, dictionary, (0, 99999), display_min, store_paths=True, timeout=10.0, use_added_words=True)
-                                    if len(dense_s) >= 300:
-                                        board = dense_b
-                                        final_solve = dense_s
-                                        count = len(final_solve)
-                                        print(f"[BoardGen] ✅ Super-density generation hit {count} words for AW.")
-                                        break
-                        except Exception as r_err:
-                            print(f"[BoardGen] Rescue sweep error: {r_err}")
-                    else:
-                        print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Failed to hit target after 50 attempts. Returning best effort with {count} words.")
+                if is_timed_out and not (min_words <= count <= max_words):
+                    if best_candidate and best_candidate[2] > 0:
+                        board, final_solve, count = best_candidate
+                    print(f"[BoardGen] ⚠️ EMERGENCY LOOP TIMEOUT: Reached attempt {_attempt} or deadline. Returning best effort with {count} words.")
                 else:
                     print(f"[BoardGen] ✓ EMERGENCY COMPLIANCE SUCCESS: {count} words after {_attempt} emergency tries.")
 

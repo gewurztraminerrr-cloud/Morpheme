@@ -3650,19 +3650,37 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         # Determine target range - strictly preserve provided target_range
         if is_aw:
             use_added_words = True
-            if target_range and target_range in ['300-400', '400-500', '500+']:
+            if '4x4' in dimensions:
+                target_range_resolved = '300-400'
+                min_accept, max_accept = 300, 399
+            elif '4x6' in dimensions:
+                target_range_resolved = '400-500' if target_range == '400-500' else '300-400'
+                min_accept, max_accept = (400, 499) if target_range_resolved == '400-500' else (300, 399)
+            elif target_range and target_range in ['300-400', '400-500', '500+']:
                 target_range_resolved = target_range
+                if target_range_resolved == '300-400':
+                    min_accept, max_accept = 300, 399
+                elif target_range_resolved == '400-500':
+                    min_accept, max_accept = 400, 499
+                elif target_range_resolved == '500+':
+                    min_accept, max_accept = 500, 99999
             else:
                 import random
                 target_range_resolved = random.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
-            if target_range_resolved == '300-400':
-                min_accept, max_accept = 300, 399
-            elif target_range_resolved == '400-500':
-                min_accept, max_accept = 400, 499
-            elif target_range_resolved == '500+':
-                min_accept, max_accept = 500, 99999
+                if target_range_resolved == '300-400':
+                    min_accept, max_accept = 300, 399
+                elif target_range_resolved == '400-500':
+                    min_accept, max_accept = 400, 499
+                elif target_range_resolved == '500+':
+                    min_accept, max_accept = 500, 99999
         elif target_range:
             target_range_resolved = target_range
+            if '4x4' in dimensions and target_range_resolved in ['400-500', '500+']:
+                target_range_resolved = '200-300'
+                min_accept, max_accept = 200, 299
+            elif '4x6' in dimensions and target_range_resolved == '500+':
+                target_range_resolved = '300-400'
+                min_accept, max_accept = 300, 399
         elif not is_24h:
             target_range_resolved = '100-200'
         
@@ -3809,13 +3827,14 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     csw_cnt_ult = sum(1 for w in words_filtered if word_validator.word_validator.is_csw_only(w)) if ('CSW' in str(dictionary).upper() and hasattr(word_validator, 'word_validator')) else 1
                     aw_cnt_ult = sum(1 for w in words_filtered if word_validator.word_validator.is_added_word(w)) if (is_aw and hasattr(word_validator, 'word_validator')) else 1
 
+                    is_impossible_outlier = ('4x4' in dimensions and min_accept >= 400) or ('4x6' in dimensions and min_accept >= 500)
                     if matching_final_min < 3:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had only {matching_final_min} words of length {final_min} (needed >= 3). REJECTING cached board...")
                     elif is_aw and actual_wc < 300:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had only {actual_wc} words for +AW (needed >= 300). REJECTING cached board...")
-                    elif actual_wc < min_accept or actual_wc > max_accept:
+                    elif (actual_wc < min_accept or actual_wc > max_accept) and not is_impossible_outlier:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had {actual_wc} words for min_word_length={final_min} (needed {min_accept}-{max_accept}). REJECTING cached board...")
-                    elif target_range and not is_board_count_valid(actual_wc, target_range):
+                    elif target_range and not is_board_count_valid(actual_wc, target_range) and not is_impossible_outlier:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had {actual_wc} words outside target_range {target_range}. REJECTING cached board...")
                     elif 'CSW' in str(dictionary).upper() and csw_cnt_ult == 0:
                         print(f"[get_emergency_fallback_board] Ultimate cached board has 0 CSW-only words for CSW dictionary. REJECTING...")
