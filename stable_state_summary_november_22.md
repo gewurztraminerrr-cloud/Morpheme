@@ -1,11 +1,11 @@
 # Morpheme Stable State Summary – November 22, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `2fcfc52ce1cc0620cc7796a5ae5c22cbe3d17796` (`2fcfc52c`)
+- **Canonical Git Commit ID**: `cc0bd07e684156936115a6afcf14ccba46d1b792` (`cc0bd07e`)
 - **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
-- **Date/Time**: November 23, 2026 (04:58 UTC / 23:58 EST)
+- **Date/Time**: November 23, 2026 (04:59 UTC / 23:59 EST)
 
 ---
 
@@ -177,10 +177,10 @@
 
 | Component | Status | Commit / Version | Notes |
 | :--- | :--- | :--- | :--- |
-| **Localhost** | ✅ Active | `2fcfc52c` | Port 5001, daemon running, twitching eliminated |
-| **GitHub (`main`)** | ✅ Up to date | `2fcfc52c` | Remote synchronized with zero uncommitted changes |
-| **Production VPS** | ✅ Live | `2fcfc52c` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
-| **App / Client UI** | ✅ Verified | `2fcfc52c` | Score Sum tab rock-solid on "No players found" |
+| **Localhost** | ✅ Active | `cc0bd07e` | Port 5001, daemon running, twitching eliminated |
+| **GitHub (`main`)** | ✅ Up to date | `cc0bd07e` | Remote synchronized with zero uncommitted changes |
+| **Production VPS** | ✅ Live | `cc0bd07e` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
+| **App / Client UI** | ✅ Verified | `cc0bd07e` | Score Sum tab rock-solid on "No players found" |
 
 ---
 
@@ -189,6 +189,6 @@
 To reset or redeploy to this exact point in the future:
 ```bash
 git fetch origin main
-git reset --hard 2fcfc52ce1cc0620cc7796a5ae5c22cbe3d17796
+git reset --hard cc0bd07e684156936115a6afcf14ccba46d1b792
 python3 scratch/deploy_reliable.py
 ```
