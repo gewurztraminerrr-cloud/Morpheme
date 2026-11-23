@@ -2276,6 +2276,32 @@ if (window._profileTimeIntervalId) {
     window._profileTimeIntervalId = null;
 }
 
+// Dynamic Stat Font Size Calibrator
+// Scales down font size and tightens letter spacing as numbers grow into hundreds of thousands
+// or millions (similar to how Is Valid in Tools scales large word entries), guaranteeing that
+// astronomical numbers (200,000 games, multi-million points) fit completely without truncation.
+function applyDynamicStatSize(el, str) {
+    if (!el) return;
+    const len = (str !== undefined && str !== null ? String(str) : (el.innerText || '')).trim().length;
+    if (len <= 5) {
+        el.style.fontSize = '';
+        el.style.letterSpacing = '';
+    } else if (len <= 7) {
+        el.style.fontSize = 'clamp(0.74rem, 2.5vw, 0.86rem)';
+        el.style.letterSpacing = '-0.3px';
+    } else if (len <= 9) {
+        el.style.fontSize = 'clamp(0.66rem, 2.2vw, 0.76rem)';
+        el.style.letterSpacing = '-0.5px';
+    } else if (len <= 11) {
+        el.style.fontSize = 'clamp(0.58rem, 1.9vw, 0.68rem)';
+        el.style.letterSpacing = '-0.7px';
+    } else {
+        el.style.fontSize = 'clamp(0.50rem, 1.6vw, 0.60rem)';
+        el.style.letterSpacing = '-0.9px';
+    }
+}
+window.applyDynamicStatSize = applyDynamicStatSize;
+
 window.showMiniProfile = async function (username) {
     if (!username) return;
     if (window.getSelection) {
@@ -2316,18 +2342,20 @@ window.showMiniProfile = async function (username) {
             fullNEl.title = cleanProfileText(data.full_name);
         }
 
-        // Stats: Games, Wins, Words, PT Sum, Avg WPM, Top 10 Rate
+        // Stats: Games, Wins, Words, PT Sum, Avg WPM, Top 10
         const gamesEl = document.getElementById('mini-profile-games');
         if (gamesEl) {
             const gCount = (data.games_played || 0).toLocaleString();
             gamesEl.innerText = gCount;
             gamesEl.title = `Games: ${gCount}`;
+            applyDynamicStatSize(gamesEl, gCount);
         }
         const winsEl = document.getElementById('mini-profile-wins');
         if (winsEl) {
             const wCount = (data.wins || 0).toLocaleString();
             winsEl.innerText = wCount;
             winsEl.title = `Wins: ${wCount}`;
+            applyDynamicStatSize(winsEl, wCount);
         }
 
         const wordsEl = document.getElementById('mini-profile-words');
@@ -2335,6 +2363,7 @@ window.showMiniProfile = async function (username) {
             const wordsCount = (data.total_words || 0).toLocaleString();
             wordsEl.innerText = wordsCount;
             wordsEl.title = `Total Words Found: ${wordsCount}`;
+            applyDynamicStatSize(wordsEl, wordsCount);
         }
 
         const ptSumEl = document.getElementById('mini-profile-pt-sum');
@@ -2342,19 +2371,24 @@ window.showMiniProfile = async function (username) {
             const pts = (data.pt_sum || 0).toLocaleString();
             ptSumEl.innerText = pts;
             ptSumEl.title = `Total Points Sum: ${pts}`;
+            applyDynamicStatSize(ptSumEl, pts);
         }
 
         const avgWpmEl = document.getElementById('mini-profile-avg-wpm');
         if (avgWpmEl) {
-            avgWpmEl.innerText = data.avg_wpm_300 || 0;
+            const wpmStr = String(data.avg_wpm_300 || 0);
+            avgWpmEl.innerText = wpmStr;
             avgWpmEl.title = "Average Words Per Minute in boards with 100+ potential words (requires finding 20+ words in a round)";
+            applyDynamicStatSize(avgWpmEl, wpmStr);
         }
 
         const miniTop10El = document.getElementById('mini-profile-top-10') || document.getElementById('mini-profile-top-10-count') || document.getElementById('mini-profile-top-10-rate');
         if (miniTop10El) {
             const count = data.top_10_count || 0;
-            miniTop10El.innerText = count.toLocaleString();
+            const top10Str = count.toLocaleString();
+            miniTop10El.innerText = top10Str;
             miniTop10El.title = `Finished within the top 10 placements in ${count} games with 20+ players (Accumulative)`;
+            applyDynamicStatSize(miniTop10El, top10Str);
         }
 
         // Demographics: Age and Gender
@@ -3337,7 +3371,11 @@ async function renderProfile(user) {
 
     // PT SUM
     const ptSumEl = document.getElementById('profile-pt-sum');
-    if (ptSumEl) ptSumEl.innerText = (user.pt_sum || 0).toLocaleString();
+    if (ptSumEl) {
+        const val = (user.pt_sum || 0).toLocaleString();
+        ptSumEl.innerText = val;
+        applyDynamicStatSize(ptSumEl, val);
+    }
 
     // Rating & Color (Global display removed, but we still need color for avatar theme)
     const avatar = document.querySelector('.profile-avatar.large');
@@ -3430,13 +3468,25 @@ async function renderProfile(user) {
 
     // Stats: GAMES, WINS, WORDS, PT SUM
     const gamesEl = document.getElementById('profile-games');
-    if (gamesEl) gamesEl.innerText = (user.games_played || 0).toLocaleString();
+    if (gamesEl) {
+        const val = (user.games_played || 0).toLocaleString();
+        gamesEl.innerText = val;
+        applyDynamicStatSize(gamesEl, val);
+    }
 
     const winsEl = document.getElementById('profile-wins');
-    if (winsEl) winsEl.innerText = (user.wins || 0).toLocaleString();
+    if (winsEl) {
+        const val = (user.wins || 0).toLocaleString();
+        winsEl.innerText = val;
+        applyDynamicStatSize(winsEl, val);
+    }
 
     const wordsEl = document.getElementById('profile-words');
-    if (wordsEl) wordsEl.innerText = (user.total_words || 0).toLocaleString();
+    if (wordsEl) {
+        const val = (user.total_words || 0).toLocaleString();
+        wordsEl.innerText = val;
+        applyDynamicStatSize(wordsEl, val);
+    }
 
     const winRateEl = document.getElementById('profile-win-rate');
     if (winRateEl) {
@@ -3452,14 +3502,18 @@ async function renderProfile(user) {
     const profileTop10El = document.getElementById('profile-top-10') || document.getElementById('profile-top-10-count') || document.getElementById('profile-top-10-rate');
     if (profileTop10El) {
         const count = user.top_10_count || 0;
-        profileTop10El.innerText = count.toLocaleString();
+        const val = count.toLocaleString();
+        profileTop10El.innerText = val;
         profileTop10El.title = `Finished within the top 10 placements in ${count} games with 20+ players (Accumulative)`;
+        applyDynamicStatSize(profileTop10El, val);
     }
 
     const wpmEl = document.getElementById('profile-avg-wpm');
     if (wpmEl) {
-        wpmEl.innerText = user.avg_wpm_300 || 0;
+        const val = String(user.avg_wpm_300 || 0);
+        wpmEl.innerText = val;
         wpmEl.title = "Average Words Per Minute in boards with 100+ potential words (requires finding 20+ words in a round)";
+        applyDynamicStatSize(wpmEl, val);
     }
 
     // Profile Details
