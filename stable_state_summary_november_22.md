@@ -181,6 +181,10 @@
   - **Backend API Routes**: In `app.py`, `ban_user_api`, `timeout_user_api`, and `ban_ip_api` explicitly block any attempt targeting `jeffb`, `jeffbabiak`, or `system` with HTTP 403.
   - **IP Protection**: `ban_ip_api` prevents any moderator from blacklisting an IP address belonging to `jeffb` or `jeffbabiak`.
   - **Cache Busters**: Bumped `tools.js?v=1795260000` and `mods.js?v=1795260000` in `templates/index.html`.
+- **Supreme Authority for `jeffb` over Moderators**:
+  - `jeffb` has full authority to timeout or permanently ban any moderator.
+  - When `jeffb` bans a moderator, their records are purged from the `moderators` table and `mods.txt` file, and active moderator caches are reloaded immediately.
+  - Subordinate moderators cannot ban or timeout other moderators (only `jeffb` has authority over other mods).
 
 ---
 
@@ -188,10 +192,10 @@
 
 | Component | Status | Commit / Version | Notes |
 | :--- | :--- | :--- | :--- |
-| **Localhost** | ✅ Active | Latest | Port 5001, daemon running, jeffb protected, Lift Ban removed |
-| **GitHub (`main`)** | ✅ Up to date | Latest | Remote synchronized with zero uncommitted changes |
-| **Production VPS** | ✅ Live | Latest | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
-| **App / Client UI** | ✅ Verified | Latest | Permanent bans enforced, admin immunity verified |
+| **Localhost** | ✅ Active | `8b0d019a` | Port 5001, daemon running, jeffb protected, Lift Ban removed |
+| **GitHub (`main`)** | ✅ Up to date | `8b0d019a` | Remote synchronized with zero uncommitted changes |
+| **Production VPS** | ✅ Live | `8b0d019a` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
+| **App / Client UI** | ✅ Verified | `8b0d019a` | Permanent bans enforced, admin immunity verified |
 
 ---
 
@@ -200,6 +204,6 @@
 To reset or redeploy to this exact point in the future:
 ```bash
 git fetch origin main
-git reset --hard HEAD
+git reset --hard 8b0d019a7302f1e2c51b2b11dff611e25379b97f
 python3 scratch/deploy_reliable.py
 ```
