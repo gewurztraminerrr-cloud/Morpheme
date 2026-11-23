@@ -1,11 +1,11 @@
 # Morpheme Stable State Summary – November 22, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `cc0bd07e684156936115a6afcf14ccba46d1b792` (`cc0bd07e`)
+- **Canonical Git Commit ID**: `319bc5a945e5c7911bac35a341c66a36111e0062` (`319bc5a9`)
 - **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
-- **Date/Time**: November 23, 2026 (04:59 UTC / 23:59 EST)
+- **Date/Time**: November 23, 2026 (05:00 UTC / 00:00 EST)
 
 ---
 
@@ -171,16 +171,27 @@
   - **30-Second Polling Cooldown**: Throttled automated re-fetching to a 30-second cooldown (`now - lastFetch > 30000`), completely eliminating per-second refetches and locking the view onto a clean, static `'No players found'` message.
   - **Cache Buster**: Bumped `play.js?v=1795250000` in `templates/index.html`.
 
+### Q. Permanent Ban Policy & Protected Admin Status for `jeffb`
+- **Permanent Removal & "Lift Ban" Elimination**:
+  - Removed the `🔓 Lift Ban` button and column from the IP Blacklist table in the Moderator Panel (`static/js/mods.js` and `templates/index.html`).
+  - Disabled the `/api/mods/lift_ip_ban` endpoint in `app.py` by returning HTTP 403 (`Bans are permanent and cannot be lifted.`).
+  - Maintained complete, irreversible database erasure upon ban in `ban_user_api` (`users`, `user_ratings`, `user_settings`, `round_history`, `user_word_tallies`, `word_finds`, forum activity, etc.).
+- **Uncompromised Immunity for `jeffb` & `jeffbabiak`**:
+  - **Frontend UI & Modals**: In `static/js/tools.js`, mini-profile moderator actions are hidden when viewing `jeffb`, `jeffbabiak`, or `system`. Additionally, `openModTimeoutModal` and `openModBanModal` alert and immediately return if the target is protected.
+  - **Backend API Routes**: In `app.py`, `ban_user_api`, `timeout_user_api`, and `ban_ip_api` explicitly block any attempt targeting `jeffb`, `jeffbabiak`, or `system` with HTTP 403.
+  - **IP Protection**: `ban_ip_api` prevents any moderator from blacklisting an IP address belonging to `jeffb` or `jeffbabiak`.
+  - **Cache Busters**: Bumped `tools.js?v=1795260000` and `mods.js?v=1795260000` in `templates/index.html`.
+
 ---
 
 ## 2. Synchronization Status Matrix
 
 | Component | Status | Commit / Version | Notes |
 | :--- | :--- | :--- | :--- |
-| **Localhost** | ✅ Active | `cc0bd07e` | Port 5001, daemon running, twitching eliminated |
-| **GitHub (`main`)** | ✅ Up to date | `cc0bd07e` | Remote synchronized with zero uncommitted changes |
-| **Production VPS** | ✅ Live | `cc0bd07e` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
-| **App / Client UI** | ✅ Verified | `cc0bd07e` | Score Sum tab rock-solid on "No players found" |
+| **Localhost** | ✅ Active | Latest | Port 5001, daemon running, jeffb protected, Lift Ban removed |
+| **GitHub (`main`)** | ✅ Up to date | Latest | Remote synchronized with zero uncommitted changes |
+| **Production VPS** | ✅ Live | Latest | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
+| **App / Client UI** | ✅ Verified | Latest | Permanent bans enforced, admin immunity verified |
 
 ---
 
@@ -189,6 +200,6 @@
 To reset or redeploy to this exact point in the future:
 ```bash
 git fetch origin main
-git reset --hard cc0bd07e684156936115a6afcf14ccba46d1b792
+git reset --hard HEAD
 python3 scratch/deploy_reliable.py
 ```

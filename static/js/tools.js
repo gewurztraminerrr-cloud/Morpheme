@@ -2609,13 +2609,14 @@ window.showMiniProfile = async function (username) {
             }
         }
 
-        // Setup Moderator Action Buttons (Visible strictly for authorized moderators, non-self)
+        // Setup Moderator Action Buttons (Visible strictly for authorized moderators, non-self, non-protected)
         const isMod = Boolean(window.currentUserIsMod);
         const modActions = document.getElementById('mini-profile-mod-actions');
         const isSelf = currentName && currentName.toLowerCase() === data.username.toLowerCase();
+        const isProtected = ['jeffbabiak', 'jeffb', 'system'].includes(data.username.toLowerCase());
 
         if (modActions) {
-            if (isMod && !isSelf) {
+            if (isMod && !isSelf && !isProtected) {
                 modActions.classList.remove('hidden');
                 const timeoutBtn = document.getElementById('mini-profile-timeout-btn');
                 if (timeoutBtn) {
@@ -2646,7 +2647,12 @@ window.showMiniProfile = async function (username) {
 };
 
 window.openModTimeoutModal = function(username) {
-    if (!username) return;
+    if (!username || ['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
+        if (username && ['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
+            alert(`Action Prohibited: User '${username}' cannot be timed out.`);
+        }
+        return;
+    }
     const modal = document.getElementById('mod-timeout-modal');
     const uEl = document.getElementById('mod-timeout-modal-username');
     const hInput = document.getElementById('mod-timeout-modal-hours');
@@ -2739,7 +2745,12 @@ window.closeModTimeoutModal = function() {
 };
 
 window.openModBanModal = function(username) {
-    if (!username) return;
+    if (!username || ['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
+        if (username && ['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
+            alert(`Action Prohibited: User '${username}' cannot be banned.`);
+        }
+        return;
+    }
     const modal = document.getElementById('mod-ban-modal');
     const uEl = document.getElementById('mod-ban-modal-username');
     const rInput = document.getElementById('mod-ban-modal-reason');

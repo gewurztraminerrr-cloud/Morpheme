@@ -1038,9 +1038,6 @@ async function loadIpBans() {
                         <td style="padding: 8px; color: var(--text-secondary);">${escapeHtml(b.banned_by || 'Moderator')}</td>
                         <td style="padding: 8px; color: var(--text-secondary);">${escapeHtml(b.reason || '-')}</td>
                         <td style="padding: 8px; font-size: 0.8rem; color: var(--text-secondary);">${typeof window.formatAppDate === 'function' ? window.formatAppDate(b.created_at, true) : escapeHtml(b.created_at || '-')}</td>
-                        <td style="padding: 8px; text-align: right;">
-                            <button class="mini-action-btn secondary" style="background: #059669; border-color: #047857; color: #fff; padding: 3px 8px; font-size: 0.75rem;" onclick="liftIpBan('${escapeHtml(b.ip_address)}', ${b.id})">🔓 Lift Ban</button>
-                        </td>
                     </tr>
                 `).join('');
             }
@@ -1050,32 +1047,7 @@ async function loadIpBans() {
     }
 }
 
-async function liftIpBan(ip, id) {
-    if (!confirm(`Are you sure you want to lift the IP ban for "${ip}"?`)) {
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/mods/lift_ip_ban', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ip_address: ip, id: id })
-        });
-        const data = await response.json();
-        if (data.success) {
-            showModStatus(data.message || `IP ban lifted for ${ip}.`, false, 'ban-status-area');
-            loadIpBans();
-        } else {
-            alert("Error: " + (data.error || "Failed to lift IP ban."));
-        }
-    } catch (err) {
-        console.error("Error lifting IP ban:", err);
-        showModStatus("Network error lifting IP ban.", true, 'ban-status-area');
-    }
-}
-
 window.loadIpBans = loadIpBans;
-window.liftIpBan = liftIpBan;
 
 async function addDefinition() {
     const wordInput = document.getElementById('def-word-input');

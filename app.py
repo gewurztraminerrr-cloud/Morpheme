@@ -2145,8 +2145,8 @@ def ban_user_api():
     if not username:
         return jsonify({'error': 'Username required'}), 400
         
-    if username.lower() in ('jeffbabiak', 'jeffb'):
-        return jsonify({'error': 'Cannot ban protected moderator'}), 403
+    if username.lower() in ('jeffbabiak', 'jeffb', 'system'):
+        return jsonify({'error': 'Cannot ban protected administrator'}), 403
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
@@ -2291,6 +2291,9 @@ def ban_ip_api():
     reason = (data.get('reason') or 'Moderator manual IP ban').strip()
     username = (data.get('username') or '').strip()
     
+    if username and username.lower() in ('jeffbabiak', 'jeffb', 'system'):
+        return jsonify({'error': 'Cannot ban IP associated with protected administrator'}), 403
+
     if not ip:
         return jsonify({'error': 'IP address is required'}), 400
         
@@ -2305,6 +2308,17 @@ def ban_ip_api():
     
     try:
         with get_db() as conn:
+            # Prevent banning any IP currently used by protected accounts
+            admin_ips = set()
+            rows = conn.execute("SELECT registration_ip, last_ip FROM users WHERE LOWER(username) IN ('jeffbabiak', 'jeffb', 'system')").fetchall()
+            for r in rows:
+                if r['registration_ip']:
+                    admin_ips.add(r['registration_ip'].strip())
+                if r['last_ip']:
+                    admin_ips.add(r['last_ip'].strip())
+            if ip in admin_ips:
+                return jsonify({'error': 'Cannot ban IP address associated with protected administrator'}), 403
+
             conn.execute("""
                 INSERT OR REPLACE INTO ip_bans (ip_address, banned_username, banned_by, reason, created_at)
                 VALUES (?, ?, ?, ?, ?)
@@ -2323,26 +2337,7 @@ def ban_ip_api():
 def lift_ip_ban_api():
     if not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
-    data = request.json or {}
-    ip = (data.get('ip_address') or '').strip()
-    ban_id = data.get('id')
-    
-    if not ip and not ban_id:
-        return jsonify({'error': 'IP address or ban ID required'}), 400
-        
-    try:
-        with get_db() as conn:
-            if ban_id:
-                conn.execute("DELETE FROM ip_bans WHERE id = ?", (ban_id,))
-            else:
-                conn.execute("DELETE FROM ip_bans WHERE ip_address = ?", (ip,))
-            conn.commit()
-            
-        reload_banned_ips()
-        return jsonify({'success': True, 'message': f'IP ban lifted for {ip or f"ID {ban_id}"}.'})
-    except Exception as e:
-        print(f"Error lifting IP ban: {e}")
-        return jsonify({'error': str(e)}), 500
+    return jsonify({'error': 'Bans are permanent and cannot be lifted.'}), 403
 
 
 def format_duration_string(minutes):
@@ -2683,8 +2678,8 @@ def timeout_user_api():
     if not username:
         return jsonify({'error': 'Username required'}), 400
         
-    if username.lower() in ('jeffbabiak', 'jeffb'):
-        return jsonify({'error': 'Cannot timeout protected moderator'}), 403
+    if username.lower() in ('jeffbabiak', 'jeffb', 'system'):
+        return jsonify({'error': 'Cannot timeout protected administrator'}), 403
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
