@@ -80,6 +80,16 @@ _STATS_CACHE = {}
 _STATS_MTIME = 0
 _STATS_MAX_BY_LEN = {}
 
+def _is_legit_word(w: str) -> bool:
+    """Helper to verify if a word actually exists in any official dictionary (or added words)."""
+    if not w or not isinstance(w, str):
+        return False
+    try:
+        import word_validator
+        return word_validator.is_valid_word(w, 'NWL', True) or word_validator.is_valid_word(w, 'CSW', True)
+    except Exception:
+        return True
+
 def get_word_stats() -> dict:
     """Thread-safe read of word_stats.json with mtime caching."""
     global _STATS_CACHE, _STATS_MTIME, _STATS_MAX_BY_LEN
@@ -181,9 +191,14 @@ def sync_word_stats_from_db(db_path: str = None, tally_log_path: str = None) -> 
                             found_set = set()
                             for w in w_list:
                                 if isinstance(w, str) and w:
-                                    found_set.add(w.strip().upper())
+                                    w_up = w.strip().upper()
+                                    if _is_legit_word(w_up):
+                                        found_set.add(w_up)
                                 elif isinstance(w, dict) and w.get('word'):
-                                    found_set.add(str(w['word']).strip().upper())
+                                    if (w.get('points', 0) or 0) > 0:
+                                        w_up = str(w['word']).strip().upper()
+                                        if _is_legit_word(w_up):
+                                            found_set.add(w_up)
                             for word in found_set:
                                 target_counts[word] = max(target_counts.get(word, 0), 1)
                     except Exception:
@@ -270,7 +285,9 @@ def rebuild_word_stats_from_db(db_path: str = None) -> int:
                     GROUP BY uwt.word
                 """).fetchall():
                     if w and cnt:
-                        target_counts[str(w).strip().upper()] = int(cnt)
+                        w_up = str(w).strip().upper()
+                        if _is_legit_word(w_up):
+                            target_counts[w_up] = int(cnt)
             
             # Fallback/supplement: word_finds if user_word_tallies didn't cover it
             if 'word_finds' in tables:
@@ -283,7 +300,8 @@ def rebuild_word_stats_from_db(db_path: str = None) -> int:
                 """).fetchall():
                     if w and cnt:
                         w_up = str(w).strip().upper()
-                        target_counts[w_up] = max(target_counts.get(w_up, 0), int(cnt))
+                        if _is_legit_word(w_up):
+                            target_counts[w_up] = max(target_counts.get(w_up, 0), int(cnt))
                         
             conn.close()
         except Exception as e:
@@ -583,8 +601,8 @@ def get_division_examples() -> dict:
         div_buckets = {d: [] for d in range(1, k_divs + 1)}
         words_seen = set()
 
-        # 1. First, check all non-zero words in stats for this length
-        stats_words = [w for w, c in stats.items() if len(w) == length and c > 0]
+        # 1. First, check all non-zero words in stats for this length that are valid dictionary words
+        stats_words = [w for w, c in stats.items() if len(w) == length and c > 0 and _is_legit_word(w)]
         random.shuffle(stats_words)
         for w in stats_words:
             d_info = get_word_division_info(w)

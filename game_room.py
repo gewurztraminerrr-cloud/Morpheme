@@ -2733,8 +2733,13 @@ class GameRoom:
                                     board_format=self.current_board_format
                                 )
                                 
-                                # Log word tally
-                                player_words = {p['username']: [w['word'] for w in p['submitted_words']] for p in intermission_player_snapshots}
+                                # Log word tally (strictly valid words with positive score only)
+                                player_words = {
+                                    p['username']: [
+                                        w['word'] for w in p['submitted_words'] 
+                                        if (w.get('points', 0) if isinstance(w, dict) else 0) > 0
+                                    ] for p in intermission_player_snapshots
+                                }
                                 rm.log_word_tally(self, player_words, round_num=self.current_round, round_start_time=self.round_start_time)
                             except Exception as db_save_err:
                                 print(f"[GameRoom] Error in immediate database save: {db_save_err}")
@@ -8503,8 +8508,13 @@ class RoomManager:
                     })
             
             # USER REQUEST: Word Tally. Capture unique words found by each player in this round.
-            # We must do this BEFORE promotion resets p.submitted_words.
-            ghost_player_words = {p['username']: [w['word'] for w in p['submitted_words']] for p in ghost_player_snapshots}
+            # Strictly filter for valid words with positive score only (exclude invalid guesses/penalties)
+            ghost_player_words = {
+                p['username']: [
+                    w['word'] for w in p['submitted_words']
+                    if (w.get('points', 0) if isinstance(w, dict) else 0) > 0
+                ] for p in ghost_player_snapshots
+            }
             
             # DIAGNOSTIC: Log the capture
             total_captured = sum(len(ws) for ws in ghost_player_words.values())
@@ -9900,12 +9910,18 @@ class RoomManager:
                         })
                     
                     # Calculate Best Word (Using Base Points Only - strictly excluding bonus word extra points)
+                    # Defense-in-depth: only consider valid words with positive score and present on the board
                     def _get_u_base_score(item):
                         if not item: return 0
                         w_txt = item.get('word', '') if isinstance(item, dict) else str(item)
                         return calculate_word_score(w_txt, bonus_word=None, board_format=board_format)
 
-                    best_w_entry = max(u_submitted, key=lambda x: (_get_u_base_score(x), len(x.get('word', '')))) if u_submitted else None
+                    valid_submitted = [
+                        w for w in u_submitted
+                        if (w.get('points', 0) if isinstance(w, dict) else 0) > 0
+                        and (not actual_all_words or (w.get('word', '') if isinstance(w, dict) else str(w)).upper() in actual_all_words)
+                    ]
+                    best_w_entry = max(valid_submitted, key=lambda x: (_get_u_base_score(x), len(x.get('word', '')))) if valid_submitted else None
                     best_word_text = best_w_entry['word'] if best_w_entry else None
                     best_word_val = _get_u_base_score(best_w_entry) if best_w_entry else 0
 
@@ -9951,12 +9967,17 @@ class RoomManager:
                     rh_id = cur_rh.lastrowid
 
                     # Also persist player word finds into lightweight word_finds table for Find Count
-                    # Find Count rules: never record 24h rooms or Guest finds
+                    # Find Count rules: never record 24h rooms or Guest finds, and strictly ignore invalid/penalty guesses
                     if u_id != -1 and u_name != 'System' and room.time_limit < 7200 and not str(u_name).startswith('Guest_'):
                         try:
                             for entry in words_data:
+                                pts = entry.get('points', 0) if isinstance(entry, dict) else 0
+                                if pts <= 0:
+                                    continue
                                 w_text = entry.get('word', '').upper() if isinstance(entry, dict) else str(entry).upper()
                                 if w_text:
+                                    if actual_all_words and w_text not in actual_all_words:
+                                        continue
                                     conn.execute('''
                                         INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number, round_history_id)
                                         VALUES (?, ?, ?, ?, ?, ?)
@@ -9964,13 +9985,16 @@ class RoomManager:
                         except Exception:
                             pass
 
-                    # Increment user input method statistics based on words submitted in this round
+                    # Increment user input method statistics based on words submitted in this round (valid words only)
                     if u_id > 0 and u_name != 'System' and not str(u_name).startswith('Guest_'):
                         m_cnt = 0
                         k_cnt = 0
                         t_cnt = 0
                         player_im = getattr(p, 'input_method', 'mouse') if hasattr(p, 'input_method') else p.get('input_method', 'mouse')
                         for entry in words_data:
+                            pts = entry.get('points', 0) if isinstance(entry, dict) else 0
+                            if pts <= 0:
+                                continue
                             im = (entry.get('input_method') if isinstance(entry, dict) else None) or player_im
                             im_str = str(im).lower()
                             if im_str == 'keyboard':

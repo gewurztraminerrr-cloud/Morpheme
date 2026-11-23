@@ -12072,6 +12072,9 @@ def prune_non_visible_round_history():
                                 if uid and uid != -1:
                                     w_list = json.loads(w_json) if w_json else []
                                     for item in w_list:
+                                        pts = item.get('points', 0) if isinstance(item, dict) else 0
+                                        if pts <= 0:
+                                            continue
                                         w_str = item.get('word', '').upper() if isinstance(item, dict) else str(item).upper()
                                         if w_str:
                                             c.execute("INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number) VALUES (?, ?, ?, ?, ?)",
