@@ -831,41 +831,54 @@ async function timeoutUser() {
         return;
     }
 
-    const durPrompt = hoursVal ? `\nDuration: ${hoursVal} hour(s)` : '';
-    const reasonPrompt = reason ? `\nReason: "${reason}"` : '';
-    if (!confirm(`Are you sure you want to timeout user "${username}"?${durPrompt}${reasonPrompt}\n\nThey will be evicted from their current room and temporarily banned from playing in all rooms.`)) {
-        return;
-    }
+    const durPrompt = hoursVal ? `• Duration: ${hoursVal} hour(s)` : '• Duration: Automatic tier duration';
+    const reasonPrompt = reason ? `• Reason: "${reason}"` : '• Reason: Moderator timeout';
+    const warningMsg = `Are you certain you want to timeout user "${username}"?\n\n${durPrompt}\n${reasonPrompt}\n\nThey will be evicted from their current room and temporarily restricted from playing in all rooms.`;
 
-    try {
-        const response = await fetch('/api/mods/timeout_user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                username, 
-                reason: reason || 'Moderator timeout',
-                hours: hoursVal || null
-            })
-        });
-        const data = await response.json();
-        if (data.success) {
-            showModStatus(data.message, false, 'ban-status-area');
-            const infoEl = document.getElementById('timeout-info-display');
-            if (infoEl) {
-                const rDisplay = reason ? ` | Reason: <em>${reason}</em>` : '';
-                const formattedUntil = (typeof window.formatTimeoutTimestamp === 'function')
+    const proceedTimeout = async () => {
+        try {
+            const response = await fetch('/api/mods/timeout_user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    username, 
+                    reason: reason || 'Moderator timeout',
+                    hours: hoursVal || null
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                showModStatus(data.message, false, 'ban-status-area');
+                const infoEl = document.getElementById('timeout-info-display');
+                if (infoEl) {
+                    const rDisplay = reason ? ` | Reason: <em>${reason}</em>` : '';
+                    const formattedUntil = (typeof window.formatTimeoutTimestamp === 'function')
+                        ? window.formatTimeoutTimestamp(data.timeout_until)
+                        : `${data.timeout_until} UTC`;
+                    infoEl.innerHTML = `✅ <strong>${username}</strong> timed out for <strong>${data.duration}</strong> (Offense #${data.offense_count})${rDisplay}. Until: ${formattedUntil}`;
+                }
+                const formattedUntilAlert = (typeof window.formatTimeoutTimestamp === 'function')
                     ? window.formatTimeoutTimestamp(data.timeout_until)
                     : `${data.timeout_until} UTC`;
-                infoEl.innerHTML = `✅ <strong>${username}</strong> timed out for <strong>${data.duration}</strong> (Offense #${data.offense_count})${rDisplay}. Until: ${formattedUntil}`;
+                if (window.showAlertModal) {
+                    window.showAlertModal('User Timed Out', `User "${username}" has been timed out for ${data.duration}.<br>Until: ${formattedUntilAlert}`);
+                } else {
+                    alert(`User "${username}" has been timed out for ${data.duration}.\nUntil: ${formattedUntilAlert}`);
+                }
+            } else {
+                showModStatus(data.error || "Failed to timeout user.", true, 'ban-status-area');
+                alert("Error: " + (data.error || "Failed to timeout user."));
             }
-            alert(`User "${username}" has been timed out for ${data.duration}.`);
-        } else {
-            showModStatus(data.error || "Failed to timeout user.", true, 'ban-status-area');
-            alert("Error: " + (data.error || "Failed to timeout user."));
+        } catch (err) {
+            console.error("Error timing out user:", err);
+            showModStatus("Network error timing out user.", true, 'ban-status-area');
         }
-    } catch (err) {
-        console.error("Error timing out user:", err);
-        showModStatus("Network error timing out user.", true, 'ban-status-area');
+    };
+
+    if (window.showConfirmModal) {
+        window.showConfirmModal('⚠️ Confirm User Timeout', warningMsg, proceedTimeout, 'Yes, Timeout', 'Cancel');
+    } else if (confirm(warningMsg)) {
+        proceedTimeout();
     }
 }
 
@@ -959,30 +972,41 @@ async function banUser() {
         return;
     }
 
-    if (!confirm(`ARE YOU SURE? This will permanently ERASE all data for user "${username}". This cannot be undone.`)) {
-        return;
-    }
+    const reasonPrompt = reason ? `• Reason: "${reason}"` : '• Reason: Permanent ban';
+    const warningMsg = `Are you certain you want to permanently erase and ban user "${username}"?\n\n${reasonPrompt}\n\nCRITICAL WARNING: This will permanently delete the user account, erase all stats and ratings, and automatically blacklist their IP address(es). This cannot be undone.`;
 
-    try {
-        const response = await fetch('/api/mods/ban_user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, reason })
-        });
-        const data = await response.json();
-        if (data.success) {
-            if (input) input.value = '';
-            if (reasonInput) reasonInput.value = '';
-            showModStatus(data.message, false, 'ban-status-area');
-            alert(data.message || `User "${username}" has been permanently erased from the database.`);
-            loadIpBans();
-        } else {
-            showModStatus(data.error || "Failed to ban user.", true, 'ban-status-area');
-            alert("Error: " + (data.error || "Failed to ban user."));
+    const proceedBan = async () => {
+        try {
+            const response = await fetch('/api/mods/ban_user', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, reason })
+            });
+            const data = await response.json();
+            if (data.success) {
+                if (input) input.value = '';
+                if (reasonInput) reasonInput.value = '';
+                showModStatus(data.message, false, 'ban-status-area');
+                if (window.showAlertModal) {
+                    window.showAlertModal('User Erased & Banned', data.message || `User "${username}" has been permanently erased from the database.`);
+                } else {
+                    alert(data.message || `User "${username}" has been permanently erased from the database.`);
+                }
+                loadIpBans();
+            } else {
+                showModStatus(data.error || "Failed to ban user.", true, 'ban-status-area');
+                alert("Error: " + (data.error || "Failed to ban user."));
+            }
+        } catch (err) {
+            console.error("Error banning user:", err);
+            showModStatus("Network error banning user.", true, 'ban-status-area');
         }
-    } catch (err) {
-        console.error("Error banning user:", err);
-        showModStatus("Network error banning user.", true, 'ban-status-area');
+    };
+
+    if (window.showConfirmModal) {
+        window.showConfirmModal('🚨 Confirm Permanent Ban', warningMsg, proceedBan, 'Yes, Permanently Ban', 'Cancel');
+    } else if (confirm(warningMsg)) {
+        proceedBan();
     }
 }
 
