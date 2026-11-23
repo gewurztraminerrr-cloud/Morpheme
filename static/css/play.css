@@ -12893,7 +12893,9 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     #page-tools .tools-content:has(#tool-reverse-dictionary.active),
     #page-tools .tools-content.has-reverse-dictionary-active,
     #page-tools .tools-content:has(#tool-word-chart.active),
-    #page-tools .tools-content.has-word-chart-active {
+    #page-tools .tools-content.has-word-chart-active,
+    #page-tools .tools-content:has(#tool-good-at.active),
+    #page-tools .tools-content.has-good-at-active {
         padding: 12px 14px !important;
         overflow-y: hidden !important;
     }
@@ -12907,6 +12909,7 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     #tool-store.tool-pane.active,
     #tool-reverse-dictionary.tool-pane.active,
     #tool-word-chart.tool-pane.active,
+    #tool-good-at.tool-pane.active,
     .tools-content.no-outer-scroll .tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
@@ -15259,8 +15262,7 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
         min-height: 0 !important;
         height: 100% !important;
         max-height: 100% !important;
-        display: flex !important;
-        flex-direction: column !important;
+        display: block !important;
         overflow-y: auto !important;
         overflow-x: auto !important;
         -webkit-overflow-scrolling: touch !important;
@@ -15269,52 +15271,47 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
         border-radius: 8px !important;
         border: 1px solid var(--input-border) !important;
         background: var(--bg-surface) !important;
+        box-sizing: border-box !important;
     }
 
     #page-tools #tool-good-at .history-table {
         width: 100% !important;
-        table-layout: fixed !important;
+        min-width: 540px !important;
+        table-layout: auto !important;
         border-collapse: collapse !important;
     }
-
-    #page-tools #tool-good-at .history-table th:nth-child(1),
-    #page-tools #tool-good-at .history-table td:nth-child(1) { width: 28% !important; }
-    #page-tools #tool-good-at .history-table th:nth-child(2),
-    #page-tools #tool-good-at .history-table td:nth-child(2) { width: 12% !important; text-align: center !important; }
-    #page-tools #tool-good-at .history-table th:nth-child(3),
-    #page-tools #tool-good-at .history-table td:nth-child(3) { width: 15% !important; text-align: center !important; }
-    #page-tools #tool-good-at .history-table th:nth-child(4),
-    #page-tools #tool-good-at .history-table td:nth-child(4) { width: 27% !important; text-align: center !important; }
-    #page-tools #tool-good-at .history-table th:nth-child(5),
-    #page-tools #tool-good-at .history-table td:nth-child(5) { width: 18% !important; text-align: right !important; }
 
     #page-tools #tool-good-at .history-table thead th {
         position: sticky !important;
         top: 0 !important;
-        z-index: 5 !important;
+        z-index: 10 !important;
         background: var(--bg-surface) !important;
-        padding: 6px 3px !important;
-        font-size: 0.70rem !important;
+        padding: 8px 12px !important;
+        font-size: 0.74rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.04em !important;
+        color: var(--muted-text) !important;
         white-space: nowrap !important;
         border-bottom: 1px solid var(--input-border) !important;
         box-sizing: border-box !important;
     }
 
     #page-tools #tool-good-at .history-table tbody td {
-        padding: 6px 3px !important;
-        font-size: 0.78rem !important;
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
         white-space: nowrap !important;
         box-sizing: border-box !important;
     }
 
     #page-tools #tool-good-at .history-table tbody td .reverse-dict-word-text {
-        font-size: 0.88rem !important;
+        font-size: 0.95rem !important;
     }
 
     #page-tools #tool-good-at .good-at-div-badge {
-        padding: 1px 4px !important;
-        font-size: 0.68rem !important;
-        border-radius: 6px !important;
+        padding: 3px 8px !important;
+        font-size: 0.74rem !important;
+        border-radius: 8px !important;
         display: inline-block !important;
         white-space: nowrap !important;
     }
@@ -15419,8 +15416,7 @@ body.is-mobile #page-tools .tools-content.has-good-at-active {
 body.is-mobile #page-tools #new-users-table-scroll,
 body.is-mobile #page-tools #work-on-table-scroll,
 body.is-mobile #page-tools #seq-list-results,
-body.is-mobile #page-tools #reverse-dict-table-scroll,
-body.is-mobile #page-tools #good-at-results-wrapper {
+body.is-mobile #page-tools #reverse-dict-table-scroll {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
 }
@@ -15428,8 +15424,7 @@ body.is-mobile #page-tools #good-at-results-wrapper {
 body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar,
 body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar,
 body.is-mobile #page-tools #seq-list-results::-webkit-scrollbar,
-body.is-mobile #page-tools #reverse-dict-table-scroll::-webkit-scrollbar,
-body.is-mobile #page-tools #good-at-results-wrapper::-webkit-scrollbar {
+body.is-mobile #page-tools #reverse-dict-table-scroll::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
@@ -15437,9 +15432,29 @@ body.is-mobile #page-tools #good-at-results-wrapper::-webkit-scrollbar {
 
 body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb,
 body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar-thumb,
-body.is-mobile #page-tools #seq-list-results::-webkit-scrollbar-thumb,
-body.is-mobile #page-tools #good-at-results-wrapper::-webkit-scrollbar-thumb {
+body.is-mobile #page-tools #seq-list-results::-webkit-scrollbar-thumb {
     display: none !important;
+}
+
+body.is-mobile #page-tools #good-at-results-wrapper {
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(var(--text-primary-rgb), 0.35) transparent !important;
+    -ms-overflow-style: auto !important;
+}
+
+body.is-mobile #page-tools #good-at-results-wrapper::-webkit-scrollbar {
+    width: 4px !important;
+    height: 4px !important;
+    display: block !important;
+}
+
+body.is-mobile #page-tools #good-at-results-wrapper::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+body.is-mobile #page-tools #good-at-results-wrapper::-webkit-scrollbar-thumb {
+    background: rgba(var(--text-primary-rgb), 0.35) !important;
+    border-radius: 4px !important;
 }
 
 /* Find Count Tool Styles */
@@ -16768,6 +16783,41 @@ body.theme-white .find-count-division-badge,
         width: auto !important;
         padding: 0 20px !important;
         height: 38px !important;
+    }
+
+    #page-tools #tool-good-at #good-at-results-wrapper,
+    body.is-desktop #page-tools #tool-good-at #good-at-results-wrapper {
+        flex: 1 1 0px !important;
+        min-height: 160px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        display: block !important;
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+        box-sizing: border-box !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.45) rgba(0, 0, 0, 0.15) !important;
+        -ms-overflow-style: auto !important;
+    }
+
+    #page-tools #tool-good-at #good-at-results-wrapper::-webkit-scrollbar {
+        width: 6px !important;
+        height: 6px !important;
+        display: block !important;
+    }
+
+    #page-tools #tool-good-at #good-at-results-wrapper::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.15) !important;
+        border-radius: 6px !important;
+    }
+
+    #page-tools #tool-good-at #good-at-results-wrapper::-webkit-scrollbar-thumb {
+        background: rgba(var(--text-primary-rgb), 0.45) !important;
+        border-radius: 6px !important;
+    }
+
+    #page-tools #tool-good-at #good-at-results-wrapper::-webkit-scrollbar-thumb:hover {
+        background: rgba(var(--text-primary-rgb), 0.75) !important;
     }
 
     #page-tools #tool-random .combo-control-panel .input-row,

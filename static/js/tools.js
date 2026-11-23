@@ -13900,27 +13900,23 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
                     const safeJsWord = safeWord.replace(/'/g, "\\'");
                     
                     const ptFull = `${w.points} pt${w.points !== 1 ? 's' : ''}`;
-                    const ptCompact = `${w.points}p`;
                     let divBadge = '';
                     if (w.division >= 4) {
-                        divBadge = `<span class="good-at-div-badge div-high"><span class="badge-full">Division ${w.division} (${ptFull})</span><span class="badge-compact">Div ${w.division} (${ptCompact})</span></span>`;
+                        divBadge = `<span class="good-at-div-badge div-high">Division ${w.division} (${ptFull})</span>`;
                     } else if (w.division >= 2) {
-                        divBadge = `<span class="good-at-div-badge div-mid"><span class="badge-full">Division ${w.division} (${ptFull})</span><span class="badge-compact">Div ${w.division} (${ptCompact})</span></span>`;
+                        divBadge = `<span class="good-at-div-badge div-mid">Division ${w.division} (${ptFull})</span>`;
                     } else {
-                        divBadge = `<span class="good-at-div-badge div-low"><span class="badge-full">Division 1 (${ptFull})</span><span class="badge-compact">Div 1 (${ptCompact})</span></span>`;
+                        divBadge = `<span class="good-at-div-badge div-low">Division 1 (${ptFull})</span>`;
                     }
 
                     // Relative date
-                    let fullDateStr = '-';
-                    let compactDateStr = '-';
+                    let dateStr = '-';
                     if (w.last_found_at) {
                         try {
                             const d = new Date(w.last_found_at);
-                            fullDateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                            compactDateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                            dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
                         } catch (e) {
-                            fullDateStr = String(w.last_found_at).slice(0, 10);
-                            compactDateStr = fullDateStr;
+                            dateStr = String(w.last_found_at).slice(0, 10);
                         }
                     }
 
@@ -13941,8 +13937,7 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
                                 ${divBadge}
                             </td>
                             <td class="good-at-cell-date" style="padding: 10px 14px; text-align: right; color: var(--muted-text); font-size: 0.8rem;">
-                                <span class="header-full">${fullDateStr}</span>
-                                <span class="header-compact">${compactDateStr}</span>
+                                ${dateStr}
                             </td>
                         </tr>
                     `;
