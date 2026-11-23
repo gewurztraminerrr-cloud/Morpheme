@@ -12110,8 +12110,11 @@ def prune_non_visible_round_history():
                                             continue
                                         w_str = item.get('word', '').upper() if isinstance(item, dict) else str(item).upper()
                                         if w_str:
-                                            c.execute("INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number) VALUES (?, ?, ?, ?, ?)",
-                                                      (w_str, uid, ts, r_id, r_num))
+                                            # Find Count only displays the 10 most recent finders. Cap word_finds at 10 per word to prevent table bloat.
+                                            cur_cnt = c.execute("SELECT COUNT(*) FROM word_finds WHERE word = ?", (w_str,)).fetchone()[0]
+                                            if cur_cnt < 10:
+                                                c.execute("INSERT INTO word_finds (word, user_id, timestamp, room_id, round_number) VALUES (?, ?, ?, ?, ?)",
+                                                          (w_str, uid, ts, r_id, r_num))
                         except Exception as p_err:
                             print(f"[Cleanup] Error preserving word finds: {p_err}")
                         c.execute(f"DELETE FROM round_history WHERE id IN ({placeholders})", chunk)
