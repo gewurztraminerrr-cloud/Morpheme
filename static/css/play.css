@@ -14447,11 +14447,13 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
         font-size: 0.8rem !important;
     }
 
-    /* Lists & Sequence Tool Mobile Layout: fit table on screen, remove outer scroll, reduce description padding */
+    /* Lists, Sequence & Words User is Good at Tool Mobile Layout: fit table on screen, remove outer scroll, reduce description padding */
     #page-tools .tools-content:has(#tool-lists.active),
     #page-tools .tools-content.has-lists-active,
     #page-tools .tools-content:has(#tool-sequence.active),
-    #page-tools .tools-content.has-sequence-active {
+    #page-tools .tools-content.has-sequence-active,
+    #page-tools .tools-content:has(#tool-good-at.active),
+    #page-tools .tools-content.has-good-at-active {
         display: flex !important;
         flex-direction: column !important;
         overflow-y: hidden !important;
@@ -14466,7 +14468,9 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     #page-tools #tool-lists.tool-pane.active,
     body.is-mobile #page-tools #tool-lists.tool-pane.active,
     #page-tools #tool-sequence.tool-pane.active,
-    body.is-mobile #page-tools #tool-sequence.tool-pane.active {
+    body.is-mobile #page-tools #tool-sequence.tool-pane.active,
+    #page-tools #tool-good-at.tool-pane.active,
+    body.is-mobile #page-tools #tool-good-at.tool-pane.active {
         display: flex !important;
         flex-direction: column !important;
         flex: 1 1 0px !important;
@@ -14480,19 +14484,22 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
 
     /* Reduce padding/margin below description to give maximum room for the table */
     #page-tools #tool-lists .tool-header,
-    #page-tools #tool-sequence .tool-header {
+    #page-tools #tool-sequence .tool-header,
+    #page-tools #tool-good-at .tool-header {
         flex: 0 0 auto !important;
         margin-bottom: 2px !important;
         padding: 0 !important;
     }
 
     #page-tools #tool-lists .tool-header p,
-    #page-tools #tool-sequence .tool-header p {
+    #page-tools #tool-sequence .tool-header p,
+    #page-tools #tool-good-at .tool-header p {
         margin: 0 0 6px 0 !important;
-        padding: 5px 10px !important;
-        font-size: 0.76rem !important;
+        padding: 4px 8px !important;
+        font-size: 0.74rem !important;
         line-height: 1.25 !important;
-        max-height: 42px !important;
+        max-height: 56px !important;
+        overflow: hidden !important;
     }
 
     /* Compact filter panel */
@@ -14503,8 +14510,17 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
         border-radius: 8px !important;
     }
 
+    #page-tools #tool-good-at .combo-control-panel {
+        flex: 0 0 auto !important;
+        padding: 6px 8px !important;
+        margin-bottom: 6px !important;
+        border-radius: 8px !important;
+    }
+
     #page-tools #tool-lists .combo-control-panel .input-row,
-    body.is-mobile #page-tools #tool-lists .combo-control-panel .input-row {
+    body.is-mobile #page-tools #tool-lists .combo-control-panel .input-row,
+    #page-tools #tool-good-at .combo-control-panel .input-row,
+    body.is-mobile #page-tools #tool-good-at .combo-control-panel .input-row {
         display: grid !important;
         grid-template-columns: 1fr 1fr !important;
         gap: 6px !important;
@@ -14514,19 +14530,36 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     #page-tools #tool-lists .combo-control-panel .input-row > select,
     #page-tools #tool-lists .combo-control-panel .input-row > button,
     body.is-mobile #page-tools #tool-lists .combo-control-panel .input-row > select,
-    body.is-mobile #page-tools #tool-lists .combo-control-panel .input-row > button {
+    body.is-mobile #page-tools #tool-lists .combo-control-panel .input-row > button,
+    #page-tools #tool-good-at .combo-control-panel .input-row > select,
+    #page-tools #tool-good-at .combo-control-panel .input-row > input,
+    #page-tools #tool-good-at .combo-control-panel .input-row > button,
+    body.is-mobile #page-tools #tool-good-at .combo-control-panel .input-row > select,
+    body.is-mobile #page-tools #tool-good-at .combo-control-panel .input-row > input,
+    body.is-mobile #page-tools #tool-good-at .combo-control-panel .input-row > button {
         width: 100% !important;
         max-width: 100% !important;
-        height: 36px !important;
-        min-height: 36px !important;
-        max-height: 36px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
         padding: 0 8px !important;
         font-size: 0.82rem !important;
         border-radius: 6px !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-good-at #good-at-word-filter,
+    body.is-mobile #page-tools #tool-good-at #good-at-word-filter {
+        text-transform: uppercase !important;
     }
 
     #page-tools #tool-lists #list-update-btn,
-    body.is-mobile #page-tools #tool-lists #list-update-btn {
+    body.is-mobile #page-tools #tool-lists #list-update-btn,
+    #page-tools #tool-good-at #good-at-search-btn,
+    body.is-mobile #page-tools #tool-good-at #good-at-search-btn {
         grid-column: 1 / -1 !important;
         width: 100% !important;
     }
@@ -15159,6 +15192,206 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     body.is-mobile #page-tools #tool-store #store-scrollbar-track {
         display: none !important;
     }
+
+    /* Words User is Good at Mobile Layout */
+    #page-tools #tool-good-at #good-at-top-players,
+    body.is-mobile #page-tools #tool-good-at #good-at-top-players {
+        flex: 0 0 auto !important;
+        margin-bottom: 6px !important;
+        align-items: center !important;
+        gap: 6px !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;
+    }
+
+    #page-tools #tool-good-at #good-at-top-players::-webkit-scrollbar,
+    body.is-mobile #page-tools #tool-good-at #good-at-top-players::-webkit-scrollbar {
+        display: none !important;
+    }
+
+    #page-tools #tool-good-at #good-at-summary-banner,
+    body.is-mobile #page-tools #tool-good-at #good-at-summary-banner {
+        flex: 0 0 auto !important;
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 4px !important;
+        margin-bottom: 6px !important;
+        padding: 0 !important;
+    }
+
+    #page-tools #tool-good-at #good-at-summary-banner > div,
+    body.is-mobile #page-tools #tool-good-at #good-at-summary-banner > div {
+        padding: 4px 4px !important;
+        border-radius: 6px !important;
+        background: rgba(var(--text-primary-rgb), 0.04) !important;
+        border: 1px solid rgba(var(--text-primary-rgb), 0.1) !important;
+        text-align: center !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-good-at #good-at-summary-banner > div > div:first-child,
+    body.is-mobile #page-tools #tool-good-at #good-at-summary-banner > div > div:first-child {
+        font-size: 0.65rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.02em !important;
+        color: var(--muted-text) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    #page-tools #tool-good-at #good-at-summary-banner > div > div:last-child,
+    body.is-mobile #page-tools #tool-good-at #good-at-summary-banner > div > div:last-child {
+        font-size: 0.82rem !important;
+        font-weight: 800 !important;
+        margin-top: 1px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+    }
+
+    #page-tools #tool-good-at #good-at-results-wrapper,
+    body.is-mobile #page-tools #tool-good-at #good-at-results-wrapper {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        margin: 0 0 6px 0 !important;
+        padding: 0 !important;
+        border-radius: 8px !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--bg-surface) !important;
+    }
+
+    #page-tools #tool-good-at .history-table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+    }
+
+    #page-tools #tool-good-at .history-table th:nth-child(1),
+    #page-tools #tool-good-at .history-table td:nth-child(1) { width: 28% !important; }
+    #page-tools #tool-good-at .history-table th:nth-child(2),
+    #page-tools #tool-good-at .history-table td:nth-child(2) { width: 12% !important; text-align: center !important; }
+    #page-tools #tool-good-at .history-table th:nth-child(3),
+    #page-tools #tool-good-at .history-table td:nth-child(3) { width: 15% !important; text-align: center !important; }
+    #page-tools #tool-good-at .history-table th:nth-child(4),
+    #page-tools #tool-good-at .history-table td:nth-child(4) { width: 27% !important; text-align: center !important; }
+    #page-tools #tool-good-at .history-table th:nth-child(5),
+    #page-tools #tool-good-at .history-table td:nth-child(5) { width: 18% !important; text-align: right !important; }
+
+    #page-tools #tool-good-at .history-table thead th {
+        position: sticky !important;
+        top: 0 !important;
+        z-index: 5 !important;
+        background: var(--bg-surface) !important;
+        padding: 6px 3px !important;
+        font-size: 0.70rem !important;
+        white-space: nowrap !important;
+        border-bottom: 1px solid var(--input-border) !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-good-at .history-table tbody td {
+        padding: 6px 3px !important;
+        font-size: 0.78rem !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-good-at .history-table tbody td .reverse-dict-word-text {
+        font-size: 0.88rem !important;
+    }
+
+    #page-tools #tool-good-at .good-at-div-badge {
+        padding: 1px 4px !important;
+        font-size: 0.68rem !important;
+        border-radius: 6px !important;
+        display: inline-block !important;
+        white-space: nowrap !important;
+    }
+
+    #page-tools #tool-good-at #good-at-pagination,
+    body.is-mobile #page-tools #tool-good-at #good-at-pagination {
+        flex: 0 0 auto !important;
+        padding: 4px 4px !important;
+        margin: 0 !important;
+        font-size: 0.76rem !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+    }
+
+    #page-tools #tool-good-at #good-at-prev-btn,
+    #page-tools #tool-good-at #good-at-next-btn,
+    body.is-mobile #page-tools #tool-good-at #good-at-prev-btn,
+    body.is-mobile #page-tools #tool-good-at #good-at-next-btn {
+        padding: 4px 10px !important;
+        height: 28px !important;
+        min-height: 28px !important;
+        font-size: 0.76rem !important;
+        border-radius: 6px !important;
+    }
+
+    #page-tools #tool-good-at .header-compact,
+    body.is-mobile #page-tools #tool-good-at .header-compact,
+    #page-tools #tool-good-at .badge-compact,
+    body.is-mobile #page-tools #tool-good-at .badge-compact {
+        display: inline !important;
+    }
+
+    #page-tools #tool-good-at .header-full,
+    body.is-mobile #page-tools #tool-good-at .header-full,
+    #page-tools #tool-good-at .badge-full,
+    body.is-mobile #page-tools #tool-good-at .badge-full {
+        display: none !important;
+    }
+}
+
+#page-tools #tool-good-at .good-at-div-badge {
+    border-radius: 10px;
+    padding: 2px 7px;
+    font-size: 0.75rem;
+    display: inline-block;
+    white-space: nowrap;
+}
+
+#page-tools #tool-good-at .good-at-div-badge.div-high {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    font-weight: 700;
+}
+
+#page-tools #tool-good-at .good-at-div-badge.div-mid {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    font-weight: 600;
+}
+
+#page-tools #tool-good-at .good-at-div-badge.div-low {
+    background: rgba(var(--text-primary-rgb), 0.05);
+    color: var(--text-primary);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.12);
+}
+
+#page-tools #tool-good-at .header-compact,
+#page-tools #tool-good-at .badge-compact {
+    display: none;
+}
+
+#page-tools #tool-good-at .header-full,
+#page-tools #tool-good-at .badge-full {
+    display: inline;
 }
 
 body.is-mobile #page-tools .tools-content:has(#tool-lists.active),
@@ -15170,7 +15403,9 @@ body.is-mobile #page-tools .tools-content.has-work-on-active,
 body.is-mobile #page-tools .tools-content:has(#tool-sequence.active),
 body.is-mobile #page-tools .tools-content.has-sequence-active,
 body.is-mobile #page-tools .tools-content:has(#tool-reverse-dictionary.active),
-body.is-mobile #page-tools .tools-content.has-reverse-dictionary-active {
+body.is-mobile #page-tools .tools-content.has-reverse-dictionary-active,
+body.is-mobile #page-tools .tools-content:has(#tool-good-at.active),
+body.is-mobile #page-tools .tools-content.has-good-at-active {
     display: flex !important;
     flex-direction: column !important;
     overflow-y: hidden !important;
@@ -15184,7 +15419,8 @@ body.is-mobile #page-tools .tools-content.has-reverse-dictionary-active {
 body.is-mobile #page-tools #new-users-table-scroll,
 body.is-mobile #page-tools #work-on-table-scroll,
 body.is-mobile #page-tools #seq-list-results,
-body.is-mobile #page-tools #reverse-dict-table-scroll {
+body.is-mobile #page-tools #reverse-dict-table-scroll,
+body.is-mobile #page-tools #good-at-results-wrapper {
     scrollbar-width: none !important;
     -ms-overflow-style: none !important;
 }
@@ -15192,7 +15428,8 @@ body.is-mobile #page-tools #reverse-dict-table-scroll {
 body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar,
 body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar,
 body.is-mobile #page-tools #seq-list-results::-webkit-scrollbar,
-body.is-mobile #page-tools #reverse-dict-table-scroll::-webkit-scrollbar {
+body.is-mobile #page-tools #reverse-dict-table-scroll::-webkit-scrollbar,
+body.is-mobile #page-tools #good-at-results-wrapper::-webkit-scrollbar {
     display: none !important;
     width: 0 !important;
     height: 0 !important;
@@ -15200,7 +15437,8 @@ body.is-mobile #page-tools #reverse-dict-table-scroll::-webkit-scrollbar {
 
 body.is-mobile #page-tools #new-users-table-scroll::-webkit-scrollbar-thumb,
 body.is-mobile #page-tools #work-on-table-scroll::-webkit-scrollbar-thumb,
-body.is-mobile #page-tools #seq-list-results::-webkit-scrollbar-thumb {
+body.is-mobile #page-tools #seq-list-results::-webkit-scrollbar-thumb,
+body.is-mobile #page-tools #good-at-results-wrapper::-webkit-scrollbar-thumb {
     display: none !important;
 }
 
@@ -16483,6 +16721,53 @@ body.theme-white .find-count-division-badge,
         grid-column: auto !important;
         width: auto !important;
         padding: 0 20px !important;
+    }
+
+    #page-tools #tool-good-at .combo-control-panel .input-row,
+    body.is-desktop #page-tools #tool-good-at .combo-control-panel .input-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        justify-content: center !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: 100% !important;
+    }
+
+    #page-tools #tool-good-at #good-at-user-input {
+        flex: 1 1 180px !important;
+        min-width: 130px !important;
+        height: 38px !important;
+    }
+
+    #page-tools #tool-good-at #good-at-word-filter {
+        flex: 1 1 150px !important;
+        min-width: 110px !important;
+        height: 38px !important;
+        text-transform: uppercase !important;
+    }
+
+    #page-tools #tool-good-at #good-at-length-select {
+        flex: 0 1 135px !important;
+        min-width: 110px !important;
+        width: 135px !important;
+        height: 38px !important;
+    }
+
+    #page-tools #tool-good-at #good-at-sort-select {
+        flex: 0 1 160px !important;
+        min-width: 125px !important;
+        width: 160px !important;
+        height: 38px !important;
+    }
+
+    #page-tools #tool-good-at #good-at-search-btn,
+    body.is-desktop #page-tools #tool-good-at #good-at-search-btn {
+        flex: 0 0 auto !important;
+        grid-column: auto !important;
+        width: auto !important;
+        padding: 0 20px !important;
+        height: 38px !important;
     }
 
     #page-tools #tool-random .combo-control-panel .input-row,

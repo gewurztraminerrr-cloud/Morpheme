@@ -310,10 +310,15 @@ window.showTool = function(toolId) {
                 p.style.display = 'none';
             }
         });
-        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on' || toolId === 'store' || toolId === 'reverse-dictionary' || toolId === 'word-chart') {
+        if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on' || toolId === 'store' || toolId === 'reverse-dictionary' || toolId === 'word-chart' || toolId === 'good-at') {
             content.classList.add('no-outer-scroll');
         } else {
             content.classList.remove('no-outer-scroll');
+        }
+        if (toolId === 'good-at') {
+            content.classList.add('has-good-at-active');
+        } else {
+            content.classList.remove('has-good-at-active');
         }
         if (toolId === 'reverse-dictionary') {
             content.classList.add('has-reverse-dictionary-active');
@@ -613,6 +618,7 @@ window.resetToolsTab = function(immediate = false) {
             content.classList.remove('no-outer-scroll');
             content.classList.remove('has-lists-active');
             content.classList.remove('has-sequence-active');
+            content.classList.remove('has-good-at-active');
         }
         return;
     }
@@ -631,6 +637,7 @@ window.resetToolsTab = function(immediate = false) {
             content.classList.remove('no-outer-scroll');
             content.classList.remove('has-lists-active');
             content.classList.remove('has-sequence-active');
+            content.classList.remove('has-good-at-active');
         }
         window._toolsSlideTimeout = null;
     }, 320);
@@ -13732,6 +13739,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    const goodAtWordFilter = document.getElementById('good-at-word-filter');
+    if (goodAtWordFilter) {
+        goodAtWordFilter.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.loadWordsGoodAtTool(null, true);
+            }
+        });
+    }
 });
 
 // ==========================================
@@ -13826,7 +13843,9 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
         }
 
         // Render Featured Player chips if available
+        const topPlayersContainer = document.getElementById('good-at-top-players');
         if (chipsContainer && data.top_players && data.top_players.length > 0) {
+            if (topPlayersContainer) topPlayersContainer.style.display = 'flex';
             chipsContainer.innerHTML = data.top_players.map(p => {
                 const isActive = (p.username.toLowerCase() === data.username.toLowerCase());
                 const activeStyle = isActive 
@@ -13840,6 +13859,8 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
                     </button>
                 `;
             }).join('');
+        } else if (topPlayersContainer) {
+            topPlayersContainer.style.display = 'none';
         }
 
         // Update Summary Banner
@@ -13855,7 +13876,7 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
             if (statFinds) statFinds.textContent = (data.total_finds || 0).toLocaleString();
             if (statRarest) {
                 const rDiv = data.rarest_division || 1;
-                statRarest.textContent = `Division ${rDiv}`;
+                statRarest.innerHTML = `<span class="header-full">Division ${rDiv}</span><span class="header-compact">Div ${rDiv}</span>`;
             }
         }
 
@@ -13878,44 +13899,50 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
                     const safeWord = escapeHtml(w.word);
                     const safeJsWord = safeWord.replace(/'/g, "\\'");
                     
+                    const ptFull = `${w.points} pt${w.points !== 1 ? 's' : ''}`;
+                    const ptCompact = `${w.points}p`;
                     let divBadge = '';
                     if (w.division >= 4) {
-                        divBadge = `<span style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 2px 7px; font-size: 0.75rem; font-weight: 700;">Division ${w.division} (${w.points} pts)</span>`;
+                        divBadge = `<span class="good-at-div-badge div-high"><span class="badge-full">Division ${w.division} (${ptFull})</span><span class="badge-compact">Div ${w.division} (${ptCompact})</span></span>`;
                     } else if (w.division >= 2) {
-                        divBadge = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 2px 7px; font-size: 0.75rem; font-weight: 600;">Division ${w.division} (${w.points} pts)</span>`;
+                        divBadge = `<span class="good-at-div-badge div-mid"><span class="badge-full">Division ${w.division} (${ptFull})</span><span class="badge-compact">Div ${w.division} (${ptCompact})</span></span>`;
                     } else {
-                        divBadge = `<span style="background: rgba(var(--text-primary-rgb), 0.05); color: var(--text-primary); border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 10px; padding: 2px 7px; font-size: 0.75rem;">Division 1 (${w.points} pt${w.points !== 1 ? 's' : ''})</span>`;
+                        divBadge = `<span class="good-at-div-badge div-low"><span class="badge-full">Division 1 (${ptFull})</span><span class="badge-compact">Div 1 (${ptCompact})</span></span>`;
                     }
 
                     // Relative date
-                    let dateStr = '-';
+                    let fullDateStr = '-';
+                    let compactDateStr = '-';
                     if (w.last_found_at) {
                         try {
                             const d = new Date(w.last_found_at);
-                            dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                            fullDateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                            compactDateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
                         } catch (e) {
-                            dateStr = String(w.last_found_at).slice(0, 10);
+                            fullDateStr = String(w.last_found_at).slice(0, 10);
+                            compactDateStr = fullDateStr;
                         }
                     }
 
                     return `
                         <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.06); transition: background 0.1s ease;">
-                            <td style="padding: 10px 14px; font-weight: 700;">
+                            <td class="good-at-cell-word" style="padding: 10px 14px; font-weight: 700;">
                                 <span class="reverse-dict-word-text" onclick="window.showWordDefinitionPopup('${safeJsWord}', event)" title="Click to view definition" style="cursor: pointer; color: var(--accent-color, #38bdf8); text-decoration: underline; text-underline-offset: 3px; font-size: 0.98rem; letter-spacing: 0.03em;">
                                     ${safeWord}
                                 </span>
                             </td>
-                            <td style="padding: 10px 14px; text-align: center; color: var(--muted-text); font-weight: 600;">
+                            <td class="good-at-cell-len" style="padding: 10px 14px; text-align: center; color: var(--muted-text); font-weight: 600;">
                                 ${w.length}L
                             </td>
-                            <td style="padding: 10px 14px; text-align: center; font-weight: 800; color: #10b981;">
+                            <td class="good-at-cell-finds" style="padding: 10px 14px; text-align: center; font-weight: 800; color: #10b981;">
                                 ${w.find_count.toLocaleString()}
                             </td>
-                            <td style="padding: 10px 14px; text-align: center;">
+                            <td class="good-at-cell-div" style="padding: 10px 14px; text-align: center;">
                                 ${divBadge}
                             </td>
-                            <td style="padding: 10px 14px; text-align: right; color: var(--muted-text); font-size: 0.8rem;">
-                                ${dateStr}
+                            <td class="good-at-cell-date" style="padding: 10px 14px; text-align: right; color: var(--muted-text); font-size: 0.8rem;">
+                                <span class="header-full">${fullDateStr}</span>
+                                <span class="header-compact">${compactDateStr}</span>
                             </td>
                         </tr>
                     `;
