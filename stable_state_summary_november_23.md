@@ -30,6 +30,9 @@
 - **Removed Featured Players & Compensated Table Height**:
   - Removed the `FEATURED PLAYERS` container (`#good-at-top-players`) and chips from `#tool-good-at`.
   - Reallocated the vertical space directly to the results table: table vertical height expanded from 299px to 334px on mobile and from 297px to 380px (+28%) on desktop, showing significantly more word rows without scrolling.
+- **Centered Pagination & Full-Width Stretched Buttons**:
+  - Positioned "Page 1 of 3 (122 words)" text at the exact horizontal center below the results table.
+  - Placed Previous and Next buttons directly beneath the page indicator, stretching across the entire horizontal length of the screen (`flex: 1 1 0px` each), with clean disabled states and hover transitions.
 - **Compact Summary Banner**:
   - Streamlined the 4 summary statistics into a single-row compact strip on mobile (`PLAYER: <user>`, `WORDS: <count>`, `FINDS: <count>`, `RAREST: Div <n>`).
   - Avoided label truncation and ellipsis (`...`) while preserving bold contrast.
@@ -61,7 +64,7 @@
 | **Production VPS** | `ONLINE` | `132.148.72.249` ([morpheme.games](https://morpheme.games)), Ubuntu 24.04 LTS, PM2 Process ID 0 |
 | **Localhost** | `ONLINE` | Port `5001`, Python 3 Flask / SocketIO daemon (Tally Hardened) |
 | **Git Canonical Branch** | `SYNCHRONIZED` | `origin/main` == `HEAD` |
-| **Asset Cache Buster** | `1795300000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
+| **Asset Cache Buster** | `1795310000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
 | **RAM Utilization** | `OPTIMAL` | SQLite definitions proxy + LRU cache maintaining low ~1.1 GB memory profile |
 
 ---
@@ -71,11 +74,13 @@
   - Verified 2×2 control grid + full-width Update button matches Lists.
   - Verified horizontal swiping (`scrollLeft`) reveals all columns comfortably without clipping.
   - Verified vertical scrolling (`scrollTop`) with sticky headers anchored at table top.
-  - Verified removal of Featured Players container; table height expanded to 334px.
+  - Verified removal of Featured Players container.
+  - Verified centered "Page 1 of 3 (122 words)" with horizontal full-width buttons below.
 - **Desktop (1440×900 Viewport)**:
   - Verified horizontal input controls row.
-  - Verified vertical table scrolling within `#good-at-results-wrapper` expanded to 380px (+28% vertical capacity).
+  - Verified centered page indicator and full-width pagination buttons stretching across the horizontal container.
+  - Verified vertical table scrolling within `#good-at-results-wrapper` with sticky headers.
   - Verified zero outer page layout displacement.
 - **Live Production HTTP**:
-  - `curl -sL https://morpheme.games/` confirmed serving cache buster `v=1795300000`.
+  - `curl -sL https://morpheme.games/` confirmed serving cache buster `v=1795310000`.
   - PM2 logs confirmed clean process restart with zero errors.
