@@ -2447,9 +2447,10 @@ const Forum = {
 
         const triggers = document.querySelectorAll('.forum-lightbox-trigger');
         triggers.forEach(img => {
-            img.addEventListener('click', () => {
-                const url = img.getAttribute('data-url');
-                const caption = img.getAttribute('data-caption');
+            img.addEventListener('click', (e) => {
+                if (e) e.stopPropagation();
+                const url = img.getAttribute('data-url') || img.src;
+                const caption = img.getAttribute('data-caption') || img.alt || '';
                 if (typeof window.showImageLightbox === 'function') {
                     window.showImageLightbox(url, caption);
                 }
@@ -3440,7 +3441,7 @@ const Forum = {
             imagesHtml = `
                 <div class="reply-preview-images">
                     ${imageUrls.slice(0, 3).map(url => `
-                        <img src="${url}" class="reply-preview-thumb" alt="attachment">
+                        <img src="${url}" class="reply-preview-thumb forum-lightbox-trigger" data-url="${url}" alt="attachment" style="cursor: pointer;" title="Click to enlarge">
                     `).join('')}
                     ${imageUrls.length > 3 ? `<span class="reply-preview-more-images">+${imageUrls.length - 3}</span>` : ''}
                 </div>

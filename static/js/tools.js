@@ -2497,10 +2497,18 @@ window.showMiniProfile = async function (username) {
                 avatar.style.backgroundColor = 'rgba(0,0,0,0.05)';
                 avatar.innerText = '';
                 avatar.style.cursor = 'pointer';
-                avatar.onclick = () => showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
+                avatar.title = `${data.username}'s profile image (Click to enlarge)`;
+                avatar.onclick = (e) => {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    showImageLightbox(data.avatar_url, `${data.username}'s Profile Image`);
+                };
             } else {
                 avatar.classList.remove('has-image');
                 avatar.style.cursor = 'default';
+                avatar.title = '';
                 avatar.onclick = null;
                 avatar.style.backgroundImage = 'none';
                 const rColor = window.getRatingColor ? window.getRatingColor(rating) : '#fff';
@@ -3350,20 +3358,56 @@ async function renderProfile(user) {
             avatar.innerText = '';
             if (isOwner) {
                 avatar.style.cursor = 'pointer';
+                avatar.title = 'Click to upload photo';
                 avatar.onclick = null;
             } else {
                 avatar.style.cursor = 'pointer';
-                avatar.onclick = () => showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
+                avatar.title = `${user.username}'s profile image (Click to enlarge)`;
+                avatar.onclick = (e) => {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
+                };
             }
         } else {
             avatar.classList.remove('has-image');
             avatar.style.cursor = isOwner ? 'pointer' : 'default';
+            avatar.title = isOwner ? 'Click to upload photo' : '';
             avatar.onclick = null;
             avatar.style.backgroundImage = 'none';
             avatar.style.background = `linear-gradient(135deg, ${color}, #444)`;
             avatar.innerText = user.username ? user.username.charAt(0).toUpperCase() : '?';
         }
         avatar.style.boxShadow = `0 10px 30px ${color}33`;
+
+        // Provide owner with an enlarge zoom button if an avatar is set
+        const avatarContainer = avatar.closest('.profile-avatar-container');
+        if (avatarContainer) {
+            let ownerZoomBtn = avatarContainer.querySelector('.profile-owner-zoom-btn');
+            if (isOwner && user.avatar_url) {
+                if (!ownerZoomBtn) {
+                    ownerZoomBtn = document.createElement('button');
+                    ownerZoomBtn.type = 'button';
+                    ownerZoomBtn.className = 'profile-owner-zoom-btn';
+                    ownerZoomBtn.title = 'View enlarged photo';
+                    ownerZoomBtn.innerHTML = '🔍';
+                    ownerZoomBtn.style.cssText = 'position: absolute; bottom: 4px; right: 4px; z-index: 10; background: rgba(0,0,0,0.75); color: #fff; border: 1.5px solid rgba(255,255,255,0.6); border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; padding: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.5);';
+                    avatarContainer.appendChild(ownerZoomBtn);
+                }
+                ownerZoomBtn.onclick = (e) => {
+                    if (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                    }
+                    showImageLightbox(user.avatar_url, `${user.username}'s Profile Image`);
+                };
+                ownerZoomBtn.style.display = 'flex';
+            } else if (ownerZoomBtn) {
+                ownerZoomBtn.style.display = 'none';
+            }
+        }
     }
 
     // Flag Handling
@@ -5188,32 +5232,45 @@ function setupImageLightbox() {
     const captionEl = document.getElementById('image-lightbox-caption');
 
     if (modal) {
+        if (modal._lightboxSetup) return;
+        modal._lightboxSetup = true;
+
         setupImageLightboxZoom(modal, img);
-        const closeModal = () => {
+        const closeModal = (e) => {
+            if (e) {
+                if (typeof e.preventDefault === 'function') e.preventDefault();
+                if (typeof e.stopPropagation === 'function') e.stopPropagation();
+            }
             modal.classList.add('hidden');
             modal.classList.remove('forced-show');
+            modal.style.setProperty('display', 'none', 'important');
             if (img && typeof img._resetZoom === 'function') img._resetZoom();
             if (img) img.src = '';
         };
         if (closeBtn) {
             closeBtn.onclick = (e) => {
-                e.stopPropagation();
-                closeModal();
+                closeModal(e);
+            };
+            closeBtn.ontouchend = (e) => {
+                closeModal(e);
             };
         }
         modal.onclick = (e) => {
             // Dismiss if clicking backdrop or content container outside the actual image
             if (e.target !== img && e.target !== captionEl) {
-                closeModal();
+                closeModal(e);
             }
         };
 
-        // ESC key to close
+        // ESC key to close: use capture phase so lightbox intercepts Escape before any background modal receives it
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-                closeModal();
+            if (e.key === 'Escape' && !modal.classList.contains('hidden') && modal.style.display !== 'none') {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                closeModal(e);
             }
-        });
+        }, true);
     }
 
     // Also setup achievement modal
@@ -5693,20 +5750,46 @@ function renderRoomAchievementsData(data, reqSeq, card, previousScroll, isOpenin
 window.showRoomAchievements = showRoomAchievements;
 
 function showImageLightbox(url, caption = "") {
+    if (!url) return;
     const modal = document.getElementById('image-lightbox-modal');
     const img = document.getElementById('image-lightbox-img');
     const captionEl = document.getElementById('image-lightbox-caption');
 
     if (!modal || !img) return;
 
+    if (!modal._lightboxSetup && typeof setupImageLightbox === 'function') {
+        setupImageLightbox();
+    }
     if (typeof setupImageLightboxZoom === 'function') setupImageLightboxZoom(modal, img);
     if (typeof img._resetZoom === 'function') img._resetZoom();
     img.src = url;
     if (captionEl) captionEl.innerText = caption;
 
     modal.classList.remove('hidden');
+    modal.classList.add('forced-show');
+    modal.style.setProperty('display', 'flex', 'important');
+    modal.style.setProperty('z-index', '2147483646', 'important');
 }
 window.showImageLightbox = showImageLightbox;
+
+// Global Thumbnail Click Delegator:
+// When any thumbnail (forum attachment, definition image, preview thumbnail, etc.) is clicked,
+// display the enlarged image in front of the active window/modal and prevent bubbling so the
+// underlying window stays open.
+document.addEventListener('click', (e) => {
+    const trigger = e.target.closest('.definition-image, .forum-lightbox-trigger, .reply-preview-thumb, .store-item-image img, .store-banner-showcase-img');
+    if (trigger && !trigger.closest('#image-lightbox-modal')) {
+        const url = trigger.getAttribute('data-url') || trigger.src;
+        if (url) {
+            e.preventDefault();
+            e.stopPropagation();
+            const caption = trigger.getAttribute('data-caption') || trigger.alt || trigger.title || '';
+            if (typeof window.showImageLightbox === 'function') {
+                window.showImageLightbox(url, caption);
+            }
+        }
+    }
+});
 
 function updateProfileFieldCounter(key, text) {
     if (key === 'quote') {
