@@ -1,11 +1,11 @@
 # Morpheme Stable State Summary – November 23, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `a0b0e5ef8fb734ca84f82e28a2b0ba56d2c196c2` (`a0b0e5ef`)
-- **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
+- **Canonical Git Commit ID**: `0336cc6c95d9e52e5ee6fc88c7fdf9e0ec843f54` (`0336cc6c`)
+- **Git Branch**: `main`
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
-- **Date/Time**: November 23, 2026 (19:16 UTC / 14:16 EST)
+- **Date/Time**: November 23, 2026 (19:35 UTC / 14:35 EST)
 
 ---
 
@@ -18,7 +18,11 @@
     - **7+ Letter Words**: `Division 5 of 5` (maximum points, e.g., 9 of 9 pts for 7L, 13 of 13 pts for 8L).
     - **6-Letter Words**: `Division 3 of 3` (5 of 5 pts).
     - **5-Letter Words**: `Division 2 of 2` (3 of 3 pts).
-  - Perfect consistency between **Dynamic Word Lookup** (Word Charts) and **Find Count**: both tools report 0 finds and identical division/point values for every word.
+  - Perfect consistency between **Dynamic Word Lookup** (Word Charts) and **Find Count**: both tools report identical find counts, rarity tiers, and point values.
+- **Unified Single Source of Truth Across All Tally Systems**:
+  - Replaced the split-brain mechanism where `sync_word_stats_from_db` previously fell back to reading raw text lines from `word_tally.log` (which allowed orphaned or automated test finds like `TETRA: 3` to desynchronize Word Charts from Find Count).
+  - `sync_word_stats_from_db` now calls `rebuild_word_stats_from_db` directly, locking `word_stats.json`, Word Charts Dynamic Word Lookup, Find Count, and game room scoring into the **exact same authenticated database source** (`user_word_tallies` and `word_finds` in `morpheme.db`, excluding Guest and 24h room finds).
+  - During live gameplay, round completions update `user_word_tallies`, `word_finds`, and `word_stats.json` in locked synchronization.
 - **Organic Dynamic Scaling**:
   - As words are found in real games, the first word found will establish Division 1 (`0 – 1 finds`), while unplayed words remain in the maximum rarity division.
   - Over time, as players find words, find counts naturally scale into higher tiers (e.g. `20 – 40 finds` for Div 1, `10 – 20 finds` for Div 2, etc.).
