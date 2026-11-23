@@ -1,17 +1,33 @@
 # Morpheme Stable State Summary – November 23, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `3f723a73204416fdd671cfe57512eeaa3c73f818` (`3f723a73`)
+- **Canonical Git Commit ID**: `a0b0e5ef8fb734ca84f82e28a2b0ba56d2c196c2` (`a0b0e5ef`)
 - **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
-- **Date/Time**: November 23, 2026 (18:35 UTC / 13:35 EST)
+- **Date/Time**: November 23, 2026 (19:16 UTC / 14:16 EST)
 
 ---
 
 ## 1. Key Achievements & Updates in this Stable Point
 
-### A. Universal Word Definition Popup Auto-Repositioning (No Bottom Cut-Off)
+### A. Clean Baseline for Word Tallies & Dynamic Divisions (0 Finds, Div Max of Max)
+- **All Words Start at 0 Finds**:
+  - Purged artificial seed benchmark counts (`APPLE: 85`, `ZEBRA: 50`, `CAT: 120`, `JAZZ: 45`, `FUZZY: 38`, `QUIZZES: 24`, `SYZYGY: 19`, `OXYPHENBUTAZONE: 12`) from `dictionaries/word_stats.json` and `user_word_tallies`.
+  - Every word throughout Morpheme now starts at **0 finds** with its baseline maximum rarity division:
+    - **7+ Letter Words**: `Division 5 of 5` (maximum points, e.g., 9 of 9 pts for 7L, 13 of 13 pts for 8L).
+    - **6-Letter Words**: `Division 3 of 3` (5 of 5 pts).
+    - **5-Letter Words**: `Division 2 of 2` (3 of 3 pts).
+  - Perfect consistency between **Dynamic Word Lookup** (Word Charts) and **Find Count**: both tools report 0 finds and identical division/point values for every word.
+- **Organic Dynamic Scaling**:
+  - As words are found in real games, the first word found will establish Division 1 (`0 – 1 finds`), while unplayed words remain in the maximum rarity division.
+  - Over time, as players find words, find counts naturally scale into higher tiers (e.g. `20 – 40 finds` for Div 1, `10 – 20 finds` for Div 2, etc.).
+- **Protection Against Database Table Bloat**:
+  - Added a strict ceiling of at most 10 recent finders per word in `word_finds` during round history pruning. Because the Find Count table only ever displays the 10 most recent finders, keeping millions of older rows is prevented, ensuring the database remains permanently compact and fast.
+
+---
+
+### B. Universal Word Definition Popup Auto-Repositioning (No Bottom Cut-Off)
 - **Cross-Platform Viewport Edge Detection**:
   - Whenever any word is clicked/selected throughout the entire app (Tools tabs: Lists, Words User is Good at, Combo Checker, Is Valid, Sequence, Subanagrams, Unscramble, Reverse Dictionary, Word Chart, Words to Work on, Find Count; Game rooms: Notepad, Round Replay; Mods word lists, etc.) and the definition popup (`#tool-word-def-popover`) appears:
   - If the bottom of the popover extends past the visible viewport bottom (`rect.bottom > viewportHeight - 12`), the system immediately and smoothly shifts `top` higher so the entire window is 100% visible with a clean 12px safety margin.
