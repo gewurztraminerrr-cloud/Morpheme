@@ -4457,7 +4457,10 @@ async function _doUpdateGameState(incomingState = null) {
         // --- SCORE SUM TAB (24H Only) ---
         const scoreSumListEl = document.getElementById('score-sum-list');
         if (scoreSumListEl && activeWordsTab === 'score-sum') {
-            if (!window._dailyScoreSumsData || window._dailyScoreSumsRoomId !== state.room_id) {
+            const now = Date.now();
+            const needsFetch = window._dailyScoreSumsRoomId !== state.room_id || 
+                               (now - (window._lastDailyScoreSumsFetchTime || 0) > 30000);
+            if (needsFetch) {
                 fetchDailyScoreSums(state.room_id);
             } else {
                 renderDailyScoreSums();
@@ -4509,8 +4512,8 @@ function fetchDailyScoreSums(targetRoomId) {
     const dims = (window.lastGameState && window.lastGameState.board_dimensions) || '';
     const listEl = document.getElementById('score-sum-list');
     
-    // Only show "Loading rankings..." placeholder on initial cold load before data exists
-    if (listEl && (!window._dailyScoreSumsData || window._dailyScoreSumsData.length === 0)) {
+    // Only show "Loading rankings..." placeholder on initial cold load before data has ever been fetched for this room
+    if (listEl && window._dailyScoreSumsLoadedForRoom !== roomId) {
         listEl.innerHTML = '<p class="placeholder">Loading rankings...</p>';
     }
     
@@ -4522,12 +4525,16 @@ function fetchDailyScoreSums(targetRoomId) {
         .then(data => {
             window._isFetchingDailyScoreSums = false;
             window._dailyScoreSumsData = (data.players || []).filter(p => (typeof p.score_sum === 'number' ? p.score_sum : parseInt(p.score_sum, 10)) > 0);
-            window._dailyScoreSumsRoomId = data.room_id || roomId;
+            window._dailyScoreSumsRoomId = roomId;
+            window._dailyScoreSumsLoadedForRoom = roomId;
+            window._lastDailyScoreSumsFetchTime = Date.now();
             renderDailyScoreSums();
         })
         .catch(err => {
             window._isFetchingDailyScoreSums = false;
             console.error('Error fetching score sums:', err);
+            window._dailyScoreSumsRoomId = roomId;
+            window._dailyScoreSumsLoadedForRoom = roomId;
             if (listEl && (!window._dailyScoreSumsData || window._dailyScoreSumsData.length === 0)) {
                 listEl.innerHTML = '<p class="placeholder" style="color: var(--theme-danger);">Failed to load rankings</p>';
             }
