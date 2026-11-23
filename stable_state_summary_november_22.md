@@ -1,7 +1,7 @@
 # Morpheme Stable State Summary – November 22, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `e25a60ad616917b5edfcddeddcf544bc403fac72` (`e25a60ad`)
+- **Canonical Git Commit ID**: `73b58c16d5f6eea3966aea4ceaeee27cda32ce5a` (`73b58c16`)
 - **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
@@ -164,10 +164,10 @@
 
 | Component | Status | Commit / Version | Notes |
 | :--- | :--- | :--- | :--- |
-| **Localhost** | ✅ Active | `e25a60ad` | Port 5001, daemon running, penalty filtering verified |
-| **GitHub (`main`)** | ✅ Up to date | `e25a60ad` | Remote synchronized with zero uncommitted changes |
-| **Production VPS** | ✅ Live | `e25a60ad` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
-| **App / Client UI** | ✅ Verified | `e25a60ad` | Clean division examples, BOMINE purged from all tallies |
+| **Localhost** | ✅ Active | `73b58c16` | Port 5001, daemon running, penalty filtering verified |
+| **GitHub (`main`)** | ✅ Up to date | `73b58c16` | Remote synchronized with zero uncommitted changes |
+| **Production VPS** | ✅ Live | `73b58c16` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
+| **App / Client UI** | ✅ Verified | `73b58c16` | Clean division examples, BOMINE purged from all tallies |
 
 ---
 
@@ -176,6 +176,6 @@
 To reset or redeploy to this exact point in the future:
 ```bash
 git fetch origin main
-git reset --hard e25a60ad616917b5edfcddeddcf544bc403fac72
+git reset --hard 73b58c16d5f6eea3966aea4ceaeee27cda32ce5a
 python3 scratch/deploy_reliable.py
 ```
