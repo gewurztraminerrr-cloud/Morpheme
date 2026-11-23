@@ -1,11 +1,11 @@
 # Morpheme Stable State Summary – November 22, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `73b58c16d5f6eea3966aea4ceaeee27cda32ce5a` (`73b58c16`)
+- **Canonical Git Commit ID**: `2fcfc52ce1cc0620cc7796a5ae5c22cbe3d17796` (`2fcfc52c`)
 - **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
-- **Date/Time**: November 23, 2026 (04:49 UTC / 23:49 EST)
+- **Date/Time**: November 23, 2026 (04:58 UTC / 23:58 EST)
 
 ---
 
@@ -158,16 +158,29 @@
     - Corrected `best_word` in round 2646 from `BOMINE` to `BICE`.
     - Removed `BOMINE` from `word_stats.json` and verified zero occurrences across all tables and endpoints.
 
+### P. Elimination of 24h Score Sum Tab Message Twitching
+- **Root Cause Analysis**:
+  - In `static/js/play.js`, `_doUpdateGameState()` checks whether the active tab is `score-sum` on every 1-second state poll tick.
+  - The condition `window._dailyScoreSumsRoomId !== state.room_id` constantly evaluated to `true` because the API returned the canonical key (e.g. `'24h_4x4'`) while `state.room_id` was `'pub_v2_24h_4x4'`.
+  - In `fetchDailyScoreSums()`, `if (!data || data.length === 0)` overwrote `listEl.innerHTML` with `'<p class="placeholder">Loading rankings...</p>'` on every request.
+  - 50ms later, the fetch returned empty rankings, causing `renderDailyScoreSums()` to set `'<p class="placeholder">No players found</p>'`.
+  - This cycle repeated every second, causing an infinite visual twitch between the two placeholders.
+- **Fixes Applied**:
+  - **Cold Load State Guard**: Added `window._dailyScoreSumsLoadedForRoom` tracking so `'Loading rankings...'` is only displayed on the very first cold load for a room before any fetch has returned. Subsequent fetches or empty results never wipe the container back to the loading state.
+  - **Room ID Alignment**: Ensured `window._dailyScoreSumsRoomId = roomId` aligns with `state.room_id`.
+  - **30-Second Polling Cooldown**: Throttled automated re-fetching to a 30-second cooldown (`now - lastFetch > 30000`), completely eliminating per-second refetches and locking the view onto a clean, static `'No players found'` message.
+  - **Cache Buster**: Bumped `play.js?v=1795250000` in `templates/index.html`.
+
 ---
 
 ## 2. Synchronization Status Matrix
 
 | Component | Status | Commit / Version | Notes |
 | :--- | :--- | :--- | :--- |
-| **Localhost** | ✅ Active | `73b58c16` | Port 5001, daemon running, penalty filtering verified |
-| **GitHub (`main`)** | ✅ Up to date | `73b58c16` | Remote synchronized with zero uncommitted changes |
-| **Production VPS** | ✅ Live | `73b58c16` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
-| **App / Client UI** | ✅ Verified | `73b58c16` | Clean division examples, BOMINE purged from all tallies |
+| **Localhost** | ✅ Active | `2fcfc52c` | Port 5001, daemon running, twitching eliminated |
+| **GitHub (`main`)** | ✅ Up to date | `2fcfc52c` | Remote synchronized with zero uncommitted changes |
+| **Production VPS** | ✅ Live | `2fcfc52c` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
+| **App / Client UI** | ✅ Verified | `2fcfc52c` | Score Sum tab rock-solid on "No players found" |
 
 ---
 
@@ -176,6 +189,6 @@
 To reset or redeploy to this exact point in the future:
 ```bash
 git fetch origin main
-git reset --hard 73b58c16d5f6eea3966aea4ceaeee27cda32ce5a
+git reset --hard 2fcfc52ce1cc0620cc7796a5ae5c22cbe3d17796
 python3 scratch/deploy_reliable.py
 ```
