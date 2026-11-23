@@ -40,9 +40,10 @@
   - Expanded the Length dropdown in "Words User is Good at" to include discrete options: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 Letters, and 16+ Letters.
   - Updated dropdown option label to explicitly read `16+ Letters` (matching the length dropdown style).
   - Backend endpoint `/api/tools/words-good-at` performs exact length matching for lengths 3-15 and `>= 16` for `16+`.
-- **Compact Summary Banner**:
-  - Streamlined the 4 summary statistics into a single-row compact strip on mobile (`PLAYER: <user>`, `WORDS: <count>`, `FINDS: <count>`, `RAREST: Div <n>`).
-  - Avoided label truncation and ellipsis (`...`) while preserving bold contrast.
+- **Streamlined 3-Panel Summary Banner**:
+  - Removed the redundant "PLAYER" panel to the left of "WORDS" (the searched player name is already clearly visible in the input box).
+  - Stretched the remaining 3 panels horizontally across the full container (`repeat(3, 1fr)`): Mastered Words (`#good-at-stat-unique`), Total Finds (`#good-at-stat-finds`), and Rarest Mastered (`#good-at-stat-rarest`).
+  - Balanced padding and gap spacing across both mobile (6px gap) and desktop (12px gap) layouts.
 - **Description & Featured Players Spacing**:
   - Cleaned up top player chip pills with dynamic toggle (hidden when empty).
   - Adjusted header description text padding and max-height to ensure text remains fully legible without clipping descenders.
@@ -71,7 +72,7 @@
 | **Production VPS** | `ONLINE` | `132.148.72.249` ([morpheme.games](https://morpheme.games)), Ubuntu 24.04 LTS, PM2 Process ID 0 |
 | **Localhost** | `ONLINE` | Port `5001`, Python 3 Flask / SocketIO daemon (Tally Hardened) |
 | **Git Canonical Branch** | `SYNCHRONIZED` | `origin/main` == `HEAD` |
-| **Asset Cache Buster** | `1795340000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
+| **Asset Cache Buster** | `1795350000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
 | **RAM Utilization** | `OPTIMAL` | SQLite definitions proxy + LRU cache maintaining low ~1.1 GB memory profile |
 
 ---

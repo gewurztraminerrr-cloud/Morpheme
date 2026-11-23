@@ -15205,8 +15205,8 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     body.is-mobile #page-tools #tool-good-at #good-at-summary-banner {
         flex: 0 0 auto !important;
         display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
-        gap: 4px !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
         margin-bottom: 6px !important;
         padding: 0 !important;
     }
@@ -16839,8 +16839,10 @@ body.theme-white .find-count-division-badge,
     #page-tools #tool-good-at #good-at-summary-banner,
     body.is-desktop #page-tools #tool-good-at #good-at-summary-banner {
         flex: 0 0 auto !important;
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
         margin-bottom: 10px !important;
-        gap: 10px !important;
+        gap: 12px !important;
     }
 
     #page-tools #tool-good-at #good-at-summary-banner > div,
