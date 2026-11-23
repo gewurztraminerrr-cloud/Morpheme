@@ -260,10 +260,10 @@
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1794330000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794380007" as="style">
-    <link rel="preload" href="/css/play.css?v=1795330000" as="style">
+    <link rel="preload" href="/css/play.css?v=1795340000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1794330000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/lobby.css?v=1794380007" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/play.css?v=1795330000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1795340000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
@@ -4417,7 +4417,7 @@
                                     <option value="13">13 Letters</option>
                                     <option value="14">14 Letters</option>
                                     <option value="15">15 Letters</option>
-                                    <option value="16+">16+</option>
+                                    <option value="16+">16+ Letters</option>
                                 </select>
                                 <select id="good-at-sort-select" onchange="window.loadWordsGoodAtTool(null, true)">
                                     <option value="count" selected>Sort: Most Found</option>
@@ -4474,7 +4474,7 @@
 
                         <!-- Pagination -->
                         <div id="good-at-pagination" style="display: none; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; margin-top: 6px; gap: 6px;">
-                            <div id="good-at-page-info" style="font-size: 0.84rem; color: var(--muted-text); text-align: center; width: 100%;"></div>
+                            <div id="good-at-page-info" style="display: block; font-size: 0.92rem; font-weight: 700; color: var(--text-primary); text-align: center; width: 100%; margin-bottom: 4px; letter-spacing: 0.02em;"></div>
                             <div id="good-at-pagination-buttons" style="display: flex; width: 100%; gap: 8px; box-sizing: border-box;">
                                 <button type="button" id="good-at-prev-btn" onclick="window.prevGoodAtPage()" style="flex: 1 1 0px; width: 100%; padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: transparent; color: var(--text-primary); cursor: pointer; font-size: 0.85rem; text-align: center;">&larr; Previous</button>
                                 <button type="button" id="good-at-next-btn" onclick="window.nextGoodAtPage()" style="flex: 1 1 0px; width: 100%; padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: transparent; color: var(--text-primary); cursor: pointer; font-size: 0.85rem; text-align: center;">Next &rarr;</button>
@@ -10778,7 +10778,7 @@
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1795330000"></script>
+    <script src="/js/tools.js?v=1795340000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1795260000"></script>

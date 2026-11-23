@@ -15317,12 +15317,22 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
         gap: 5px !important;
     }
 
+    #page-tools #tool-good-at #good-at-pagination.hidden-pagination,
+    body.is-mobile #page-tools #tool-good-at #good-at-pagination.hidden-pagination {
+        display: none !important;
+    }
+
     #page-tools #tool-good-at #good-at-page-info,
     body.is-mobile #page-tools #tool-good-at #good-at-page-info {
+        display: block !important;
         width: 100% !important;
         text-align: center !important;
-        font-size: 0.82rem !important;
-        color: var(--muted-text) !important;
+        font-size: 0.86rem !important;
+        font-weight: 700 !important;
+        color: var(--text-primary) !important;
+        opacity: 1 !important;
+        margin-bottom: 4px !important;
+        letter-spacing: 0.02em !important;
     }
 
     #page-tools #tool-good-at #good-at-pagination-buttons,
@@ -16894,16 +16904,21 @@ body.theme-white .find-count-division-badge,
         gap: 6px !important;
     }
 
+    #page-tools #tool-good-at #good-at-pagination.hidden-pagination,
+    body.is-desktop #page-tools #tool-good-at #good-at-pagination.hidden-pagination {
+        display: none !important;
+    }
+
     #page-tools #tool-good-at #good-at-page-info,
     body.is-desktop #page-tools #tool-good-at #good-at-page-info {
         display: block !important;
         width: 100% !important;
         text-align: center !important;
-        font-size: 0.88rem !important;
-        font-weight: 600 !important;
+        font-size: 0.92rem !important;
+        font-weight: 700 !important;
         color: var(--text-primary) !important;
-        opacity: 0.85 !important;
-        margin-bottom: 4px !important;
+        opacity: 1 !important;
+        margin-bottom: 6px !important;
         letter-spacing: 0.02em !important;
     }
 

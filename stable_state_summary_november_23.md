@@ -31,13 +31,15 @@
   - Removed the `FEATURED PLAYERS` container (`#good-at-top-players`) and chips from `#tool-good-at`.
   - Reallocated the vertical space directly to the results table: table vertical height expanded from 299px to 334px on mobile and from 297px to 380px (+28%) on desktop, showing significantly more word rows without scrolling.
 - **Centered Pagination & Full-Width Stretched Buttons Across All Platforms**:
-  - Positioned "Page 1 of 3 (122 words)" text at the exact horizontal center below the results table across mobile, laptop, and desktop viewports.
+  - Positioned "Page 1 of 3 (122 words)" indicator text at the exact horizontal center directly above the Previous and Next buttons across mobile, laptop, and desktop viewports.
+  - Hardened page indicator contrast and visibility: styled with `color: var(--text-primary) !important`, bold `font-weight: 700`, `opacity: 1`, and active JS rendering across single-page and multi-page results.
   - Placed Previous and Next buttons directly beneath the page indicator, stretching across the entire horizontal length of the container (`flex: 1 1 0px` each), with clean disabled states and hover transitions.
   - Added explicit `@media (min-width: 901px)` desktop/laptop styling (`height: 38px`, `font-size: 0.88rem`, `padding: 8px 16px`) alongside mobile rules (`height: 32px`, `font-size: 0.8rem`).
   - Equalized the bottom padding/spacing of the results table on desktops and laptops to 14px to match the 14px left padding.
-- **Granular Word Length Filter (3 through 15 Letters & 16+)**:
-  - Expanded the Length dropdown in "Words User is Good at" to include discrete options: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 Letters, and 16+.
-  - Updated backend endpoint `/api/tools/words-good-at` to perform exact length matching for lengths 3-15 and `>= 16` for `16+`.
+- **Granular Word Length Filter (3 through 15 Letters & 16+ Letters)**:
+  - Expanded the Length dropdown in "Words User is Good at" to include discrete options: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 Letters, and 16+ Letters.
+  - Updated dropdown option label to explicitly read `16+ Letters` (matching the length dropdown style).
+  - Backend endpoint `/api/tools/words-good-at` performs exact length matching for lengths 3-15 and `>= 16` for `16+`.
 - **Compact Summary Banner**:
   - Streamlined the 4 summary statistics into a single-row compact strip on mobile (`PLAYER: <user>`, `WORDS: <count>`, `FINDS: <count>`, `RAREST: Div <n>`).
   - Avoided label truncation and ellipsis (`...`) while preserving bold contrast.
@@ -69,7 +71,7 @@
 | **Production VPS** | `ONLINE` | `132.148.72.249` ([morpheme.games](https://morpheme.games)), Ubuntu 24.04 LTS, PM2 Process ID 0 |
 | **Localhost** | `ONLINE` | Port `5001`, Python 3 Flask / SocketIO daemon (Tally Hardened) |
 | **Git Canonical Branch** | `SYNCHRONIZED` | `origin/main` == `HEAD` |
-| **Asset Cache Buster** | `1795330000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
+| **Asset Cache Buster** | `1795340000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
 | **RAM Utilization** | `OPTIMAL` | SQLite definitions proxy + LRU cache maintaining low ~1.1 GB memory profile |
 
 ---

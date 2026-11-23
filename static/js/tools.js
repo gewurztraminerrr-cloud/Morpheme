@@ -13870,7 +13870,11 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
                     </tr>
                 `;
             }
-            if (pagination) pagination.style.display = 'none';
+            if (pagination) {
+                pagination.style.display = 'none';
+                pagination.classList.add('hidden-pagination');
+            }
+            if (pageInfo) pageInfo.textContent = '';
         } else {
             if (tbody) {
                 tbody.innerHTML = words.map((w) => {
@@ -13924,15 +13928,16 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
 
             // Pagination Controls
             if (pagination) {
+                pagination.classList.remove('hidden-pagination');
+                pagination.style.display = 'flex';
                 const totalPages = data.total_pages || 1;
-                if (totalPages > 1) {
-                    pagination.style.display = 'flex';
-                    if (pageInfo) pageInfo.textContent = `Page ${data.page} of ${totalPages} (${data.filtered_count.toLocaleString()} words)`;
-                    if (prevBtn) prevBtn.disabled = (data.page <= 1);
-                    if (nextBtn) nextBtn.disabled = (data.page >= totalPages);
-                } else {
-                    pagination.style.display = 'none';
+                const totalWords = (typeof data.filtered_count === 'number') ? data.filtered_count : (data.total_unique_words || words.length);
+                const currentPage = data.page || 1;
+                if (pageInfo) {
+                    pageInfo.textContent = `Page ${currentPage} of ${totalPages} (${totalWords.toLocaleString()} words)`;
                 }
+                if (prevBtn) prevBtn.disabled = (currentPage <= 1);
+                if (nextBtn) nextBtn.disabled = (currentPage >= totalPages);
             }
         }
     } catch (err) {
@@ -13945,7 +13950,11 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
                 </tr>
             `;
         }
-        if (pagination) pagination.style.display = 'none';
+        if (pagination) {
+            pagination.style.display = 'none';
+            pagination.classList.add('hidden-pagination');
+        }
+        if (pageInfo) pageInfo.textContent = '';
         if (summaryBanner) summaryBanner.style.display = 'none';
     } finally {
         if (searchBtn) searchBtn.disabled = false;
