@@ -15371,6 +15371,9 @@ def get_friends_list():
     conn.row_factory = sqlite3.Row
     try:
         user = conn.execute('SELECT id FROM users WHERE username = ? COLLATE NOCASE', (session['username'],)).fetchone()
+        if not user:
+            session.clear()
+            return jsonify({'error': 'User not found or banned'}), 401
         # Join with users to get usernames and avatars
         friends_rows = conn.execute('''
             SELECT u.id, u.username, u.avatar_url, u.rating, u.country_flag
