@@ -9416,12 +9416,9 @@
                     <label for="mod-timeout-modal-reason" style="display: block; font-size: 0.85rem; color: var(--text-primary); font-weight: 600; margin-bottom: 6px;">Reason for Timeout:</label>
                     <textarea id="mod-timeout-modal-reason" maxlength="500" placeholder="Explain why the user is timed out... (e.g. Chat harassment, Unsportsmanlike conduct, Spamming)" style="width: 100%; min-height: 70px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; box-sizing: border-box;"></textarea>
                 </div>
-                <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 0.85rem; text-align: center; color: var(--text-primary);">
-                    Are you sure you want to timeout this user?
-                </div>
                 <div style="display: flex; gap: 10px;">
-                    <button class="mini-action-btn secondary" style="flex: 1; padding: 10px;" onclick="window.closeModTimeoutModal()">No, Cancel</button>
-                    <button id="mod-timeout-modal-confirm-btn" class="mini-action-btn" style="flex: 1.2; padding: 10px; background: #d97706; border-color: #b45309; color: #fff; font-weight: 700;">Yes, Timeout User</button>
+                    <button class="mini-action-btn secondary" style="flex: 1; padding: 10px;" onclick="window.closeModTimeoutModal()">Cancel</button>
+                    <button id="mod-timeout-modal-confirm-btn" class="mini-action-btn" style="flex: 1.2; padding: 10px; background: #d97706; border-color: #b45309; color: #fff; font-weight: 700;">⏱️ Timeout User</button>
                 </div>
             </div>
         </div>
@@ -9440,12 +9437,9 @@
                     <label for="mod-ban-modal-reason" style="display: block; font-size: 0.85rem; color: var(--text-primary); font-weight: 600; margin-bottom: 6px;">Reason for Permanent Ban:</label>
                     <textarea id="mod-ban-modal-reason" maxlength="500" placeholder="Explain why the user is banned... (e.g. Using unauthorized word-finding bots, Cheating in tournament, Severe harassment)" style="width: 100%; min-height: 70px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); padding: 8px 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; box-sizing: border-box;"></textarea>
                 </div>
-                <div style="background: rgba(244, 63, 94, 0.08); border: 1px solid rgba(244, 63, 94, 0.25); border-radius: 8px; padding: 10px; margin-bottom: 16px; font-size: 0.85rem; text-align: center; color: var(--text-primary);">
-                    Are you sure you want to permanently erase and ban this user?
-                </div>
                 <div style="display: flex; gap: 10px;">
-                    <button class="mini-action-btn secondary" style="flex: 1; padding: 10px;" onclick="window.closeModBanModal()">No, Cancel</button>
-                    <button id="mod-ban-modal-confirm-btn" class="mini-action-btn" style="flex: 1.2; padding: 10px; background: #e11d48; border-color: #be123c; color: #fff; font-weight: 700;">Yes, Ban & Erase</button>
+                    <button class="mini-action-btn secondary" style="flex: 1; padding: 10px;" onclick="window.closeModBanModal()">Cancel</button>
+                    <button id="mod-ban-modal-confirm-btn" class="mini-action-btn" style="flex: 1.2; padding: 10px; background: #e11d48; border-color: #be123c; color: #fff; font-weight: 700;">🚫 Ban & Erase User</button>
                 </div>
             </div>
         </div>
@@ -9492,7 +9486,7 @@
 
     <!-- Generic Confirm Modal -->
     <div id="generic-confirm-modal" class="modal-overlay hidden"
-        style="z-index: 10000; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none;">
+        style="z-index: 100020; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none;">
         <div class="achievement-card"
             style="max-width: 400px; padding: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--bg-panel); border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
             <div class="modal-header"

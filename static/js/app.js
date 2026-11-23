@@ -3904,15 +3904,32 @@ window.showConfirmModal = function (title, message, onConfirm, okText = 'Confirm
 
     if (modal && titleEl && bodyEl && cancelBtn && okBtn) {
         titleEl.textContent = title;
-        bodyEl.innerHTML = `<p style="white-space: pre-wrap; margin: 0;">${message}</p>`;
+        bodyEl.innerHTML = `<p style="white-space: pre-wrap; margin: 0; line-height: 1.5;">${message}</p>`;
         okBtn.textContent = okText;
         cancelBtn.textContent = cancelText;
+
+        if (okText && okText.toLowerCase().includes('ban')) {
+            okBtn.style.background = '#e11d48';
+            okBtn.style.borderColor = '#be123c';
+            okBtn.style.color = '#ffffff';
+        } else if (okText && okText.toLowerCase().includes('timeout')) {
+            okBtn.style.background = '#d97706';
+            okBtn.style.borderColor = '#b45309';
+            okBtn.style.color = '#ffffff';
+        } else {
+            okBtn.style.background = '';
+            okBtn.style.borderColor = '';
+            okBtn.style.color = '';
+        }
 
         const cleanup = () => {
             modal.style.display = 'none';
             modal.classList.add('hidden');
             okBtn.textContent = 'Confirm';
             cancelBtn.textContent = 'Cancel';
+            okBtn.style.background = '';
+            okBtn.style.borderColor = '';
+            okBtn.style.color = '';
             cancelBtn.onclick = null;
             okBtn.onclick = null;
             modal.onclick = null;
@@ -3932,6 +3949,7 @@ window.showConfirmModal = function (title, message, onConfirm, okText = 'Confirm
 
         modal.classList.remove('hidden');
         modal.style.display = 'flex';
+        modal.style.setProperty('z-index', '100020', 'important');
     } else {
         // Fallback to native confirm if modal isn't injected yet
         if (confirm(message)) {

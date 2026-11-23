@@ -2656,8 +2656,8 @@ window.openModTimeoutModal = function(username) {
 
     if (confirmBtn) {
         confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Yes, Timeout User';
-        confirmBtn.onclick = async () => {
+        confirmBtn.textContent = '⏱️ Timeout User';
+        confirmBtn.onclick = () => {
             if (['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
                 alert(`Action Prohibited: User '${username}' cannot be timed out.`);
                 return;
@@ -2665,39 +2665,58 @@ window.openModTimeoutModal = function(username) {
             const hoursVal = hInput ? hInput.value.trim() : '';
             const reasonVal = rInput ? rInput.value.trim() : '';
 
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Processing...';
+            const durationText = hoursVal ? `${hoursVal} hour(s)` : 'Automatic tier duration';
+            const reasonText = reasonVal ? `"${reasonVal}"` : 'Moderator timeout';
 
-            try {
-                const response = await fetch('/api/mods/timeout_user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: username,
-                        reason: reasonVal || 'Moderator timeout',
-                        hours: hoursVal || null
-                    })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    window.closeModTimeoutModal();
-                    const formattedUntil = (typeof window.formatTimeoutTimestamp === 'function')
-                        ? window.formatTimeoutTimestamp(data.timeout_until)
-                        : `${data.timeout_until} UTC`;
-                    if (window.showAlertModal) {
-                        window.showAlertModal('User Timed Out', `User "${username}" has been timed out for ${data.duration}.<br>Until: ${formattedUntil}`);
+            const warningMsg = `Are you certain you want to timeout "${username}"?\n\n• Duration: ${durationText}\n• Reason: ${reasonText}\n\nThis will immediately kick them from their active room and restrict them from playing across all rooms.`;
+
+            const proceedWithTimeout = async () => {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Processing...';
+
+                try {
+                    const response = await fetch('/api/mods/timeout_user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: username,
+                            reason: reasonVal || 'Moderator timeout',
+                            hours: hoursVal || null
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        window.closeModTimeoutModal();
+                        const formattedUntil = (typeof window.formatTimeoutTimestamp === 'function')
+                            ? window.formatTimeoutTimestamp(data.timeout_until)
+                            : `${data.timeout_until} UTC`;
+                        if (window.showAlertModal) {
+                            window.showAlertModal('User Timed Out', `User "${username}" has been timed out for ${data.duration}.<br>Until: ${formattedUntil}`);
+                        } else {
+                            alert(`User "${username}" has been timed out for ${data.duration}.\nUntil: ${formattedUntil}`);
+                        }
                     } else {
-                        alert(`User "${username}" has been timed out for ${data.duration}.\nUntil: ${formattedUntil}`);
+                        alert("Error: " + (data.error || "Failed to timeout user."));
                     }
-                } else {
-                    alert("Error: " + (data.error || "Failed to timeout user."));
+                } catch (err) {
+                    console.error("Error timing out user:", err);
+                    alert("Network error timing out user.");
+                } finally {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = '⏱️ Timeout User';
                 }
-            } catch (err) {
-                console.error("Error timing out user:", err);
-                alert("Network error timing out user.");
-            } finally {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = 'Yes, Timeout User';
+            };
+
+            if (window.showConfirmModal) {
+                window.showConfirmModal(
+                    '⚠️ Confirm User Timeout',
+                    warningMsg,
+                    proceedWithTimeout,
+                    'Yes, Timeout',
+                    'Cancel'
+                );
+            } else if (confirm(warningMsg)) {
+                proceedWithTimeout();
             }
         };
     }
@@ -2728,51 +2747,68 @@ window.openModBanModal = function(username) {
 
     if (confirmBtn) {
         confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Yes, Ban & Erase';
-        confirmBtn.onclick = async () => {
+        confirmBtn.textContent = '🚫 Ban & Erase User';
+        confirmBtn.onclick = () => {
             if (['jeffbabiak', 'jeffb', 'system'].includes(username.toLowerCase())) {
                 alert(`Action Prohibited: User '${username}' cannot be banned.`);
                 return;
             }
             const reasonVal = rInput ? rInput.value.trim() : '';
+            const reasonText = reasonVal ? `"${reasonVal}"` : 'Permanent ban';
 
-            confirmBtn.disabled = true;
-            confirmBtn.textContent = 'Erasing & Banning...';
+            const warningMsg = `Are you certain you want to permanently erase and ban "${username}"?\n\n• Reason: ${reasonText}\n\nCRITICAL: This permanently deletes their account, erases all stats and ratings, and blacklists their IP address.`;
 
-            try {
-                const response = await fetch('/api/mods/ban_user', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: username,
-                        reason: reasonVal || 'Permanent ban'
-                    })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    window.closeModBanModal();
-                    const miniModal = document.getElementById('mini-profile-modal');
-                    if (miniModal) {
-                        miniModal.classList.add('hidden');
-                        miniModal.classList.remove('forced-show');
-                    }
-                    if (typeof window.loadIpBans === 'function') {
-                        window.loadIpBans();
-                    }
-                    if (window.showAlertModal) {
-                        window.showAlertModal('User Erased & Banned', data.message || `User "${username}" has been permanently erased from the database.`);
+            const proceedWithBan = async () => {
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Erasing & Banning...';
+
+                try {
+                    const response = await fetch('/api/mods/ban_user', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: username,
+                            reason: reasonVal || 'Permanent ban'
+                        })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        window.closeModBanModal();
+                        const miniModal = document.getElementById('mini-profile-modal');
+                        if (miniModal) {
+                            miniModal.classList.add('hidden');
+                            miniModal.classList.remove('forced-show');
+                        }
+                        if (typeof window.loadIpBans === 'function') {
+                            window.loadIpBans();
+                        }
+                        if (window.showAlertModal) {
+                            window.showAlertModal('User Erased & Banned', data.message || `User "${username}" has been permanently erased from the database.`);
+                        } else {
+                            alert(data.message || `User "${username}" has been permanently erased from the database.`);
+                        }
                     } else {
-                        alert(data.message || `User "${username}" has been permanently erased from the database.`);
+                        alert("Error: " + (data.error || "Failed to ban user."));
                     }
-                } else {
-                    alert("Error: " + (data.error || "Failed to ban user."));
+                } catch (err) {
+                    console.error("Error banning user:", err);
+                    alert("Network error banning user.");
+                } finally {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = '🚫 Ban & Erase User';
                 }
-            } catch (err) {
-                console.error("Error banning user:", err);
-                alert("Network error banning user.");
-            } finally {
-                confirmBtn.disabled = false;
-                confirmBtn.textContent = 'Yes, Ban & Erase';
+            };
+
+            if (window.showConfirmModal) {
+                window.showConfirmModal(
+                    '🚨 Confirm Permanent Ban',
+                    warningMsg,
+                    proceedWithBan,
+                    'Yes, Permanently Ban',
+                    'Cancel'
+                );
+            } else if (confirm(warningMsg)) {
+                proceedWithBan();
             }
         };
     }

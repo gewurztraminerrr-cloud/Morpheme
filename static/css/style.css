@@ -5042,6 +5042,11 @@ body.is-mobile #mini-profile-ban-btn {
 }
 
 /* PM Toast Notification */
+#generic-confirm-modal,
+#generic-info-modal {
+    z-index: 100020 !important;
+}
+
 .pm-toast-notification {
     position: fixed;
     top: 20px;
