@@ -1,11 +1,11 @@
 # Morpheme Stable State Summary – November 23, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `0336cc6c95d9e52e5ee6fc88c7fdf9e0ec843f54` (`0336cc6c`)
-- **Git Branch**: `main`
+- **Canonical Git Commit ID**: `73be65f95a1bf86f26a62fa359d88692a8f8ccb8` (`73be65f9`)
+- **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
-- **Date/Time**: November 23, 2026 (19:35 UTC / 14:35 EST)
+- **Date/Time**: November 23, 2026 (20:42 UTC / 15:42 EST)
 
 ---
 
@@ -28,6 +28,19 @@
   - Over time, as players find words, find counts naturally scale into higher tiers (e.g. `20 – 40 finds` for Div 1, `10 – 20 finds` for Div 2, etc.).
 - **Protection Against Database Table Bloat**:
   - Added a strict ceiling of at most 10 recent finders per word in `word_finds` during round history pruning. Because the Find Count table only ever displays the 10 most recent finders, keeping millions of older rows is prevented, ensuring the database remains permanently compact and fast.
+
+---
+
+### B. Fix for Room Loading Hang & "Joining room took longer than expected"
+- **Root Cause Resolution**:
+  - Investigated `loadfail.png`: When waking up an empty public singleton (e.g., ACC 4x4 45s), random parameter generation previously could spin a word count target of `500+` on a 4x4 grid (16 tiles).
+  - Because 16 tiles cannot mathematically reach 500 words, all pre-generated cached boards were rejected and the synchronous emergency generator looped for up to 50 attempts (~2 minutes) holding `self.lock`. This backed up the server's task queue (`Waitress queue depth 346`) and triggered the browser's 45s fetch timeout.
+- **Physical Feasibility Clamping & Generator Hardening**:
+  - **Grid Ceilings**: Hard clamped word count ranges for small grids in `spinner_set.py`, `board_generator.py`, and `game_room.py`:
+    - **4x4 (16 tiles)**: Strictly capped at `300-400` words max. Never spins `400-500` or `500+`.
+    - **4x6 (24 tiles)**: Strictly capped at `400-500` words max. Never spins `500+`.
+  - **Loop Cap & Deadline**: Reduced emergency generator loop cap from 50 attempts to at most 5 attempts with a hard 4.0-second deadline. If no exact match is found, the best-effort board is returned immediately rather than blocking the server.
+  - **Instant Cache Fallback**: In `get_emergency_fallback_board`, impossible outlier targets (e.g. `500+` on 4x4) now bypass strict range checks and immediately return a valid cached board of that dimension in <1ms.
 
 ---
 
