@@ -2235,6 +2235,22 @@ async function _doUpdateGameState(incomingState = null) {
                         errorMsg = errData.error || "";
                     } catch(e) {}
 
+                    if (errData && (errData.banned || errData.is_banned || errorMsg.toLowerCase().includes('banned'))) {
+                        stopPolling();
+                        window.currentRoomId = null;
+                        try { localStorage.removeItem('last_joined_room'); } catch(e) {}
+                        const banMsg = errData.error || 'Your account has been permanently banned from Morpheme.';
+                        if (typeof window.showAlertModal === 'function') {
+                            window.showAlertModal('Account Banned', banMsg);
+                        } else {
+                            alert(banMsg);
+                        }
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 2000);
+                        return;
+                    }
+
                     if (errData && (errData.reason === 'daily_reset' || errorMsg.toLowerCase().includes('daily room reset') || errorMsg.toLowerCase().includes('daily_reset'))) {
                         ejectToLobby("daily_reset");
                         return;

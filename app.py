@@ -624,7 +624,8 @@ def reload_banned_ips():
     """Reloads active banned IPs and usernames from database into in-memory O(1) structures."""
     global BANNED_IPS_CACHE, BANNED_IPS_REASONS, BANNED_USERNAMES_REASONS
     try:
-        conn = get_db_connection(DB_PATH, timeout=15.0)
+        conn = sqlite3.connect(DB_PATH, timeout=15.0)
+        conn.row_factory = sqlite3.Row
         rows = conn.execute("SELECT ip_address, banned_username, reason FROM ip_bans ORDER BY id ASC").fetchall()
         new_cache = set()
         new_ip_reasons = {}
@@ -665,7 +666,7 @@ def get_client_ip(req=None):
 
 @app.before_request
 def check_ip_ban():
-    """Blocks all incoming non-static traffic if client IP is present in BANNED_IPS_CACHE."""
+    """Blocks all incoming non-static traffic if client IP or username is present in ban cache."""
     # Skip static files, service worker, audio, images, icons, manifest
     if (request.path.startswith('/static') or 
         request.path in ['/service-worker.js', '/favicon.ico', '/manifest.json'] or 
@@ -674,7 +675,15 @@ def check_ip_ban():
 
     client_ip = get_client_ip()
     u_lower = (session.get('username') or '').strip().lower()
-    is_banned = bool((client_ip and client_ip in BANNED_IPS_CACHE) or (u_lower and u_lower in BANNED_USERNAMES_REASONS))
+    is_moderator = is_mod(session.get('username'))
+
+    is_banned = False
+    if not is_moderator:
+        if u_lower and u_lower in BANNED_USERNAMES_REASONS:
+            is_banned = True
+        elif client_ip and client_ip in BANNED_IPS_CACHE:
+            is_banned = True
+
     if is_banned:
         ban_reason = (u_lower and BANNED_USERNAMES_REASONS.get(u_lower)) or BANNED_IPS_REASONS.get(client_ip) or "Violation of community rules"
         if request.path.startswith('/api/'):
@@ -2203,6 +2212,36 @@ def ban_user_api():
         # Reload cache
         reload_banned_ips()
 
+        # 3. Active Memory Eviction: Force-remove banned user from all active rooms in memory
+        try:
+            from game_room import room_manager
+            if room_manager and hasattr(room_manager, 'rooms'):
+                for r_id, room in list(room_manager.rooms.items()):
+                    is_in_room = False
+                    for p in list(getattr(room, 'players', [])):
+                        if getattr(p, 'user_id', None) == user_id or str(getattr(p, 'username', '')).lower() == username.lower():
+                            is_in_room = True
+                            break
+                    for s in list(getattr(room, 'spectators', [])):
+                        if getattr(s, 'user_id', None) == user_id or str(getattr(s, 'username', '')).lower() == username.lower():
+                            is_in_room = True
+                            break
+                    if is_in_room:
+                        room.remove_player(user_id, force=True)
+                        room.players = [p for p in room.players if getattr(p, 'user_id', None) != user_id and str(getattr(p, 'username', '')).lower() != username.lower()]
+                        room.spectators = [s for s in room.spectators if getattr(s, 'user_id', None) != user_id and str(getattr(s, 'username', '')).lower() != username.lower()]
+                        if not hasattr(room, 'evicted_users'):
+                            room.evicted_users = {}
+                        room.evicted_users[str(user_id)] = f'Banned: {ban_reason}'
+                        room.evicted_users[username.lower()] = f'Banned: {ban_reason}'
+                        if not hasattr(room, 'left_users'):
+                            room.left_users = {}
+                        room.left_users[str(user_id)] = time.time()
+                        room.left_users[username.lower()] = time.time()
+                        print(f"[ban_user_api] Force-evicted banned user {username} (ID: {user_id}) from room {r_id}")
+        except Exception as evict_ex:
+            print(f"[ban_user_api] Error evicting user from rooms: {evict_ex}")
+
         # Recompute global word stats strictly from remaining non-banned users
         try:
             import tally_divisions as td
@@ -2231,10 +2270,12 @@ def get_ip_bans_api():
     if not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
     try:
-        with get_db() as conn:
-            rows = conn.execute("SELECT id, ip_address, banned_username, banned_by, reason, created_at FROM ip_bans ORDER BY id DESC").fetchall()
-            bans = [dict(r) for r in rows]
-            return jsonify({'success': True, 'bans': bans})
+        conn = sqlite3.connect(DB_PATH, timeout=15.0)
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("SELECT id, ip_address, banned_username, banned_by, reason, created_at FROM ip_bans ORDER BY id DESC").fetchall()
+        bans = [dict(r) for r in rows]
+        conn.close()
+        return jsonify({'success': True, 'bans': bans})
     except Exception as e:
         print(f"Error fetching IP bans: {e}")
         return jsonify({'error': str(e)}), 500
@@ -7764,6 +7805,24 @@ def create_room():
 def join_room(room_id):
     if 'user_id' not in session:
         return jsonify({'error': 'Not authenticated'}), 401
+
+    # Ban check
+    client_ip = get_client_ip(request)
+    u_lower = (session.get('username') or '').strip().lower()
+    is_moderator = is_mod(session.get('username'))
+    if not is_moderator:
+        if (u_lower and u_lower in BANNED_USERNAMES_REASONS) or (client_ip and client_ip in BANNED_IPS_CACHE):
+            ban_reason = (u_lower and BANNED_USERNAMES_REASONS.get(u_lower)) or BANNED_IPS_REASONS.get(client_ip) or "Permanent ban: Violation of community rules"
+            return jsonify({'error': f'Your account / IP address has been permanently banned.\nReason: {ban_reason}', 'banned': True, 'is_banned': True}), 403
+
+    # Verify account exists in database (detect deleted/banned users with stale session cookies)
+    if not session.get('is_guest'):
+        conn_v = sqlite3.connect(DB_PATH, timeout=5)
+        user_exists = conn_v.execute("SELECT id FROM users WHERE id = ?", (session['user_id'],)).fetchone()
+        conn_v.close()
+        if not user_exists:
+            session.clear()
+            return jsonify({'error': 'Your account has been deleted or permanently banned.', 'banned': True, 'is_banned': True}), 403
     
     # Timeout check
     is_to, _, rem_str, _, _, reason_val = check_user_timeout(session.get('user_id') or session.get('username'))
@@ -8281,10 +8340,38 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
     room = room_manager.get_room(room_id)
     if room:
         if uid:
-            if str(uid) in getattr(room, 'evicted_users', {}):
-                reason = room.evicted_users.get(str(uid), 'inactivity')
-                print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response (Reason: {reason}).")
-                return None, (jsonify({'error': f'You have been evicted: {reason}', 'evicted': True, 'reason': reason}), 403)
+            # Eviction check (e.g. Moderator Ban or Inactivity)
+            u_lower = (session.get('username') or '').strip().lower() if in_req else ''
+            evicted_reason = getattr(room, 'evicted_users', {}).get(str(uid)) or getattr(room, 'evicted_users', {}).get(u_lower)
+            if evicted_reason:
+                room.remove_player(uid, force=True)
+                print(f"[get_room_state] User {uid} detected in room.evicted_users! Returning 403 eviction response (Reason: {evicted_reason}).")
+                return None, (jsonify({'error': f'You have been evicted: {evicted_reason}', 'evicted': True, 'banned': 'Banned' in evicted_reason, 'is_banned': 'Banned' in evicted_reason, 'reason': evicted_reason}), 403)
+
+            # Ban check during room state polling
+            client_ip = get_client_ip(request) if in_req else None
+            is_moderator = is_mod(session.get('username')) if in_req else False
+            if not is_moderator:
+                if (u_lower and u_lower in BANNED_USERNAMES_REASONS) or (client_ip and client_ip in BANNED_IPS_CACHE):
+                    room.remove_player(uid, force=True)
+                    ban_reason = (u_lower and BANNED_USERNAMES_REASONS.get(u_lower)) or BANNED_IPS_REASONS.get(client_ip) or "Permanent ban: Violation of community rules"
+                    return None, (jsonify({
+                        'error': f'Your account / IP address has been permanently banned.\nReason: {ban_reason}',
+                        'banned': True,
+                        'is_banned': True,
+                        'evicted': True,
+                        'ban_reason': ban_reason
+                    }), 403)
+
+            # Verify registered user account still exists in database
+            if in_req and not session.get('is_guest'):
+                conn_v = sqlite3.connect(DB_PATH, timeout=5)
+                user_exists = conn_v.execute("SELECT id FROM users WHERE id = ?", (uid,)).fetchone()
+                conn_v.close()
+                if not user_exists:
+                    room.remove_player(uid, force=True)
+                    session.clear()
+                    return None, (jsonify({'error': 'Your account has been deleted or permanently banned.', 'banned': True, 'is_banned': True, 'evicted': True}), 403)
             
             # Timeout check during room state polling
             is_to, _, rem_str, _, _, reason_val = check_user_timeout(uid)
