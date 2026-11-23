@@ -54,6 +54,8 @@
 - **Permanent Ban Enforcement & Removal of "Lift Ban"**:
   - Fully eliminated the "Lift Ban" button and associated frontend/backend handlers from **Mods $\to$ Ban/Timeout User**.
   - Enforced a strictly permanent ban model: when a user account is banned, the record is permanently eradicated, active sessions are terminated, and their IP address is blacklisted.
+- **Active Room Ban Chatbox Notice**:
+  - If a banned user is currently active in a game room (as a player or spectator), the system immediately broadcasts a system message to the room's chatbox (`<username> has been banned from all rooms.`), matching the exact behavior and presentation format used for Timeouts, before authoritatively evicting the user.
 - **Hardened Root Administrator Protection (`jeffb`)**:
   - Client-side and server-side hard checks prevent any moderator from timing out, banning, or IP-banning user `jeffb`.
   - Rejection with explicit authorization error (`403 Forbidden: Protected user cannot be timed out or banned`) if attempted.

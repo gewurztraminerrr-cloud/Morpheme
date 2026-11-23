@@ -2157,11 +2157,12 @@ def ban_user_api():
     conn.row_factory = sqlite3.Row
     try:
         # Get user ID and recorded IP addresses before deletion
-        cursor = conn.execute("SELECT id, registration_ip, last_ip FROM users WHERE username = ? COLLATE NOCASE", (username,))
+        cursor = conn.execute("SELECT id, username, registration_ip, last_ip FROM users WHERE username = ? COLLATE NOCASE", (username,))
         row = cursor.fetchone()
         if not row:
             return jsonify({'error': 'User not found'}), 404
         user_id = row['id']
+        actual_username = row['username'] or username
         reg_ip = (row['registration_ip'] or '').strip()
         last_ip = (row['last_ip'] or '').strip()
         
@@ -2231,11 +2232,14 @@ def ban_user_api():
                         if getattr(p, 'user_id', None) == user_id or str(getattr(p, 'username', '')).lower() == username.lower():
                             is_in_room = True
                             break
-                    for s in list(getattr(room, 'spectators', [])):
-                        if getattr(s, 'user_id', None) == user_id or str(getattr(s, 'username', '')).lower() == username.lower():
-                            is_in_room = True
-                            break
+                    if not is_in_room:
+                        for s in list(getattr(room, 'spectators', [])):
+                            if getattr(s, 'user_id', None) == user_id or str(getattr(s, 'username', '')).lower() == username.lower():
+                                is_in_room = True
+                                break
                     if is_in_room:
+                        # Broadcast notice to everyone in the game room in the chatbox
+                        room.add_chat_message("System", f"{actual_username} has been banned from all rooms.", is_system=True)
                         room.remove_player(user_id, force=True)
                         room.players = [p for p in room.players if getattr(p, 'user_id', None) != user_id and str(getattr(p, 'username', '')).lower() != username.lower()]
                         room.spectators = [s for s in room.spectators if getattr(s, 'user_id', None) != user_id and str(getattr(s, 'username', '')).lower() != username.lower()]
@@ -2247,7 +2251,8 @@ def ban_user_api():
                             room.left_users = {}
                         room.left_users[str(user_id)] = time.time()
                         room.left_users[username.lower()] = time.time()
-                        print(f"[ban_user_api] Force-evicted banned user {username} (ID: {user_id}) from room {r_id}")
+                        print(f"[ban_user_api] Force-evicted banned user {actual_username} (ID: {user_id}) from room {r_id} and posted chat notice")
+            cleanup_user_rooms_entirely(user_id)
         except Exception as evict_ex:
             print(f"[ban_user_api] Error evicting user from rooms: {evict_ex}")
 
@@ -2335,6 +2340,25 @@ def ban_ip_api():
             conn.commit()
             
         reload_banned_ips()
+
+        # Active Memory Eviction: if banned user or matching IP was in an active room, post notice & evict
+        try:
+            from game_room import room_manager
+            if room_manager and hasattr(room_manager, 'rooms'):
+                for r_id, room in list(room_manager.rooms.items()):
+                    for p in list(getattr(room, 'players', [])):
+                        p_name = getattr(p, 'username', '')
+                        p_uid = getattr(p, 'user_id', None)
+                        p_ip = getattr(p, 'ip', None) or getattr(p, 'client_ip', None)
+                        if (username and str(p_name).lower() == username.lower()) or (p_ip and p_ip == ip):
+                            room.add_chat_message("System", f"{p_name or username} has been banned from all rooms.", is_system=True)
+                            if p_uid:
+                                room.remove_player(p_uid, force=True)
+                                cleanup_user_rooms_entirely(p_uid)
+                            room.players = [pl for pl in room.players if pl is not p]
+        except Exception as ip_evict_ex:
+            print(f"[ban_ip_api] Error evicting user: {ip_evict_ex}")
+
         return jsonify({'success': True, 'message': f'IP address {ip} has been banned.'})
     except Exception as e:
         print(f"Error banning IP: {e}")
