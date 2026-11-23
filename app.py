@@ -2187,6 +2187,8 @@ def ban_user_api():
         tournament_manager.handle_user_banned(user_id, conn=conn)
         conn.execute("DELETE FROM user_ratings WHERE user_id = ?", (user_id,))
         conn.execute("DELETE FROM user_settings WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM user_word_tallies WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM word_finds WHERE user_id = ?", (user_id,))
         
         # Name-based string deletions
         conn.execute("DELETE FROM match_invites WHERE recipient_username = ? COLLATE NOCASE", (username,))
@@ -2200,6 +2202,18 @@ def ban_user_api():
         
         # Reload cache
         reload_banned_ips()
+
+        # Recompute global word stats strictly from remaining non-banned users
+        try:
+            import tally_divisions as td
+            td.rebuild_word_stats_from_db(db_path=DB_PATH)
+        except Exception as sync_err:
+            print(f"[ban_user_api] Error syncing word stats: {sync_err}")
+
+        # Clear Find Count in-memory cache
+        global _WORD_FINDS_CACHE
+        if isinstance(_WORD_FINDS_CACHE, dict):
+            _WORD_FINDS_CACHE.clear()
     except Exception as e:
         conn.rollback()
         print(f"Error banning user: {e}")
@@ -4722,6 +4736,40 @@ def init_db():
             conn.commit()
         except Exception as purge_err:
             print(f"[init_db] Notice purging 24h/guest word_finds: {purge_err}")
+
+        # MIGRATION: Ensure user_word_tallies table exists and is indexed
+        try:
+            conn.execute('''
+                CREATE TABLE IF NOT EXISTS user_word_tallies (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    word TEXT NOT NULL,
+                    find_count INTEGER DEFAULT 1,
+                    last_found_at DATETIME NOT NULL,
+                    FOREIGN KEY(user_id) REFERENCES users(id),
+                    UNIQUE(user_id, word)
+                )
+            ''')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_uwt_user_count ON user_word_tallies(user_id, find_count DESC)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_uwt_word ON user_word_tallies(word)')
+            conn.execute('CREATE INDEX IF NOT EXISTS idx_uwt_user_word ON user_word_tallies(user_id, word)')
+            conn.commit()
+
+            # Pre-seed user_word_tallies from historical word_finds if empty
+            uwt_row = conn.execute("SELECT COUNT(*) FROM user_word_tallies").fetchone()
+            if uwt_row and uwt_row[0] == 0:
+                conn.execute("""
+                    INSERT OR IGNORE INTO user_word_tallies (user_id, word, find_count, last_found_at)
+                    SELECT wf.user_id, wf.word, COUNT(*), MAX(wf.timestamp)
+                    FROM word_finds wf
+                    JOIN users u ON wf.user_id = u.id
+                    WHERE u.username NOT LIKE 'Guest_%'
+                      AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%'))
+                    GROUP BY wf.user_id, wf.word
+                """)
+                conn.commit()
+        except Exception as uwt_init_err:
+            print(f"[init_db] Error migrating user_word_tallies: {uwt_init_err}")
 
         # Link historical round_history records accurately where available
         try:
@@ -14534,6 +14582,164 @@ def tools_find_count():
         import traceback
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/tools/words-good-at', methods=['GET'])
+def tools_words_good_at():
+    try:
+        target_username = (request.args.get('username') or '').strip()
+        logged_in_user = session.get('username')
+        
+        conn = sqlite3.connect(DB_PATH, timeout=30)
+        conn.row_factory = sqlite3.Row
+        
+        # If no username specified, try logged-in user; if guest or empty, try top player or jeffb
+        if not target_username:
+            if logged_in_user and not logged_in_user.startswith('Guest_'):
+                target_username = logged_in_user
+            else:
+                top_row = conn.execute("""
+                    SELECT u.username FROM user_word_tallies uwt
+                    JOIN users u ON uwt.user_id = u.id
+                    WHERE u.username NOT LIKE 'Guest_%'
+                    GROUP BY u.id
+                    ORDER BY COUNT(uwt.id) DESC
+                    LIMIT 1
+                """).fetchone()
+                if top_row:
+                    target_username = top_row['username']
+                else:
+                    target_username = 'jeffb'
+        
+        # Look up user in db
+        user_row = conn.execute("SELECT id, username, country_flag FROM users WHERE username = ? COLLATE NOCASE", (target_username,)).fetchone()
+        if not user_row:
+            conn.close()
+            return jsonify({
+                'success': False,
+                'error': f"Player '{target_username}' not found or has no recorded games."
+            }), 404
+            
+        user_id = user_row['id']
+        canonical_username = user_row['username']
+        country_flag = user_row['country_flag'] or ''
+        
+        # Filters and sorting
+        search_filter = (request.args.get('search') or '').strip().upper()
+        length_filter = (request.args.get('length') or 'all').strip().lower()
+        sort_by = (request.args.get('sort') or 'count').strip().lower()
+        page = max(1, int(request.args.get('page', 1)))
+        limit = min(200, max(10, int(request.args.get('limit', 100))))
+        
+        query_parts = ["SELECT uwt.word, uwt.find_count, uwt.last_found_at FROM user_word_tallies uwt WHERE uwt.user_id = ?"]
+        params = [user_id]
+        
+        if search_filter:
+            query_parts.append("AND uwt.word LIKE ?")
+            params.append(f"%{search_filter}%")
+            
+        if length_filter != 'all':
+            if length_filter in ('8+', '8'):
+                query_parts.append("AND LENGTH(uwt.word) >= 8")
+            else:
+                try:
+                    len_val = int(length_filter)
+                    query_parts.append("AND LENGTH(uwt.word) = ?")
+                    params.append(len_val)
+                except ValueError:
+                    pass
+        
+        # Get overall totals for user
+        total_unique_row = conn.execute("SELECT COUNT(*), SUM(find_count) FROM user_word_tallies WHERE user_id = ?", (user_id,)).fetchone()
+        total_unique = (total_unique_row[0] or 0) if total_unique_row else 0
+        total_finds = (total_unique_row[1] or 0) if total_unique_row else 0
+        
+        # Count matching filter
+        count_sql = "SELECT COUNT(*) FROM (" + " ".join(query_parts) + ")"
+        filtered_count = conn.execute(count_sql, params).fetchone()[0]
+        
+        # Sorting
+        if sort_by == 'alpha':
+            query_parts.append("ORDER BY uwt.word ASC")
+        elif sort_by == 'length':
+            query_parts.append("ORDER BY LENGTH(uwt.word) DESC, uwt.find_count DESC")
+        elif sort_by == 'recent':
+            query_parts.append("ORDER BY uwt.last_found_at DESC")
+        else: # 'count' or 'division'
+            query_parts.append("ORDER BY uwt.find_count DESC, LENGTH(uwt.word) DESC")
+            
+        # Offset & limit
+        offset = (page - 1) * limit
+        query_parts.append(f"LIMIT {limit} OFFSET {offset}")
+        
+        rows = conn.execute(" ".join(query_parts), params).fetchall()
+        
+        # Top 10 featured players who have recorded word tallies
+        top_players_rows = conn.execute("""
+            SELECT u.username, u.country_flag, COUNT(uwt.id) as word_count, SUM(uwt.find_count) as total_finds
+            FROM user_word_tallies uwt
+            JOIN users u ON uwt.user_id = u.id
+            WHERE u.username NOT LIKE 'Guest_%'
+            GROUP BY u.id
+            ORDER BY word_count DESC, total_finds DESC
+            LIMIT 10
+        """).fetchall()
+        
+        top_players = [{
+            'username': r['username'],
+            'country_flag': r['country_flag'] or '',
+            'word_count': r['word_count'],
+            'total_finds': r['total_finds']
+        } for r in top_players_rows]
+        
+        conn.close()
+        
+        import tally_divisions as td
+        words_data = []
+        max_div_found = 1
+        
+        for r in rows:
+            w = r['word']
+            c = r['find_count']
+            div_info = td.get_word_division_info(w)
+            is_hard = td.is_word_hard_by_tally(w)
+            d_val = div_info.get('division', 1)
+            if d_val > max_div_found:
+                max_div_found = d_val
+            words_data.append({
+                'word': w,
+                'length': len(w),
+                'find_count': c,
+                'last_found_at': r['last_found_at'],
+                'division': d_val,
+                'max_divisions': div_info.get('max_divisions', 1),
+                'points': div_info.get('points', 0),
+                'max_points': div_info.get('max_points', 0),
+                'division_str': div_info.get('division_str', ''),
+                'is_hard': is_hard
+            })
+            
+        if sort_by == 'division':
+            words_data.sort(key=lambda x: (x['division'], x['find_count']), reverse=True)
+            
+        return jsonify({
+            'success': True,
+            'username': canonical_username,
+            'country_flag': country_flag,
+            'total_unique_words': total_unique,
+            'total_finds': total_finds,
+            'filtered_count': filtered_count,
+            'page': page,
+            'limit': limit,
+            'total_pages': max(1, (filtered_count + limit - 1) // limit),
+            'rarest_division': max_div_found,
+            'words': words_data,
+            'top_players': top_players
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/api/round-replay', methods=['GET'])

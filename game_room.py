@@ -10054,6 +10054,7 @@ class RoomManager:
             
             # 1. Efficient Tally: Number of unique USERS who found each word in THIS round
             word_counts = collections.Counter()
+            user_valid_words = {}
             for _uname, words in player_words.items():
                 if str(_uname).startswith('Guest_'):
                     continue  # Guest finds are never counted in Find Count
@@ -10064,11 +10065,35 @@ class RoomManager:
                     if w and word_validator.is_valid_word(w, active_dict, use_added_words=getattr(room, 'use_added_words', False)):
                         unique_words_for_user.add(w)
                 
+                if unique_words_for_user:
+                    user_valid_words[_uname] = unique_words_for_user
                 for w in unique_words_for_user:
                     word_counts[w] += 1
             
             if not word_counts:
                 return
+
+            # Record per-user tallies in user_word_tallies table
+            if user_valid_words:
+                try:
+                    now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                    with get_db() as conn:
+                        for uname, uwords in user_valid_words.items():
+                            c = conn.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (uname,))
+                            row = c.fetchone()
+                            if row:
+                                uid = row['id'] if isinstance(row, dict) or hasattr(row, 'keys') else row[0]
+                                for w in uwords:
+                                    conn.execute("""
+                                        INSERT INTO user_word_tallies (user_id, word, find_count, last_found_at)
+                                        VALUES (?, ?, 1, ?)
+                                        ON CONFLICT(user_id, word) DO UPDATE SET
+                                            find_count = find_count + 1,
+                                            last_found_at = excluded.last_found_at
+                                    """, (uid, w, now_iso))
+                        conn.commit()
+                except Exception as uwt_err:
+                    print(f"[WordTally] Error saving user_word_tallies: {uwt_err}")
 
             # 2. Append per-round entry to audit log
             log_entry = {

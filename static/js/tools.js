@@ -501,6 +501,9 @@ window.showTool = function(toolId) {
     if (toolId === 'find-count') {
         if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords(false);
     }
+    if (toolId === 'good-at') {
+        if (typeof window.loadWordsGoodAtTool === 'function') window.loadWordsGoodAtTool();
+    }
     if (toolId === 'new-users') {
         if (typeof window.loadNewUsersTool === 'function') window.loadNewUsersTool();
     }
@@ -13708,5 +13711,233 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    const goodAtUserInput = document.getElementById('good-at-user-input');
+    if (goodAtUserInput) {
+        goodAtUserInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                window.loadWordsGoodAtTool(null, true);
+            }
+        });
+    }
 });
+
+// ==========================================
+// WORDS USER IS GOOD AT TOOL
+// ==========================================
+window.goodAtCurrentPage = 1;
+window.goodAtCurrentUsername = '';
+window._goodAtFilterDebounce = null;
+
+window.debounceGoodAtFilter = function() {
+    if (window._goodAtFilterDebounce) clearTimeout(window._goodAtFilterDebounce);
+    window._goodAtFilterDebounce = setTimeout(() => {
+        window.loadWordsGoodAtTool(null, true);
+    }, 250);
+};
+
+window.prevGoodAtPage = function() {
+    if (window.goodAtCurrentPage > 1) {
+        window.goodAtCurrentPage--;
+        window.loadWordsGoodAtTool(null, false);
+    }
+};
+
+window.nextGoodAtPage = function() {
+    window.goodAtCurrentPage++;
+    window.loadWordsGoodAtTool(null, false);
+};
+
+window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
+    const userInput = document.getElementById('good-at-user-input');
+    const wordFilterInput = document.getElementById('good-at-word-filter');
+    const lengthSelect = document.getElementById('good-at-length-select');
+    const sortSelect = document.getElementById('good-at-sort-select');
+    const tbody = document.getElementById('good-at-table-body');
+    const searchBtn = document.getElementById('good-at-search-btn');
+    const summaryBanner = document.getElementById('good-at-summary-banner');
+    const chipsContainer = document.getElementById('good-at-player-chips');
+    const pagination = document.getElementById('good-at-pagination');
+    const pageInfo = document.getElementById('good-at-page-info');
+    const prevBtn = document.getElementById('good-at-prev-btn');
+    const nextBtn = document.getElementById('good-at-next-btn');
+
+    if (resetPage) {
+        window.goodAtCurrentPage = 1;
+    }
+
+    let username = '';
+    if (targetUsername) {
+        username = targetUsername.trim();
+        if (userInput) userInput.value = username;
+    } else if (userInput) {
+        username = userInput.value.trim();
+    }
+
+    const wordFilter = wordFilterInput ? wordFilterInput.value.trim() : '';
+    const lengthFilter = lengthSelect ? lengthSelect.value : 'all';
+    const sortBy = sortSelect ? sortSelect.value : 'count';
+    const page = window.goodAtCurrentPage || 1;
+
+    if (searchBtn) searchBtn.disabled = true;
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="padding: 30px; text-align: center; color: var(--muted-text);">
+                    <span class="reverse-dict-searching-spinner" style="display:inline-block; vertical-align:middle; margin-right:6px;"></span>
+                    Loading words...
+                </td>
+            </tr>
+        `;
+    }
+
+    try {
+        const queryParams = new URLSearchParams({
+            username: username,
+            search: wordFilter,
+            length: lengthFilter,
+            sort: sortBy,
+            page: page,
+            limit: 50
+        });
+
+        const res = await fetch(`/api/tools/words-good-at?${queryParams.toString()}`);
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to load words');
+        }
+
+        window.goodAtCurrentUsername = data.username;
+        if (userInput && !userInput.value) {
+            userInput.value = data.username;
+        }
+
+        // Render Featured Player chips if available
+        if (chipsContainer && data.top_players && data.top_players.length > 0) {
+            chipsContainer.innerHTML = data.top_players.map(p => {
+                const isActive = (p.username.toLowerCase() === data.username.toLowerCase());
+                const activeStyle = isActive 
+                    ? 'background: var(--accent-color, #38bdf8); color: #fff; border-color: var(--accent-color, #38bdf8); font-weight: 700;' 
+                    : 'background: rgba(var(--text-primary-rgb), 0.05); color: var(--text-primary); border-color: rgba(var(--text-primary-rgb), 0.15);';
+                return `
+                    <button type="button" onclick="window.loadWordsGoodAtTool('${escapeHtml(p.username)}', true)" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 14px; border: 1px solid; font-size: 0.78rem; cursor: pointer; transition: all 0.15s ease; ${activeStyle}">
+                        <span>${p.country_flag || '👤'}</span>
+                        <span>${escapeHtml(p.username)}</span>
+                        <span style="opacity: 0.7; font-size: 0.72rem;">(${p.word_count})</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // Update Summary Banner
+        if (summaryBanner) {
+            summaryBanner.style.display = 'grid';
+            const statUser = document.getElementById('good-at-stat-user');
+            const statUnique = document.getElementById('good-at-stat-unique');
+            const statFinds = document.getElementById('good-at-stat-finds');
+            const statRarest = document.getElementById('good-at-stat-rarest');
+
+            if (statUser) statUser.textContent = `${data.country_flag ? data.country_flag + ' ' : ''}${data.username}`;
+            if (statUnique) statUnique.textContent = (data.total_unique_words || 0).toLocaleString();
+            if (statFinds) statFinds.textContent = (data.total_finds || 0).toLocaleString();
+            if (statRarest) {
+                const rDiv = data.rarest_division || 1;
+                statRarest.textContent = `Division ${rDiv}`;
+            }
+        }
+
+        // Render Words Table
+        const words = data.words || [];
+        if (words.length === 0) {
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="padding: 30px; text-align: center; color: var(--muted-text);">
+                            No matching words found for ${escapeHtml(data.username)}${wordFilter ? ` matching "${escapeHtml(wordFilter)}"` : ''}.
+                        </td>
+                    </tr>
+                `;
+            }
+            if (pagination) pagination.style.display = 'none';
+        } else {
+            if (tbody) {
+                tbody.innerHTML = words.map((w) => {
+                    const safeWord = escapeHtml(w.word);
+                    const safeJsWord = safeWord.replace(/'/g, "\\'");
+                    
+                    let divBadge = '';
+                    if (w.division >= 4) {
+                        divBadge = `<span style="background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 10px; padding: 2px 7px; font-size: 0.75rem; font-weight: 700;">Division ${w.division} (${w.points} pts)</span>`;
+                    } else if (w.division >= 2) {
+                        divBadge = `<span style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 10px; padding: 2px 7px; font-size: 0.75rem; font-weight: 600;">Division ${w.division} (${w.points} pts)</span>`;
+                    } else {
+                        divBadge = `<span style="background: rgba(var(--text-primary-rgb), 0.05); color: var(--text-primary); border: 1px solid rgba(var(--text-primary-rgb), 0.12); border-radius: 10px; padding: 2px 7px; font-size: 0.75rem;">Division 1 (${w.points} pt${w.points !== 1 ? 's' : ''})</span>`;
+                    }
+
+                    // Relative date
+                    let dateStr = '-';
+                    if (w.last_found_at) {
+                        try {
+                            const d = new Date(w.last_found_at);
+                            dateStr = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+                        } catch (e) {
+                            dateStr = String(w.last_found_at).slice(0, 10);
+                        }
+                    }
+
+                    return `
+                        <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.06); transition: background 0.1s ease;">
+                            <td style="padding: 10px 14px; font-weight: 700;">
+                                <span class="reverse-dict-word-text" onclick="window.showWordDefinitionPopup('${safeJsWord}', event)" title="Click to view definition" style="cursor: pointer; color: var(--accent-color, #38bdf8); text-decoration: underline; text-underline-offset: 3px; font-size: 0.98rem; letter-spacing: 0.03em;">
+                                    ${safeWord}
+                                </span>
+                            </td>
+                            <td style="padding: 10px 14px; text-align: center; color: var(--muted-text); font-weight: 600;">
+                                ${w.length}L
+                            </td>
+                            <td style="padding: 10px 14px; text-align: center; font-weight: 800; color: #10b981;">
+                                ${w.find_count.toLocaleString()}
+                            </td>
+                            <td style="padding: 10px 14px; text-align: center;">
+                                ${divBadge}
+                            </td>
+                            <td style="padding: 10px 14px; text-align: right; color: var(--muted-text); font-size: 0.8rem;">
+                                ${dateStr}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Pagination Controls
+            if (pagination) {
+                const totalPages = data.total_pages || 1;
+                if (totalPages > 1) {
+                    pagination.style.display = 'flex';
+                    if (pageInfo) pageInfo.textContent = `Page ${data.page} of ${totalPages} (${data.filtered_count.toLocaleString()} words)`;
+                    if (prevBtn) prevBtn.disabled = (data.page <= 1);
+                    if (nextBtn) nextBtn.disabled = (data.page >= totalPages);
+                } else {
+                    pagination.style.display = 'none';
+                }
+            }
+        }
+    } catch (err) {
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="padding: 30px; text-align: center; color: #f43f5e;">
+                        <strong>Notice:</strong> ${escapeHtml(err.message || 'Error loading player word data')}
+                    </td>
+                </tr>
+            `;
+        }
+        if (pagination) pagination.style.display = 'none';
+        if (summaryBanner) summaryBanner.style.display = 'none';
+    } finally {
+        if (searchBtn) searchBtn.disabled = false;
+    }
+};
 

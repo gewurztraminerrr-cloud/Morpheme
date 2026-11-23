@@ -4292,6 +4292,10 @@
                         <div class="tool-btn-title">Find Count</div>
                         <div class="tool-btn-desc">See word find history</div>
                     </button>
+                    <button class="tool-nav-btn" data-tool="good-at" onclick="window.showTool('good-at')">
+                        <div class="tool-btn-title">Words User is Good at</div>
+                        <div class="tool-btn-desc">Words that do not fool players</div>
+                    </button>
                     <button class="tool-nav-btn" data-tool="timer" onclick="window.showTool('timer')">
                         <div class="tool-btn-title">Personal Timer</div>
                         <div class="tool-btn-desc">Set a session alert timer</div>
@@ -4379,6 +4383,102 @@
                                         <!-- Injected by JS -->
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Words User is Good at Interface -->
+                    <div id="tool-good-at" class="tool-pane" style="display: none; flex-direction: column; width: 100%; box-sizing: border-box;">
+                        <div class="tool-header">
+                            <h2>Words User is Good at</h2>
+                            <p>Discover what words do not fool players! Explore the words that experienced players consistently spot and master. Search for your own name to inspect your most reliable vocabulary, or look up top players to study which challenging words never fool the best.</p>
+                        </div>
+
+                        <!-- Top Players Quick Picker -->
+                        <div id="good-at-top-players" style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <span style="font-size: 0.82rem; font-weight: 700; color: var(--muted-text); text-transform: uppercase; letter-spacing: 0.05em;">Featured Players:</span>
+                            <div id="good-at-player-chips" style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <!-- Injected dynamically via JS -->
+                            </div>
+                        </div>
+
+                        <!-- Search & Filter Controls -->
+                        <div class="combo-control-panel" style="margin-bottom: 16px; padding: 14px 16px; background: rgba(0, 0, 0, 0.15); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; gap: 8px; flex: 1 1 260px; min-width: 220px;">
+                                    <input type="text" id="good-at-user-input" placeholder="Search player (e.g. jeffb)..." style="flex: 1; height: 38px; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: rgba(var(--text-primary-rgb), 0.04); color: var(--text-primary); font-size: 0.9rem;">
+                                    <button type="button" id="good-at-search-btn" onclick="window.loadWordsGoodAtTool(null, true)" style="height: 38px; padding: 0 16px; border-radius: 8px; background: var(--accent-color, #38bdf8); color: #fff; font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer; white-space: nowrap;">Search Player</button>
+                                </div>
+                                <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                                    <input type="text" id="good-at-word-filter" placeholder="Filter words..." oninput="window.debounceGoodAtFilter()" style="height: 38px; width: 130px; padding: 0 12px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: rgba(var(--text-primary-rgb), 0.04); color: var(--text-primary); font-size: 0.85rem; text-transform: uppercase;">
+                                    <select id="good-at-length-select" onchange="window.loadWordsGoodAtTool(null, true)" style="height: 38px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: var(--input-bg); color: var(--text-primary); padding: 0 10px; font-size: 0.85rem; cursor: pointer;">
+                                        <option value="all">All Lengths</option>
+                                        <option value="3">3 Letters</option>
+                                        <option value="4">4 Letters</option>
+                                        <option value="5">5 Letters</option>
+                                        <option value="6">6 Letters</option>
+                                        <option value="7">7 Letters</option>
+                                        <option value="8+">8+ Letters</option>
+                                    </select>
+                                    <select id="good-at-sort-select" onchange="window.loadWordsGoodAtTool(null, true)" style="height: 38px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: var(--input-bg); color: var(--text-primary); padding: 0 10px; font-size: 0.85rem; cursor: pointer;">
+                                        <option value="count">Most Found</option>
+                                        <option value="division">Highest Division (Rarest)</option>
+                                        <option value="length">Word Length (Longest)</option>
+                                        <option value="recent">Most Recent</option>
+                                        <option value="alpha">Alphabetical (A-Z)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Summary Statistics Banner -->
+                        <div id="good-at-summary-banner" style="display: none; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 18px;">
+                            <div style="background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; padding: 12px 16px;">
+                                <div style="font-size: 0.75rem; color: var(--muted-text); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Player</div>
+                                <div id="good-at-stat-user" style="font-size: 1.15rem; font-weight: 800; color: var(--text-primary); margin-top: 2px;"></div>
+                            </div>
+                            <div style="background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; padding: 12px 16px;">
+                                <div style="font-size: 0.75rem; color: var(--muted-text); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Mastered Words</div>
+                                <div id="good-at-stat-unique" style="font-size: 1.15rem; font-weight: 800; color: var(--accent-color, #38bdf8); margin-top: 2px;">0</div>
+                            </div>
+                            <div style="background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; padding: 12px 16px;">
+                                <div style="font-size: 0.75rem; color: var(--muted-text); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Total Finds</div>
+                                <div id="good-at-stat-finds" style="font-size: 1.15rem; font-weight: 800; color: #10b981; margin-top: 2px;">0</div>
+                            </div>
+                            <div style="background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 10px; padding: 12px 16px;">
+                                <div style="font-size: 0.75rem; color: var(--muted-text); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">Rarest Mastered</div>
+                                <div id="good-at-stat-rarest" style="font-size: 1.15rem; font-weight: 800; color: #f59e0b; margin-top: 2px;">-</div>
+                            </div>
+                        </div>
+
+                        <!-- Table Results Container -->
+                        <div id="good-at-results-wrapper" class="history-table-wrapper" style="overflow-x: auto; background: rgba(0, 0, 0, 0.15); border-radius: 10px; border: 1px solid rgba(var(--text-primary-rgb), 0.1); margin-bottom: 16px;">
+                            <table class="history-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1); background: rgba(var(--text-primary-rgb), 0.03);">
+                                        <th style="padding: 10px 14px; font-weight: 700; color: var(--muted-text);">Word</th>
+                                        <th style="padding: 10px 14px; font-weight: 700; color: var(--muted-text); text-align: center;">Length</th>
+                                        <th style="padding: 10px 14px; font-weight: 700; color: var(--muted-text); text-align: center;">Times Found</th>
+                                        <th style="padding: 10px 14px; font-weight: 700; color: var(--muted-text); text-align: center;">Tally Division &amp; Points</th>
+                                        <th style="padding: 10px 14px; font-weight: 700; color: var(--muted-text); text-align: right;">Last Spotted</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="good-at-table-body">
+                                    <tr>
+                                        <td colspan="5" style="padding: 30px; text-align: center; color: var(--muted-text);">
+                                            Enter a player's username or select a featured player above to see what words do not fool them.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div id="good-at-pagination" style="display: none; justify-content: space-between; align-items: center; padding: 4px 2px; flex-wrap: wrap; gap: 10px;">
+                            <div id="good-at-page-info" style="font-size: 0.84rem; color: var(--muted-text);"></div>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" id="good-at-prev-btn" onclick="window.prevGoodAtPage()" style="padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: transparent; color: var(--text-primary); cursor: pointer; font-size: 0.85rem;">&larr; Previous</button>
+                                <button type="button" id="good-at-next-btn" onclick="window.nextGoodAtPage()" style="padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: transparent; color: var(--text-primary); cursor: pointer; font-size: 0.85rem;">Next &rarr;</button>
                             </div>
                         </div>
                     </div>
@@ -10680,7 +10780,7 @@
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1795227000"></script>
+    <script src="/js/tools.js?v=1795230000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1794380009"></script>

@@ -240,6 +240,94 @@ def sync_word_stats_from_db(db_path: str = None, tally_log_path: str = None) -> 
         print(f"[TallyDivisions] Error syncing word stats: {e}")
         return 0
 
+def rebuild_word_stats_from_db(db_path: str = None) -> int:
+    """
+    Completely recompute word_stats.json strictly from authenticated, non-banned
+    registered users in morpheme.db (user_word_tallies and word_finds).
+    Any words contributed by banned users or non-legitimate sources are wiped clean,
+    instantly restoring affected words back to their rightful high-rarity divisions.
+    """
+    import sqlite3
+    global _STATS_CACHE, _STATS_MTIME, _STATS_MAX_BY_LEN
+    if not db_path:
+        db_path = os.path.join(BASE_DIR, 'morpheme.db')
+    if not os.path.exists(STATS_PATH):
+        return 0
+
+    target_counts = {}
+    if os.path.exists(db_path):
+        try:
+            conn = sqlite3.connect(db_path, timeout=30)
+            c = conn.cursor()
+            tables = [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+            
+            # Primary: Read authentic user word tallies (non-guest, non-banned users only)
+            if 'user_word_tallies' in tables:
+                for w, cnt in c.execute("""
+                    SELECT uwt.word, SUM(uwt.find_count) FROM user_word_tallies uwt
+                    JOIN users u ON uwt.user_id = u.id
+                    WHERE u.username NOT LIKE 'Guest_%'
+                    GROUP BY uwt.word
+                """).fetchall():
+                    if w and cnt:
+                        target_counts[str(w).strip().upper()] = int(cnt)
+            
+            # Fallback/supplement: word_finds if user_word_tallies didn't cover it
+            if 'word_finds' in tables:
+                for w, cnt in c.execute("""
+                    SELECT wf.word, COUNT(*) FROM word_finds wf
+                    JOIN users u ON wf.user_id = u.id
+                    WHERE u.username NOT LIKE 'Guest_%'
+                      AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%'))
+                    GROUP BY wf.word
+                """).fetchall():
+                    if w and cnt:
+                        w_up = str(w).strip().upper()
+                        target_counts[w_up] = max(target_counts.get(w_up, 0), int(cnt))
+                        
+            conn.close()
+        except Exception as e:
+            print(f"[TallyDivisions] Warning reading database in rebuild_word_stats: {e}")
+
+    try:
+        with open(STATS_PATH, 'r+', encoding='utf-8') as f:
+            fcntl.flock(f, fcntl.LOCK_EX)
+            try:
+                stats = json.load(f)
+            except Exception:
+                stats = {}
+
+            # Zero out any words not in target_counts
+            for w in list(stats.keys()):
+                if w not in target_counts:
+                    stats[w] = 0
+            # Set exact counts for legitimate words
+            for w, cnt in target_counts.items():
+                stats[w] = cnt
+
+            f.seek(0)
+            f.truncate()
+            json.dump(stats, f)
+            f.flush()
+            os.fsync(f.fileno())
+            _STATS_CACHE = stats
+            _STATS_MTIME = os.path.getmtime(STATS_PATH)
+            
+            # Recompute max counts
+            max_counts = {}
+            for w, c in stats.items():
+                if isinstance(c, (int, float)) and c > 0:
+                    l = len(w)
+                    if c > max_counts.get(l, 0):
+                        max_counts[l] = int(c)
+            _STATS_MAX_BY_LEN = max_counts
+            fcntl.flock(f, fcntl.LOCK_UN)
+            print(f"[TallyDivisions] Rebuilt word_stats.json with {len(target_counts)} authentic words.")
+            return len(target_counts)
+    except Exception as e:
+        print(f"[TallyDivisions] Error in rebuild_word_stats_from_db: {e}")
+        return 0
+
 # Configuration storage & retrieval
 _CONFIG_CACHE = None
 _CONFIG_MTIME = 0
