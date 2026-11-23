@@ -2148,6 +2148,11 @@ def ban_user_api():
     if username.lower() in ('jeffbabiak', 'jeffb', 'system'):
         return jsonify({'error': 'Cannot ban protected administrator'}), 403
 
+    # Only jeffb can ban another moderator
+    caller = session.get('username', '').strip().lower()
+    if username.lower() in get_moderators() and caller not in ('jeffb', 'jeffbabiak', 'system'):
+        return jsonify({'error': 'Only jeffb can ban another moderator'}), 403
+
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
@@ -2203,11 +2208,15 @@ def ban_user_api():
         conn.execute("DELETE FROM match_invites WHERE recipient_username = ? COLLATE NOCASE", (username,))
         conn.execute("DELETE FROM private_match_players WHERE username = ? COLLATE NOCASE", (username,))
         conn.execute("DELETE FROM private_messages WHERE sender_username = ? COLLATE NOCASE", (username,))
+        conn.execute("DELETE FROM moderators WHERE username = ? COLLATE NOCASE", (username,))
 
         # Finally, delete the user record
         conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
         
         conn.commit()
+        
+        # If banned user was a moderator, purge from mods file and cache
+        remove_moderator(username)
         
         # Reload cache
         reload_banned_ips()
@@ -2680,6 +2689,11 @@ def timeout_user_api():
         
     if username.lower() in ('jeffbabiak', 'jeffb', 'system'):
         return jsonify({'error': 'Cannot timeout protected administrator'}), 403
+
+    # Only jeffb can timeout another moderator
+    caller = session.get('username', '').strip().lower()
+    if username.lower() in get_moderators() and caller not in ('jeffb', 'jeffbabiak', 'system'):
+        return jsonify({'error': 'Only jeffb can timeout another moderator'}), 403
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     conn.row_factory = sqlite3.Row
