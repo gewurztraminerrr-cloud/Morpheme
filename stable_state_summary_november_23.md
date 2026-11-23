@@ -1,7 +1,7 @@
 # Morpheme Stable State Summary – November 23, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `7c50d72bfe5140e3681fceea6de540eaf5b6607a` (`7c50d72b`)
+- **Canonical Git Commit ID**: `eb51f92500c25a07530c00827282b09eb321e9c2` (`eb51f925`)
 - **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
