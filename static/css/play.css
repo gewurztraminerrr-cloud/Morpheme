@@ -14517,11 +14517,16 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
         border-radius: 8px !important;
     }
 
-    #page-tools #tool-good-at .combo-control-panel {
+    #page-tools #tool-good-at .combo-control-panel,
+    body.is-mobile #page-tools #tool-good-at .combo-control-panel {
         flex: 0 0 auto !important;
         padding: 6px 8px !important;
         margin-bottom: 6px !important;
         border-radius: 8px !important;
+        overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        z-index: 100 !important;
     }
 
     #page-tools #tool-lists .combo-control-panel .input-row,
@@ -14544,6 +14549,31 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     body.is-mobile #page-tools #tool-good-at .combo-control-panel .input-row > select,
     body.is-mobile #page-tools #tool-good-at .combo-control-panel .input-row > input,
     body.is-mobile #page-tools #tool-good-at .combo-control-panel .input-row > button {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 8px !important;
+        font-size: 0.82rem !important;
+        border-radius: 6px !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-good-at .combo-control-panel .input-row > .good-at-user-input-wrap,
+    body.is-mobile #page-tools #tool-good-at .combo-control-panel .input-row > .good-at-user-input-wrap {
+        width: 100% !important;
+        max-width: 100% !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #page-tools #tool-good-at .combo-control-panel .input-row > .good-at-user-input-wrap > input,
+    body.is-mobile #page-tools #tool-good-at .combo-control-panel .input-row > .good-at-user-input-wrap > input {
         width: 100% !important;
         max-width: 100% !important;
         height: 34px !important;
@@ -15434,6 +15464,26 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
 #page-tools #tool-good-at .header-full,
 #page-tools #tool-good-at .badge-full {
     display: inline;
+}
+
+#page-tools #tool-good-at .good-at-user-input-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+#page-tools #tool-good-at .good-at-user-input-wrap .friends-invite-dropdown {
+    min-width: 260px !important;
+    max-width: min(340px, calc(100vw - 32px)) !important;
+    width: max-content !important;
+    z-index: 1050 !important;
+}
+
+#page-tools #tool-good-at .combo-control-panel {
+    overflow: visible !important;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    z-index: 100 !important;
 }
 
 body.is-mobile #page-tools .tools-content:has(#tool-lists.active),
@@ -16794,9 +16844,19 @@ body.theme-white .find-count-division-badge,
         width: 100% !important;
     }
 
-    #page-tools #tool-good-at #good-at-user-input {
+    #page-tools #tool-good-at .good-at-user-input-wrap,
+    body.is-desktop #page-tools #tool-good-at .good-at-user-input-wrap {
         flex: 1 1 180px !important;
         min-width: 130px !important;
+        position: relative !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    #page-tools #tool-good-at #good-at-user-input,
+    #page-tools #tool-good-at .good-at-user-input-wrap #good-at-user-input,
+    body.is-desktop #page-tools #tool-good-at .good-at-user-input-wrap #good-at-user-input {
+        width: 100% !important;
         height: 38px !important;
     }
 
@@ -16834,6 +16894,10 @@ body.theme-white .find-count-division-badge,
     body.is-desktop #page-tools #tool-good-at .combo-control-panel {
         margin-bottom: 10px !important;
         padding: 10px 16px !important;
+        overflow: visible !important;
+        overflow-x: visible !important;
+        overflow-y: visible !important;
+        z-index: 100 !important;
     }
 
     #page-tools #tool-good-at #good-at-summary-banner,

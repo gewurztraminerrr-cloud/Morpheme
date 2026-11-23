@@ -260,10 +260,10 @@
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1794330000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794380007" as="style">
-    <link rel="preload" href="/css/play.css?v=1795350000" as="style">
+    <link rel="preload" href="/css/play.css?v=1795360000" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1794330000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/lobby.css?v=1794380007" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/play.css?v=1795350000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1795360000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
@@ -4398,9 +4398,12 @@
                         </div>
 
                         <!-- Filter Controls -->
-                        <div class="combo-control-panel" style="margin-bottom: 12px; position: sticky; top: 0; z-index: 10; background: var(--bg-panel); backdrop-filter: blur(10px); padding: 14px 20px; box-sizing: border-box; width: 100%;">
+                        <div class="combo-control-panel" style="margin-bottom: 12px; position: sticky; top: 0; z-index: 100; background: var(--bg-panel); backdrop-filter: blur(10px); padding: 14px 20px; box-sizing: border-box; width: 100%; overflow: visible !important;">
                             <div class="input-row">
-                                <input type="text" id="good-at-user-input" placeholder="Player (e.g. jeffb)..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                                <div class="good-at-user-input-wrap">
+                                    <input type="text" id="good-at-user-input" placeholder="Player (e.g. jeffb)..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                                    <div id="good-at-friends-dropdown" class="friends-invite-dropdown hidden" role="listbox"></div>
+                                </div>
                                 <input type="text" id="good-at-word-filter" placeholder="Filter words..." oninput="window.debounceGoodAtFilter()" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
                                 <select id="good-at-length-select" onchange="window.loadWordsGoodAtTool(null, true)">
                                     <option value="all">Length: All</option>
@@ -10774,7 +10777,7 @@
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1795350000"></script>
+    <script src="/js/tools.js?v=1795360000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1795260000"></script>

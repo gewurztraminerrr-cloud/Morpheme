@@ -244,6 +244,9 @@ window.showTool = function(toolId) {
         window._toolsSlideTimeout = null;
     }
     // Save scroll position of currently active tool before switching
+    if (typeof window.hideGoodAtFriendsDropdown === 'function') {
+        window.hideGoodAtFriendsDropdown();
+    }
     const currentActivePane = document.querySelector('.tool-pane.active');
     if (currentActivePane) {
         const curId = currentActivePane.id.replace('tool-', '');
@@ -507,6 +510,7 @@ window.showTool = function(toolId) {
         if (typeof loadRandomSuggestedWords === 'function') loadRandomSuggestedWords(false);
     }
     if (toolId === 'good-at') {
+        if (typeof window.refreshGoodAtFriends === 'function') window.refreshGoodAtFriends(false);
         if (typeof window.loadWordsGoodAtTool === 'function') window.loadWordsGoodAtTool();
     }
     if (toolId === 'new-users') {
@@ -13730,15 +13734,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const goodAtUserInput = document.getElementById('good-at-user-input');
-    if (goodAtUserInput) {
-        goodAtUserInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                window.loadWordsGoodAtTool(null, true);
-            }
-        });
-    }
+    initGoodAtFriendsDropdown();
 
     const goodAtWordFilter = document.getElementById('good-at-word-filter');
     if (goodAtWordFilter) {
@@ -13750,6 +13746,339 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// ==========================================
+// WORDS USER IS GOOD AT - FRIENDS DROPDOWN
+// ==========================================
+let goodAtFriendsCache = null;
+let isFetchingGoodAtFriends = false;
+const goodAtDropdownState = {
+    matches: [],
+    selectedIndex: -1,
+    query: ''
+};
+
+function escapeHtmlTools(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+async function fetchGoodAtFriendsList(force = false) {
+    if (goodAtFriendsCache !== null && !force) return goodAtFriendsCache;
+    if (isFetchingGoodAtFriends) return goodAtFriendsCache || [];
+    isFetchingGoodAtFriends = true;
+    try {
+        const res = await fetch('/api/friends/list');
+        if (res.ok) {
+            const data = await res.json();
+            goodAtFriendsCache = data.friends || [];
+            return goodAtFriendsCache;
+        } else if (res.status === 401) {
+            goodAtFriendsCache = null;
+            return null;
+        }
+    } catch (e) {
+        console.warn('[tools] Failed to fetch friends list:', e);
+    } finally {
+        isFetchingGoodAtFriends = false;
+    }
+    return goodAtFriendsCache || [];
+}
+
+window.refreshGoodAtFriends = function(force = true) {
+    if (force) goodAtFriendsCache = null;
+    return fetchGoodAtFriendsList(force);
+};
+
+function filterGoodAtFriends(friends, query) {
+    if (friends === null) return null; // Not logged in
+    if (!Array.isArray(friends)) return [];
+    if (!query) return friends;
+    const qLower = query.toLowerCase();
+    return friends.filter(f => {
+        const uname = (f.username || '').toLowerCase();
+        return uname.startsWith(qLower);
+    });
+}
+
+window.hideGoodAtFriendsDropdown = function() {
+    const dropdown = document.getElementById('good-at-friends-dropdown');
+    if (dropdown) {
+        dropdown.classList.add('hidden');
+        dropdown.innerHTML = '';
+    }
+    goodAtDropdownState.matches = [];
+    goodAtDropdownState.selectedIndex = -1;
+    goodAtDropdownState.query = '';
+};
+
+function renderGoodAtFriendsDropdown(friends, query, selectedIdx = 0) {
+    const dropdown = document.getElementById('good-at-friends-dropdown');
+    if (!dropdown) return;
+
+    if (friends === null) {
+        dropdown.innerHTML = `
+            <div class="friends-dropdown-empty">
+                Please log in to view your friends list.
+            </div>
+        `;
+        dropdown.classList.remove('hidden');
+        goodAtDropdownState.matches = [];
+        goodAtDropdownState.selectedIndex = -1;
+        return;
+    }
+
+    if (friends.length === 0) {
+        let emptyMessage = 'No friends found on your list.';
+        if (query) {
+            emptyMessage = `No friends starting with "<strong>${escapeHtmlTools(query)}</strong>"`;
+        }
+        dropdown.innerHTML = `
+            <div class="friends-dropdown-header">
+                <span>Friends (0)</span>
+            </div>
+            <div class="friends-dropdown-empty">
+                ${emptyMessage}
+            </div>
+        `;
+        dropdown.classList.remove('hidden');
+        goodAtDropdownState.matches = [];
+        goodAtDropdownState.selectedIndex = -1;
+        return;
+    }
+
+    goodAtDropdownState.matches = friends;
+    goodAtDropdownState.selectedIndex = Math.max(0, Math.min(selectedIdx, friends.length - 1));
+    goodAtDropdownState.query = query;
+
+    const itemsHtml = friends.map((friend, idx) => {
+        const uname = friend.username || '';
+        const qLen = query ? query.length : 0;
+        let nameHtml;
+        if (qLen > 0 && uname.toLowerCase().startsWith(query.toLowerCase())) {
+            const matched = uname.slice(0, qLen);
+            const rest = uname.slice(qLen);
+            nameHtml = `<strong>${escapeHtmlTools(matched)}</strong>${escapeHtmlTools(rest)}`;
+        } else {
+            nameHtml = escapeHtmlTools(uname);
+        }
+
+        const initial = uname ? uname[0].toUpperCase() : '?';
+        const avatarStyle = friend.avatar_url ? `style="background-image: url('${friend.avatar_url}');"` : '';
+        const flagHtml = window.getFlagHtml ? window.getFlagHtml(friend.country_flag) : (friend.country_flag || '');
+        const onlineDot = friend.is_online ? '<span class="friends-dropdown-online" title="Online"></span>' : '';
+
+        return `
+            <div class="friends-dropdown-item ${idx === goodAtDropdownState.selectedIndex ? 'active' : ''}" data-index="${idx}" role="option">
+                <div class="friends-dropdown-avatar" ${avatarStyle}>${friend.avatar_url ? '' : initial}</div>
+                ${flagHtml ? `<span class="friends-dropdown-flag">${flagHtml}</span>` : ''}
+                <span class="friends-dropdown-name">${nameHtml}</span>
+                ${onlineDot}
+            </div>
+        `;
+    }).join('');
+
+    dropdown.innerHTML = `
+        <div class="friends-dropdown-header">
+            <span>Friends (${friends.length})</span>
+        </div>
+        <div class="friends-dropdown-list">
+            ${itemsHtml}
+        </div>
+    `;
+
+    dropdown.classList.remove('hidden');
+
+    const activeItem = dropdown.querySelector(`.friends-dropdown-item[data-index="${goodAtDropdownState.selectedIndex}"]`);
+    if (activeItem) {
+        const itemTop = activeItem.offsetTop;
+        const itemBottom = itemTop + activeItem.offsetHeight;
+        if (itemTop < dropdown.scrollTop) {
+            dropdown.scrollTop = itemTop;
+        } else if (itemBottom > dropdown.scrollTop + dropdown.clientHeight) {
+            dropdown.scrollTop = itemBottom - dropdown.clientHeight;
+        }
+    }
+}
+
+let goodAtJustSelected = false;
+
+function selectGoodAtFriendItem(friend) {
+    if (!friend || !friend.username) return;
+    const input = document.getElementById('good-at-user-input');
+    if (!input) return;
+
+    goodAtJustSelected = true;
+    input.value = friend.username;
+    window.hideGoodAtFriendsDropdown();
+    input.focus();
+
+    window.loadWordsGoodAtTool(friend.username, true);
+}
+
+function updateGoodAtDropdownSelection(newIndex) {
+    const dropdown = document.getElementById('good-at-friends-dropdown');
+    if (!dropdown || dropdown.classList.contains('hidden') || goodAtDropdownState.matches.length === 0) return;
+
+    const count = goodAtDropdownState.matches.length;
+    if (newIndex < 0) newIndex = count - 1;
+    if (newIndex >= count) newIndex = 0;
+
+    goodAtDropdownState.selectedIndex = newIndex;
+
+    const items = dropdown.querySelectorAll('.friends-dropdown-item');
+    items.forEach((item, idx) => {
+        if (idx === newIndex) {
+            item.classList.add('active');
+            const itemTop = item.offsetTop;
+            const itemBottom = itemTop + item.offsetHeight;
+            if (itemTop < dropdown.scrollTop) {
+                dropdown.scrollTop = itemTop;
+            } else if (itemBottom > dropdown.scrollTop + dropdown.clientHeight) {
+                dropdown.scrollTop = itemBottom - dropdown.clientHeight;
+            }
+        } else {
+            item.classList.remove('active');
+        }
+    });
+}
+
+function initGoodAtFriendsDropdown() {
+    const input = document.getElementById('good-at-user-input');
+    const dropdown = document.getElementById('good-at-friends-dropdown');
+    if (!input || !dropdown) return;
+
+    const showDropdownWithMatches = async (showAll = false) => {
+        const friends = await fetchGoodAtFriendsList();
+        const query = showAll ? '' : (input.value || '').trim();
+        const matches = filterGoodAtFriends(friends, query);
+        renderGoodAtFriendsDropdown(matches, query, 0);
+    };
+
+    // When clicking or focusing the textbox:
+    input.addEventListener('focus', () => {
+        if (goodAtJustSelected) {
+            goodAtJustSelected = false;
+            return;
+        }
+        input.select();
+        showDropdownWithMatches(true);
+    });
+    input.addEventListener('click', () => {
+        if (goodAtJustSelected) {
+            goodAtJustSelected = false;
+            return;
+        }
+        showDropdownWithMatches(true);
+    });
+
+    // When typing:
+    input.addEventListener('input', () => {
+        goodAtJustSelected = false;
+        showDropdownWithMatches(false);
+    });
+
+    // Keyboard navigation:
+    input.addEventListener('keydown', (e) => {
+        if (dropdown.classList.contains('hidden')) {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                showDropdownWithMatches(true);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                window.loadWordsGoodAtTool(null, true);
+            }
+            return;
+        }
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            updateGoodAtDropdownSelection(goodAtDropdownState.selectedIndex + 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            updateGoodAtDropdownSelection(goodAtDropdownState.selectedIndex - 1);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (goodAtDropdownState.matches && goodAtDropdownState.matches.length > 0 && goodAtDropdownState.selectedIndex >= 0) {
+                const sel = goodAtDropdownState.matches[goodAtDropdownState.selectedIndex];
+                if (sel) {
+                    selectGoodAtFriendItem(sel);
+                    return;
+                }
+            }
+            window.hideGoodAtFriendsDropdown();
+            window.loadWordsGoodAtTool(null, true);
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            window.hideGoodAtFriendsDropdown();
+        } else if (e.key === 'Tab') {
+            if (goodAtDropdownState.matches && goodAtDropdownState.matches.length > 0 && goodAtDropdownState.selectedIndex >= 0) {
+                const sel = goodAtDropdownState.matches[goodAtDropdownState.selectedIndex];
+                if (sel) {
+                    e.preventDefault();
+                    selectGoodAtFriendItem(sel);
+                }
+            } else {
+                window.hideGoodAtFriendsDropdown();
+            }
+        }
+    });
+
+    // Touch and click handling:
+    let touchStartY = 0;
+    let isTouchScroll = false;
+
+    dropdown.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches[0]) {
+            touchStartY = e.touches[0].clientY;
+            isTouchScroll = false;
+        }
+    }, { passive: true });
+
+    dropdown.addEventListener('touchmove', (e) => {
+        if (e.touches && e.touches[0]) {
+            if (Math.abs(e.touches[0].clientY - touchStartY) > 8) {
+                isTouchScroll = true;
+            }
+        }
+    }, { passive: true });
+
+    dropdown.addEventListener('touchend', (e) => {
+        if (isTouchScroll) return;
+        const item = e.target.closest('.friends-dropdown-item');
+        if (item) {
+            const idx = parseInt(item.dataset.index, 10);
+            if (!isNaN(idx) && goodAtDropdownState.matches[idx]) {
+                e.preventDefault();
+                selectGoodAtFriendItem(goodAtDropdownState.matches[idx]);
+            }
+        }
+    });
+
+    dropdown.addEventListener('click', (e) => {
+        const item = e.target.closest('.friends-dropdown-item');
+        if (item) {
+            const idx = parseInt(item.dataset.index, 10);
+            if (!isNaN(idx) && goodAtDropdownState.matches[idx]) {
+                selectGoodAtFriendItem(goodAtDropdownState.matches[idx]);
+            }
+        }
+    });
+
+    // Outside pointerdown handler:
+    document.addEventListener('pointerdown', (e) => {
+        if (!dropdown.classList.contains('hidden')) {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                window.hideGoodAtFriendsDropdown();
+            }
+        }
+    });
+}
 
 // ==========================================
 // WORDS USER IS GOOD AT TOOL
