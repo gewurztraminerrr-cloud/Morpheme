@@ -16703,7 +16703,10 @@ def get_tournament_status():
             if r_data:
                 try:
                     board_meta = json.loads(r_data[0])
-                    params['uniqueness_ratio'] = board_meta.get('uniqueness_ratio', 0.0)
+                    actual_ratio = board_meta.get('uniqueness_ratio', 0.0)
+                    params['uniqueness_ratio'] = actual_ratio
+                    if board_meta.get('difficulty'):
+                        params['difficulty'] = board_meta.get('difficulty')
                 except:
                     params['uniqueness_ratio'] = 0.0
 

@@ -280,6 +280,17 @@ function renderTournament(data) {
                 wordsStr = wordRange[1] > 50000 ? `${wordRange[0]}+` : `${wordRange[0]}-${wordRange[1]}`;
             }
 
+            // Difficulty formatting: ensure only ONE single percentage is displayed (e.g. "Medium (42%)")
+            const rawDiff = params.difficulty || 'Medium';
+            const baseDiff = rawDiff.split('(')[0].trim() || 'Medium';
+            let diffDisplay = baseDiff;
+            if (params.uniqueness_ratio) {
+                const pct = Math.round(params.uniqueness_ratio * 100);
+                diffDisplay = `${baseDiff} (${pct}%)`;
+            } else if (rawDiff.includes('(') && rawDiff.includes('%')) {
+                diffDisplay = rawDiff;
+            }
+
             pContainer.innerHTML = `
                 <div class="param-item">
                     <span class="param-label">Board Size</span>
@@ -291,7 +302,7 @@ function renderTournament(data) {
                 </div>
                 <div class="param-item">
                     <span class="param-label">Difficulty</span>
-                    <span class="param-value">${params.difficulty || 'Medium'}${params.uniqueness_ratio ? ` (${Math.round(params.uniqueness_ratio * 100)}%)` : ''}</span>
+                    <span class="param-value">${diffDisplay}</span>
                 </div>
                 <div class="param-item">
                     <span class="param-label">Word Count</span>
