@@ -525,6 +525,9 @@ function setupLobbyEvents() {
             // Stop lobby and previous game polling synchronously (server cleanup_user_rooms handles leaving old room)
             stopLobbyPolling();
             if (typeof window.stopGamePolling === 'function') window.stopGamePolling();
+            if (typeof window.leaveCurrentRoom === 'function' && window.currentRoomId && window.currentRoomId !== roomId) {
+                window.leaveCurrentRoom().catch(() => {});
+            }
             window.currentRoomId = null;
             window._isEnteringRoom = true;
             window._isEnteringRoomTime = Date.now();

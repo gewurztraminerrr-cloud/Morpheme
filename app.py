@@ -7539,16 +7539,18 @@ def cleanup_user_rooms(user_id, exclude_room_id=None):
         if not room:
             continue
         
-        # PERSISTENCE RULE: Keep users in Hubs and 24h rooms even if they join another
-        is_hub = str(rid).startswith('pub_')
-        if room.time_limit >= 7200 or is_hub:
+        # PERSISTENCE RULE: Only 24h daily rooms persist across rooms
+        if room.time_limit >= 7200:
             continue
             
         # Apply leave penalty if applicable
         apply_leave_penalty(user_id, room)
 
-        # Remove from players (Standard removal, respects 24h persistence)
-        room.remove_player(user_id)
+        # Remove from players (Force removal, clear from active players)
+        room.remove_player(user_id, force=True)
+        if not hasattr(room, 'left_users'):
+            room.left_users = {}
+        room.left_users[str(user_id)] = time.time()
 
 def cleanup_user_rooms_entirely(user_id):
     """FORCED removal from ALL rooms (skipping 24h skip for explicit Logout) - used for Logout"""
@@ -7754,6 +7756,8 @@ def join_room(room_id):
         
     # Ensure user is not in any other room
     cleanup_user_rooms(session['user_id'], exclude_room_id=room_id)
+    if hasattr(room, 'left_users') and str(user_id) in room.left_users:
+        del room.left_users[str(user_id)]
 
     # Check for spectator request
     data = request.get_json() or {}
@@ -7842,7 +7846,11 @@ def leave_room(room_id):
         # Apply leave penalty if applicable
         apply_leave_penalty(session['user_id'], room)
         
-        room.remove_player(session['user_id'])
+        room.remove_player(session['user_id'], force=True)
+        if not hasattr(room, 'left_users'):
+            room.left_users = {}
+        room.left_users[str(session['user_id'])] = time.time()
+        
         if hasattr(room, 'evicted_users') and str(session['user_id']) in room.evicted_users:
             del room.evicted_users[str(session['user_id'])]
         
@@ -8246,8 +8254,10 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
             
             is_guest = session.get('is_guest', False) if in_req else False
 
-            # Automatically sync active polling user into room.players OR room.spectators if not already present
-            if not room.is_solo and not room.get_player(uid) and not room.get_spectator(uid):
+            # Automatically sync active polling user into room.players OR room.spectators if not already present,
+            # UNLESS the user has explicitly left this room!
+            user_has_left = str(uid) in getattr(room, 'left_users', {})
+            if not room.is_solo and not room.get_player(uid) and not room.get_spectator(uid) and not user_has_left:
                 # Fetch user's rating for this room's configuration ONLY when first syncing
                 rating = 1200
                 games_played = 0

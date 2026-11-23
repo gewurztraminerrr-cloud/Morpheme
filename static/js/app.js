@@ -2018,9 +2018,10 @@ function setupNavigation() {
             // Execute synchronously up to the network beacon so showPage('page-lobby') and AudioContext.resume()
             // run inside the direct user click gesture without waiting on network latency.
             if (pageTarget === 'lobby') {
-                if (window.leaveCurrentRoom && (window.currentRoomId || localStorage.getItem('last_joined_room'))) {
-                    console.log('[setupNavigation] Leaving current room on Lobby navigation click.');
-                    window.leaveCurrentRoom().catch(() => {});
+                const currentRid = (typeof window.getCurrentRoomId === 'function') ? window.getCurrentRoomId() : (window.currentRoomId || localStorage.getItem('last_joined_room'));
+                if (window.leaveCurrentRoom && currentRid) {
+                    console.log('[setupNavigation] Leaving current room on Lobby navigation click:', currentRid);
+                    await window.leaveCurrentRoom().catch(() => {});
                 }
             } else {
                 if (typeof window.leaveLobbyPresence === 'function') {

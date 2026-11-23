@@ -12422,21 +12422,13 @@ async function leaveCurrentRoom() {
     const url = `/api/room/${roomId}/leave`;
     try {
         const leaveController = new AbortController();
-        const leaveTimer = setTimeout(() => leaveController.abort(), 1500);
-        const leavePromise = fetch(url, {
+        const leaveTimer = setTimeout(() => leaveController.abort(), 2000);
+        await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({}),
             signal: leaveController.signal
         }).finally(() => clearTimeout(leaveTimer));
-
-        if (navigator.sendBeacon) {
-            try {
-                const blob = new Blob(['{}'], { type: 'application/json' });
-                navigator.sendBeacon(url, blob);
-            } catch (bErr) {}
-        }
-        await leavePromise;
     } catch (e) {
         console.warn('[play.js] fetch /leave completed or timed out in leaveCurrentRoom:', e.message);
         if (navigator.sendBeacon) {
@@ -12471,7 +12463,7 @@ if (returnBtnEl) {
             await finishPrivateMatchTurn();
             return;
         }
-        leaveCurrentRoom().catch(() => {});
+        await leaveCurrentRoom().catch(() => {});
         showPage('page-lobby');
     });
 }
