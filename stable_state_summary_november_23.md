@@ -1,17 +1,70 @@
 # Morpheme Stable State Summary – November 23, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `1d3414b63f2a6654d33351cf4bd1a040803342d5` (`1d3414b6`)
+- **Canonical Git Commit ID**: `f29e01e3377999e3d7ddf77ee7ade5dacac0b96c` (`f29e01e3`)
 - **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
-- **Date/Time**: November 23, 2026 (15:55 UTC / 10:55 EST)
+- **Date/Time**: November 23, 2026 (18:31 UTC / 13:31 EST)
 
 ---
 
 ## 1. Key Achievements & Updates in this Stable Point
 
-### A. Words User is Good at (Tools Tab) Mobile & Desktop Overhaul
+### A. Universal Word Definition Popup Auto-Repositioning (No Bottom Cut-Off)
+- **Cross-Platform Viewport Edge Detection**:
+  - Whenever any word is clicked/selected throughout the entire app (Tools tabs: Lists, Words User is Good at, Combo Checker, Is Valid, Sequence, Subanagrams, Unscramble, Reverse Dictionary, Word Chart, Words to Work on, Find Count; Game rooms: Notepad, Round Replay; Mods word lists, etc.) and the definition popup (`#tool-word-def-popover`) appears:
+  - If the bottom of the popover extends past the visible viewport bottom (`rect.bottom > viewportHeight - 12`), the system immediately and smoothly shifts `top` higher so the entire window is 100% visible with a clean 12px safety margin.
+- **Dynamic Asynchronous Height Handling**:
+  - Attached a `ResizeObserver` on `#tool-word-def-popover` that automatically detects when content expands (such as when multi-line definitions, division badges, inflections, Wikipedia links, and images load asynchronously from `/api/tools/validate`).
+  - Added direct image `load` and `error` event handlers inside `renderDefData(data)` to re-calculate popover positioning as soon as definition images finish rendering.
+  - Bound window `resize` and `orientationchange` listeners so orientation changes on mobile and window resizes on desktop/laptop keep the popover fully in view.
+- **Top Edge & Small Screen Fallback (Constrained Max-Height)**:
+  - Ensured shifting `top` higher never pushes the popover off the top of the screen (`top >= 12px`).
+  - If the viewport height is very small (such as mobile landscape orientation), capped `maxHeight` to `viewportHeight - 24px` and enabled smooth touch scrolling (`-webkit-overflow-scrolling: touch`) on `.tool-def-content`, ensuring header titles and footer action buttons (CC, FC, ADD) remain visible and accessible.
+  - Reset inline `maxHeight` and scroll states upon popover close so subsequent lookups measure naturally.
+- **Cache Buster**:
+  - Bumped `tools.js?v=1795370000` to `v=1795380000` in `templates/index.html`.
+
+---
+
+### B. Empty Default Player in "Words User is Good at" (No `jeffb` Default)
+- **Blank Starting State**:
+  - The "Player" textbox (`#good-at-user-input`) now starts off completely blank with no initial text.
+  - Eliminated the backend fallback to `jeffb` or top recorded player when no username is provided: `/api/tools/words-good-at` returns an empty successful dataset (`username: ''`, `words: []`, `total_count: 0`) when no username query parameter is present.
+  - Frontend prompts the user with: `"Enter a player's username above or select from your friends list to view the words they are good at."`
+  - Neutral placeholder updated to `placeholder="Player..."` (removing `"e.g. jeffb"`).
+  - Preserved full search and friend selection functionality: typing a username or choosing a friend from the popup immediately fetches and renders that player's mastered words.
+
+### C. Unified Blue "Update" and Primary Action Buttons Across All Themes & Layouts
+- **All Layout Colors & Themes (Light & Dark)**:
+  - Standardized the "Update" button in **Words User is Good at** (`#good-at-search-btn`) and **Lists** (`#list-update-btn`) to use the vibrant blue action button styling (`linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important; color: #ffffff !important; border: none !important; font-weight: 700 !important;`) matching the other Tools tabs across all layout colors (default dark, black, gray, dark-gray, dark-red, dark-blue, white, light-gray, light-light-gray, light-red, light-orange, light-green, light-blue, etc.).
+  - Fixed mobile selector conflict in `play.css` where `.combo-control-panel .input-row > button` had previously been bundled with inputs and assigned `background: var(--input-bg)` (causing light theme Update buttons on mobile to render light gray/white instead of blue).
+  - Explicitly unified hover (`linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)`) and active states across desktop, laptop, and mobile viewports.
+  - Extended unified blue styling across all tool action buttons (`#combo-search-btn`, `#valid-check-btn`, `#seq-search-btn`, `#find-count-btn`, `#random-gen-btn`, `#unscramble-gen-btn`, `#wc-word-search-btn`) in light-colored layouts.
+
+---
+
+### D. Friends Dropdown Popup in "Words User is Good at"
+- **Interactive Friends Popup Aligned with With Friends Invitations**:
+  - Implemented an autocomplete dropdown for the "Player" input (`#good-at-user-input`) in **Tools $\to$ Words User is Good at**, mimicking the exact visual style and behavior of the **With Friends** game room invitation dropdown.
+  - **Popup Structure & Content**:
+    - **Header**: Shows `FRIENDS (<count>)` count matching `/api/friends/list`.
+    - **Items**: Each friend row features a colored circular avatar with their initial letter, optional country flag emoji (`🇨🇦`), friend username (with typed prefix matching highlighted in bold), and an online/offline status indicator dot.
+    - **Empty & Non-Logged In States**: Displays clear messages if no friends match the typed filter or if the user is not currently logged in.
+  - **Prefix Filtering & Keyboard/Touch Navigation**:
+    - Typing into the Player textbox filters the friends list by username prefix in real-time (`startsWith`).
+    - Full keyboard accessibility: ArrowDown/ArrowUp moves selection, Enter selects friend and automatically loads their mastered words tool data, Escape hides the popup, and Tab selects or closes.
+    - Seamless touch support: tapping on mobile or desktop item selects the friend, updates the textbox value, hides the popup, and automatically invokes `window.loadWordsGoodAtTool(friend.username, true)`.
+    - Outside clicks or tool switching automatically closes the dropdown.
+  - **Stacking Context & Overflow Resolution**:
+    - Wrapped `#good-at-user-input` in `.good-at-user-input-wrap` (`position: relative; display: flex; flex-direction: column;`).
+    - Fixed `.combo-control-panel` stacking bug by explicitly overriding `overflow: visible !important; z-index: 100 !important;` so the dropdown floats cleanly above the summary banner and results table on desktop, laptop, and mobile viewports.
+    - Replaced `scrollIntoView()` with inner `dropdown.scrollTop` calculations so ancestor containers are never unintentionally shifted.
+
+---
+
+### E. Words User is Good at (Tools Tab) Mobile & Desktop Overhaul
 - **Control Organization Aligned with Lists**:
   - Restructured the controls in `#tool-good-at` into an `.input-row` identical in organization to `#tool-lists`.
   - **Mobile 2×2 Grid + Full-Width Button**:
@@ -50,7 +103,7 @@
 
 ---
 
-### B. Moderation Policy, Hierarchy & Permanent Ban Protocol
+### F. Moderation Policy, Hierarchy & Permanent Ban Protocol
 - **Permanent Ban Enforcement & Removal of "Lift Ban"**:
   - Fully eliminated the "Lift Ban" button and associated frontend/backend handlers from **Mods $\to$ Ban/Timeout User**.
   - Enforced a strictly permanent ban model: when a user account is banned, the record is permanently eradicated, active sessions are terminated, and their IP address is blacklisted.
@@ -73,8 +126,8 @@
 |---|---|---|
 | **Production VPS** | `ONLINE` | `132.148.72.249` ([morpheme.games](https://morpheme.games)), Ubuntu 24.04 LTS, PM2 Process ID 0 |
 | **Localhost** | `ONLINE` | Port `5001`, Python 3 Flask / SocketIO daemon (Tally Hardened) |
-| **Git Canonical Branch** | `SYNCHRONIZED` | `origin/main` == `HEAD` |
-| **Asset Cache Buster** | `1795350000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
+| **Git Canonical Branch** | `SYNCHRONIZED` | `origin/main` == `HEAD` (`f29e01e3`) |
+| **Asset Cache Buster** | `1795380000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
 | **RAM Utilization** | `OPTIMAL` | SQLite definitions proxy + LRU cache maintaining low ~1.1 GB memory profile |
 
 ---
@@ -94,5 +147,5 @@
   - Verified vertical table scrolling within `#good-at-results-wrapper` with sticky headers.
   - Verified zero outer page layout displacement.
 - **Live Production HTTP**:
-  - `curl -sL https://morpheme.games/` confirmed serving cache buster `v=1795330000`.
+  - `curl -sI https://morpheme.games/` confirmed HTTP/2 200 OK serving cache buster `v=1795380000`.
   - PM2 logs confirmed clean process restart with zero errors.
