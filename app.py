@@ -14716,23 +14716,23 @@ def tools_words_good_at():
         conn = sqlite3.connect(DB_PATH, timeout=30)
         conn.row_factory = sqlite3.Row
         
-        # If no username specified, try logged-in user; if guest or empty, try top player or jeffb
+        # If no username specified, do not default to jeffb or any user; start off empty
         if not target_username:
-            if logged_in_user and not logged_in_user.startswith('Guest_'):
-                target_username = logged_in_user
-            else:
-                top_row = conn.execute("""
-                    SELECT u.username FROM user_word_tallies uwt
-                    JOIN users u ON uwt.user_id = u.id
-                    WHERE u.username NOT LIKE 'Guest_%'
-                    GROUP BY u.id
-                    ORDER BY COUNT(uwt.id) DESC
-                    LIMIT 1
-                """).fetchone()
-                if top_row:
-                    target_username = top_row['username']
-                else:
-                    target_username = 'jeffb'
+            conn.close()
+            limit = min(200, max(10, int(request.args.get('limit', 100))))
+            return jsonify({
+                'success': True,
+                'username': '',
+                'country_flag': '',
+                'total_unique_words': 0,
+                'total_finds': 0,
+                'rarest_division': 1,
+                'words': [],
+                'total_count': 0,
+                'page': 1,
+                'limit': limit,
+                'total_pages': 0
+            })
         
         # Look up user in db
         user_row = conn.execute("SELECT id, username, country_flag FROM users WHERE username = ? COLLATE NOCASE", (target_username,)).fetchone()

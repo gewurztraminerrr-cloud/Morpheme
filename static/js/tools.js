@@ -14131,6 +14131,23 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
         username = userInput.value.trim();
     }
 
+    if (!username) {
+        if (searchBtn) searchBtn.disabled = false;
+        if (summaryBanner) summaryBanner.style.display = 'none';
+        if (pagination) pagination.style.display = 'none';
+        if (pageInfo) pageInfo.textContent = '';
+        if (tbody) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="padding: 40px 20px; text-align: center; color: var(--muted-text); font-size: 0.95rem;">
+                        Enter a player's username above or select from your friends list to view the words they are good at.
+                    </td>
+                </tr>
+            `;
+        }
+        return;
+    }
+
     const wordFilter = wordFilterInput ? wordFilterInput.value.trim() : '';
     const lengthFilter = lengthSelect ? lengthSelect.value : 'all';
     const sortBy = sortSelect ? sortSelect.value : 'count';
@@ -14166,9 +14183,6 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
         }
 
         window.goodAtCurrentUsername = data.username;
-        if (userInput && !userInput.value) {
-            userInput.value = data.username;
-        }
 
         // Update Summary Banner
         if (summaryBanner) {
