@@ -1,11 +1,11 @@
 # Morpheme Stable State Summary – November 22, 2026
 
 **Synchronization Checkpoint & Stable Anchor**  
-- **Canonical Git Commit ID**: `aa05c65a96cbe84203c67ced2eae1ee655e2bbfd` (`aa05c65a`)
+- **Canonical Git Commit ID**: `965eb8d59360385c06f6c0d5e3741da503f49af5` (`965eb8d5`)
 - **Git Branch**: `main` (synchronized: local `main` == `origin/main` == VPS `main`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & healthy (Tally Hardened version)
-- **Date/Time**: November 23, 2026 (03:10 UTC / 22:10 EST)
+- **Date/Time**: November 23, 2026 (04:48 UTC / 23:48 EST)
 
 ---
 
@@ -122,16 +122,52 @@
   - Executes `tally_divisions.rebuild_word_stats_from_db()` to recalculate `word_stats.json` strictly from remaining non-banned users.
   - Wipes cheater finds across **Find Count in Tools** (total find count & 10 most recent finders), **Dynamic Word Lookup (Word Charts)**, and **Tally Division Difficulty**, instantly restoring inflated words to their rightful maximum rarity divisions.
 
+### N. Instant Room Eviction on Ban & In-Memory Ban Cache Fix
+- **In-Memory Ban Cache Tuple Fix (`reload_banned_ips`)**:
+  - Resolved `TypeError: tuple indices must be integers or slices, not str` in `reload_banned_ips()`, which previously prevented `BANNED_USERNAMES_REASONS` and `BANNED_IPS_CACHE` from loading into memory.
+  - Set `conn.row_factory = sqlite3.Row` so banned usernames and IPs populate $O(1)$ lookup structures reliably.
+- **Immediate In-Memory Active Room Eviction**:
+  - When a user is banned in `ban_user_api`, the server iterates through all active rooms in `room_manager.rooms` and force-evicts the player from `room.players` and `room.spectators` (by both `user_id` and username).
+  - Flags them in `room.evicted_users` and `room.left_users`.
+- **Enforced Ban Interception on Join & Room Polling**:
+  - In `/api/room/<id>/join`: Added ban checks and database user-existence validation to reject deleted/banned accounts still holding signed cookies.
+  - In `/api/room/<id>/state`: Intercepts banned users, force-evicts them, and returns HTTP 403.
+  - In `static/js/play.js`: Added an explicit `is_banned` handler that immediately stops polling, displays an `Account Banned` modal, clears local room storage, and redirects to `/`.
+  - Added moderator immunity check (`is_mod`) in `@app.before_request` so moderators testing bans from the same IP/Wi-Fi are not locked out.
+
+### O. Elimination of Penalty Guess Leaks into Word Finds, Best Word, & Rarity Divisions
+- **Root Cause Analysis for "BOMINE (1)"**:
+  - In **Penalty** board format rooms (specifically `pub_v2_accumulative_4x6_45` round 20), invalid guesses are recorded in `words_data` with negative points (`points: -3`) to deduct the penalty from the player's round score.
+  - At round end, `game_room.py` iterated through `words_data` and saved words into `word_finds` without checking if `entry.get('points', 0) > 0`.
+  - Similarly, `best_word` was computed via length without checking for positive points or validity, erroneously selecting `BOMINE` as the player's best word.
+  - Periodic database synchronizations (`sync_word_stats_from_db`, `rebuild_word_stats_from_db`, and `user_word_tallies`) synced `word_finds` directly into `word_stats.json` with count 1.
+  - The Dynamic Word Lookup in Tools -> Word Charts randomly sampled words from `word_stats.json` for 6-letter division examples, surfacing `BOMINE (1)` to the user.
+- **Fixes Applied**:
+  - **`game_room.py`**:
+    - Filtered `player_words` and `ghost_player_words` to only words with `points > 0`.
+    - Enforced `pts > 0` and board validity (`w_text in actual_all_words`) when inserting into `word_finds`.
+    - Enforced `pts > 0` and board validity when selecting `best_word`.
+    - Enforced `pts > 0` when counting user input method statistics.
+  - **`app.py`**:
+    - In `prune_non_visible_round_history`, added `if pts <= 0: continue` before archiving to `word_finds`.
+  - **`tally_divisions.py`**:
+    - Added `_is_legit_word()` check to ensure only actual dictionary words (NWL, CSW, or Added Words) can be counted in `sync_word_stats_from_db` and `rebuild_word_stats_from_db`.
+    - Added `_is_legit_word()` check in `get_division_examples()` so no invalid word can ever be displayed as an example.
+  - **Production Database & Stats Cleanup**:
+    - Purged `BOMINE` from `word_finds` and `user_word_tallies`.
+    - Corrected `best_word` in round 2646 from `BOMINE` to `BICE`.
+    - Removed `BOMINE` from `word_stats.json` and verified zero occurrences across all tables and endpoints.
+
 ---
 
 ## 2. Synchronization Status Matrix
 
 | Component | Status | Commit / Version | Notes |
 | :--- | :--- | :--- | :--- |
-| **Localhost** | ✅ Active | `aa05c65a` | Port 5001, daemon running, single difficulty percentage verified |
-| **GitHub (`main`)** | ✅ Up to date | `aa05c65a` | Remote synchronized with zero uncommitted changes |
-| **Production VPS** | ✅ Live | `aa05c65a` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
-| **App / Client UI** | ✅ Verified | `aa05c65a` | Tournament parameters display only one factual percentage |
+| **Localhost** | ✅ Active | `965eb8d5` | Port 5001, daemon running, penalty filtering verified |
+| **GitHub (`main`)** | ✅ Up to date | `965eb8d5` | Remote synchronized with zero uncommitted changes |
+| **Production VPS** | ✅ Live | `965eb8d5` | `morpheme.games` (132.148.72.249), PM2 online, HTTP 200 OK |
+| **App / Client UI** | ✅ Verified | `965eb8d5` | Clean division examples, BOMINE purged from all tallies |
 
 ---
 
@@ -140,6 +176,6 @@
 To reset or redeploy to this exact point in the future:
 ```bash
 git fetch origin main
-git reset --hard aa05c65a96cbe84203c67ced2eae1ee655e2bbfd
+git reset --hard 965eb8d59360385c06f6c0d5e3741da503f49af5
 python3 scratch/deploy_reliable.py
 ```
