@@ -25,8 +25,11 @@
   - Rendered full readable values: Word text with definition popup triggers, length indicator (`3L`), bold find counts, full division badges (`Division 1 (1 pt)`, `Division 2 (3 pts)`, `Division 5 (9 pts)`), and full dates (`Nov 23, 2026`).
   - Enabled smooth horizontal swiping on mobile viewports via `-webkit-overflow-scrolling: touch` with subtle native scroll indicators.
 - **Universal Internal Vertical Scrolling with Sticky Headers**:
-  - **Mobile**: Configured `#good-at-results-wrapper` to fill all remaining vertical viewport space (`flex: 1 1 0px !important; min-height: 0 !important; height: 100% !important; overflow-y: auto !important;`). Sticky header (`position: sticky; top: 0; z-index: 10`) keeps column titles anchored while words scroll beneath.
-  - **Desktop**: Isolated vertical flex sizing (`min-height: 160px; height: 100%`) with internal vertical scroll and custom thin scrollbars, preventing outer page displacement.
+  - **Mobile**: Configured `#good-at-results-wrapper` to fill all remaining vertical viewport space (`flex: 1 1 0px !important; min-height: 280px !important; height: 100% !important; overflow-y: auto !important;`). Sticky header (`position: sticky; top: 0; z-index: 10`) keeps column titles anchored while words scroll beneath.
+  - **Desktop**: Isolated vertical flex sizing (`min-height: 380px; height: 100%`) with internal vertical scroll and custom thin scrollbars, preventing outer page displacement.
+- **Removed Featured Players & Compensated Table Height**:
+  - Removed the `FEATURED PLAYERS` container (`#good-at-top-players`) and chips from `#tool-good-at`.
+  - Reallocated the vertical space directly to the results table: table vertical height expanded from 299px to 334px on mobile and from 297px to 380px (+28%) on desktop, showing significantly more word rows without scrolling.
 - **Compact Summary Banner**:
   - Streamlined the 4 summary statistics into a single-row compact strip on mobile (`PLAYER: <user>`, `WORDS: <count>`, `FINDS: <count>`, `RAREST: Div <n>`).
   - Avoided label truncation and ellipsis (`...`) while preserving bold contrast.
@@ -57,8 +60,8 @@
 |---|---|---|
 | **Production VPS** | `ONLINE` | `132.148.72.249` ([morpheme.games](https://morpheme.games)), Ubuntu 24.04 LTS, PM2 Process ID 0 |
 | **Localhost** | `ONLINE` | Port `5001`, Python 3 Flask / SocketIO daemon (Tally Hardened) |
-| **Git Canonical Branch** | `SYNCHRONIZED` | `origin/main` == `HEAD` (`7c50d72b`) |
-| **Asset Cache Buster** | `1795290000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
+| **Git Canonical Branch** | `SYNCHRONIZED` | `origin/main` == `HEAD` |
+| **Asset Cache Buster** | `1795300000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
 | **RAM Utilization** | `OPTIMAL` | SQLite definitions proxy + LRU cache maintaining low ~1.1 GB memory profile |
 
 ---
@@ -68,10 +71,11 @@
   - Verified 2×2 control grid + full-width Update button matches Lists.
   - Verified horizontal swiping (`scrollLeft`) reveals all columns comfortably without clipping.
   - Verified vertical scrolling (`scrollTop`) with sticky headers anchored at table top.
+  - Verified removal of Featured Players container; table height expanded to 334px.
 - **Desktop (1440×900 Viewport)**:
   - Verified horizontal input controls row.
-  - Verified vertical table scrolling within `#good-at-results-wrapper` with 50+ rows.
+  - Verified vertical table scrolling within `#good-at-results-wrapper` expanded to 380px (+28% vertical capacity).
   - Verified zero outer page layout displacement.
 - **Live Production HTTP**:
-  - `curl -sL https://morpheme.games/` confirmed serving cache buster `v=1795290000`.
+  - `curl -sL https://morpheme.games/` confirmed serving cache buster `v=1795300000`.
   - PM2 logs confirmed clean process restart with zero errors.

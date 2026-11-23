@@ -15197,23 +15197,6 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     }
 
     /* Words User is Good at Mobile Layout */
-    #page-tools #tool-good-at #good-at-top-players,
-    body.is-mobile #page-tools #tool-good-at #good-at-top-players {
-        flex: 0 0 auto !important;
-        margin-bottom: 6px !important;
-        align-items: center !important;
-        gap: 6px !important;
-        overflow-x: auto !important;
-        white-space: nowrap !important;
-        -webkit-overflow-scrolling: touch !important;
-        scrollbar-width: none !important;
-    }
-
-    #page-tools #tool-good-at #good-at-top-players::-webkit-scrollbar,
-    body.is-mobile #page-tools #tool-good-at #good-at-top-players::-webkit-scrollbar {
-        display: none !important;
-    }
-
     #page-tools #tool-good-at #good-at-summary-banner,
     body.is-mobile #page-tools #tool-good-at #good-at-summary-banner {
         flex: 0 0 auto !important;
@@ -15259,7 +15242,7 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     #page-tools #tool-good-at #good-at-results-wrapper,
     body.is-mobile #page-tools #tool-good-at #good-at-results-wrapper {
         flex: 1 1 0px !important;
-        min-height: 0 !important;
+        min-height: 280px !important;
         height: 100% !important;
         max-height: 100% !important;
         display: block !important;
@@ -16785,10 +16768,28 @@ body.theme-white .find-count-division-badge,
         height: 38px !important;
     }
 
+    #page-tools #tool-good-at .combo-control-panel,
+    body.is-desktop #page-tools #tool-good-at .combo-control-panel {
+        margin-bottom: 10px !important;
+        padding: 10px 16px !important;
+    }
+
+    #page-tools #tool-good-at #good-at-summary-banner,
+    body.is-desktop #page-tools #tool-good-at #good-at-summary-banner {
+        flex: 0 0 auto !important;
+        margin-bottom: 10px !important;
+        gap: 10px !important;
+    }
+
+    #page-tools #tool-good-at #good-at-summary-banner > div,
+    body.is-desktop #page-tools #tool-good-at #good-at-summary-banner > div {
+        padding: 8px 14px !important;
+    }
+
     #page-tools #tool-good-at #good-at-results-wrapper,
     body.is-desktop #page-tools #tool-good-at #good-at-results-wrapper {
         flex: 1 1 0px !important;
-        min-height: 160px !important;
+        min-height: 380px !important;
         height: 100% !important;
         max-height: 100% !important;
         display: block !important;

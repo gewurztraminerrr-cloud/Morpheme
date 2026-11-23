@@ -13785,7 +13785,6 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
     const tbody = document.getElementById('good-at-table-body');
     const searchBtn = document.getElementById('good-at-search-btn');
     const summaryBanner = document.getElementById('good-at-summary-banner');
-    const chipsContainer = document.getElementById('good-at-player-chips');
     const pagination = document.getElementById('good-at-pagination');
     const pageInfo = document.getElementById('good-at-page-info');
     const prevBtn = document.getElementById('good-at-prev-btn');
@@ -13840,27 +13839,6 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
         window.goodAtCurrentUsername = data.username;
         if (userInput && !userInput.value) {
             userInput.value = data.username;
-        }
-
-        // Render Featured Player chips if available
-        const topPlayersContainer = document.getElementById('good-at-top-players');
-        if (chipsContainer && data.top_players && data.top_players.length > 0) {
-            if (topPlayersContainer) topPlayersContainer.style.display = 'flex';
-            chipsContainer.innerHTML = data.top_players.map(p => {
-                const isActive = (p.username.toLowerCase() === data.username.toLowerCase());
-                const activeStyle = isActive 
-                    ? 'background: var(--accent-color, #38bdf8); color: #fff; border-color: var(--accent-color, #38bdf8); font-weight: 700;' 
-                    : 'background: rgba(var(--text-primary-rgb), 0.05); color: var(--text-primary); border-color: rgba(var(--text-primary-rgb), 0.15);';
-                return `
-                    <button type="button" onclick="window.loadWordsGoodAtTool('${escapeHtml(p.username)}', true)" style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 14px; border: 1px solid; font-size: 0.78rem; cursor: pointer; transition: all 0.15s ease; ${activeStyle}">
-                        <span>${p.country_flag || '👤'}</span>
-                        <span>${escapeHtml(p.username)}</span>
-                        <span style="opacity: 0.7; font-size: 0.72rem;">(${p.word_count})</span>
-                    </button>
-                `;
-            }).join('');
-        } else if (topPlayersContainer) {
-            topPlayersContainer.style.display = 'none';
         }
 
         // Update Summary Banner
