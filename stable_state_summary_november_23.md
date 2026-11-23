@@ -34,6 +34,10 @@
   - Positioned "Page 1 of 3 (122 words)" text at the exact horizontal center below the results table across mobile, laptop, and desktop viewports.
   - Placed Previous and Next buttons directly beneath the page indicator, stretching across the entire horizontal length of the container (`flex: 1 1 0px` each), with clean disabled states and hover transitions.
   - Added explicit `@media (min-width: 901px)` desktop/laptop styling (`height: 38px`, `font-size: 0.88rem`, `padding: 8px 16px`) alongside mobile rules (`height: 32px`, `font-size: 0.8rem`).
+  - Equalized the bottom padding/spacing of the results table on desktops and laptops to 14px to match the 14px left padding.
+- **Granular Word Length Filter (3 through 15 Letters & 16+)**:
+  - Expanded the Length dropdown in "Words User is Good at" to include discrete options: 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 Letters, and 16+.
+  - Updated backend endpoint `/api/tools/words-good-at` to perform exact length matching for lengths 3-15 and `>= 16` for `16+`.
 - **Compact Summary Banner**:
   - Streamlined the 4 summary statistics into a single-row compact strip on mobile (`PLAYER: <user>`, `WORDS: <count>`, `FINDS: <count>`, `RAREST: Div <n>`).
   - Avoided label truncation and ellipsis (`...`) while preserving bold contrast.
@@ -65,7 +69,7 @@
 | **Production VPS** | `ONLINE` | `132.148.72.249` ([morpheme.games](https://morpheme.games)), Ubuntu 24.04 LTS, PM2 Process ID 0 |
 | **Localhost** | `ONLINE` | Port `5001`, Python 3 Flask / SocketIO daemon (Tally Hardened) |
 | **Git Canonical Branch** | `SYNCHRONIZED` | `origin/main` == `HEAD` |
-| **Asset Cache Buster** | `1795320000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
+| **Asset Cache Buster** | `1795330000` | Applied across `play.css` and `tools.js` in `templates/index.html` |
 | **RAM Utilization** | `OPTIMAL` | SQLite definitions proxy + LRU cache maintaining low ~1.1 GB memory profile |
 
 ---
@@ -80,8 +84,10 @@
 - **Laptop & Desktop (1280×800 & 1440×900 Viewports)**:
   - Verified horizontal input controls row.
   - Verified centered page indicator and full-width pagination buttons stretching across the horizontal container (`899px` on laptop, `1049px` on desktop).
+  - Verified matching 14px bottom padding/margin on table to equal left padding.
+  - Verified discrete length filters (8, 9, 10, 11, 12, 13, 14, 15, and 16+ Letters).
   - Verified vertical table scrolling within `#good-at-results-wrapper` with sticky headers.
   - Verified zero outer page layout displacement.
 - **Live Production HTTP**:
-  - `curl -sL https://morpheme.games/` confirmed serving cache buster `v=1795320000`.
+  - `curl -sL https://morpheme.games/` confirmed serving cache buster `v=1795330000`.
   - PM2 logs confirmed clean process restart with zero errors.

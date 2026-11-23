@@ -12893,10 +12893,14 @@ body[class*="theme-light-"] #store-scrollbar-thumb,
     #page-tools .tools-content:has(#tool-reverse-dictionary.active),
     #page-tools .tools-content.has-reverse-dictionary-active,
     #page-tools .tools-content:has(#tool-word-chart.active),
-    #page-tools .tools-content.has-word-chart-active,
+    #page-tools .tools-content.has-word-chart-active {
+        padding: 12px 14px !important;
+        overflow-y: hidden !important;
+    }
+
     #page-tools .tools-content:has(#tool-good-at.active),
     #page-tools .tools-content.has-good-at-active {
-        padding: 12px 14px !important;
+        padding: 14px !important;
         overflow-y: hidden !important;
     }
 
@@ -16843,10 +16847,17 @@ body.theme-white .find-count-division-badge,
         display: block !important;
         overflow-y: auto !important;
         overflow-x: auto !important;
+        margin: 0 0 14px 0 !important;
+        padding: 0 !important;
         box-sizing: border-box !important;
         scrollbar-width: thin !important;
         scrollbar-color: rgba(var(--text-primary-rgb), 0.45) rgba(0, 0, 0, 0.15) !important;
         -ms-overflow-style: auto !important;
+    }
+
+    #page-tools #tool-good-at .history-table tbody td,
+    body.is-desktop #page-tools #tool-good-at .history-table tbody td {
+        padding: 10px 14px !important;
     }
 
     #page-tools #tool-good-at #good-at-results-wrapper::-webkit-scrollbar {
@@ -16873,8 +16884,8 @@ body.theme-white .find-count-division-badge,
     #page-tools #tool-good-at #good-at-pagination,
     body.is-desktop #page-tools #tool-good-at #good-at-pagination {
         flex: 0 0 auto !important;
-        padding: 6px 0 2px 0 !important;
-        margin: 6px 0 0 0 !important;
+        padding: 0 !important;
+        margin: 0 0 4px 0 !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
@@ -16885,10 +16896,15 @@ body.theme-white .find-count-division-badge,
 
     #page-tools #tool-good-at #good-at-page-info,
     body.is-desktop #page-tools #tool-good-at #good-at-page-info {
+        display: block !important;
         width: 100% !important;
         text-align: center !important;
         font-size: 0.88rem !important;
-        color: var(--muted-text) !important;
+        font-weight: 600 !important;
+        color: var(--text-primary) !important;
+        opacity: 0.85 !important;
+        margin-bottom: 4px !important;
+        letter-spacing: 0.02em !important;
     }
 
     #page-tools #tool-good-at #good-at-pagination-buttons,

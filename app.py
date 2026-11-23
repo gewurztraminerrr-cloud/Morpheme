@@ -14738,8 +14738,15 @@ def tools_words_good_at():
             params.append(f"%{search_filter}%")
             
         if length_filter != 'all':
-            if length_filter in ('8+', '8'):
-                query_parts.append("AND LENGTH(uwt.word) >= 8")
+            if length_filter in ('16+', '16_plus'):
+                query_parts.append("AND LENGTH(uwt.word) >= 16")
+            elif length_filter.endswith('+'):
+                try:
+                    len_val = int(length_filter[:-1])
+                    query_parts.append("AND LENGTH(uwt.word) >= ?")
+                    params.append(len_val)
+                except ValueError:
+                    pass
             else:
                 try:
                     len_val = int(length_filter)
