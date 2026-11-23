@@ -11710,6 +11710,7 @@ window.hideWordDefinitionPopup = function () {
         setTimeout(() => {
             if (!popover.classList.contains('active')) {
                 popover.style.display = 'none';
+                popover.style.maxHeight = '';
             }
         }, 150);
     }
@@ -12060,6 +12061,69 @@ window.navigateToFindCount = function (word, originPage = null) {
     }
 };
 
+window.ensureDefPopoverInView = function () {
+    const popover = document.getElementById('tool-word-def-popover');
+    if (!popover || !popover.classList.contains('active')) return;
+
+    const margin = 12; // Safety margin in px from viewport edges
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+    // Convert centered transform to pixel top/left before adjusting
+    if (popover.style.transform && popover.style.transform.includes('translate(-50%')) {
+        const initialRect = popover.getBoundingClientRect();
+        popover.style.transform = 'scale(1) translateY(0)';
+        popover.style.top = `${Math.round(initialRect.top)}px`;
+        popover.style.left = `${Math.round(initialRect.left)}px`;
+    }
+
+    let rect = popover.getBoundingClientRect();
+    if (!rect || rect.height === 0) return;
+
+    // Constrain popover max-height if viewport is short (e.g. mobile landscape)
+    const availableHeight = Math.max(100, viewportHeight - (margin * 2));
+    if (rect.height > availableHeight) {
+        popover.style.maxHeight = `${availableHeight}px`;
+        const contentEl = popover.querySelector('.tool-def-content');
+        if (contentEl) {
+            contentEl.style.overflowY = 'auto';
+            contentEl.style.webkitOverflowScrolling = 'touch';
+        }
+        rect = popover.getBoundingClientRect();
+    }
+
+    // If the window gets cut off along the bottom, move the window higher so all of it is visible
+    if (rect.bottom > viewportHeight - margin) {
+        const overflowBottom = rect.bottom - (viewportHeight - margin);
+        const currentTop = parseFloat(popover.style.top) || rect.top;
+        let newTop = currentTop - overflowBottom;
+
+        // Ensure moving higher does not push top off the screen
+        if (newTop < margin) {
+            newTop = margin;
+        }
+        popover.style.top = `${Math.round(newTop)}px`;
+        rect = popover.getBoundingClientRect();
+    }
+
+    // Ensure top is never cut off
+    if (rect.top < margin) {
+        popover.style.top = `${margin}px`;
+        rect = popover.getBoundingClientRect();
+    }
+
+    // Ensure horizontal visibility
+    if (rect.right > viewportWidth - margin) {
+        const overflowRight = rect.right - (viewportWidth - margin);
+        const currentLeft = parseFloat(popover.style.left) || rect.left;
+        let newLeft = currentLeft - overflowRight;
+        if (newLeft < margin) newLeft = margin;
+        popover.style.left = `${Math.round(newLeft)}px`;
+    } else if (rect.left < margin) {
+        popover.style.left = `${margin}px`;
+    }
+};
+
 window.showWordDefinitionPopup = async function (word, event) {
     if (!word) return;
     if (event && typeof event.stopPropagation === 'function') {
@@ -12133,6 +12197,13 @@ window.showWordDefinitionPopup = async function (word, event) {
                 </div>
             `;
         }
+    }
+
+    // Reset previous inline max-height and overflow
+    popover.style.maxHeight = '';
+    const resetContentEl = popover.querySelector('.tool-def-content');
+    if (resetContentEl) {
+        resetContentEl.style.overflowY = '';
     }
 
     if (!_defPopoverDocListenerAdded) {
@@ -12291,7 +12362,7 @@ window.showWordDefinitionPopup = async function (word, event) {
     if (target && typeof target.getBoundingClientRect === 'function') {
         const rect = target.getBoundingClientRect();
         const popWidth = Math.min(360, window.innerWidth - 16);
-        const popHeight = popover.offsetHeight || 220;
+        const popHeight = Math.max(popover.offsetHeight || 0, 260);
         let left, top;
 
         const notepadCard = target.closest && target.closest('.notepad-card');
@@ -12335,14 +12406,34 @@ window.showWordDefinitionPopup = async function (word, event) {
         popover.style.top = `${top}px`;
         popover.style.transform = 'scale(1) translateY(0)';
     } else {
-        popover.style.left = '50%';
-        popover.style.top = '50%';
-        popover.style.transform = 'translate(-50%, -50%)';
+        const popWidth = Math.min(360, window.innerWidth - 16);
+        const popHeight = Math.max(popover.offsetHeight || 0, 260);
+        popover.style.left = `${Math.max(10, Math.round((window.innerWidth - popWidth) / 2))}px`;
+        popover.style.top = `${Math.max(10, Math.round((window.innerHeight - popHeight) / 2))}px`;
+        popover.style.transform = 'scale(1) translateY(0)';
     }
 
     // Activate transition
     void popover.offsetWidth;
     popover.classList.add('active');
+
+    // Immediately ensure the popover is completely within viewport
+    window.ensureDefPopoverInView();
+
+    // Attach ResizeObserver and window resize/orientationchange listeners to keep popover in view
+    if (window.ResizeObserver && !popover._defResizeObserver) {
+        popover._defResizeObserver = new ResizeObserver(() => {
+            if (popover && popover.classList.contains('active')) {
+                window.ensureDefPopoverInView();
+            }
+        });
+        popover._defResizeObserver.observe(popover);
+    }
+    if (!window._defPopoverResizeBound) {
+        window._defPopoverResizeBound = true;
+        window.addEventListener('resize', () => window.ensureDefPopoverInView(), { passive: true });
+        window.addEventListener('orientationchange', () => window.ensureDefPopoverInView(), { passive: true });
+    }
 
     function renderDefData(data) {
         let divBadgeEl = document.getElementById('tool-def-division-badge');
@@ -12408,6 +12499,19 @@ window.showWordDefinitionPopup = async function (word, event) {
                 html += `<div class="definition-image-container" style="margin-top: 12px; text-align: center;"><img src="${data.image_url}" class="definition-image" style="max-width: 100%; max-height: 160px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.4);" /></div>`;
             }
             contentEl.innerHTML = html;
+
+            // If images are present, re-check visibility once loaded
+            const defImages = contentEl.querySelectorAll('img');
+            defImages.forEach(img => {
+                if (!img.complete) {
+                    img.addEventListener('load', () => window.ensureDefPopoverInView(), { once: true });
+                    img.addEventListener('error', () => window.ensureDefPopoverInView(), { once: true });
+                }
+            });
+
+            // Adjust popover position after content rendering
+            window.ensureDefPopoverInView();
+            requestAnimationFrame(() => window.ensureDefPopoverInView());
         }
     }
 
