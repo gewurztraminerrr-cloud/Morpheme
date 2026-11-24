@@ -5840,7 +5840,7 @@ def register():
         # Insert default settings for the new user
         default_settings = [
             ('board_sizes', '{"4x4":82,"4x6":82,"5x7":65,"6x8":54}'),
-            ('corner_cutoff', '39')
+            ('corner_cutoff', '31')
         ]
         for key, val in default_settings:
             conn.execute('INSERT INTO user_settings (user_id, setting_key, setting_value) VALUES (?, ?, ?)', (user_id, key, val))
@@ -6335,7 +6335,7 @@ def guest_login():
             # Insert default settings for the guest user
             default_settings = [
                 ('board_sizes', '{"4x4":82,"4x6":82,"5x7":65,"6x8":54}'),
-                ('corner_cutoff', '39')
+                ('corner_cutoff', '31')
             ]
             for key, val in default_settings:
                 conn.execute('INSERT INTO user_settings (user_id, setting_key, setting_value) VALUES (?, ?, ?)', (new_user_id, key, val))

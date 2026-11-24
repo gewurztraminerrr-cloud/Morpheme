@@ -20,7 +20,7 @@ function debounce(func, wait) {
             chat_font_size: 13,
             def_font_size: 15,
             board_size: 54,
-            corner_cutoff: 39,
+            corner_cutoff: 31,
             board_sizes: { '4x4': 82, '4x6': 82, '5x7': 65, '6x8': 54 },
             cube_size: 220,
             subanagrams_tile_size: 64,
@@ -319,8 +319,8 @@ function debounce(func, wait) {
             ? parseInt(settings.corner_cutoff)
             : ((window.userSettings && window.userSettings.corner_cutoff !== undefined)
                 ? parseInt(window.userSettings.corner_cutoff)
-                : 39);
-        const finalCutoff = !isNaN(cutoffVal) ? cutoffVal : 39;
+                : 31);
+        const finalCutoff = !isNaN(cutoffVal) ? cutoffVal : 31;
         document.documentElement.style.setProperty('--corner-cutoff', `${finalCutoff}%`);
         const cutoffSlider = document.getElementById('setting-corner-cutoff');
         if (cutoffSlider) cutoffSlider.value = finalCutoff;

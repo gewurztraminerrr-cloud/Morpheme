@@ -2536,14 +2536,14 @@ body.is-subanagrams .timer-display #transpose-board-btn {
     touch-action: none !important;
     /* Only this layer talks to the JS */
     clip-path: polygon(
-        var(--corner-cutoff, 39%) 0%, 
-        calc(100% - var(--corner-cutoff, 39%)) 0%, 
-        100% var(--corner-cutoff, 39%), 
-        100% calc(100% - var(--corner-cutoff, 39%)), 
-        calc(100% - var(--corner-cutoff, 39%)) 100%, 
-        var(--corner-cutoff, 39%) 100%, 
-        0% calc(100% - var(--corner-cutoff, 39%)), 
-        0% var(--corner-cutoff, 39%)
+        var(--corner-cutoff, 31%) 0%, 
+        calc(100% - var(--corner-cutoff, 31%)) 0%, 
+        100% var(--corner-cutoff, 31%), 
+        100% calc(100% - var(--corner-cutoff, 31%)), 
+        calc(100% - var(--corner-cutoff, 31%)) 100%, 
+        var(--corner-cutoff, 31%) 100%, 
+        0% calc(100% - var(--corner-cutoff, 31%)), 
+        0% var(--corner-cutoff, 31%)
     );
     cursor: pointer;
 }
