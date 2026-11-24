@@ -3679,7 +3679,7 @@ async function _doUpdateGameState(incomingState = null) {
                 const wordsLen = allWords ? allWords.length : 0;
                 const cswLen = cswForList ? cswForList.length : 0;
                 const addedLen = addedForList ? addedForList.length : 0;
-                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}_${cswLen}_${addedLen}`;
+                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${wordsLen}_${cswLen}_${addedLen}`;
 
                 if (window.lastRenderedIntermissionKey !== currentRenderKey) {
                     try {
@@ -6103,7 +6103,7 @@ function updateIntermissionRenderKey() {
     const wordsLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[0]) ? window.lastDisplayAllWordsArgs[0].length : 0;
     const cswLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[5]) ? window.lastDisplayAllWordsArgs[5].length : 0;
     const addedLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[6]) ? window.lastDisplayAllWordsArgs[6].length : 0;
-    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${highlightedFoundWord || ''}_${wordsLen}_${cswLen}_${addedLen}`;
+    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${wordsLen}_${cswLen}_${addedLen}`;
 }
 
 window.LETTER_VALUES = window.LETTER_VALUES || {
@@ -13019,11 +13019,16 @@ function toggleWordSelection(word, clickedElement = null) {
             animateReviewWordPath(cleanWord);
         }
 
-        // Ensure the selected item stays fully visible within its scrolling container
+        // Ensure the selected item stays fully visible within its scrolling container only if outside visible view
         try {
             const activeItem = clickedElement || document.querySelector('.word-item.finder-active');
-            if (activeItem && typeof activeItem.scrollIntoView === 'function') {
-                activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            const listContainer = document.getElementById('submitted-words-list');
+            if (activeItem && listContainer && typeof activeItem.scrollIntoView === 'function') {
+                const cRect = listContainer.getBoundingClientRect();
+                const aRect = activeItem.getBoundingClientRect();
+                if (aRect.top < cRect.top || aRect.bottom > cRect.bottom) {
+                    activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
             }
         } catch (scrollErr) {}
 

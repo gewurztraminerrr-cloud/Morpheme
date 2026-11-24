@@ -3321,9 +3321,8 @@ body.theme-light-gray .notepad-item.bonus-word .word-text {
     border: 2px solid var(--selected-border-color, #3b82f6) !important;
     box-shadow: 0 0 12px rgba(59, 130, 246, 0.6) !important;
     outline: none !important;
-    transform: scale(1.02);
     z-index: 10;
-    will-change: transform, border-color, box-shadow, background-color;
+    will-change: border-color, box-shadow, background-color;
     animation: selected-pulse-default 3s infinite ease-in-out !important;
 }
 
