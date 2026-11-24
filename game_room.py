@@ -4414,7 +4414,7 @@ class RoomManager:
                             now_t = time.time()
                             active_humans = [p for p in humans if (now_t - getattr(p, 'last_active', 0)) < 120.0]
                             is_empty_or_inactive = (len(active_humans) == 0)
-                            needs_wakeup = (existing_room.state == 'waiting' or not existing_room.board or (is_empty_or_inactive and existing_room.state == 'intermission'))
+                            needs_wakeup = (existing_room.state == 'waiting' or not existing_room.board or (is_empty_or_inactive and existing_room.state == 'intermission' and existing_room.time_remaining <= 0))
                             if needs_wakeup and existing_room.time_limit < 7200:
                                 if existing_room.state in ['waiting', 'intermission'] or not existing_room.board:
                                     if existing_room.game_type == 'subanagrams':

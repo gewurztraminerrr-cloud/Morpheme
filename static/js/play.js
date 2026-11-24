@@ -2150,7 +2150,7 @@ async function _doUpdateGameState(incomingState = null) {
         return;
     }
 
-    const roomId = getCurrentRoomId();
+    const roomId = (incomingState && incomingState.room_id) || getCurrentRoomId();
     if (!roomId) {
         return;
     }
@@ -2617,8 +2617,8 @@ async function _doUpdateGameState(incomingState = null) {
                 });
             }
 
-            // FORCE TAB TO 'WORDS' ON INTERMISSION START (Only if not already viewing something else)
-            if (activeWordsTab !== 'history' && activeWordsTab !== 'remaining') {
+            // FORCE TAB TO 'WORDS' ON INTERMISSION START
+            if (isSub || (activeWordsTab !== 'history' && activeWordsTab !== 'remaining')) {
                 activeWordsTab = 'found';
             }
             window.wordPressedDuringIntermission = false;
@@ -3500,7 +3500,9 @@ async function _doUpdateGameState(incomingState = null) {
 
         // Ensure activeWordsTab is valid for current room type
         if (isSubanagramsRoom) {
-            if (activeWordsTab !== 'remaining') {
+            if (state.state === 'intermission') {
+                activeWordsTab = 'found';
+            } else if (activeWordsTab !== 'remaining') {
                 activeWordsTab = 'found';
             }
         } else if (is24H && (activeWordsTab === 'remaining' || activeWordsTab === 'history')) {
