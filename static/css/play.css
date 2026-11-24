@@ -19495,8 +19495,8 @@ body.is-desktop .board-panel {
     overflow-y: hidden !important;
     overflow-x: hidden !important;
     scroll-snap-align: none !important;
-    padding: 8px 0 12px 0 !important;
-    gap: 10px !important;
+    padding: 8px 0 8px 0 !important;
+    gap: 8px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -19506,8 +19506,9 @@ body.is-desktop .board-panel {
     body:not(.is-mobile) .board-panel {
         padding-left: 0 !important;
         padding-right: 0 !important;
-        padding-bottom: 12px !important;
-        gap: 10px !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+        gap: 8px !important;
         overflow-y: hidden !important;
         overflow-x: hidden !important;
         align-items: center !important;
@@ -26493,8 +26494,8 @@ body.is-desktop #word-length-radar {
     flex-direction: column;
     width: 100%;
     max-width: 480px;
-    margin: 2px auto 0 auto !important;
-    padding: 8px 14px 10px;
+    margin: auto auto !important;
+    padding: 12px 16px 14px;
     background: var(--input-bg, #ffffff);
     border: 1px solid var(--border-color, rgba(128, 128, 128, 0.2));
     border-radius: 10px;
@@ -26517,8 +26518,8 @@ body.is-mobile #word-length-radar,
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 6px;
-    padding-bottom: 4px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--border-color, rgba(128, 128, 128, 0.15));
 }
 
@@ -26569,22 +26570,22 @@ body.is-mobile #word-length-radar,
 .radar-bars-container {
     display: flex;
     flex-direction: column;
-    gap: 5px;
+    gap: 7px;
 }
 
 .radar-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.74rem;
-    height: 15px;
+    gap: 10px;
+    font-size: 0.78rem;
+    height: 18px;
 }
 
 .radar-len-badge {
     width: 28px;
     font-weight: 800;
     color: var(--text-primary);
-    font-size: 0.74rem;
+    font-size: 0.78rem;
     text-align: left;
     flex-shrink: 0;
 }
@@ -26592,7 +26593,7 @@ body.is-mobile #word-length-radar,
 .radar-bar-track {
     flex: 1;
     min-width: 0;
-    height: 7px;
+    height: 8px;
     background: rgba(128, 128, 128, 0.15);
     border-radius: 4px;
     overflow: hidden;
@@ -26607,11 +26608,11 @@ body.is-mobile #word-length-radar,
 }
 
 .radar-count-label {
-    width: 56px;
+    width: 58px;
     text-align: right;
     font-weight: 700;
     color: var(--text-secondary, #64748b);
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
 }
@@ -26632,27 +26633,31 @@ body.is-mobile #word-length-radar,
     }
     body.is-desktop .board-panel,
     body:not(.is-mobile) .board-panel {
-        gap: 6px !important;
+        gap: 5px !important;
         padding-top: 4px !important;
-        padding-bottom: 8px !important;
+        padding-bottom: 4px !important;
         overflow-y: hidden !important;
     }
+    body.is-desktop .board-panel .timer-display {
+        margin: 2px auto !important;
+        padding: 2px 14px !important;
+    }
     body.is-desktop #word-length-radar {
-        margin: 2px auto 0 auto !important;
-        padding: 5px 10px 6px !important;
+        margin: auto auto !important;
+        padding: 8px 12px 10px !important;
     }
     body.is-desktop .radar-header {
-        margin-bottom: 4px !important;
-        padding-bottom: 3px !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 4px !important;
     }
     body.is-desktop .radar-row {
-        height: 13px !important;
-        gap: 6px !important;
+        height: 15px !important;
+        gap: 8px !important;
     }
     body.is-desktop .radar-bar-track {
-        height: 6px !important;
+        height: 7px !important;
     }
     body.is-desktop .radar-bars-container {
-        gap: 3px !important;
+        gap: 4px !important;
     }
 }
