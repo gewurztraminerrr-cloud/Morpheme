@@ -755,14 +755,59 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
     color: var(--text-primary);
 }
 
-.player-item.selected-player {
-    border: 1.5px solid #409cff !important;
-    background: rgba(64, 156, 255, 0.22) !important;
-    box-shadow: 0 0 10px rgba(64, 156, 255, 0.4) !important;
+/* Selected Player under Players during Intermission (Flashing dark blue and white pulse with sheen) */
+.player-item.selected-player,
+.player-item.selected-player.bonus-finder,
+.player-item.selected-player.current-user,
+.player-item.selected-player.finder-highlight {
+    position: relative !important;
+    overflow: visible !important;
+    flex-shrink: 0 !important;
+    background-color: var(--selected-cell-bg, #0f2b5c) !important;
+    background-image: linear-gradient(
+        115deg,
+        transparent 0%,
+        transparent 40%,
+        rgba(255, 255, 255, 0.45) 50%,
+        rgba(255, 255, 255, 0.75) 52%,
+        rgba(255, 255, 255, 0.45) 54%,
+        transparent 64%,
+        transparent 100%
+    ) !important;
+    background-size: 260% 100% !important;
+    background-repeat: no-repeat !important;
+    border: 2px solid var(--selected-border-color, #3b82f6) !important;
+    box-shadow: 0 0 0 2px var(--selected-border-color, #3b82f6), 0 0 16px rgba(59, 130, 246, 0.8), 0 0 32px rgba(96, 165, 250, 0.35) !important;
+    outline: none !important;
+    z-index: 25 !important;
+    will-change: border-color, box-shadow, background-color, background-position;
+    animation: 
+        selected-pulse-default 3s infinite ease-in-out,
+        selected-sheen-sweep 2.6s infinite ease-in-out !important;
+}
+
+.player-item.selected-player,
+.player-item.selected-player > *,
+.player-item.selected-player span,
+.player-item.selected-player div,
+.player-item.selected-player .player-username,
+.player-item.selected-player .player-rating-val,
+.player-item.selected-player .player-rating-val span,
+.player-item.selected-player .player-words-count,
+.player-item.selected-player .player-score-val,
+.player-item.selected-player .player-rank {
+    position: relative;
+    z-index: 2;
+    color: var(--selected-text-color, #ffffff) !important;
+    text-shadow: none !important;
+    filter: none !important;
+}
+
+.player-item.selected-player .trophy-icon {
+    filter: drop-shadow(0 0 4px #ffd700) !important;
 }
 
 .player-item.selected-player .player-username {
-    color: #409cff !important;
     font-weight: 700 !important;
 }
 
@@ -3525,31 +3570,53 @@ body.theme-light-gray .notepad-item.bonus-word .word-text {
     animation: selected-pulse-unfound 3s infinite ease-in-out, selected-sheen-sweep 2.6s infinite ease-in-out !important;
 }
 
+.word-item.finder-active,
 .word-item.finder-active > *,
 .word-item.finder-active span,
 .word-item.finder-active div,
 .word-item.finder-active .word-text,
 .word-item.finder-active .word-item-pts,
 .word-item.finder-active .points-math,
+.word-item.finder-active.bonus-word,
+.word-item.finder-active.bonus-word > *,
+.word-item.finder-active.bonus-word span,
+#submitted-words-list .word-item.finder-active,
 #submitted-words-list .word-item.finder-active > *,
 #submitted-words-list .word-item.finder-active span,
 #submitted-words-list .word-item.finder-active div,
 #submitted-words-list .word-item.finder-active .word-text,
 #submitted-words-list .word-item.finder-active .word-item-pts,
 #submitted-words-list .word-item.finder-active .points-math,
+#submitted-words-list .word-item.finder-active.bonus-word,
+#submitted-words-list .word-item.finder-active.bonus-word > *,
+#submitted-words-list .word-item.finder-active.bonus-word span,
+#previous-words-list .word-item.finder-active,
 #previous-words-list .word-item.finder-active > *,
 #previous-words-list .word-item.finder-active span,
 #previous-words-list .word-item.finder-active div,
 #previous-words-list .word-item.finder-active .word-text,
 #previous-words-list .word-item.finder-active .word-item-pts,
 #previous-words-list .word-item.finder-active .points-math,
+#previous-words-list .word-item.finder-active.bonus-word,
+#previous-words-list .word-item.finder-active.bonus-word > *,
+#previous-words-list .word-item.finder-active.bonus-word span,
+.feed-item.finder-active,
 .feed-item.finder-active > *,
+.clue-item.finder-active,
 .clue-item.finder-active > *,
+.notepad-item.finder-active,
 .notepad-item.finder-active > *,
+.notepad-item.finder-active span,
+.notepad-item.finder-active.bonus-word,
+.notepad-item.finder-active.bonus-word > *,
+.notepad-item.finder-active.bonus-word span,
+.notepad-word-line.finder-active,
 .notepad-word-line.finder-active > * {
     position: relative;
     z-index: 2;
     color: var(--selected-text-color, #ffffff) !important;
+    text-shadow: none !important;
+    filter: none !important;
 }
 
 .word-item.finder-active .points-math,
@@ -3557,6 +3624,8 @@ body.theme-light-gray .notepad-item.bonus-word .word-text {
     background: rgba(128, 128, 128, 0.2) !important;
     border: 1px solid rgba(128, 128, 128, 0.35) !important;
     color: var(--selected-text-color, #ffffff) !important;
+    text-shadow: none !important;
+    filter: none !important;
 }
 
 .word-item.finder-active .found-indicator.empty {
@@ -20429,8 +20498,15 @@ body[class*="theme-light-"] .word-item.finder-active *,
 body.theme-white #submitted-words-list .word-item.finder-active span,
 body.theme-white #submitted-words-list .word-item.finder-active span:last-child,
 body[class*="theme-light-"] #submitted-words-list .word-item.finder-active span,
-body[class*="theme-light-"] #submitted-words-list .word-item.finder-active span:last-child {
+body[class*="theme-light-"] #submitted-words-list .word-item.finder-active span:last-child,
+[class*="theme-white"] .player-item.selected-player *,
+[class*="theme-light-"] .player-item.selected-player *,
+body.theme-white .player-item.selected-player *,
+body.theme-light-gray .player-item.selected-player *,
+body[class*="theme-light-"] .player-item.selected-player * {
     color: var(--selected-text-color, #ffffff) !important;
+    text-shadow: none !important;
+    filter: none !important;
 }
 
 [class*="theme-white"] .word-item.finder-active .points-math,
