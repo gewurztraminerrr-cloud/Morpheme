@@ -9844,10 +9844,14 @@ function findWordPathOnBoard(word, board, targetCoord = null) {
         }
     }
 
-    // 2. Add transposed/untransposed bonus letter coordinate
+    // 2. Add transposed/untransposed bonus letter coordinate (only if explicitly targeted or format is Bonus Letter)
     let bc = targetCoord;
     if (!bc) {
-        bc = (window.lastGameState && window.lastGameState.bonus_cell) ? window.lastGameState.bonus_cell : null;
+        const curFmt = ((window.lastGameState && window.lastGameState.current_board_format) || '').toLowerCase();
+        const isBonusLetterFormat = curFmt.includes('bonus letter') || curFmt.trim() === 'bonus';
+        if (isBonusLetterFormat) {
+            bc = (window.lastGameState && window.lastGameState.bonus_cell) ? window.lastGameState.bonus_cell : null;
+        }
     }
     if (bc) {
         if (Array.isArray(bc)) {
@@ -11524,7 +11528,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
     window._playedCurrentRound = true;
     try {
         const input = document.getElementById('word-input');
-    let word = wordParam ? wordParam.toUpperCase() : (input ? input.value.trim().toUpperCase() : '');
+    let word = (wordParam ? wordParam : (input ? input.value : '')).trim().toUpperCase();
     const roomId = getCurrentRoomId();
 
     const now = Date.now();
@@ -11757,12 +11761,16 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
 
             const curFmtLow = String(preState.board_format || '').toLowerCase();
             const isPenaltyMode = curFmtLow.includes('penalty');
+            const is24H = !!((preState && ((preState.time_limit >= 7200) || (preState.room_id && (preState.room_id.includes('24h') || preState.room_id.includes('86400'))) || (preState.game_type === '24h'))) ||
+                (roomId && (roomId.includes('24h') || roomId.includes('86400'))));
 
             if (wordList.length > 0) {
                 // Word list is populated and trustworthy — check locally for instant flash.
-                const isInWordList = wordList.some(w =>
-                    (typeof w === 'string' ? w : (w.word || '')).toUpperCase() === word
-                );
+                if (!preState._allWordsSet || preState._allWordsSetSource !== preState.all_words) {
+                    preState._allWordsSet = new Set(wordList.map(w => (typeof w === 'string' ? w : (w.word || '')).trim().toUpperCase()));
+                    preState._allWordsSetSource = preState.all_words;
+                }
+                const isInWordList = preState._allWordsSet.has(word);
 
                 if (isInWordList) {
                     // Confirmed valid — check if it's Bonus Word OR uses Bonus Letter tile
@@ -11852,12 +11860,10 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             }
                         }
                     }
-                } else {
-                    // PREFACE: the board word list is complete (never truncated), so an unlisted word is
+                } else if (!isPenaltyMode && !is24H) {
+                    // PREFACE: in standard timed rooms (e.g. ACC 4x4 45s), the board word list is complete (never truncated), so an unlisted word is
                     // invalid. Flash red at the exact same instant (0ms) and duration as the blue flash.
-                    // QU-FALLBACK GUARD: If this word contains QU on a swipe round with a Q tile,
-                    // do NOT flash red yet because it might be valid without the U (e.g. QANAT).
-                    // Wait for server / fallback to resolve so it never double flashes red!
+                    // NOTE: In 24h rooms, the server dynamically validates & accepts valid dictionary words on the board, so do not optimistically flash red!
                     const couldQFallback = !_quFallback && pathParam !== null && /QU/.test(word);
                     if (!couldQFallback) {
                         const invMsg = isPenaltyMode
