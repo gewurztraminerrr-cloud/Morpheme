@@ -5158,6 +5158,27 @@ function renderPlayers(players, currentUser = null, state = null) {
     }).join('');
 
     if (html === lastPlayersHtml) return;
+
+    // Smooth in-place class toggle: if player cards already exist with the same usernames,
+    // toggle .selected-player in place to preserve animations without destroying the DOM.
+    const existingItems = listEl.querySelectorAll('.player-item');
+    if (existingItems.length === players.length && lastPlayersHtml !== null) {
+        let sameStructure = true;
+        for (let i = 0; i < players.length; i++) {
+            if (existingItems[i].dataset.username !== players[i].username) {
+                sameStructure = false;
+                break;
+            }
+        }
+        if (sameStructure) {
+            existingItems.forEach(item => {
+                const uname = item.dataset.username;
+                item.classList.toggle('selected-player', uname === selectedPlayerUsername);
+            });
+            lastPlayersHtml = html;
+            return;
+        }
+    }
     
     // SAVE SCROLL POSITION
     const oldScrollTop = listEl.scrollTop;
@@ -5202,12 +5223,15 @@ function renderPlayers(players, currentUser = null, state = null) {
                     if (wordsScroller) wordsScroller.scrollTop = 0;
                 }
 
+                // Instantly toggle .selected-player on existing player cards in-place without DOM teardown
+                listEl.querySelectorAll('.player-item').forEach(pItem => {
+                    pItem.classList.toggle('selected-player', pItem.dataset.username === selectedPlayerUsername);
+                });
+
                 window.lastRenderedIntermissionKey = null;
-                lastPlayersHtml = '';
                 if (window.lastGameState) {
                     _doUpdateGameState(window.lastGameState);
                 }
-                updateGameState();
             });
         }
 
