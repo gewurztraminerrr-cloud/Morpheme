@@ -4,8 +4,8 @@
 - **Git Branch**: `main` (Synchronized: Localhost == GitHub `origin/main` == VPS `132.148.72.249`)
 - **Production Server**: `132.148.72.249` ([morpheme.games](https://morpheme.games)) – Live & Healthy (HTTP 200 OK)
 - **Localhost Development**: Port `5001` – Running & Healthy (HTTP 200 OK)
-- **Date/Time**: November 24, 2026 (00:25 EST / 05:25 UTC)
-- **Anchor Commit ID**: `f1f32a6f` ("Swap positions of Word List and Length dropdowns above Intermission words table")
+- **Date/Time**: November 24, 2026 (01:03 EST / 06:03 UTC)
+- **Anchor Commit ID**: `62b8c47b` ("Implement Concept 1: Word Length Radar for desktop and laptop game rooms")
 
 ---
 
@@ -79,13 +79,29 @@
 
 ---
 
+### H. Concept 1: Word Length Radar (Desktop & Laptop Game Rooms)
+- **Problem**:
+  - In `hmm.png`, `.board-panel` stretched vertically to match the height of the left and right panels, leaving a 250px–350px empty field below Rotate and Transpose buttons.
+- **Implementation**:
+  - Created a responsive, live-updating **Word Length Radar** (`#word-length-radar`) directly below the word input and rotate/transpose row.
+  - Dynamically calculates active board letter lengths (`totalByLen` vs `foundByLen`) and renders animated progress bars with vibrant bracket colors (4L: Emerald, 5L: Amber, 6L: Purple, 7L: Pink, 8L+: Indigo).
+  - Displays instant optimistic completion updates as the player submits words, plus completion checkmarks (`✓`) when a letter bracket is fully cleared.
+  - In intermission, switches seamlessly to a round completion debrief (`Word Length Breakdown`).
+- **Strict Desktop / Laptop Only Constraint**:
+  - Hidden unconditionally on mobile devices and tablets via `body.is-mobile #word-length-radar { display: none !important; }` and `@media (max-width: 992px) { display: none !important; }`.
+  - In JS, skips execution if `window.innerWidth <= 992` or mobile user agent is detected.
+- **Cache Busters**: `play.css?v=1795370006`, `play.js?v=1795390003`.
+- **Commit History**: `62b8c47b`.
+
+---
+
 ## 2. Infrastructure, Server Health & Resource Usage
 
 | Node / Environment | Host / Port | Git Revision | Status |
 | :--- | :--- | :--- | :--- |
-| **Production VPS** | GoDaddy `132.148.72.249` | `f1f32a6f` | **Online (HTTP 200)** |
-| **GitHub Remote** | `origin/main` | `f1f32a6f` | **Synchronized** |
-| **Local Development** | Port `5001` | `f1f32a6f` | **Online (HTTP 200)** |
+| **Production VPS** | GoDaddy `132.148.72.249` | `62b8c47b` | **Online (HTTP 200)** |
+| **GitHub Remote** | `origin/main` | `62b8c47b` | **Synchronized** |
+| **Local Development** | Port `5001` | `62b8c47b` | **Online (HTTP 200)** |
 | **PM2 Process ID** | `0` (`morpheme`) | Fork Mode | **Online (0% CPU, 4.5MB init)** |
 
 ---
