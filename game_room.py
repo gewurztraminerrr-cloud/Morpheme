@@ -535,7 +535,7 @@ class GameRoom:
                 # MID-ROUND DETECTION: Check if player was in the room when round started
                 if not is_daily and (self.state == 'active' or getattr(self, 'starting_round', False)):
                     round_starters = getattr(self, 'round_starting_player_ids', None)
-                    if round_starters is not None:
+                    if round_starters:
                         if uid_str not in round_starters or manual_accessed:
                             existing_player.joined_mid_round = True
                             print(f"[GameRoom] Mid-round flag set for {username} (existing player not in round_starting_player_ids or manual).")
@@ -1065,7 +1065,7 @@ class GameRoom:
         # Safeguard: if player submits word while active and was not in round_starters, flag joined_mid_round
         if player and not getattr(self, 'is_daily', False) and (self.time_limit < 7200) and self.state == 'active':
             round_starters = getattr(self, 'round_starting_player_ids', None)
-            if round_starters is not None and str(user_id) not in round_starters:
+            if round_starters and str(user_id) not in round_starters:
                 player.joined_mid_round = True
 
         # Update activity on submission
@@ -2546,7 +2546,7 @@ class GameRoom:
                                     and not getattr(p, 'is_ai', False)
                                     and not is_player_guest(p)
                                     and not getattr(p, 'joined_mid_round', False)
-                                    and (round_starters is None or str(p.user_id) in round_starters)
+                                    and (not round_starters or str(p.user_id) in round_starters)
                                 ]
                                 rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private, board_format=self.current_board_format)
                                 
@@ -2574,7 +2574,7 @@ class GameRoom:
                                         # Strict User Mandate: Only affect ratings of people who played from the beginning of the round and had a score >= 1
                                         played_from_start = (
                                             not getattr(p, 'joined_mid_round', False) and
-                                            (round_starters is None or str(p.user_id) in round_starters)
+                                            (not round_starters or str(p.user_id) in round_starters)
                                         )
                                         has_score = (getattr(p, 'score', 0) >= 1)
                                         is_eligible_human = (not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and not is_player_guest(p))
@@ -2691,7 +2691,7 @@ class GameRoom:
                                             p for p in self.players 
                                             if not p.is_ai and not getattr(p, 'is_guest', False) and not is_player_guest(p)
                                             and not getattr(p, 'joined_mid_round', False)
-                                            and (round_starters is None or str(p.user_id) in round_starters)
+                                            and (not round_starters or str(p.user_id) in round_starters)
                                             and getattr(p, 'score', 0) >= 1
                                             and not getattr(p, 'is_unrated', False)
                                         ]
@@ -8701,6 +8701,7 @@ class RoomManager:
                     room.players = []
                     room.spectators = []
                 else:
+                    room.round_starting_player_ids = {str(p.user_id) for p in room.players}
                     for p in room.players:
                         p.submitted_words, p.invalid_words, p.score = [], [], 0
                         p.found_bonus_word, p.has_abandoned = False, False
@@ -9557,6 +9558,8 @@ class RoomManager:
                     time.sleep(_wait)
                 room.round_start_time = time.time()
                 room.state = 'active'
+                if room.time_limit < 7200:
+                    room.round_starting_player_ids = {str(p.user_id) for p in room.players}
                 if room.time_limit >= 7200:
                     if not hasattr(room, 'evicted_users') or room.evicted_users is None:
                         room.evicted_users = {}
@@ -9836,6 +9839,8 @@ class RoomManager:
                 room.current_round = max(1, room.current_round)
                 room.round_start_time = time.time()
                 room.state = 'active'
+                if room.time_limit < 7200:
+                    room.round_starting_player_ids = {str(p.user_id) for p in room.players}
                 room.solving_complete = True
                 room.board_search_loading = False
                 room.starting_round = False
