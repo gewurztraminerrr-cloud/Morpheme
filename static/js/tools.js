@@ -13765,13 +13765,16 @@ window.lookupWordChartWord = async function() {
             : '<span style="background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid rgba(74, 222, 128, 0.3); border-radius: 12px; padding: 3px 8px; font-size: 0.75rem; font-weight: 600;">Standard</span>';
 
         const lists = data.lists || [];
-        let badgesHtml = '<div style="display: inline-flex; gap: 4px; vertical-align: middle;">';
+        const wordLen = data.length || (data.word || word).length;
+        let badgesHtml = '<div style="display: inline-flex; gap: 4px; align-items: center; vertical-align: middle;">';
+        badgesHtml += `<span class="tool-def-len-badge">${wordLen}L</span>`;
+        badgesHtml += '<span class="tool-def-lists-container" style="display: inline-flex; gap: 4px; align-items: center; vertical-align: middle;">';
         ['NWL', 'CSW', 'AW'].forEach(dictName => {
             if (lists.includes(dictName)) {
                 badgesHtml += `<span class="work-on-badge work-on-badge-${dictName.toLowerCase()}">${dictName}</span>`;
             }
         });
-        badgesHtml += '</div>';
+        badgesHtml += '</span></div>';
 
         card.innerHTML = `
             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
@@ -13779,7 +13782,6 @@ window.lookupWordChartWord = async function() {
                     <span class="reverse-dict-word-text" onclick="window.showWordDefinitionPopup('${safeJsWord}', event)" title="Click to view definition" style="font-size: 1.3rem; font-weight: 800; cursor: pointer; color: var(--accent-color, #38bdf8); text-decoration: underline; text-underline-offset: 3px;">
                         ${safeWord}
                     </span>
-                    <span style="font-size: 0.8rem; font-weight: 600; color: var(--muted-text); margin-left: 8px;">(${data.length} letters)</span>
                     <div style="margin-top: 4px;">${badgesHtml}</div>
                 </div>
                 <div style="display: flex; gap: 6px; align-items: center;">
