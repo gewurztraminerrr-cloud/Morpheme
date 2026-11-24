@@ -3197,12 +3197,57 @@ body.theme-light-gray .notepad-item.bonus-word .word-text {
     color: #ffffff !important;
 }
 
-/* Active Highlight for Finding Finders */
-.word-item.finder-active {
-    outline: 3px solid #ffd700;
-    outline-offset: 2px;
-    z-index: 10;
+/* Active Selected Word in Words / All Words during Intermission */
+.word-item.finder-active,
+#submitted-words-list .word-item.finder-active,
+#previous-words-list .word-item.finder-active,
+.feed-item.finder-active,
+.clue-item.finder-active,
+.notepad-item.finder-active,
+.notepad-word-line.finder-active {
+    background: #0f2b5c !important;
+    border: 2px solid #3b82f6 !important;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.5) !important;
+    color: #ffffff !important;
+    outline: none !important;
     transform: scale(1.02);
+    z-index: 10;
+}
+
+.word-item.finder-active *,
+.word-item.finder-active span,
+.word-item.finder-active div,
+.word-item.finder-active .word-text,
+.word-item.finder-active .word-item-pts,
+.word-item.finder-active .points-math,
+#submitted-words-list .word-item.finder-active *,
+#submitted-words-list .word-item.finder-active span,
+#submitted-words-list .word-item.finder-active div,
+#submitted-words-list .word-item.finder-active .word-text,
+#submitted-words-list .word-item.finder-active .word-item-pts,
+#submitted-words-list .word-item.finder-active .points-math,
+#previous-words-list .word-item.finder-active *,
+#previous-words-list .word-item.finder-active span,
+#previous-words-list .word-item.finder-active div,
+#previous-words-list .word-item.finder-active .word-text,
+#previous-words-list .word-item.finder-active .word-item-pts,
+#previous-words-list .word-item.finder-active .points-math,
+.feed-item.finder-active *,
+.clue-item.finder-active *,
+.notepad-item.finder-active *,
+.notepad-word-line.finder-active * {
+    color: #ffffff !important;
+}
+
+.word-item.finder-active .points-math,
+#submitted-words-list .word-item.finder-active .points-math {
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: #ffffff !important;
+}
+
+.word-item.finder-active .found-indicator.empty {
+    border-color: rgba(255, 255, 255, 0.4) !important;
 }
 
 .found-indicator {
@@ -20021,6 +20066,56 @@ body[class*="theme-light-"] .word-item.missed .points-math {
     background: rgba(255, 255, 255, 0.9) !important;
     color: #881337 !important;
     border: 1.5px solid rgba(244, 63, 94, 0.45) !important;
+}
+
+/* Active Selected Word in Words / All Words for Light / White Themes */
+[class*="theme-white"] .word-item.finder-active,
+[class*="theme-light-"] .word-item.finder-active,
+body.theme-white .word-item.finder-active,
+body.theme-light-gray .word-item.finder-active,
+body[class*="theme-light-"] .word-item.finder-active,
+[class*="theme-white"] #submitted-words-list .word-item.finder-active,
+[class*="theme-light-"] #submitted-words-list .word-item.finder-active,
+body.theme-white #submitted-words-list .word-item.finder-active,
+body[class*="theme-light-"] #submitted-words-list .word-item.finder-active {
+    background: #0f2b5c !important;
+    border: 2px solid #2563eb !important;
+    box-shadow: 0 0 10px rgba(37, 99, 235, 0.4) !important;
+    color: #ffffff !important;
+    outline: none !important;
+}
+
+[class*="theme-white"] .word-item.finder-active *,
+[class*="theme-light-"] .word-item.finder-active *,
+body.theme-white .word-item.finder-active *,
+body.theme-light-gray .word-item.finder-active *,
+body[class*="theme-light-"] .word-item.finder-active *,
+[class*="theme-white"] .word-item.finder-active span,
+[class*="theme-light-"] .word-item.finder-active span,
+[class*="theme-white"] .word-item.finder-active .word-text,
+[class*="theme-light-"] .word-item.finder-active .word-text,
+[class*="theme-white"] .word-item.finder-active .word-item-pts,
+[class*="theme-light-"] .word-item.finder-active .word-item-pts,
+[class*="theme-white"] .word-item.finder-active .points-math,
+[class*="theme-light-"] .word-item.finder-active .points-math,
+[class*="theme-white"] #submitted-words-list .word-item.finder-active span,
+[class*="theme-light-"] #submitted-words-list .word-item.finder-active span,
+[class*="theme-white"] #submitted-words-list .word-item.finder-active span:last-child,
+[class*="theme-light-"] #submitted-words-list .word-item.finder-active span:last-child,
+body.theme-white #submitted-words-list .word-item.finder-active span,
+body.theme-white #submitted-words-list .word-item.finder-active span:last-child,
+body[class*="theme-light-"] #submitted-words-list .word-item.finder-active span,
+body[class*="theme-light-"] #submitted-words-list .word-item.finder-active span:last-child {
+    color: #ffffff !important;
+}
+
+[class*="theme-white"] .word-item.finder-active .points-math,
+[class*="theme-light-"] .word-item.finder-active .points-math,
+body.theme-white .word-item.finder-active .points-math,
+body[class*="theme-light-"] .word-item.finder-active .points-math {
+    background: rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+    color: #ffffff !important;
 }
 
 /* 2. Mods Tab Content High-Contrast & Clean Organization for Light Themes */
