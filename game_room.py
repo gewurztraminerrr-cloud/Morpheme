@@ -1736,10 +1736,13 @@ class GameRoom:
             if elapsed_intermission >= fallback_050_threshold and not getattr(self, 'next_round_board', None) and not getattr(self, '_fallback_at_50s_done', False):
                 print(f"[Watchdog] 0:50 mark in intermission ({elapsed_intermission:.1f}s elapsed) for {self.room_id} — no board ready. Pulling validated pregenerated board.")
                 self._fallback_at_50s_done = True
-                try:
-                    self.ensure_next_board_ready()
-                except Exception as wd_err:
-                    print(f"[Watchdog] Error in 0:50 ensure_next_board_ready for {self.room_id}: {wd_err}")
+                def _bg_ensure():
+                    try:
+                        self.ensure_next_board_ready()
+                    except Exception as wd_err:
+                        print(f"[Watchdog] Error in 0:50 ensure_next_board_ready for {self.room_id}: {wd_err}")
+                import threading
+                threading.Thread(target=_bg_ensure, daemon=True).start()
 
         if getattr(self, 'starting_round', False):
             curr_init = getattr(self, '_round_start_init_time', 0)
@@ -3651,8 +3654,15 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         if is_aw:
             use_added_words = True
             if '4x4' in dimensions:
-                target_range_resolved = '300-400'
-                min_accept, max_accept = 300, 399
+                if min_word_length >= 5:
+                    target_range_resolved = '100-200'
+                    min_accept, max_accept = 100, 200
+                elif min_word_length == 4:
+                    target_range_resolved = '200-300'
+                    min_accept, max_accept = 200, 300
+                else:
+                    target_range_resolved = '300-400'
+                    min_accept, max_accept = 300, 399
             elif '4x6' in dimensions:
                 target_range_resolved = '400-500' if target_range == '400-500' else '300-400'
                 min_accept, max_accept = (400, 499) if target_range_resolved == '400-500' else (300, 399)
@@ -4414,7 +4424,7 @@ class RoomManager:
                             now_t = time.time()
                             active_humans = [p for p in humans if (now_t - getattr(p, 'last_active', 0)) < 120.0]
                             is_empty_or_inactive = (len(active_humans) == 0)
-                            needs_wakeup = (existing_room.state == 'waiting' or not existing_room.board or (is_empty_or_inactive and existing_room.state == 'intermission' and existing_room.time_remaining <= 0))
+                            needs_wakeup = (existing_room.state == 'waiting' or not existing_room.board or (is_empty_or_inactive and existing_room.state == 'intermission' and (existing_room.game_type != 'subanagrams' or existing_room.time_remaining <= 0)))
                             if needs_wakeup and existing_room.time_limit < 7200:
                                 if existing_room.state in ['waiting', 'intermission'] or not existing_room.board:
                                     if existing_room.game_type == 'subanagrams':
