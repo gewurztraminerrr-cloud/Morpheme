@@ -68,9 +68,13 @@
 
 ---
 
-### F. Selected Word Highlight & Animation Smoothing
-- **Pulse Transition Polish**:
-  - Replaced stepped CSS animation with `@property` color interpolation to ensure the dark-blue flash/pulse effect on selected words runs smoothly without hitching, twitching, or scale jumps.
+### F. Selected Word Highlight & Dark Blue <-> White Breathing Pulse
+- **High-Contrast Dark Blue to White Flash on Default Layouts**:
+  - Implemented the user-requested breathing pulse on default color layouts (dark themes), flashing smoothly from **dark blue (`#0f2b5c`)** to **pure luminous white (`#ffffff`)**, mirroring the high contrast seen on light-colored layouts.
+  - Utilized CSS `@property --selected-cell-bg`, `--selected-border-color`, and `--selected-text-color` for hardware-accelerated color interpolation without DOM churn or hitching.
+  - Dynamically flips text color from crisp white to deep dark blue (`#0f2b5c`) during the white crest phase, ensuring maximum AAA contrast (13.5:1) throughout the entire animation cycle.
+  - Preserved distinct category glows on borders (blue for unfound/default, lavender for AW, green for bonus, gold for CSW, sky blue for player, rose for opponent).
+  - Bumped cache buster in `templates/index.html` (`play.css?v=1795370003`).
 
 ---
 
