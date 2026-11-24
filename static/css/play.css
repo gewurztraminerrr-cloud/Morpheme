@@ -19476,7 +19476,6 @@ body.is-desktop .play-grid {
 }
 
 body.is-desktop .left-panel-container,
-body.is-desktop .board-panel,
 body.is-desktop .words-panel {
     flex: unset !important;
     width: 100% !important;
@@ -19488,7 +19487,16 @@ body.is-desktop .words-panel {
 }
 
 body.is-desktop .board-panel {
-    padding: 8px 0 6px 0 !important;
+    flex: unset !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    overflow-y: hidden !important;
+    overflow-x: hidden !important;
+    scroll-snap-align: none !important;
+    padding: 8px 0 12px 0 !important;
+    gap: 10px !important;
     display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
@@ -19498,7 +19506,10 @@ body.is-desktop .board-panel {
     body:not(.is-mobile) .board-panel {
         padding-left: 0 !important;
         padding-right: 0 !important;
-        padding-bottom: 6px !important;
+        padding-bottom: 12px !important;
+        gap: 10px !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
         align-items: center !important;
     }
 }
@@ -26482,8 +26493,8 @@ body.is-desktop #word-length-radar {
     flex-direction: column;
     width: 100%;
     max-width: 480px;
-    margin: 12px auto 0 auto;
-    padding: 10px 14px 12px;
+    margin: 2px auto 0 auto !important;
+    padding: 8px 14px 10px;
     background: var(--input-bg, #ffffff);
     border: 1px solid var(--border-color, rgba(128, 128, 128, 0.2));
     border-radius: 10px;
@@ -26506,8 +26517,8 @@ body.is-mobile #word-length-radar,
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
+    margin-bottom: 6px;
+    padding-bottom: 4px;
     border-bottom: 1px solid var(--border-color, rgba(128, 128, 128, 0.15));
 }
 
@@ -26517,13 +26528,8 @@ body.is-mobile #word-length-radar,
     gap: 6px;
 }
 
-.radar-icon {
-    font-size: 0.85rem;
-    color: #f59e0b;
-}
-
 .radar-title {
-    font-size: 0.78rem;
+    font-size: 0.74rem;
     font-weight: 800;
     letter-spacing: 0.5px;
     text-transform: uppercase;
@@ -26543,16 +26549,11 @@ body.is-mobile #word-length-radar,
     color: #3b82f6;
 }
 
-.radar-pill.intermission {
-    background: rgba(139, 92, 246, 0.15);
-    color: #8b5cf6;
-}
-
 .radar-overall-stats {
     display: flex;
     align-items: baseline;
     gap: 4px;
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     font-weight: 700;
 }
 
@@ -26562,28 +26563,28 @@ body.is-mobile #word-length-radar,
 
 .radar-overall-pct {
     color: var(--text-secondary, #64748b);
-    font-size: 0.72rem;
+    font-size: 0.70rem;
 }
 
 .radar-bars-container {
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 5px;
 }
 
 .radar-row {
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 0.78rem;
-    height: 18px;
+    gap: 8px;
+    font-size: 0.74rem;
+    height: 15px;
 }
 
 .radar-len-badge {
-    width: 32px;
+    width: 28px;
     font-weight: 800;
     color: var(--text-primary);
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     text-align: left;
     flex-shrink: 0;
 }
@@ -26591,7 +26592,7 @@ body.is-mobile #word-length-radar,
 .radar-bar-track {
     flex: 1;
     min-width: 0;
-    height: 8px;
+    height: 7px;
     background: rgba(128, 128, 128, 0.15);
     border-radius: 4px;
     overflow: hidden;
@@ -26606,11 +26607,11 @@ body.is-mobile #word-length-radar,
 }
 
 .radar-count-label {
-    width: 60px;
+    width: 56px;
     text-align: right;
     font-weight: 700;
     color: var(--text-secondary, #64748b);
-    font-size: 0.74rem;
+    font-size: 0.72rem;
     flex-shrink: 0;
     font-variant-numeric: tabular-nums;
 }
@@ -26622,4 +26623,36 @@ body.is-mobile #word-length-radar,
 .radar-row.is-complete .radar-count-label {
     color: #10b981;
     font-weight: 800;
+}
+
+/* Compact Laptop Screens: Prevent any vertical overflow while keeping padding equal */
+@media (min-width: 901px) and (max-height: 820px) {
+    :root {
+        --cell-size: 46px;
+    }
+    body.is-desktop .board-panel,
+    body:not(.is-mobile) .board-panel {
+        gap: 6px !important;
+        padding-top: 4px !important;
+        padding-bottom: 8px !important;
+        overflow-y: hidden !important;
+    }
+    body.is-desktop #word-length-radar {
+        margin: 2px auto 0 auto !important;
+        padding: 5px 10px 6px !important;
+    }
+    body.is-desktop .radar-header {
+        margin-bottom: 4px !important;
+        padding-bottom: 3px !important;
+    }
+    body.is-desktop .radar-row {
+        height: 13px !important;
+        gap: 6px !important;
+    }
+    body.is-desktop .radar-bar-track {
+        height: 6px !important;
+    }
+    body.is-desktop .radar-bars-container {
+        gap: 3px !important;
+    }
 }
