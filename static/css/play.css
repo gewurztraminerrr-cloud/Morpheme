@@ -639,6 +639,13 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
     text-overflow: ellipsis;
     white-space: nowrap;
     text-align: left !important;
+    cursor: pointer;
+    transition: color 0.15s ease, text-decoration 0.15s ease;
+}
+
+.player-username:hover {
+    color: #409cff !important;
+    text-decoration: underline;
 }
 
 .player-rating-val {
@@ -746,6 +753,17 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
     background: rgba(64, 156, 255, 0.25);
     border: 1px solid #409cff;
     color: var(--text-primary);
+}
+
+.player-item.selected-player {
+    border: 1.5px solid #409cff !important;
+    background: rgba(64, 156, 255, 0.22) !important;
+    box-shadow: 0 0 10px rgba(64, 156, 255, 0.4) !important;
+}
+
+.player-item.selected-player .player-username {
+    color: #409cff !important;
+    font-weight: 700 !important;
 }
 
 .players-divider {

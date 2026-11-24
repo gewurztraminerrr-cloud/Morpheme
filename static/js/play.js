@@ -3440,7 +3440,10 @@ async function _doUpdateGameState(incomingState = null) {
         if (wordsPanelHeader) {
             let headerText = is24H ? 'Your Words' : 'Words';
             if (state.game_type === 'fcfs') headerText = 'Live Feed';
-            if (state.state === 'intermission') headerText = 'All Words';
+            if (state.state === 'intermission') {
+                const isOtherSelected = Boolean(selectedPlayerUsername && (!currentUser || selectedPlayerUsername.toLowerCase().trim() !== currentUser.toLowerCase().trim()));
+                headerText = isOtherSelected ? `All Words (${selectedPlayerUsername})` : 'All Words';
+            }
             wordsPanelHeader.textContent = headerText;
         }
 
@@ -3589,11 +3592,54 @@ async function _doUpdateGameState(incomingState = null) {
                 const globalUnique = new Set(allPlayerFoundStrs).size;
                 const globalPercentage = totalWords > 0 ? Math.round((globalUnique / totalWords) * 100) : 0;
 
-                // 2. Calculate Personal Stats (Current User)
-                const myPlayer = (state.players && Array.isArray(state.players)) ? state.players.find(p => p && p.username && p.username.toLowerCase() === (currentUser || "").toLowerCase()) : null;
-                const myWords = myPlayer ? (myPlayer.submitted_words || []) : [];
-                const personalUnique = new Set(myWords.map(w => ((typeof w === 'string' ? w : (w && w.word)) || '').toUpperCase()).filter(Boolean)).size;
-                const personalPercentage = totalWords > 0 ? Math.round((personalUnique / totalWords) * 100) : 0;
+                // 2. Identify Target Player (Selected player or logged-in user)
+                let targetPlayer = null;
+                if (selectedPlayerUsername) {
+                    const selLower = selectedPlayerUsername.toLowerCase().trim();
+                    targetPlayer = (state.players && Array.isArray(state.players) && state.players.find(p => p && p.username && p.username.toLowerCase().trim() === selLower)) ||
+                                   (state.previous_players && Array.isArray(state.previous_players) && state.previous_players.find(p => p && p.username && p.username.toLowerCase().trim() === selLower)) ||
+                                   null;
+                } else {
+                    const curLower = (currentUser || '').toLowerCase().trim();
+                    const curUid = String(window.currentUserId || '');
+                    targetPlayer = (state.players && Array.isArray(state.players) && state.players.find(p => 
+                        (p && p.username && p.username.toLowerCase().trim() === curLower) ||
+                        (curUid && p && p.user_id && String(p.user_id) === curUid)
+                    )) || (state.previous_players && Array.isArray(state.previous_players) && state.previous_players.find(p => 
+                        (p && p.username && p.username.toLowerCase().trim() === curLower) ||
+                        (curUid && p && p.user_id && String(p.user_id) === curUid)
+                    )) || null;
+                }
+
+                let rawTargetWords = [];
+                if (targetPlayer) {
+                    if (state.state === 'intermission') {
+                        rawTargetWords = (targetPlayer.previous_submitted_words && Array.isArray(targetPlayer.previous_submitted_words) && targetPlayer.previous_submitted_words.length > 0)
+                            ? targetPlayer.previous_submitted_words
+                            : (targetPlayer.submitted_words || []);
+                    } else {
+                        rawTargetWords = (targetPlayer.submitted_words && Array.isArray(targetPlayer.submitted_words) && targetPlayer.submitted_words.length > 0)
+                            ? targetPlayer.submitted_words
+                            : (targetPlayer.previous_submitted_words || []);
+                    }
+                }
+                let targetWords = rawTargetWords.map(w => ((typeof w === 'string' ? w : (w && w.word)) || '').toUpperCase().trim()).filter(Boolean);
+
+                const isMeSelected = selectedPlayerUsername && currentUser && (selectedPlayerUsername.toLowerCase().trim() === currentUser.toLowerCase().trim());
+                if ((!selectedPlayerUsername || isMeSelected) && window._localSubmittedWords) {
+                    const existingSet = new Set(targetWords);
+                    for (const lw of window._localSubmittedWords) {
+                        if (!lw) continue;
+                        const lwUpper = lw.toUpperCase().trim();
+                        if (!existingSet.has(lwUpper)) {
+                            targetWords.push(lwUpper);
+                            existingSet.add(lwUpper);
+                        }
+                    }
+                }
+
+                const targetUnique = new Set(targetWords).size;
+                const targetPercentage = totalWords > 0 ? Math.round((targetUnique / totalWords) * 100) : 0;
 
                 // Display Both
                 let finderButtonHtml = '';
@@ -3613,41 +3659,17 @@ async function _doUpdateGameState(incomingState = null) {
                 if (totalPointsValue > 0) window.lastValidTotalPoints = totalPointsValue;
 
                 if (wordsStats) {
+                    const statsPrefix = (selectedPlayerUsername && !isMeSelected)
+                        ? `<span style="color: #409cff; font-weight: 700;">${selectedPlayerUsername}:</span> `
+                        : '';
                     wordsStats.innerHTML = `
                         <div style="line-height: 1.2;" class="stats-text-primary">
-                            ${personalUnique}/${totalWords} - ${personalPercentage}% (${totalPointsValue} total pts)
+                            ${statsPrefix}${targetUnique}/${totalWords} - ${targetPercentage}% (${totalPointsValue} total pts)
                             <div class="stats-text-secondary" style="font-size: 0.75em; margin-top: 2px;">
                                 Collective Percentage: ${globalPercentage}%
                             </div>
                             ${finderButtonHtml}
                         </div>`;
-                }
-
-                const targetUsernameStr = (selectedPlayerUsername || currentUser || '').toLowerCase().trim();
-                const currentUserIdStr = String(window.currentUserId || '');
-                let targetPlayer = state.players ? state.players.find(p => 
-                    (p && p.username && p.username.toLowerCase().trim() === targetUsernameStr) ||
-                    (p && p.user_id && String(p.user_id) === currentUserIdStr)
-                ) : null;
-                if (!targetPlayer && state.previous_players) {
-                    targetPlayer = state.previous_players.find(p => 
-                        (p && p.username && p.username.toLowerCase().trim() === targetUsernameStr) ||
-                        (p && p.user_id && String(p.user_id) === currentUserIdStr)
-                    );
-                }
-                let targetWords = targetPlayer && targetPlayer.submitted_words ? targetPlayer.submitted_words.map(w => ((typeof w === 'string' ? w : (w && w.word)) || '').toUpperCase()).filter(Boolean) : [];
-                
-                // Merge locally submitted words so all found words (including CSW & 5x7 words) are highlighted in blue
-                if (!selectedPlayerUsername && window._localSubmittedWords) {
-                    const existingSet = new Set(targetWords);
-                    for (const lw of window._localSubmittedWords) {
-                        if (!lw) continue;
-                        const lwUpper = lw.toUpperCase();
-                        if (!existingSet.has(lwUpper)) {
-                            targetWords.push(lwUpper);
-                            existingSet.add(lwUpper);
-                        }
-                    }
                 }
 
                 // Ensure all target words (found by player) and local submitted words are in uniqueGlobalFound
@@ -5060,12 +5082,17 @@ function renderPlayers(players, currentUser = null, state = null) {
         const flagCountryName = (window.getCountryName ? window.getCountryName(p.country_flag) : '') || '';
         const flagTitleAttr = flagCountryName ? ` title="${flagCountryName.replace(/"/g, '&quot;')}"` : '';
 
+        const itemTitle = isIntermission ? 'Click to view notepad' : '';
+        const userTitle = (p.username === selectedPlayerUsername)
+            ? 'Click to revert to your words'
+            : 'Click to highlight found words in All Words';
+
         return `
-        <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
+        <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}"${itemTitle ? ` title="${itemTitle}"` : ''}>
             <div class="player-row-top">
                 <span class="player-rank${rankClass}"${rankStyle ? ` style="${rankStyle}"` : ''}>#${rank}</span>
                 <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
-                <span class="player-username" style="text-align: left !important;">${p.username}</span>
+                <span class="player-username" style="text-align: left !important;" title="${userTitle}">${p.username}</span>
                 <span class="player-rating-val">${ratingDisplay}</span>
             </div>
             <div class="player-row-bottom">
@@ -5092,28 +5119,53 @@ function renderPlayers(players, currentUser = null, state = null) {
     // RESTORE SCROLL POSITION (Prevents jumping on score updates)
     listEl.scrollTop = oldScrollTop;
 
-    // Add click listeners for selection
+    // Add click listeners for selection and notepad
     const items = listEl.querySelectorAll('.player-item');
     items.forEach(item => {
+        const username = item.dataset.username;
+        const usernameEl = item.querySelector('.player-username');
+
+        // Clicking specifically on username text toggles highlight in All Words and slides to Words panel
+        if (usernameEl) {
+            usernameEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                // Close notepad if open
+                if (typeof window.closeNotepadPopup === 'function') {
+                    window.closeNotepadPopup();
+                }
+
+                // Toggle selection
+                if (selectedPlayerUsername === username) {
+                    selectedPlayerUsername = null; // Revert back to own words
+                } else {
+                    selectedPlayerUsername = username;
+                    // Ensure 'found' (All Words) tab is active
+                    if (typeof activeWordsTab !== 'undefined' && activeWordsTab !== 'found') {
+                        const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
+                        if (foundTabBtn) foundTabBtn.click();
+                    }
+                    // Slide over to Words panel
+                    if (typeof window.switchPlayPanel === 'function') {
+                        window.switchPlayPanel('words', true);
+                    }
+                    const wordsScroller = document.getElementById('submitted-words-list');
+                    if (wordsScroller) wordsScroller.scrollTop = 0;
+                }
+
+                window.lastRenderedIntermissionKey = null;
+                lastPlayersHtml = '';
+                updateGameState();
+            });
+        }
+
+        // Clicking anywhere else on player card opens notepad popup during intermission
         item.addEventListener('click', () => {
-            const username = item.dataset.username;
-            // Toggle selection
-            if (selectedPlayerUsername === username) {
-                selectedPlayerUsername = null; // Deselect
-            } else {
-                selectedPlayerUsername = username;
-            }
-            
-            // If in intermission state (end of round), open the notepad popup!
             if (window.lastGameState && window.lastGameState.state === 'intermission') {
                 if (typeof window.showNotepadPopup === 'function') {
                     window.showNotepadPopup(username);
                 }
             }
-            
-            // Trigger immediate update (or wait for next poll)
-            // waiting for next poll (1s) is fine, or we can force it
-            updateGameState();
         });
     });
 }
@@ -6319,7 +6371,8 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const titleEl = document.getElementById('words-panel-title');
     if (titleEl && activeWordsTab === 'found') {
         const existingBtn = document.getElementById('toggle-board-btn');
-        titleEl.textContent = 'All Words';
+        const isOtherSelected = Boolean(selectedPlayerUsername && (!currentUser || selectedPlayerUsername.toLowerCase().trim() !== currentUser.toLowerCase().trim()));
+        titleEl.textContent = isOtherSelected ? `All Words (${selectedPlayerUsername})` : 'All Words';
         if (existingBtn) {
             titleEl.appendChild(existingBtn);
         }
