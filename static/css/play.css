@@ -26469,3 +26469,157 @@ body[class*="theme-light-"] #list-update-btn:hover,
 }
 
 
+
+/* ==========================================================================
+   WORD LENGTH RADAR (DESKTOP & LAPTOP ONLY)
+   ========================================================================== */
+#word-length-radar {
+    display: none;
+}
+
+body.is-desktop #word-length-radar {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 480px;
+    margin: 12px auto 0 auto;
+    padding: 10px 14px 12px;
+    background: var(--input-bg, #ffffff);
+    border: 1px solid var(--border-color, rgba(128, 128, 128, 0.2));
+    border-radius: 10px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Strict mobile & small screen suppression: never show on mobile devices */
+body.is-mobile #word-length-radar,
+@media (max-width: 992px) {
+    #word-length-radar,
+    body.is-desktop #word-length-radar {
+        display: none !important;
+    }
+}
+
+.radar-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-color, rgba(128, 128, 128, 0.15));
+}
+
+.radar-title-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.radar-icon {
+    font-size: 0.85rem;
+    color: #f59e0b;
+}
+
+.radar-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-primary);
+}
+
+.radar-pill {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 8px;
+    line-height: 1.3;
+}
+
+.radar-pill.active {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.radar-pill.intermission {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+}
+
+.radar-overall-stats {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.radar-overall-count {
+    color: var(--text-primary);
+}
+
+.radar-overall-pct {
+    color: var(--text-secondary, #64748b);
+    font-size: 0.72rem;
+}
+
+.radar-bars-container {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.radar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.78rem;
+    height: 18px;
+}
+
+.radar-len-badge {
+    width: 32px;
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 0.76rem;
+    text-align: left;
+    flex-shrink: 0;
+}
+
+.radar-bar-track {
+    flex: 1;
+    min-width: 0;
+    height: 8px;
+    background: rgba(128, 128, 128, 0.15);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.radar-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: width;
+}
+
+.radar-count-label {
+    width: 60px;
+    text-align: right;
+    font-weight: 700;
+    color: var(--text-secondary, #64748b);
+    font-size: 0.74rem;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.radar-row.is-complete .radar-len-badge {
+    color: #10b981;
+}
+
+.radar-row.is-complete .radar-count-label {
+    color: #10b981;
+    font-weight: 800;
+}

@@ -4481,6 +4481,11 @@ async function _doUpdateGameState(incomingState = null) {
             }
         }
 
+        // Update Desktop Word Length Radar
+        if (typeof updateWordLengthRadar === 'function') {
+            updateWordLengthRadar(state);
+        }
+
         // Rapid retry if server is lagged (stayed in active or intermission state but time is up, or room is waiting)
         if (state && (((state.state === 'active' || state.state === 'intermission') && state.time_remaining <= 0) || state.state === 'waiting')) {
             console.warn(`[play.js] Server state is ${state.state} (tr=${state.time_remaining}). Scheduling rapid state check in 200ms...`);
@@ -4510,6 +4515,196 @@ async function _doUpdateGameState(incomingState = null) {
         }
     }
 }
+
+function updateWordLengthRadar(state) {
+    const radarEl = document.getElementById('word-length-radar');
+    if (!radarEl) return;
+
+    // Strict desktop & laptop only check
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isDesktop = !isMobileUA && window.innerWidth > 992 && document.body.classList.contains('is-desktop');
+    if (!isDesktop) {
+        radarEl.style.display = 'none';
+        return;
+    }
+
+    if (!state || (state.state !== 'active' && state.state !== 'intermission')) {
+        radarEl.style.display = 'none';
+        return;
+    }
+
+    const isIntermission = state.state === 'intermission';
+
+    // 1. Calculate Totals By Length for the board
+    let totalByLen = {};
+    if (!isIntermission && state.total_counts_by_len) {
+        totalByLen = state.total_counts_by_len;
+    } else {
+        totalByLen = state.previous_total_counts_by_len || state.total_counts_by_len || {};
+    }
+
+    // Check if we can derive from all_words
+    const wordList = isIntermission ? (state.previous_all_words || state.all_words) : state.all_words;
+    if (wordList && Array.isArray(wordList) && wordList.length > 0) {
+        const fromList = {};
+        wordList.forEach(w => {
+            const str = (typeof w === 'string' ? w : (w && w.word) || '');
+            if (str && str.length > 0) fromList[str.length] = (fromList[str.length] || 0) + 1;
+        });
+        const validKeys = Object.keys(totalByLen).filter(k => !k.startsWith('_') && parseInt(totalByLen[k], 10) > 0);
+        if (validKeys.length === 0) {
+            totalByLen = fromList;
+        }
+    }
+
+    // 2. Calculate User Found Words By Length
+    const currentUser = state.your_username || (window.currentUsername || '');
+    const currentUserId = state.your_user_id || window.currentUserId;
+    let myFoundStrs = [];
+
+    if (state.game_type === 'fcfs') {
+        myFoundStrs = (state.fcfs_found_words || []).map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase());
+    } else {
+        const me = state.players && Array.isArray(state.players) ? state.players.find(p => 
+            (currentUser && p.username && p.username.toLowerCase().trim() === currentUser.toLowerCase().trim()) ||
+            (currentUserId && p.user_id && String(p.user_id) === String(currentUserId))
+        ) : null;
+        if (me) {
+            const pWords = (isIntermission && me.previous_submitted_words && me.previous_submitted_words.length > 0)
+                ? me.previous_submitted_words
+                : (me.submitted_words || me.previous_submitted_words || []);
+            myFoundStrs = pWords.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase());
+        }
+    }
+
+    // Merge window._localSubmittedWords during active gameplay
+    const myFoundSet = new Set(myFoundStrs);
+    if (!isIntermission && window._localSubmittedWords && window._localSubmittedWords.size > 0) {
+        window._localSubmittedWords.forEach(w => {
+            if (w) myFoundSet.add(w.toUpperCase().trim());
+        });
+    }
+
+    const foundByLen = {};
+    myFoundSet.forEach(word => {
+        const l = word.length;
+        foundByLen[l] = (foundByLen[l] || 0) + 1;
+    });
+
+    // 3. Determine Active Board Lengths (lengths that have > 0 words)
+    const availableLengths = [];
+    for (let l = 1; l <= 30; l++) {
+        const cnt = parseInt(totalByLen[l] !== undefined ? totalByLen[l] : (totalByLen[String(l)] || 0), 10);
+        if (cnt > 0) {
+            availableLengths.push(l);
+        }
+    }
+
+    if (availableLengths.length === 0) {
+        radarEl.style.display = 'none';
+        return;
+    }
+
+    // 4. Group lengths if needed (max 5 rows so it fits compactly)
+    let displayRows = [];
+    if (availableLengths.length <= 5) {
+        displayRows = availableLengths.map(l => ({
+            label: `${l}L`,
+            lengths: [l]
+        }));
+    } else {
+        for (let i = 0; i < 4; i++) {
+            displayRows.push({
+                label: `${availableLengths[i]}L`,
+                lengths: [availableLengths[i]]
+            });
+        }
+        const remainingLens = availableLengths.slice(4);
+        displayRows.push({
+            label: `${remainingLens[0]}L+`,
+            lengths: remainingLens
+        });
+    }
+
+    // 5. Compute stats per row and overall
+    let grandTotal = 0;
+    let grandFound = 0;
+
+    const rowData = displayRows.map(row => {
+        let rowTotal = 0;
+        let rowFound = 0;
+        row.lengths.forEach(l => {
+            const tot = parseInt(totalByLen[l] !== undefined ? totalByLen[l] : (totalByLen[String(l)] || 0), 10);
+            const fnd = Math.min(tot, foundByLen[l] || 0);
+            rowTotal += tot;
+            rowFound += fnd;
+        });
+        grandTotal += rowTotal;
+        grandFound += rowFound;
+        const pct = rowTotal > 0 ? Math.round((rowFound / rowTotal) * 100) : 0;
+        return {
+            label: row.label,
+            found: rowFound,
+            total: rowTotal,
+            pct: pct,
+            isComplete: rowTotal > 0 && rowFound >= rowTotal
+        };
+    });
+
+    const overallPct = grandTotal > 0 ? Math.round((grandFound / grandTotal) * 100) : 0;
+
+    // Palette gradients matching length brackets
+    const colorMap = {
+        '3L': 'linear-gradient(90deg, #3b82f6, #60a5fa)',
+        '4L': 'linear-gradient(90deg, #10b981, #34d399)',
+        '5L': 'linear-gradient(90deg, #f59e0b, #fbbf24)',
+        '6L': 'linear-gradient(90deg, #8b5cf6, #a78bfa)',
+        '7L': 'linear-gradient(90deg, #ec4899, #f472b6)',
+        '8L': 'linear-gradient(90deg, #6366f1, #818cf8)',
+        'default': 'linear-gradient(90deg, #6366f1, #a855f7)'
+    };
+
+    let rowsHtml = '';
+    rowData.forEach(r => {
+        const bgGrad = colorMap[r.label] || colorMap['default'];
+        const completeClass = r.isComplete ? ' is-complete' : '';
+        const countDisplay = r.isComplete ? `${r.found}/${r.total} ✓` : `${r.found}/${r.total}`;
+        rowsHtml += `
+            <div class="radar-row${completeClass}" data-length="${r.label}">
+                <span class="radar-len-badge">${r.label}</span>
+                <div class="radar-bar-track">
+                    <div class="radar-bar-fill" style="width: ${r.pct}%; background: ${bgGrad};"></div>
+                </div>
+                <span class="radar-count-label">${countDisplay}</span>
+            </div>
+        `;
+    });
+
+    const titleText = isIntermission ? 'Word Length Breakdown' : 'Word Length Radar';
+    const statusPill = isIntermission 
+        ? `<span class="radar-pill intermission">Round Review</span>` 
+        : (grandFound > 0 ? `<span class="radar-pill active">${overallPct}% Found</span>` : '');
+
+    radarEl.innerHTML = `
+        <div class="radar-header">
+            <div class="radar-title-group">
+                <span class="radar-icon">⚡</span>
+                <span class="radar-title">${titleText}</span>
+                ${statusPill}
+            </div>
+            <div class="radar-overall-stats">
+                <span class="radar-overall-count">${grandFound} / ${grandTotal}</span>
+                <span class="radar-overall-pct">(${overallPct}%)</span>
+            </div>
+        </div>
+        <div class="radar-bars-container">
+            ${rowsHtml}
+        </div>
+    `;
+
+    radarEl.style.display = 'flex';
+}
+window.updateWordLengthRadar = updateWordLengthRadar;
 
 function fetchDailyScoreSums(targetRoomId) {
     const roomId = targetRoomId || window.currentRoomId || (window.lastGameState ? window.lastGameState.room_id : '24h_4x4');
@@ -11629,6 +11824,10 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                                 time: Date.now() / 1000
                             });
 
+                            if (typeof updateWordLengthRadar === 'function' && window.lastGameState) {
+                                updateWordLengthRadar(window.lastGameState);
+                            }
+
                             const myPlayer = preState.players && preState.players.find(p =>
                                 (currentUser && p.username && p.username.toLowerCase().trim() === currentUser.toLowerCase().trim()) ||
                                 (window.currentUserId && p.user_id && String(p.user_id) === String(window.currentUserId)) ||
@@ -11857,6 +12056,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                 });
             }
             recordGuessResult(true, true);
+            if (typeof updateWordLengthRadar === 'function' && window.lastGameState) {
+                updateWordLengthRadar(window.lastGameState);
+            }
         } else if (serverIsPenalty) {
             window._localSubmittedWords = window._localSubmittedWords || new Set();
             window._localSubmittedWords.add(word);
@@ -11870,6 +12072,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                 window._localSubmittedWordsList = window._localSubmittedWordsList.filter(
                     item => (typeof item === 'string' ? item : (item && item.word) || '').toUpperCase() !== word
                 );
+            }
+            if (typeof updateWordLengthRadar === 'function' && window.lastGameState) {
+                updateWordLengthRadar(window.lastGameState);
             }
             if (typeof updateGameState === 'function') {
                 updateGameState();
