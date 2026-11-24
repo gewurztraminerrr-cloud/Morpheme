@@ -16,7 +16,7 @@ import datetime
 import threading
 import copy
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import List, Dict, Set
 import os
 import fcntl
 
@@ -290,6 +290,7 @@ class GameRoom:
     spectators: List[Player] = field(default_factory=list)
     max_players: int = 8
     is_closing: bool = False
+    round_starting_player_ids: Set[str] = field(default_factory=set)
     
     
     # Game state
@@ -531,16 +532,27 @@ class GameRoom:
                     existing_player.config_games_played = config_games_played
                 if game_room_chat is not None:
                     existing_player.game_room_chat = game_room_chat
-                # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
-                if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
-                    round_started_at = getattr(self, 'round_start_time', 0)
-                    was_present_at_start = (
-                        round_started_at > 0 and
-                        prior_last_active >= round_started_at - 30
-                    )
-                    if not was_present_at_start or manual_accessed:
-                        existing_player.joined_mid_round = True
-                        print(f"[GameRoom] Mid-round flag set for {username} (existing player path). round_start={round_started_at:.0f}, prior_last_active={prior_last_active:.0f}")
+                # MID-ROUND DETECTION: Check if player was in the room when round started
+                if not is_daily and (self.state == 'active' or getattr(self, 'starting_round', False)):
+                    round_starters = getattr(self, 'round_starting_player_ids', None)
+                    if round_starters is not None:
+                        if uid_str not in round_starters or manual_accessed:
+                            existing_player.joined_mid_round = True
+                            print(f"[GameRoom] Mid-round flag set for {username} (existing player not in round_starting_player_ids or manual).")
+                    else:
+                        round_started_at = getattr(self, 'round_start_time', 0)
+                        was_present_at_start = (
+                            round_started_at > 0 and
+                            prior_last_active >= round_started_at - 5
+                        )
+                        if not was_present_at_start or manual_accessed:
+                            existing_player.joined_mid_round = True
+                            print(f"[GameRoom] Mid-round flag set for {username} (existing player path fallback). round_start={round_started_at:.0f}, prior_last_active={prior_last_active:.0f}")
+
+                # If they were in round_quitters, they left the active round and rejoined mid-round
+                if any(str(q.user_id) == uid_str or str(q.username).lower() == uname_lower for q in self.round_quitters):
+                    existing_player.joined_mid_round = True
+
                 # Ensure they are removed from round_quitters if they were in there (REJOIN TRANSITION)
                 self.round_quitters = [q for q in self.round_quitters if str(q.user_id) != uid_str and str(q.username).lower() != uname_lower]
                 if not getattr(existing_player, 'cell_density', None):
@@ -563,6 +575,7 @@ class GameRoom:
                 quitter.last_active = time.time()
                 quitter.country_flag = country_flag
                 quitter.is_guest = is_guest
+                quitter.joined_mid_round = True
                 if is_unrated is not None:
                     quitter.is_unrated = is_unrated
                     quitter.provisional_games = provisional_games
@@ -624,16 +637,14 @@ class GameRoom:
                 if game_room_chat is not None:
                     existing_player.game_room_chat = game_room_chat
                 
-                # MID-ROUND DETECTION: Use round_start_time as authoritative truth.
-                if not is_daily and self.state == 'active' and not existing_player.joined_mid_round:
-                    round_started_at = getattr(self, 'round_start_time', 0)
-                    was_present_at_start = (
-                        round_started_at > 0 and
-                        prior_last_active >= round_started_at - 30
-                    )
-                    if not was_present_at_start or manual_accessed:
+                # MID-ROUND DETECTION: past_player joining an active round is joining mid-round
+                if not is_daily and (self.state == 'active' or getattr(self, 'starting_round', False)):
+                    round_starters = getattr(self, 'round_starting_player_ids', None)
+                    if round_starters is not None and uid_str in round_starters and not manual_accessed:
+                        pass
+                    else:
                         existing_player.joined_mid_round = True
-                        print(f"[GameRoom] Mid-round flag set for {username} (past_player path). round_start={round_started_at:.0f}, prior_last_active={prior_last_active:.0f}")
+                        print(f"[GameRoom] Mid-round flag set for {username} (past_player path).")
                 
                 if not getattr(existing_player, 'cell_density', None):
                     self._initialize_player_density_grid(existing_player)
@@ -1051,6 +1062,12 @@ class GameRoom:
         # Clean spectator list if they are an active player
         self.spectators = [s for s in self.spectators if str(s.user_id) != str(user_id)]
         
+        # Safeguard: if player submits word while active and was not in round_starters, flag joined_mid_round
+        if player and not getattr(self, 'is_daily', False) and (self.time_limit < 7200) and self.state == 'active':
+            round_starters = getattr(self, 'round_starting_player_ids', None)
+            if round_starters is not None and str(user_id) not in round_starters:
+                player.joined_mid_round = True
+
         # Update activity on submission
         self.update_player_activity(user_id)
         
@@ -2521,11 +2538,15 @@ class GameRoom:
                                 print(f"[GameRoom] {self.game_type} room: skipping rating updates.")
                             else:
                                 from rating_logic import calculate_proportional_rating_change
-                                # USER MANDATE: Only change ratings for players who started the round from the beginning
+                                # USER MANDATE: Only affect ratings of people who played from the beginning of the round and had a score >= 1
+                                round_starters = getattr(self, 'round_starting_player_ids', None)
                                 participants = [
                                     p for p in self.players + quitters_snapshot 
-                                    if (getattr(p, 'score', 0) > 0 or not getattr(p, 'is_ai', False)) 
+                                    if getattr(p, 'score', 0) >= 1
+                                    and not getattr(p, 'is_ai', False)
+                                    and not is_player_guest(p)
                                     and not getattr(p, 'joined_mid_round', False)
+                                    and (round_starters is None or str(p.user_id) in round_starters)
                                 ]
                                 rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private, board_format=self.current_board_format)
                                 
@@ -2533,8 +2554,8 @@ class GameRoom:
                                 config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
                                 active_humans = [
                                     p for p in participants
-                                    if (getattr(p, 'score', 0) > 0 or (getattr(p, 'submitted_words', []) and any(w.get('points', 0) > 0 for w in p.submitted_words)))
-                                    and not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False)
+                                    if getattr(p, 'score', 0) >= 1
+                                    and not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and not is_player_guest(p)
                                 ]
 
                                 def _is_established_opponent(o):
@@ -2550,6 +2571,18 @@ class GameRoom:
 
                                 with get_db() as conn_p:
                                     for p in self.players + quitters_snapshot:
+                                        # Strict User Mandate: Only affect ratings of people who played from the beginning of the round and had a score >= 1
+                                        played_from_start = (
+                                            not getattr(p, 'joined_mid_round', False) and
+                                            (round_starters is None or str(p.user_id) in round_starters)
+                                        )
+                                        has_score = (getattr(p, 'score', 0) >= 1)
+                                        is_eligible_human = (not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and not is_player_guest(p))
+
+                                        if not (played_from_start and has_score and is_eligible_human):
+                                            p.rating_change = 0
+                                            continue
+
                                         if p.user_id in rating_changes:
                                             simulated_change = rating_changes[p.user_id]
                                             is_p_unrated = getattr(p, 'is_unrated', False) or (
@@ -2656,8 +2689,10 @@ class GameRoom:
                                     if self.abandonment_bounty > 0:
                                         eligible_receivers = [
                                             p for p in self.players 
-                                            if not p.is_ai and not getattr(p, 'is_guest', False) 
+                                            if not p.is_ai and not getattr(p, 'is_guest', False) and not is_player_guest(p)
                                             and not getattr(p, 'joined_mid_round', False)
+                                            and (round_starters is None or str(p.user_id) in round_starters)
+                                            and getattr(p, 'score', 0) >= 1
                                             and not getattr(p, 'is_unrated', False)
                                         ]
                                         if eligible_receivers:
@@ -6471,6 +6506,9 @@ class RoomManager:
                 p.has_abandoned = False # Reset penalty flag for new round
                 p._last_round_seen = room.current_round
                 
+            # Record authoritative set of players present at the start of this round
+            room.round_starting_player_ids = {str(p.user_id) for p in room.players}
+
             # Clear FCFS global list
             room.fcfs_found_words = []
             room._fcfs_found_words_set = set()

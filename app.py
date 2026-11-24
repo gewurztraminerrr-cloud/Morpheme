@@ -7956,13 +7956,13 @@ def join_room(room_id):
                              provisional_rating=r_info['provisional_rating'],
                              config_games_played=r_info.get('config_games_played', 0))
     if success:
-        p = room.players[-1] # Valid since we just added or updated
+        p = room.get_player(user_id) or room.players[-1]
         p.has_exceptional_round = has_exceptional 
         room.update_player_activity(user_id)
         state = None
         try: state, _ = get_room_state_dict(room_id, uid=user_id)
         except Exception: pass
-        return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': False, 'state': state})
+        return jsonify({'success': True, 'role': 'player', 'max_players': room.max_players, 'joined_mid_round': getattr(p, 'joined_mid_round', False), 'state': state})
     else:
         # If room is full, automatically join as spectator instead of failing (except Accumulative and Subanagrams)
         if room.game_type in ['accumulative', 'solo_accumulative', 'subanagrams']:
