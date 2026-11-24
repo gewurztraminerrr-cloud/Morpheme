@@ -647,10 +647,12 @@ function showAlreadyOpenScreen() {
 document.addEventListener('DOMContentLoaded', async () => {
     // Check if the user's last visit was more than 10 minutes ago (server room expiration)
     try {
+        const lastRoom = String(localStorage.getItem('last_joined_room') || (window.lastGameState && window.lastGameState.room_id) || '');
+        const is24h = lastRoom.includes('24h') || lastRoom.includes('86400') || (window.lastGameState && (window.lastGameState.time_limit >= 7200 || window.lastGameState.game_type === '24h'));
         const lastActiveTime = parseInt(localStorage.getItem('morpheme_last_active_time') || localStorage.getItem('morpheme_last_active_timestamp') || '0', 10);
         const nowTime = Date.now();
         const exceededTimeout = (lastActiveTime > 0) && ((nowTime - lastActiveTime) >= 10 * 60 * 1000);
-        if (exceededTimeout) {
+        if (exceededTimeout && !is24h) {
             console.log(`[app.js] Last visit was ${Math.round((nowTime - lastActiveTime) / 60000)} minutes ago (>= 10 minutes). Silently clearing room session without Session Expired notice.`);
             window._suppressInactivityNotice = true;
             sessionStorage.setItem('morpheme_suppress_inactivity_notice', 'true');
@@ -4500,24 +4502,32 @@ function handleAppVisibilityChange() {
                 const playPage = document.getElementById('page-play');
                 const wasOnPlayPage = playPage && !playPage.classList.contains('hidden') && playPage.style.display !== 'none';
                 const hasRoom = window.currentRoomId || localStorage.getItem('last_joined_room') || (window.lastGameState && window.lastGameState.room_id);
+                const roomStr = String(hasRoom || '');
+                const is24h = roomStr.includes('24h') || roomStr.includes('86400') || (window.lastGameState && (window.lastGameState.time_limit >= 7200 || window.lastGameState.game_type === '24h'));
 
                 if (wasOnPlayPage && hasRoom) {
-                    console.log('[app.js] User returned to room after >= 10m idle. Invoking ejectToLobby.');
-                    if (typeof window.ejectToLobby === 'function') {
-                        window.ejectToLobby("inactivity");
-                    } else if (typeof window.navigateToPage === 'function') {
-                        window.navigateToPage("lobby");
+                    if (!is24h) {
+                        console.log('[app.js] User returned to non-24h room after >= 10m idle. Invoking ejectToLobby.');
+                        if (typeof window.ejectToLobby === 'function') {
+                            window.ejectToLobby("inactivity");
+                        } else if (typeof window.navigateToPage === 'function') {
+                            window.navigateToPage("lobby");
+                        }
+                    } else {
+                        console.log('[app.js] User returned to 24h room after >= 10m idle. Exempting from inactivity ejection.');
                     }
                 } else {
                     // Stale background session cleanup when not actively in a room
-                    if (hasRoom && typeof window.leaveCurrentRoom === 'function') {
-                        window.leaveCurrentRoom().catch(() => {});
+                    if (!is24h) {
+                        if (hasRoom && typeof window.leaveCurrentRoom === 'function') {
+                            window.leaveCurrentRoom().catch(() => {});
+                        }
+                        window._suppressInactivityNotice = true;
+                        sessionStorage.setItem('morpheme_suppress_inactivity_notice', 'true');
+                        localStorage.removeItem('last_joined_room');
+                        if (window.currentRoomId) window.currentRoomId = null;
+                        if (window.lastGameState) window.lastGameState = null;
                     }
-                    window._suppressInactivityNotice = true;
-                    sessionStorage.setItem('morpheme_suppress_inactivity_notice', 'true');
-                    localStorage.removeItem('last_joined_room');
-                    if (window.currentRoomId) window.currentRoomId = null;
-                    if (window.lastGameState) window.lastGameState = null;
                 }
             }
         } catch(e) {}

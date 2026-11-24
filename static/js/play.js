@@ -1426,7 +1426,8 @@ setInterval(() => {
     if (!roomId) return;
 
     // EXEMPTION: No idle limit for 24h rooms
-    const is24h = window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || window.lastGameState.game_type === '24h');
+    const rStr = String(roomId || (window.lastGameState && window.lastGameState.room_id) || '');
+    const is24h = rStr.includes('24h') || rStr.includes('86400') || (window.lastGameState && ((window.lastGameState.time_limit >= 7200) || window.lastGameState.game_type === '24h'));
     if (is24h) return;
 
     const idleMs = Date.now() - lastGameInteractionTime;
@@ -1825,7 +1826,8 @@ function handleResumeWakeUp(source) {
 
     if (isOnPlayPage()) {
         const activeRoomId = typeof getCurrentRoomId === 'function' ? getCurrentRoomId() : window.currentRoomId;
-        const is24h = window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || window.lastGameState.game_type === '24h');
+        const rStr = String(activeRoomId || (window.lastGameState && window.lastGameState.room_id) || '');
+        const is24h = rStr.includes('24h') || rStr.includes('86400') || (window.lastGameState && ((window.lastGameState.time_limit >= 7200) || window.lastGameState.game_type === '24h'));
 
         // IDLE EVICTION ON RETURN: If idle for >= 10m while in a non-24h game room, eject immediately to lobby!
         if (activeRoomId && !is24h && idleGap >= 10 * 60 * 1000) {
