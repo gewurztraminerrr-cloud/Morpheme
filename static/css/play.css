@@ -755,7 +755,7 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
     color: var(--text-primary);
 }
 
-/* Selected Player under Players during Intermission (Flashing dark blue and white pulse with sheen) */
+/* Selected Player under Players during Intermission (Flashing dark blue and white pulse) */
 .player-item.selected-player,
 .player-item.selected-player.bonus-finder,
 .player-item.selected-player.current-user,
@@ -764,28 +764,15 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
     overflow: visible !important;
     flex-shrink: 0 !important;
     background-color: var(--selected-cell-bg, #0f2b5c) !important;
-    background-image: linear-gradient(
-        115deg,
-        transparent 0%,
-        transparent 40%,
-        rgba(255, 255, 255, 0.45) 50%,
-        rgba(255, 255, 255, 0.75) 52%,
-        rgba(255, 255, 255, 0.45) 54%,
-        transparent 64%,
-        transparent 100%
-    ) !important;
-    background-size: 260% 100% !important;
-    background-repeat: no-repeat !important;
+    background-image: none !important;
     border: 2px solid var(--selected-border-color, #3b82f6) !important;
     box-shadow: 0 0 0 2px var(--selected-border-color, #3b82f6), 0 0 16px rgba(59, 130, 246, 0.8), 0 0 32px rgba(96, 165, 250, 0.35) !important;
     outline: none !important;
     z-index: 25 !important;
     transition: none !important;
     transform: translateZ(0) !important;
-    will-change: border-color, box-shadow, background-color, background-position;
-    animation: 
-        selected-pulse-default 3s infinite ease-in-out,
-        selected-sheen-sweep 2.6s infinite ease-in-out !important;
+    will-change: border-color, box-shadow, background-color;
+    animation: selected-pulse-default 3s infinite ease-in-out !important;
 }
 
 .player-item.selected-player:hover {
