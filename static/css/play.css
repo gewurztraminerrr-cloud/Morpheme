@@ -3009,6 +3009,11 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     margin-bottom: 10px;
 }
 
+#submitted-words-list .word-item,
+#previous-words-list .word-item {
+    flex-shrink: 0 !important;
+}
+
 #previous-words-list {
     display: flex;
     flex-direction: column;
@@ -3251,13 +3256,21 @@ body.theme-light-gray .notepad-item.bonus-word .word-text {
 .notepad-item.finder-active,
 .notepad-word-line.finder-active {
     position: relative !important;
-    overflow: hidden !important;
+    overflow: visible !important;
+    flex-shrink: 0 !important;
     border: 2px solid #3b82f6 !important;
     outline: none !important;
     transform: scale(1.02);
     z-index: 10;
     will-change: transform, border-color, box-shadow;
     animation: selected-border-pulse-default 3s infinite ease-in-out !important;
+}
+
+.word-item.finder-active,
+#submitted-words-list .word-item.finder-active,
+#previous-words-list .word-item.finder-active {
+    min-height: 44px !important;
+    box-sizing: border-box !important;
 }
 
 .word-item.finder-active::before,
@@ -9368,6 +9381,9 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
     cursor: pointer;
     padding: 10px 14px !important;
     min-width: 0;
+    flex-shrink: 0 !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
 }
 
 .word-left {

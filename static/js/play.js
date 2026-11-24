@@ -13019,6 +13019,14 @@ function toggleWordSelection(word, clickedElement = null) {
             animateReviewWordPath(cleanWord);
         }
 
+        // Ensure the selected item stays fully visible within its scrolling container
+        try {
+            const activeItem = clickedElement || document.querySelector('.word-item.finder-active');
+            if (activeItem && typeof activeItem.scrollIntoView === 'function') {
+                activeItem.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        } catch (scrollErr) {}
+
         return true; // Selected
     }
 }
