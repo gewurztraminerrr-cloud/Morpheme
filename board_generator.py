@@ -2553,14 +2553,14 @@ class BoardGenerator:
 
         # Strict physical feasibility clamping for small boards
         if num_tiles <= 16:
-            if min_words > 300 or max_words > 400 or word_count_range in ['400-500', '500+']:
-                min_words, max_words = (300, 400) if is_any_aw else (200, 300)
-                word_count_range = f"{min_words}-{max_words}"
+            if min_words > 300 or max_words > 399 or word_count_range in ['400-500', '500+']:
+                min_words, max_words = (300, 399) if is_any_aw else (200, 299)
+                word_count_range = "300-400" if is_any_aw else "200-300"
                 target_min_words, target_max_words = min_words, max_words
         elif num_tiles <= 24:
-            if min_words > 400 or max_words > 500 or word_count_range == '500+':
-                min_words, max_words = (400, 500) if is_any_aw else (300, 400)
-                word_count_range = f"{min_words}-{max_words}"
+            if min_words > 400 or max_words > 499 or word_count_range == '500+':
+                min_words, max_words = (400, 499) if is_any_aw else (300, 399)
+                word_count_range = "400-500" if is_any_aw else "300-400"
                 target_min_words, target_max_words = min_words, max_words
 
         print(f"[BoardGen] generate_board called for {dimensions} | Range: {word_count_range} ({min_words}-{max_words}) | MinLen: {min_word_length}L")
@@ -3393,13 +3393,13 @@ class BoardGenerator:
         # Strict physical feasibility clamping for small boards in emergency generator
         num_tiles = depth * rows * cols
         if num_tiles <= 16:
-            if min_words > 300 or max_words > 400 or word_count_range in ['400-500', '500+']:
-                min_words, max_words = (300, 400) if (use_aw_flag or has_aw_suffix) else (200, 300)
-                word_count_range = f"{min_words}-{max_words}"
+            if min_words > 300 or max_words > 399 or word_count_range in ['400-500', '500+']:
+                min_words, max_words = (300, 399) if (use_aw_flag or has_aw_suffix) else (200, 299)
+                word_count_range = "300-400" if (use_aw_flag or has_aw_suffix) else "200-300"
         elif num_tiles <= 24:
-            if min_words > 400 or max_words > 500 or word_count_range == '500+':
-                min_words, max_words = (400, 500) if (use_aw_flag or has_aw_suffix) else (300, 400)
-                word_count_range = f"{min_words}-{max_words}"
+            if min_words > 400 or max_words > 499 or word_count_range == '500+':
+                min_words, max_words = (400, 499) if (use_aw_flag or has_aw_suffix) else (300, 399)
+                word_count_range = "400-500" if (use_aw_flag or has_aw_suffix) else "300-400"
             
         safe_format = str(board_format or "").lower()
         if "equality freq" in safe_format:
@@ -4040,7 +4040,11 @@ class BoardGenerator:
         # Pattern: digits, optional spaces, dash, optional spaces, digits
         range_match = re.search(r'(\d+)\s*-\s*(\d+)', word_count_range)
         if range_match:
-            return (int(range_match.group(1)), int(range_match.group(2)))
+            low = int(range_match.group(1))
+            high = int(range_match.group(2))
+            if high in [100, 200, 300, 400, 500]:
+                high = high - 1
+            return (low, high)
             
         # 2. Look for open-ended range (e.g. "200+" or "500+")
         plus_match = re.search(r'(\d+)\s*\+', word_count_range)

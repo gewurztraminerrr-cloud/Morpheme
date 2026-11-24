@@ -130,6 +130,10 @@ class SpinnerSet:
                         cand['use_added_words'] = ('+ AW' in str(cand['dictionary']) or '+AW' in str(cand['dictionary']))
 
                 cand = SpinnerSet.sanitize_params(cand, board_dimensions, is_24h)
+                if is_24h and isinstance(cand, dict):
+                    cand['board_format'] = 'Valued Letters'
+                    cand['word_count_range'] = '300-400'
+                    cand['use_added_words'] = False
                 res = cand
                 # Avoid repeating the exact same Spinner Set tuple back-to-back when previous_params is given
                 if isinstance(previous_params, dict) and not is_24h:
@@ -252,12 +256,7 @@ class SpinnerSet:
 
         wc_range = p.get('word_count_range')
 
-        if p.get('_exact_wc_calculated') or p.get('_lock_word_count_range'):
-            # Pre-calculated from an actual solved board — preserve the exact truthful range!
-            wc_range = p.get('word_count_range') or ('300-400' if is_aw_effective else '100-200')
-            if is_aw_effective and wc_range not in ['300-400', '400-500', '500+']:
-                wc_range = '300-400'
-        elif is_24h:
+        if is_24h:
             p['board_format'] = 'Valued Letters'
             wc_range = '300-400'
             p['use_added_words'] = False
@@ -265,6 +264,11 @@ class SpinnerSet:
             # Ensure 300-400 is physically achievable on 24h boards without AW
             if min_word_length > floor_len:
                 min_word_length = floor_len
+        elif p.get('_exact_wc_calculated') or p.get('_lock_word_count_range'):
+            # Pre-calculated from an actual solved board — preserve the exact truthful range!
+            wc_range = p.get('word_count_range') or ('300-400' if is_aw_effective else '100-200')
+            if is_aw_effective and wc_range not in ['300-400', '400-500', '500+']:
+                wc_range = '300-400'
         elif is_aw_effective:
             # + AW dictionaries target high counts when spinning random params (NEVER below 300)
             if '4x4' in dims:

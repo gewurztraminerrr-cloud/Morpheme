@@ -3838,8 +3838,12 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     aw_cnt_ult = sum(1 for w in words_filtered if word_validator.word_validator.is_added_word(w)) if (is_aw and hasattr(word_validator, 'word_validator')) else 1
 
                     is_impossible_outlier = ('4x4' in dimensions and min_accept >= 400) or ('4x6' in dimensions and min_accept >= 500)
+                    if is_24h:
+                        is_impossible_outlier = False
                     if matching_final_min < 3:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had only {matching_final_min} words of length {final_min} (needed >= 3). REJECTING cached board...")
+                    elif is_24h and (actual_wc < 300 or actual_wc > 399):
+                        print(f"[get_emergency_fallback_board] Ultimate cached board had {actual_wc} words for 24h match (strictly needed 300-399). REJECTING cached board...")
                     elif is_aw and actual_wc < 300:
                         print(f"[get_emergency_fallback_board] Ultimate cached board had only {actual_wc} words for +AW (needed >= 300). REJECTING cached board...")
                     elif (actual_wc < min_accept or actual_wc > max_accept) and not is_impossible_outlier:
@@ -3890,8 +3894,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             l_b, l_w, l_c, l_f, l_p, l_r = live_res[:6]
             l_bw = live_res[6] if len(live_res) >= 7 else (l_w[0] if l_w else 'PLANETS')
             l_w_filt = [w for w in (l_w or []) if len(w) >= min_word_length]
-            min_required = 300 if is_aw else 15
-            if len(l_w_filt) >= min_required:
+            min_required = 300 if (is_aw or is_24h) else 15
+            if len(l_w_filt) >= min_required and (not is_24h or len(l_w_filt) <= 399):
                 # If target_range_resolved was provided and generated board exceeded max_accept, sample down
                 if False and max_accept < 99999 and len(l_w_filt) > max_accept:  # never truncate valid words
                     sampled_set = proportionally_sample_words(l_w_filt, max_accept)
@@ -3901,14 +3905,17 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     l_p = {w: p for w, p in l_p.items() if w in sampled_set}
                 l_p_filt = {w: p for w, p in l_p.items() if w in l_w_filt}
 
-                target_range_resolved = SpinnerSet.get_factchecked_wc_range(len(l_w_filt), use_added_words=is_aw, dictionary=dictionary)
+                if is_24h:
+                    target_range_resolved = '300-400'
+                else:
+                    target_range_resolved = SpinnerSet.get_factchecked_wc_range(len(l_w_filt), use_added_words=is_aw, dictionary=dictionary)
 
                 eparams = {
                     'min_word_length': min_word_length,
                     'word_count_range': target_range_resolved,
-                    'board_format': l_f,
+                    'board_format': 'Valued Letters' if is_24h else l_f,
                     'dictionary': dictionary,
-                    'use_added_words': use_added_words,
+                    'use_added_words': False if is_24h else use_added_words,
                     'difficulty': difficulty or "Medium",
                     'bonus_word_len': len(l_bw)
                 }
@@ -4661,20 +4668,22 @@ class RoomManager:
                         if row:
                             board_data_json, all_words_json, dictionary, min_length, updated_at, bonus_word, bonus_cell_json, board_format, uniqueness, word_count_range, active_players_json = row
                             
-                            # Check if the board is from the same day
+                            # Check if the board is from the same day and complies with strict 300-400 range for 24h
                             saved_dt = datetime.datetime.fromtimestamp(updated_at, tz)
                             now_dt = datetime.datetime.fromtimestamp(time.time(), tz)
-                            if saved_dt.date() == now_dt.date():
-                                print(f"[RoomManager] Restoring active 24h board for {room_id} from DB (saved at {saved_dt})")
+                            loaded_words = set(json.loads(all_words_json)) if all_words_json else set()
+                            is_wc_compliant = (300 <= len(loaded_words) <= 399) if is_24h else True
+                            if saved_dt.date() == now_dt.date() and is_wc_compliant:
+                                print(f"[RoomManager] Restoring active 24h board for {room_id} from DB (saved at {saved_dt}, {len(loaded_words)} words)")
                                 room.board = json.loads(board_data_json)
-                                room.all_words = set(json.loads(all_words_json))
+                                room.all_words = loaded_words
                                 room.current_dictionary = dictionary or 'NWL'
                                 room.current_min_length = min_length or 3
                                 room.bonus_word = bonus_word or ''
                                 room.bonus_cell = json.loads(bonus_cell_json) if bonus_cell_json else None
                                 room.current_board_format = 'Valued Letters' if is_24h else (board_format or 'Normal')
                                 room.current_uniqueness = uniqueness or 0.0
-                                room.current_word_count_range = word_count_range or ('300-400' if is_24h else '100-200')
+                                room.current_word_count_range = '300-400' if is_24h else (word_count_range or '100-200')
                                 room.update_counts_by_len()
                                 
                                 # Deserialize and restore active players
@@ -4761,6 +4770,8 @@ class RoomManager:
                                 threading.Thread(target=async_rebuild_active_scoring, daemon=True).start()
                                 self.pre_generate_next_round(room_id)
                                 restored_active = True
+                            elif saved_dt.date() == now_dt.date():
+                                print(f"[RoomManager] Saved 24h board for {room_id} has {len(loaded_words)} words (violates strict 300-400 range). Rejecting saved board so fresh compliant board generates.")
                             else:
                                 print(f"[RoomManager] Outdated 24h board found for {room_id} from {saved_dt} (Today is {now_dt}). Archiving to round_history.")
                                 try:
@@ -5957,10 +5968,11 @@ class RoomManager:
                         relaxed_res = pop_compatible_cached_board(
                             room.board_dimensions,
                             room.spinner_params['dictionary'],
-                            room.spinner_params['board_format'],
+                            'Valued Letters' if is_24h else room.spinner_params['board_format'],
                             room.spinner_params.get('min_word_length', 3),
                             use_aw_flag,
                             bonus_word_len=len(bonus_word) if bonus_word else None,
+                            word_count_range='300-400' if is_24h else target_range,
                             difficulty=room.spinner_params.get('difficulty', 'Medium')
                         )
                         if not relaxed_res:
@@ -5974,6 +5986,9 @@ class RoomManager:
                         raw_dict = room.spinner_params.get('dictionary', 'NWL')
                         raw_aw = room.spinner_params.get('use_added_words', False)
                         all_words_filtered = [w for w in all_words if len(w) >= act_min and word_validator.word_validator.is_valid_word(w, raw_dict, use_added_words=raw_aw)]
+                        if is_24h and not (300 <= len(all_words_filtered) <= 399):
+                            print(f"[RoomManager] Popped candidate relaxed board discarded for 24h room {room_id}: had {len(all_words_filtered)} words (strictly needed 300-399).")
+                            continue
                         if len(all_words_filtered) >= min_accept:
                             # Accept board without discarding valid grid words
                             all_words = all_words_filtered
@@ -6058,7 +6073,13 @@ class RoomManager:
                     _cells = list(_flat_cells(board))
                     _has_eo = any('/' in str(c) for c in _cells)
                     _bad = []
-                    if _decl_rng and not is_board_count_valid(_cnt0, _decl_rng):
+                    if is_24h:
+                        _decl_rng = '300-400'
+                        _decl_fmt = 'Valued Letters'
+                        use_aw_flag = False
+                        if not (300 <= _cnt0 <= 399):
+                            _bad.append(f"24h count {_cnt0} not in 300-399")
+                    elif _decl_rng and not is_board_count_valid(_cnt0, _decl_rng):
                         _bad.append(f"count {_cnt0} not in {_decl_rng}")
                     if not use_aw_flag:
                         _decl_diff0 = SpinnerSet.strip_difficulty_pct(_sp0.get('difficulty', 'Medium'))
@@ -6084,7 +6105,7 @@ class RoomManager:
                         _bad.append("missing Mania")
                     if _decl_low in ('checkerboard', 'equality freq') and str(updated_format).lower().strip() != _decl_low:
                         _bad.append("format shape mismatch")
-                    if _bad and not is_24h:
+                    if _bad:
                         print(f"[RoomManager] First-board contract violated for {room_id}: {_bad}. Generating compliant board...")
                         _base_dict = str(_sp0.get('dictionary', 'NWL')).replace('+ AW', '').replace('+AW', '').strip() or 'NWL'
                         try:
@@ -6162,7 +6183,32 @@ class RoomManager:
             elif isinstance(room.spinner_params, dict) and getattr(room, '_spinner_params_locked', False):
                 _declared_sr = room.spinner_params.get('word_count_range')
 
-            _final_wc_sr = _declared_sr if (_declared_sr and is_board_count_valid(_actual_wc, _declared_sr)) else _real_wc_sr
+            if is_24h:
+                _final_wc_sr = '300-400'
+                if not (300 <= _actual_wc <= 399):
+                    print(f"[RoomManager] start_round word count {_actual_wc} outside 300-400 for 24h room {room_id}. Generating compliant board...")
+                    try:
+                        _gen_24h = self.board_generator.generate_board(
+                            dimensions=room.board_dimensions,
+                            bonus_word=bonus_word,
+                            word_count_range='300-400',
+                            dictionary=raw_dict,
+                            board_format='Valued Letters',
+                            min_word_length=display_min_start,
+                            difficulty=room.spinner_params.get('difficulty', 'Medium'),
+                            timeout=15.0,
+                            use_added_words=False
+                        )
+                        if _gen_24h and len(_gen_24h) >= 7:
+                            board, all_words, bonus_cell, updated_format, all_words_dict, u_ratio, final_bonus_word = _gen_24h[:7]
+                            all_words_dict = {w: p for w, p in (all_words_dict or {}).items() if len(w) >= display_min_start}
+                            room.all_words = set(all_words_dict.keys())
+                            room.all_words_paths = all_words_dict
+                            _actual_wc = len(room.all_words)
+                    except Exception as _e24:
+                        print(f"[RoomManager] 24h compliant board generation error: {_e24}")
+            else:
+                _final_wc_sr = _declared_sr if (_declared_sr and is_board_count_valid(_actual_wc, _declared_sr)) else _real_wc_sr
 
             room.current_min_length = display_min_start
             room.current_dictionary = raw_dict
@@ -7662,7 +7708,13 @@ class RoomManager:
                             elif '200' in str(search_wc): min_accept = 200
                             elif '100' in str(search_wc): min_accept = 100
                             elif '50' in str(search_wc):  min_accept = 50
-                    if use_aw_flag:
+                    if room.time_limit >= 7200:
+                        min_accept = 300
+                        max_limit = 399
+                        search_wc = '300-400'
+                        search_fmt = 'Valued Letters'
+                        use_aw_flag = False
+                    elif use_aw_flag:
                         min_accept = max(300, min_accept)
                         if str(search_wc) in ['50-100', '100-200', '200-300']:
                             search_wc = '300-400'
@@ -7687,7 +7739,8 @@ class RoomManager:
                             search_fmt,
                             search_min,
                             use_aw_flag,
-                            bonus_word_len=len(bonus_word) if bonus_word else None
+                            bonus_word_len=len(bonus_word) if bonus_word else None,
+                            word_count_range='300-400' if room.time_limit >= 7200 else search_wc
                         )
                         if not candidate:
                             break
@@ -7701,7 +7754,8 @@ class RoomManager:
                             is_diff_match = False
 
                         matching_min_cnt = sum(1 for w in _fw_filtered if len(w) == search_min)
-                        if is_board_count_valid(len(_fw_filtered), search_wc) and len(_fw_filtered) >= min_accept and is_diff_match and matching_min_cnt >= 3:
+                        is_24h_ok = (not (room.time_limit >= 7200)) or (300 <= len(_fw_filtered) <= 399)
+                        if is_24h_ok and is_board_count_valid(len(_fw_filtered), search_wc) and len(_fw_filtered) >= min_accept and is_diff_match and matching_min_cnt >= 3:
                             # Accept board without discarding valid grid words
                             _fw = _fw_filtered
                             _fp = {w: p for w, p in _fp.items() if w in _fw}
@@ -7723,7 +7777,10 @@ class RoomManager:
                         params = dict(params)
                         actual_wc = len(_words)
                         use_aw = params.get('use_added_words', False)
-                        wc_label = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw, dictionary=params.get('dictionary'))
+                        if room.time_limit >= 7200:
+                            wc_label = '300-400'
+                        else:
+                            wc_label = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw, dictionary=params.get('dictionary'))
                         params['word_count_range'] = wc_label
                         params['uniqueness'] = _ratio
                         params['difficulty'] = SpinnerSet.format_difficulty_with_pct(params.get('difficulty', 'Medium'), _ratio)
@@ -8037,7 +8094,10 @@ class RoomManager:
                             _sb_min_len = _actual_min_board
 
                     _sb_filtered_cnt = sum(1 for w in (all_words or []) if len(w) >= _sb_min_len)
-                    achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt, use_added_words=use_aw_flag, dictionary=search_dict)
+                    if room.time_limit >= 7200:
+                        achieved_wc = '300-400'
+                    else:
+                        achieved_wc = self._get_factchecked_wc_range(_sb_filtered_cnt, use_added_words=use_aw_flag, dictionary=search_dict)
 
                     f_low = str(updated_format).lower()
                     final_bonus_cell = bonus_cell if ('bonus letter' in f_low or f_low.strip() == 'bonus') else None
@@ -8980,8 +9040,11 @@ class RoomManager:
                                 room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
 
                 # ACTIVE WORD COUNT SHIELD: Guarantee board word count strictly satisfies announced Spinner range
-                if getattr(room, 'game_type', None) != 'subanagrams' and (getattr(room, 'was_revealed_this_intermission', False) or getattr(room, 'spinner_params_revealed', False)):
+                is_24h_room = (room.time_limit >= 7200) or ('24h' in str(room.room_id)) or ('86400' in str(room.room_id))
+                if getattr(room, 'game_type', None) != 'subanagrams' and (getattr(room, 'was_revealed_this_intermission', False) or getattr(room, 'spinner_params_revealed', False) or is_24h_room):
                     target_announced_wc = (getattr(room, 'frozen_revealed_params', {}) or {}).get('word_count_range') or (room.spinner_params or {}).get('word_count_range')
+                    if is_24h_room:
+                        target_announced_wc = '300-400'
                     if target_announced_wc and not is_board_count_valid(len(room.all_words), target_announced_wc):
                         print(f"[RoomManager] CRITICAL WARNING: Active board word count {len(room.all_words)} violates announced range {target_announced_wc} for {room_id}! Healing...")
                         h_fallback = get_emergency_fallback_board(
@@ -9010,6 +9073,36 @@ class RoomManager:
                                     room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
                                     room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)]
                                 print(f"[RoomManager] Word count successfully healed to {len(room.all_words)} words matching {target_announced_wc}.")
+                        if is_24h_room and not (300 <= len(room.all_words) <= 399):
+                            try:
+                                print(f"[RoomManager] Emergency fallback could not hit 300-400 for 24h room {room_id}. Running synchronous generator...")
+                                _sync_24h = self.board_generator.generate_board(
+                                    dimensions=room.board_dimensions,
+                                    bonus_word=getattr(room, 'bonus_word', None) or 'PLANETS',
+                                    word_count_range='300-400',
+                                    dictionary=room.current_dictionary,
+                                    board_format='Valued Letters',
+                                    min_word_length=display_min,
+                                    difficulty=room.current_difficulty or "Medium",
+                                    timeout=15.0,
+                                    use_added_words=False
+                                )
+                                if _sync_24h and len(_sync_24h) >= 7:
+                                    sb, sw, sc, sf, sp, sr, sbw = _sync_24h[:7]
+                                    sw_filt = [w for w in sw if len(w) >= display_min]
+                                    if 300 <= len(sw_filt) <= 399:
+                                        room.board = sb
+                                        room.all_words = set(sw_filt)
+                                        room.all_words_paths = {w: p for w, p in sp.items() if w in room.all_words}
+                                        room.total_words_count = len(room.all_words)
+                                        room.initial_total_words = room.total_words_count
+                                        room.bonus_cell = sc
+                                        room.next_round_board = sb
+                                        room.next_round_words = list(room.all_words)
+                                        room.next_round_word_paths = dict(room.all_words_paths)
+                                        room.next_round_bonus = sbw
+                            except Exception as _sync_err:
+                                print(f"[RoomManager] 24h synchronous generator error: {_sync_err}")
 
                 room.solved_words_with_scores = getattr(room, 'next_round_word_scores', {})
                 if getattr(room, 'game_type', None) == 'subanagrams' and (not room.solved_words_with_scores or len(room.solved_words_with_scores) == 0):
@@ -9221,7 +9314,10 @@ class RoomManager:
                 if not declared_wc and active_params:
                     declared_wc = active_params.get('word_count_range')
 
-                final_wc = declared_wc if (declared_wc and is_board_count_valid(wc_cnt, declared_wc)) else real_wc
+                if is_24h_room:
+                    final_wc = '300-400'
+                else:
+                    final_wc = declared_wc if (declared_wc and is_board_count_valid(wc_cnt, declared_wc)) else real_wc
 
                 room.current_word_count_range = final_wc
                 if isinstance(room.spinner_params, dict):
