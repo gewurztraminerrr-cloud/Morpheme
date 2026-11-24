@@ -3436,6 +3436,12 @@ async function _doUpdateGameState(incomingState = null) {
             }
         }
 
+        let currentUser = null;
+        try {
+            currentUser = state.your_username || window.currentUser || localStorage.getItem('morpheme_username') || null;
+            if (currentUser) currentUser = currentUser.trim();
+        } catch (e) { console.warn('No currentUser', e); }
+
         // words-panel-title (Found/Words tab header)
         if (wordsPanelHeader) {
             let headerText = is24H ? 'Your Words' : 'Words';
@@ -3452,12 +3458,6 @@ async function _doUpdateGameState(incomingState = null) {
         if (foundTabBtn) {
             foundTabBtn.textContent = (state.game_type === 'fcfs') ? 'Live Feed' : 'Words';
         }
-
-        let currentUser = null;
-        try {
-            currentUser = state.your_username || window.currentUser || localStorage.getItem('morpheme_username') || null;
-            if (currentUser) currentUser = currentUser.trim();
-        } catch (e) { console.warn('No currentUser', e); }
 
 
 
@@ -3695,7 +3695,8 @@ async function _doUpdateGameState(incomingState = null) {
                 const wordsLen = allWords ? allWords.length : 0;
                 const cswLen = cswForList ? cswForList.length : 0;
                 const addedLen = addedForList ? addedForList.length : 0;
-                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${wordsLen}_${cswLen}_${addedLen}`;
+                const targetCount = targetWords ? targetWords.length : 0;
+                const currentRenderKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${targetCount}_${wordsLen}_${cswLen}_${addedLen}`;
 
                 if (window.lastRenderedIntermissionKey !== currentRenderKey) {
                     try {
@@ -6345,9 +6346,10 @@ function updateIntermissionRenderKey() {
     const selectedOrder = window.selectedAllWordsOrder || 'alphabetical';
     const sortMode = window.allWordsSortMode || 'alphabetical';
     const wordsLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[0]) ? window.lastDisplayAllWordsArgs[0].length : 0;
+    const targetCount = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[2]) ? window.lastDisplayAllWordsArgs[2].length : 0;
     const cswLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[5]) ? window.lastDisplayAllWordsArgs[5].length : 0;
     const addedLen = (window.lastDisplayAllWordsArgs && window.lastDisplayAllWordsArgs[6]) ? window.lastDisplayAllWordsArgs[6].length : 0;
-    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${wordsLen}_${cswLen}_${addedLen}`;
+    window.lastRenderedIntermissionKey = `${roundId}_${activeWordsTab}_${state.solving_complete}_${filterJSON}_${selectedLen}_${selectedDict}_${selectedOrder}_${sortMode}_${selectedPlayerUsername || ''}_${targetCount}_${wordsLen}_${cswLen}_${addedLen}`;
 }
 
 window.LETTER_VALUES = window.LETTER_VALUES || {
@@ -6364,7 +6366,9 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     const titleEl = document.getElementById('words-panel-title');
     if (titleEl && activeWordsTab === 'found') {
         const existingBtn = document.getElementById('toggle-board-btn');
-        const isOtherSelected = Boolean(selectedPlayerUsername && (!currentUser || selectedPlayerUsername.toLowerCase().trim() !== currentUser.toLowerCase().trim()));
+        let currentUsername = (window.lastGameState && window.lastGameState.your_username) || window.currentUser || localStorage.getItem('morpheme_username') || '';
+        if (currentUsername) currentUsername = currentUsername.trim();
+        const isOtherSelected = Boolean(selectedPlayerUsername && (!currentUsername || selectedPlayerUsername.toLowerCase().trim() !== currentUsername.toLowerCase().trim()));
         titleEl.textContent = isOtherSelected ? `All Words (${selectedPlayerUsername})` : 'All Words';
         if (existingBtn) {
             titleEl.appendChild(existingBtn);
