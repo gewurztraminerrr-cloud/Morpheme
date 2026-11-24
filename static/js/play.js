@@ -3545,28 +3545,24 @@ async function _doUpdateGameState(incomingState = null) {
         let allPlayerFoundStrs = [];
         if (state.players && Array.isArray(state.players)) {
             state.players.forEach(p => {
-                if (p && p.submitted_words && Array.isArray(p.submitted_words)) {
-                    p.submitted_words.forEach(w => {
-                        const str = (typeof w === 'string' ? w : (w && w.word)) || '';
-                        if (str) allPlayerFoundStrs.push(str.toUpperCase());
-                    });
-                }
-                if (state.state === 'intermission' && p && p.previous_submitted_words && Array.isArray(p.previous_submitted_words)) {
-                    p.previous_submitted_words.forEach(w => {
-                        const str = (typeof w === 'string' ? w : (w && w.word)) || '';
-                        if (str) allPlayerFoundStrs.push(str.toUpperCase());
-                    });
-                }
+                const pWords = (p && p.submitted_words && Array.isArray(p.submitted_words) && p.submitted_words.length > 0)
+                    ? p.submitted_words
+                    : (state.state === 'intermission' && p && p.previous_submitted_words && Array.isArray(p.previous_submitted_words) ? p.previous_submitted_words : []);
+                pWords.forEach(w => {
+                    const str = (typeof w === 'string' ? w : (w && w.word)) || '';
+                    if (str && !str.includes('?')) allPlayerFoundStrs.push(str.toUpperCase());
+                });
             });
         }
         if (state.previous_players && Array.isArray(state.previous_players)) {
             state.previous_players.forEach(p => {
-                if (p && p.submitted_words && Array.isArray(p.submitted_words)) {
-                    p.submitted_words.forEach(w => {
-                        const str = (typeof w === 'string' ? w : (w && w.word)) || '';
-                        if (str) allPlayerFoundStrs.push(str.toUpperCase());
-                    });
-                }
+                const pWords = (p && p.submitted_words && Array.isArray(p.submitted_words) && p.submitted_words.length > 0)
+                    ? p.submitted_words
+                    : (p && p.previous_submitted_words && Array.isArray(p.previous_submitted_words) ? p.previous_submitted_words : []);
+                pWords.forEach(w => {
+                    const str = (typeof w === 'string' ? w : (w && w.word)) || '';
+                    if (str && !str.includes('?')) allPlayerFoundStrs.push(str.toUpperCase());
+                });
             });
         }
         if (state.global_found_words && Array.isArray(state.global_found_words)) {
@@ -3613,17 +3609,11 @@ async function _doUpdateGameState(incomingState = null) {
 
                 let rawTargetWords = [];
                 if (targetPlayer) {
-                    if (state.state === 'intermission') {
-                        rawTargetWords = (targetPlayer.previous_submitted_words && Array.isArray(targetPlayer.previous_submitted_words) && targetPlayer.previous_submitted_words.length > 0)
-                            ? targetPlayer.previous_submitted_words
-                            : (targetPlayer.submitted_words || []);
-                    } else {
-                        rawTargetWords = (targetPlayer.submitted_words && Array.isArray(targetPlayer.submitted_words) && targetPlayer.submitted_words.length > 0)
-                            ? targetPlayer.submitted_words
-                            : (targetPlayer.previous_submitted_words || []);
-                    }
+                    rawTargetWords = (targetPlayer.submitted_words && Array.isArray(targetPlayer.submitted_words) && targetPlayer.submitted_words.length > 0)
+                        ? targetPlayer.submitted_words
+                        : (targetPlayer.previous_submitted_words && Array.isArray(targetPlayer.previous_submitted_words) ? targetPlayer.previous_submitted_words : []);
                 }
-                let targetWords = rawTargetWords.map(w => ((typeof w === 'string' ? w : (w && w.word)) || '').toUpperCase().trim()).filter(Boolean);
+                let targetWords = rawTargetWords.map(w => ((typeof w === 'string' ? w : (w && w.word)) || '').toUpperCase().trim()).filter(w => w && !w.includes('?'));
 
                 const isMeSelected = selectedPlayerUsername && currentUser && (selectedPlayerUsername.toLowerCase().trim() === currentUser.toLowerCase().trim());
                 if ((!selectedPlayerUsername || isMeSelected) && window._localSubmittedWords) {
@@ -3972,10 +3962,10 @@ async function _doUpdateGameState(incomingState = null) {
                     (state.your_user_id && p.user_id && String(p.user_id) === String(state.your_user_id))
                 ) : null;
                 if (me) {
-                    const pWords = (isIntermission && me.previous_submitted_words && me.previous_submitted_words.length > 0)
-                        ? me.previous_submitted_words
-                        : (me.submitted_words || me.previous_submitted_words || []);
-                    myFoundStrs = pWords.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase());
+                    const pWords = (me.submitted_words && Array.isArray(me.submitted_words) && me.submitted_words.length > 0)
+                        ? me.submitted_words
+                        : (me.previous_submitted_words || []);
+                    myFoundStrs = pWords.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase()).filter(w => w && !w.includes('?'));
                 }
                 if (!isIntermission && window._localSubmittedWords && window._localSubmittedWords.size > 0) {
                     window._localSubmittedWords.forEach(w => {
@@ -4592,10 +4582,10 @@ function updateWordLengthRadar(state) {
             (currentUserId && p.user_id && String(p.user_id) === String(currentUserId))
         ) : null;
         if (me) {
-            const pWords = (isIntermission && me.previous_submitted_words && me.previous_submitted_words.length > 0)
-                ? me.previous_submitted_words
-                : (me.submitted_words || me.previous_submitted_words || []);
-            myFoundStrs = pWords.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase());
+            const pWords = (me.submitted_words && Array.isArray(me.submitted_words) && me.submitted_words.length > 0)
+                ? me.submitted_words
+                : (me.previous_submitted_words || []);
+            myFoundStrs = pWords.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase()).filter(w => w && !w.includes('?'));
         }
     }
 
@@ -5155,6 +5145,9 @@ function renderPlayers(players, currentUser = null, state = null) {
 
                 window.lastRenderedIntermissionKey = null;
                 lastPlayersHtml = '';
+                if (window.lastGameState) {
+                    _doUpdateGameState(window.lastGameState);
+                }
                 updateGameState();
             });
         }
