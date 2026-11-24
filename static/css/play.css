@@ -26556,16 +26556,7 @@ body.is-mobile #word-length-radar,
 }
 
 .radar-pill {
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 1px 6px;
-    border-radius: 8px;
-    line-height: 1.3;
-}
-
-.radar-pill.active {
-    background: rgba(59, 130, 246, 0.15);
-    color: #3b82f6;
+    display: none !important;
 }
 
 .radar-overall-stats {

@@ -4694,13 +4694,11 @@ function updateWordLengthRadar(state) {
     });
 
     const titleText = isIntermission ? 'Word Length Breakdown' : 'Word Length Radar';
-    const statusPill = (!isIntermission && grandFound > 0) ? `<span class="radar-pill active">${overallPct}% Found</span>` : '';
 
     radarEl.innerHTML = `
         <div class="radar-header">
             <div class="radar-title-group">
                 <span class="radar-title">${titleText}</span>
-                ${statusPill}
             </div>
             <div class="radar-overall-stats">
                 <span class="radar-overall-count">${grandFound} / ${grandTotal}</span>
