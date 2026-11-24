@@ -3197,6 +3197,51 @@ body.theme-light-gray .notepad-item.bonus-word .word-text {
     color: #ffffff !important;
 }
 
+/* Breathing Pulse Keyframes for Selected Word in Words / All Words */
+@keyframes selected-dark-blue-pulse {
+    0%, 100% {
+        opacity: 0.96;
+    }
+    50% {
+        opacity: 0.05;
+    }
+}
+
+@keyframes selected-border-pulse-aw {
+    0%, 100% { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); }
+    50% { border-color: #a855f7; box-shadow: 0 0 16px rgba(168, 85, 247, 0.7); }
+}
+
+@keyframes selected-border-pulse-bonus {
+    0%, 100% { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); }
+    50% { border-color: #22c55e; box-shadow: 0 0 16px rgba(34, 197, 94, 0.7); }
+}
+
+@keyframes selected-border-pulse-csw {
+    0%, 100% { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); }
+    50% { border-color: #ffd700; box-shadow: 0 0 16px rgba(255, 215, 0, 0.7); }
+}
+
+@keyframes selected-border-pulse-player {
+    0%, 100% { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); }
+    50% { border-color: #60a5fa; box-shadow: 0 0 16px rgba(96, 165, 250, 0.7); }
+}
+
+@keyframes selected-border-pulse-opponent {
+    0%, 100% { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); }
+    50% { border-color: #fb7185; box-shadow: 0 0 16px rgba(244, 63, 94, 0.7); }
+}
+
+@keyframes selected-border-pulse-unfound {
+    0%, 100% { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); }
+    50% { border-color: #94a3b8; box-shadow: 0 0 12px rgba(148, 163, 184, 0.5); }
+}
+
+@keyframes selected-border-pulse-default {
+    0%, 100% { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.6); }
+    50% { border-color: #64748b; box-shadow: 0 0 12px rgba(100, 116, 139, 0.5); }
+}
+
 /* Active Selected Word in Words / All Words during Intermission */
 .word-item.finder-active,
 #submitted-words-list .word-item.finder-active,
@@ -3205,38 +3250,92 @@ body.theme-light-gray .notepad-item.bonus-word .word-text {
 .clue-item.finder-active,
 .notepad-item.finder-active,
 .notepad-word-line.finder-active {
-    background: #0f2b5c !important;
+    position: relative !important;
+    overflow: hidden !important;
     border: 2px solid #3b82f6 !important;
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.5) !important;
-    color: #ffffff !important;
     outline: none !important;
     transform: scale(1.02);
     z-index: 10;
+    will-change: transform, border-color, box-shadow;
+    animation: selected-border-pulse-default 3s infinite ease-in-out !important;
 }
 
-.word-item.finder-active *,
+.word-item.finder-active::before,
+#submitted-words-list .word-item.finder-active::before,
+#previous-words-list .word-item.finder-active::before,
+.feed-item.finder-active::before,
+.clue-item.finder-active::before,
+.notepad-item.finder-active::before,
+.notepad-word-line.finder-active::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: #0f2b5c;
+    border-radius: inherit;
+    z-index: 1;
+    pointer-events: none;
+    will-change: opacity;
+    animation: selected-dark-blue-pulse 3s infinite ease-in-out !important;
+}
+
+.word-item.finder-active.added-word,
+#submitted-words-list .word-item.finder-active.added-word,
+.notepad-item.finder-active.added-word {
+    animation: selected-border-pulse-aw 3s infinite ease-in-out !important;
+}
+
+.word-item.finder-active.bonus-word,
+#submitted-words-list .word-item.finder-active.bonus-word,
+.notepad-item.finder-active.bonus-word {
+    animation: selected-border-pulse-bonus 3s infinite ease-in-out !important;
+}
+
+.word-item.finder-active.csw-only,
+#submitted-words-list .word-item.finder-active.csw-only {
+    animation: selected-border-pulse-csw 3s infinite ease-in-out !important;
+}
+
+.word-item.finder-active.player-word,
+#submitted-words-list .word-item.finder-active.player-word {
+    animation: selected-border-pulse-player 3s infinite ease-in-out !important;
+}
+
+.word-item.finder-active.opponent-word,
+#submitted-words-list .word-item.finder-active.opponent-word {
+    animation: selected-border-pulse-opponent 3s infinite ease-in-out !important;
+}
+
+.word-item.finder-active.unfound,
+#submitted-words-list .word-item.finder-active.unfound {
+    animation: selected-border-pulse-unfound 3s infinite ease-in-out !important;
+}
+
+.word-item.finder-active > *,
 .word-item.finder-active span,
 .word-item.finder-active div,
 .word-item.finder-active .word-text,
 .word-item.finder-active .word-item-pts,
 .word-item.finder-active .points-math,
-#submitted-words-list .word-item.finder-active *,
+#submitted-words-list .word-item.finder-active > *,
 #submitted-words-list .word-item.finder-active span,
 #submitted-words-list .word-item.finder-active div,
 #submitted-words-list .word-item.finder-active .word-text,
 #submitted-words-list .word-item.finder-active .word-item-pts,
 #submitted-words-list .word-item.finder-active .points-math,
-#previous-words-list .word-item.finder-active *,
+#previous-words-list .word-item.finder-active > *,
 #previous-words-list .word-item.finder-active span,
 #previous-words-list .word-item.finder-active div,
 #previous-words-list .word-item.finder-active .word-text,
 #previous-words-list .word-item.finder-active .word-item-pts,
 #previous-words-list .word-item.finder-active .points-math,
-.feed-item.finder-active *,
-.clue-item.finder-active *,
-.notepad-item.finder-active *,
-.notepad-word-line.finder-active * {
+.feed-item.finder-active > *,
+.clue-item.finder-active > *,
+.notepad-item.finder-active > *,
+.notepad-word-line.finder-active > * {
+    position: relative;
+    z-index: 2;
     color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.7) !important;
 }
 
 .word-item.finder-active .points-math,
@@ -20078,10 +20177,6 @@ body[class*="theme-light-"] .word-item.finder-active,
 [class*="theme-light-"] #submitted-words-list .word-item.finder-active,
 body.theme-white #submitted-words-list .word-item.finder-active,
 body[class*="theme-light-"] #submitted-words-list .word-item.finder-active {
-    background: #0f2b5c !important;
-    border: 2px solid #2563eb !important;
-    box-shadow: 0 0 10px rgba(37, 99, 235, 0.4) !important;
-    color: #ffffff !important;
     outline: none !important;
 }
 
@@ -20107,6 +20202,7 @@ body.theme-white #submitted-words-list .word-item.finder-active span:last-child,
 body[class*="theme-light-"] #submitted-words-list .word-item.finder-active span,
 body[class*="theme-light-"] #submitted-words-list .word-item.finder-active span:last-child {
     color: #ffffff !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 4px rgba(0, 0, 0, 0.7) !important;
 }
 
 [class*="theme-white"] .word-item.finder-active .points-math,
