@@ -1597,7 +1597,7 @@ function setupContactForm() {
 // Check if user is already logged in
 async function checkSession() {
     try {
-        let response = await fetchWithTimeout('/api/session', {}, 6000);
+        let response = await fetchWithTimeout('/api/session', {}, 3500);
         let data = await response.json();
 
         const isLoggedOutExplicitly = (sessionStorage.getItem('morpheme_logged_out') === 'true' || localStorage.getItem('morpheme_logged_out') === 'true');
@@ -1633,7 +1633,7 @@ async function checkSession() {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ auth_token: token })
-                    }, 5000);
+                    }, 3500);
                     const autoLoginData = await autoLoginRes.json();
                     if (autoLoginData.success) {
                         console.info('[Auth] Auto-login succeeded.');
@@ -1731,6 +1731,7 @@ async function checkSession() {
         }
     } catch (error) {
         console.warn('[Auth] Session check failed (server may be restarting):', error.message || error);
+        try { if (typeof updateAuthUI === 'function') updateAuthUI(); } catch (_) {}
     }
 }
 

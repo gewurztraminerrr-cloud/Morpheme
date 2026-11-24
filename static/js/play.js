@@ -13336,54 +13336,52 @@ function renderDefinitionData(data, word, defContent, defPron) {
     }
 }
 
+let _prefetchDebounceTimer = null;
+let _pendingPrefetchWords = new Set();
+window._inFlightPrefetchWords = window._inFlightPrefetchWords || new Set();
+
 async function prefetchDefinitions(words) {
     if (!words || !words.length) return;
     if (!window._gameDefCache) window._gameDefCache = new Map();
-    const toFetch = [];
+
     for (const raw of words) {
         const w = (typeof raw === 'object' && raw !== null ? (raw.word || '') : String(raw)).trim().toUpperCase();
-        if (w && !window._gameDefCache.has(w) && !toFetch.includes(w)) {
-            toFetch.push(w);
-            if (toFetch.length >= 250) break;
+        if (w && !window._gameDefCache.has(w) && !window._inFlightPrefetchWords.has(w)) {
+            _pendingPrefetchWords.add(w);
         }
     }
-    if (!toFetch.length) return;
+    if (_pendingPrefetchWords.size === 0) return;
 
-    // Fast batch definition prefetching for instant definition display
-    try {
-        const resp = await fetch('/api/definitions/batch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ words: toFetch })
-        });
-        if (resp.ok) {
-            const data = await resp.json();
-            if (data && data.definitions) {
-                for (const [wKey, defInfo] of Object.entries(data.definitions)) {
-                    if (defInfo) {
-                        window._gameDefCache.set(wKey.toUpperCase(), defInfo);
+    if (_prefetchDebounceTimer) clearTimeout(_prefetchDebounceTimer);
+    _prefetchDebounceTimer = setTimeout(async () => {
+        const toFetch = Array.from(_pendingPrefetchWords).slice(0, 100);
+        _pendingPrefetchWords.clear();
+        if (!toFetch.length) return;
+
+        toFetch.forEach(w => window._inFlightPrefetchWords.add(w));
+
+        try {
+            const resp = await fetch('/api/definitions/batch', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ words: toFetch })
+            });
+            if (resp.ok) {
+                const data = await resp.json();
+                if (data && data.definitions) {
+                    for (const [wKey, defInfo] of Object.entries(data.definitions)) {
+                        if (defInfo) {
+                            window._gameDefCache.set(wKey.toUpperCase(), defInfo);
+                        }
                     }
                 }
-                return;
             }
+        } catch (e) {
+            console.warn('[prefetchDefinitions] Batch prefetch error:', e);
+        } finally {
+            toFetch.forEach(w => window._inFlightPrefetchWords.delete(w));
         }
-    } catch (e) {
-        console.warn('[prefetchDefinitions] Batch prefetch error, using fallback:', e);
-    }
-
-    // Fallback: staggered individual fetches
-    setTimeout(async () => {
-        for (const w of toFetch.slice(0, 25)) {
-            if (window._gameDefCache && window._gameDefCache.has(w)) continue;
-            try {
-                const resp = await fetch(`/api/definition?word=${encodeURIComponent(w)}`);
-                const data = await resp.json();
-                if (data && window._gameDefCache) {
-                    window._gameDefCache.set(w, data);
-                }
-            } catch (e) {}
-        }
-    }, 50);
+    }, 250);
 }
 window.prefetchDefinitions = prefetchDefinitions;
 

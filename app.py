@@ -9936,6 +9936,8 @@ def lookup_wiki_definition_from_db(word):
         cur.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (w_upper,))
         row = cur.fetchone()
         res = row[0] if row else None
+        if len(_WIKI_DB_CACHE) >= 50000:
+            _WIKI_DB_CACHE.clear()
         _WIKI_DB_CACHE[w_upper] = res
         return res
     except Exception as e:
@@ -9946,6 +9948,8 @@ def lookup_wiki_definition_from_db(word):
             _WIKI_DB_LOCAL.cursor.execute("SELECT definition FROM wiktionary_definitions WHERE word = ?;", (w_upper,))
             row = _WIKI_DB_LOCAL.cursor.fetchone()
             res = row[0] if row else None
+            if len(_WIKI_DB_CACHE) >= 50000:
+                _WIKI_DB_CACHE.clear()
             _WIKI_DB_CACHE[w_upper] = res
             return res
         except Exception:
@@ -9953,7 +9957,7 @@ def lookup_wiki_definition_from_db(word):
         print(f"[Definitions] Error querying local wiki definition: {e}")
     return None
 
-def get_definition_cached_or_online(w):
+def get_definition_cached_or_online(w, allow_online=True):
     global DEFINITIONS_CACHE, WORDS_MISSING_DEFINITIONS, NEGATIVE_DEFINITIONS_CACHE
     if not DEFINITIONS_CACHE:
         load_definitions()
@@ -9965,7 +9969,7 @@ def get_definition_cached_or_online(w):
     if NEGATIVE_DEFINITIONS_CACHE and w in NEGATIVE_DEFINITIONS_CACHE:
         return None
     d = lookup_wiki_definition_from_db(w)
-    if not d:
+    if not d and allow_online:
         d = lookup_raw_definition_online(w)
         if d:
             try:
@@ -9976,16 +9980,18 @@ def get_definition_cached_or_online(w):
             except Exception as e:
                 print(f"[Definitions] Error caching wiki definition to DB: {e}")
         else:
-            NEGATIVE_DEFINITIONS_CACHE.add(w)
+            if len(NEGATIVE_DEFINITIONS_CACHE) < 50000:
+                NEGATIVE_DEFINITIONS_CACHE.add(w)
     if d:
         DEFINITIONS_CACHE[w] = d
-    else:
-        NEGATIVE_DEFINITIONS_CACHE.add(w)
+    elif allow_online:
+        if len(NEGATIVE_DEFINITIONS_CACHE) < 50000:
+            NEGATIVE_DEFINITIONS_CACHE.add(w)
     return d
 
-def get_definition_cached_or_online_with_guess(w):
+def get_definition_cached_or_online_with_guess(w, allow_online=True):
     global DEFINITIONS_CACHE, WORDS_MISSING_DEFINITIONS, NEGATIVE_DEFINITIONS_CACHE
-    d = get_definition_cached_or_online(w)
+    d = get_definition_cached_or_online(w, allow_online=allow_online)
     if d:
         return d
     if WORDS_MISSING_DEFINITIONS and w in WORDS_MISSING_DEFINITIONS:
@@ -10002,8 +10008,8 @@ def get_definition_cached_or_online_with_guess(w):
         if NEGATIVE_DEFINITIONS_CACHE and root in NEGATIVE_DEFINITIONS_CACHE:
             return None
         res = lookup_wiki_definition_from_db(root)
-        if not res:
-            res = get_definition_cached_or_online(root)
+        if not res and allow_online:
+            res = get_definition_cached_or_online(root, allow_online=True)
         return res
 
     # 1. Plurals ending in -NESSES -> plural of {root}ness
@@ -10232,22 +10238,25 @@ def deduplicate_repeated_text(text):
             return s[:half].strip()
     return text.strip()
 
-def format_resolved_definition(word_upper, visited=None):
+def format_resolved_definition(word_upper, visited=None, allow_online=True):
     if visited is None:
         visited = set()
     if word_upper in visited:
         return None
     visited.add(word_upper)
 
-    raw = get_definition_cached_or_online_with_guess(word_upper)
+    raw = get_definition_cached_or_online_with_guess(word_upper, allow_online=allow_online)
     if not raw:
         return None
 
     is_official_dict_word = bool(DEFINITIONS_CACHE and word_upper in DEFINITIONS_CACHE and word_upper not in getattr(word_validator, 'added_words', set()))
     if not is_official_dict_word and _AW_DISALLOWED_PROPER_NOUN_REGEX.search(raw):
-        web_def = lookup_web_search_definition(word_upper)
-        if web_def and not _AW_DISALLOWED_PROPER_NOUN_REGEX.search(web_def):
-            raw = web_def
+        if allow_online:
+            web_def = lookup_web_search_definition(word_upper)
+            if web_def and not _AW_DISALLOWED_PROPER_NOUN_REGEX.search(web_def):
+                raw = web_def
+            else:
+                return None
         else:
             return None
 
@@ -10282,12 +10291,12 @@ def format_resolved_definition(word_upper, visited=None):
             is_case_pointer = 'alternative letter-case form' in m.group(1).lower()
             target_resolved = None
             if target != word_upper:
-                target_resolved = format_resolved_definition(target, visited.copy())
+                target_resolved = format_resolved_definition(target, visited.copy(), allow_online=allow_online)
             if not target_resolved and target != word_upper:
-                target_resolved = get_definition_cached_or_online(target) or lookup_wiki_definition_from_db(target)
+                target_resolved = get_definition_cached_or_online(target, allow_online=allow_online) or lookup_wiki_definition_from_db(target)
             if not target_resolved and target_raw != word_upper:
-                target_resolved = get_definition_cached_or_online(target_raw)
-            if not target_resolved and target == word_upper:
+                target_resolved = get_definition_cached_or_online(target_raw, allow_online=allow_online)
+            if not target_resolved and target == word_upper and allow_online:
                 # Target is same word in different casing (e.g. Malayophobia vs malayophobia)
                 target_resolved = lookup_raw_definition_online(target_raw)
             if target_resolved:
@@ -10711,7 +10720,7 @@ def append_aw_inflections_to_definition(w, defn):
         return defn
     return f"{defn.rstrip()} [inflections: {', '.join(infs)}]"
 
-def lookup_word_definition_and_pronunciation(word):
+def lookup_word_definition_and_pronunciation(word, allow_online=True):
     global DEFINITIONS_CACHE, PRONUNCIATIONS_CACHE
     if not DEFINITIONS_CACHE:
         load_definitions()
@@ -10721,7 +10730,7 @@ def lookup_word_definition_and_pronunciation(word):
     word_upper = word.upper().strip()
     pronunciation = PRONUNCIATIONS_CACHE.get(word_upper)
     
-    definition = format_resolved_definition(word_upper)
+    definition = format_resolved_definition(word_upper, allow_online=allow_online)
     if word_upper in getattr(word_validator, 'added_words', set()):
         definition = append_aw_inflections_to_definition(word_upper, definition)
     
@@ -11342,6 +11351,8 @@ _CROSS_REF_POINTER_REGEX = re.compile(
     re.IGNORECASE
 )
 
+_IS_NOUN_WIKI_CACHE = {}
+
 def check_is_noun_and_get_wiki(word: str, definition: str):
     """
     Check if a word is a noun, and if so, return (is_noun, wiki_url, wiki_title).
@@ -11351,6 +11362,8 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
         return False, None, None
     raw = word.strip()
     w_upper = raw.upper()
+    if w_upper in _IS_NOUN_WIKI_CACHE:
+        return _IS_NOUN_WIKI_CACHE[w_upper]
     w_lower = raw.lower()
     d = definition or ''
 
@@ -11358,8 +11371,13 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
     if w_upper in WIKI_COMMON_NOUN_OVERRIDES:
         t, u = WIKI_COMMON_NOUN_OVERRIDES[w_upper]
         if not t or not u:
-            return False, None, None
-        return True, u, t
+            res = (False, None, None)
+        else:
+            res = (True, u, t)
+        if len(_IS_NOUN_WIKI_CACHE) >= 50000:
+            _IS_NOUN_WIKI_CACHE.clear()
+        _IS_NOUN_WIKI_CACHE[w_upper] = res
+        return res
 
     global DEFINITIONS_CACHE
     raw_def = DEFINITIONS_CACHE.get(w_upper, '') if isinstance(DEFINITIONS_CACHE, dict) else ''
@@ -11481,7 +11499,11 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
                 is_noun = True
 
     if not is_noun:
-        return False, None, None
+        res = (False, None, None)
+        if len(_IS_NOUN_WIKI_CACHE) >= 50000:
+            _IS_NOUN_WIKI_CACHE.clear()
+        _IS_NOUN_WIKI_CACHE[w_upper] = res
+        return res
 
     lemma = None
     # If the word itself is an established noun in WordNet, prefer its base lemma over archaic pointers
@@ -11537,7 +11559,11 @@ def check_is_noun_and_get_wiki(word: str, definition: str):
         lemma = w_lower
 
     title = lemma.capitalize()
-    return resolve_wiki_common_noun(word, combined_text, lemma)
+    res = resolve_wiki_common_noun(word, combined_text, lemma)
+    if len(_IS_NOUN_WIKI_CACHE) >= 50000:
+        _IS_NOUN_WIKI_CACHE.clear()
+    _IS_NOUN_WIKI_CACHE[w_upper] = res
+    return res
 
 _WORD_DICTS_CACHE = {}
 
@@ -11549,11 +11575,13 @@ def get_word_dictionaries(word: str) -> list:
     if w_upper in _WORD_DICTS_CACHE:
         return _WORD_DICTS_CACHE[w_upper]
     word_validator.ensure_csw_loaded()
-    nwl_dict = load_tools_dictionary('NWL')
-    csw_dict = load_tools_dictionary('CSW')
-    in_nwl = w_upper in getattr(word_validator, 'nwl_words', set()) or w_upper in getattr(word_validator, 'long_words', set()) or (nwl_dict and w_upper in nwl_dict.get('set', set()))
-    in_csw = w_upper in getattr(word_validator, 'csw_words', set()) or w_upper in getattr(word_validator, 'long_words', set()) or (csw_dict and w_upper in csw_dict.get('set', set()))
+    in_nwl = w_upper in getattr(word_validator, 'nwl_words', set()) or w_upper in getattr(word_validator, 'long_words', set())
+    in_csw = w_upper in getattr(word_validator, 'csw_words', set()) or w_upper in getattr(word_validator, 'long_words', set())
     in_aw = w_upper in getattr(word_validator, 'added_words', set())
+    if not in_nwl and 'NWL' in TOOLS_DICT_CACHE:
+        in_nwl = w_upper in TOOLS_DICT_CACHE['NWL'].get('set', set())
+    if not in_csw and 'CSW' in TOOLS_DICT_CACHE:
+        in_csw = w_upper in TOOLS_DICT_CACHE['CSW'].get('set', set())
     res = []
     if in_nwl:
         res.append('NWL')
@@ -11594,15 +11622,15 @@ def get_definition():
 
 @app.route('/api/definitions/batch', methods=['POST'])
 def get_definitions_batch():
-    """Batch definition resolution for Subanagrams and fast in-room prefetching."""
-    data = request.get_json() or {}
+    """Fast, non-blocking batch definition resolution for Subanagrams and in-room prefetching."""
+    data = request.get_json(silent=True) or {}
     words = data.get('words') or []
     if not isinstance(words, list):
         return jsonify({'error': 'words must be a list'}), 400
 
     clean_words = []
     seen = set()
-    for w in words[:250]:
+    for w in words[:100]:
         cw = str(w).strip().upper()
         if cw and cw not in seen:
             seen.add(cw)
@@ -11613,8 +11641,12 @@ def get_definitions_batch():
 
     import tally_divisions as td
     res = {}
+    batch_start = time.time()
     for word in clean_words:
-        defn, pron = lookup_word_definition_and_pronunciation(word)
+        # Time budget: never allow a batch call to block worker threads longer than 3.0s
+        if time.time() - batch_start > 3.0:
+            break
+        defn, pron = lookup_word_definition_and_pronunciation(word, allow_online=False)
         img = lookup_definition_image(word)
         div_info = td.get_word_division_info(word)
         lists = get_word_dictionaries(word)
@@ -11645,6 +11677,9 @@ def get_wikipedia_summary():
     and filters out proper nouns (such as books, towns, bands, or persons).
     Caches responses to guarantee near-instant lookup with zero UI lag.
     """
+    global _WIKI_SUMMARY_CACHE
+    if len(_WIKI_SUMMARY_CACHE) > 10000:
+        _WIKI_SUMMARY_CACHE.clear()
     title = request.args.get('title', '').strip()
     word = request.args.get('word', '').strip()
     if not title and not word:
@@ -12409,6 +12444,13 @@ def warm_up_server_resources():
                 
         # 4. Pre-initialize native C morpheme metric engine
         _init_c_morpheme_metric()
+
+        # 5. Pre-warm WordNet for instant common noun calculation
+        try:
+            from nltk.corpus import wordnet as wn
+            wn.synsets('apple', pos=wn.NOUN)
+        except Exception:
+            pass
             
         STARTUP_WARMUP_COMPLETE = True
         print("[Warmup] Background warming completed successfully!")

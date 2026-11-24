@@ -2023,6 +2023,23 @@
                     document.addEventListener('DOMContentLoaded', fetchInitialStats);
                 }
 
+                // Failsafe Opening Watchdog: guarantees user can never be stuck on a blank/frozen logo screen
+                setTimeout(function() {
+                    var gb = document.getElementById('btn-enter-lobby-gateway');
+                    var lb = document.getElementById('btn-login-gateway');
+                    var spin = document.getElementById('loading-spinner-container');
+                    if (spin && spin.style.display !== 'none') {
+                        spin.style.display = 'none';
+                    }
+                    if (gb && lb && gb.style.display === 'none' && lb.style.display === 'none') {
+                        gb.style.display = '';
+                        gb.textContent = 'ENTER LOBBY';
+                    }
+                    if (typeof window.hideLoadingOverlay === 'function') {
+                        window.hideLoadingOverlay();
+                    }
+                }, 5000);
+
                 // Immediate 0ms Gateway Button Sync (ensures desktop unauthenticated / logged out state displays LOGIN)
                 try {
                     var isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
