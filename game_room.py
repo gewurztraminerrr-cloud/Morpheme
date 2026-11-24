@@ -2440,6 +2440,9 @@ class GameRoom:
                     if p.user_id not in existing_uids:
                         all_candidate_players.append(p)
                 
+                if self.game_type == 'split':
+                    self.calculate_split_scores()
+
                 try:
                     self.update_live_pe()
                 except Exception as _pe_err:
@@ -2469,285 +2472,283 @@ class GameRoom:
                     p['username'].lower(): idx + 1 for idx, p in enumerate(sorted_snapshots)
                 }
 
-                # Asynchronous Post-Round Processing
-                def process_results_async():
-                    try:
-                        if self.game_type == 'split':
-                            self.calculate_split_scores()
-                            for snap in intermission_player_snapshots:
-                                p_obj = self.get_player(snap['user_id'])
-                                if p_obj:
-                                    snap['score'] = p_obj.score
-                            sorted_snaps = sorted(
-                                intermission_player_snapshots,
-                                key=lambda x: (x.get('score', 0), x.get('rating', 1200)),
-                                reverse=True
-                            )
-                            self.last_round_placements = {
-                                p['username'].lower(): idx + 1 for idx, p in enumerate(sorted_snaps)
-                            }
-                        
-                        # Winners History
-                        active_pool = [p for p in self.players if getattr(p, 'score', 0) > 0 or (getattr(p, 'submitted_words', []) and any(w.get('points', 0) > 0 for w in p.submitted_words))]
-                        max_score = max([p.score for p in active_pool]) if active_pool else 0
-                        
-                        winners_data = []
-                        winner_words = []
-                        if active_pool:
-                            winners_data = [{'username': p.username, 'rating': p.rating} for p in active_pool if p.score == max_score]
-                            for p in active_pool:
-                                if p.score == max_score:
-                                    # Store all words in chronological order with timestamps so the
-                                    # replay can position them correctly in the timeline.
-                                    sorted_by_time = sorted(p.submitted_words, key=lambda x: x.get('time', 0))
-                                    winner_words = [
-                                        {'word': w['word'], 'points': w.get('points', 0), 'time': w.get('time', 0)}
-                                        for w in sorted_by_time
-                                    ]
-                                    break
-                        
-                        if max_score > 0:
-                            # Ensure exactly one entry per round number by removing any prior entry for self.current_round
-                            self.winners_history = [h for h in self.winners_history if h.get('round') != self.current_round]
-                            self.winners_history.insert(0, {
-                                'round': self.current_round,
-                                'game_type': getattr(self, 'game_type', 'accumulative'),
-                                'winners': winners_data,
-                                'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': getattr(p, 'rating', 1200)} for p in (active_pool or self.players)], key=lambda x: (1 if (x['score'] > 0 or any(getattr(p, 'submitted_words', []) or getattr(p, 'invalid_words', []) for p in (active_pool or self.players) if p.username == x['username'])) else 0, x['score'], x['rating']), reverse=True),
-                                'score': max_score,
-                                'board': [list(row) for row in self.board] if self.board else [],
-                                'words': winner_words,
-                                'bonus_word': getattr(self, 'bonus_word', ''),
-                                'timestamp': int(time.time() * 1000),
-                                'round_duration': self.time_limit,
-                                'round_start_time': self.round_start_time,
-                            })
-                            if len(self.winners_history) > 25: self.winners_history = self.winners_history[:25]
-                            self.last_round_had_winner = True
-                        else:
-                            # If no one entered words or scored > 0, ensure no winner record exists for this round
-                            self.winners_history = [h for h in self.winners_history if h.get('round') != self.current_round]
-                            self.last_round_had_winner = False
+                # Winners History (Calculated synchronously so results/winners are instantly available)
+                active_pool = [p for p in self.players if getattr(p, 'score', 0) > 0 or (getattr(p, 'submitted_words', []) and any(w.get('points', 0) > 0 for w in p.submitted_words))]
+                max_score = max([p.score for p in active_pool]) if active_pool else 0
+                
+                winners_data = []
+                winner_words = []
+                if active_pool:
+                    winners_data = [{'username': p.username, 'rating': p.rating} for p in active_pool if p.score == max_score]
+                    for p in active_pool:
+                        if p.score == max_score:
+                            # Store all words in chronological order with timestamps so the
+                            # replay can position them correctly in the timeline.
+                            sorted_by_time = sorted(p.submitted_words, key=lambda x: x.get('time', 0))
+                            winner_words = [
+                                {'word': w['word'], 'points': w.get('points', 0), 'time': w.get('time', 0)}
+                                for w in sorted_by_time
+                            ]
+                            break
+                
+                if max_score > 0:
+                    # Ensure exactly one entry per round number by removing any prior entry for self.current_round
+                    self.winners_history = [h for h in self.winners_history if h.get('round') != self.current_round]
+                    self.winners_history.insert(0, {
+                        'round': self.current_round,
+                        'game_type': getattr(self, 'game_type', 'accumulative'),
+                        'winners': winners_data,
+                        'all_players': sorted([{'username': p.username, 'score': p.score, 'rating': getattr(p, 'rating', 1200)} for p in (active_pool or self.players)], key=lambda x: (1 if (x['score'] > 0 or any(getattr(p, 'submitted_words', []) or getattr(p, 'invalid_words', []) for p in (active_pool or self.players) if p.username == x['username'])) else 0, x['score'], x['rating']), reverse=True),
+                        'score': max_score,
+                        'board': [list(row) for row in self.board] if self.board else [],
+                        'words': winner_words,
+                        'bonus_word': getattr(self, 'bonus_word', ''),
+                        'timestamp': int(time.time() * 1000),
+                        'round_duration': self.time_limit,
+                        'round_start_time': self.round_start_time,
+                    })
+                    if len(self.winners_history) > 25: self.winners_history = self.winners_history[:25]
+                    self.last_round_had_winner = True
+                else:
+                    # If no one entered words or scored > 0, ensure no winner record exists for this round
+                    self.winners_history = [h for h in self.winners_history if h.get('round') != self.current_round]
+                    self.last_round_had_winner = False
 
-                        # Ratings logic...
-                        try:
-                            is_24h = (self.time_limit >= 7200)
-                            if is_24h or self.game_type == 'subanagrams':
-                                for p in self.players + quitters_snapshot:
-                                    p.rating_change = 0
-                                print(f"[GameRoom] {self.game_type} room: skipping rating updates.")
-                            else:
-                                from rating_logic import calculate_proportional_rating_change
-                                # USER MANDATE: Only affect ratings of people who played from the beginning of the round and had a score >= 1
-                                round_starters = getattr(self, 'round_starting_player_ids', None)
-                                participants = [
-                                    p for p in self.players + quitters_snapshot 
-                                    if getattr(p, 'score', 0) >= 1
-                                    and not getattr(p, 'is_ai', False)
-                                    and not is_player_guest(p)
-                                    and not getattr(p, 'joined_mid_round', False)
-                                    and (not round_starters or str(p.user_id) in round_starters)
-                                ]
-                                rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private, board_format=self.current_board_format)
-                                
-                                display_game_type = self.game_type.replace('solo_', '')
-                                config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
-                                active_humans = [
-                                    p for p in participants
-                                    if getattr(p, 'score', 0) >= 1
-                                    and not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and not is_player_guest(p)
-                                ]
+                # SYNCHRONOUS RATINGS CALCULATION:
+                # Calculate and apply rating changes immediately so the change (e.g. "+7") is visible
+                # without delay on the very first state response as soon as the round ends.
+                try:
+                    is_24h = (self.time_limit >= 7200)
+                    if is_24h or self.game_type == 'subanagrams':
+                        for p in self.players + quitters_snapshot:
+                            p.rating_change = 0
+                        print(f"[GameRoom] {self.game_type} room: skipping rating updates.")
+                    else:
+                        from rating_logic import calculate_proportional_rating_change
+                        # USER MANDATE: Only affect ratings of people who played from the beginning of the round and had a score >= 1
+                        round_starters = getattr(self, 'round_starting_player_ids', None)
+                        participants = [
+                            p for p in self.players + quitters_snapshot 
+                            if getattr(p, 'score', 0) >= 1
+                            and not getattr(p, 'is_ai', False)
+                            and not is_player_guest(p)
+                            and not getattr(p, 'joined_mid_round', False)
+                            and (not round_starters or str(p.user_id) in round_starters)
+                        ]
+                        rating_changes = calculate_proportional_rating_change(participants, is_private=self.is_private, board_format=self.current_board_format)
+                        
+                        display_game_type = self.game_type.replace('solo_', '')
+                        config_key = f"{display_game_type}|{self.board_dimensions}|{self.time_limit}"
+                        active_humans = [
+                            p for p in participants
+                            if getattr(p, 'score', 0) >= 1
+                            and not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and not is_player_guest(p)
+                        ]
 
-                                def _is_established_opponent(o):
-                                    if getattr(o, 'is_unrated', False) or (0 < getattr(o, 'provisional_games', 0) < 10 and getattr(o, 'rating', 1200) == 1200):
+                        def _is_established_opponent(o):
+                            if getattr(o, 'is_unrated', False) or (0 < getattr(o, 'provisional_games', 0) < 10 and getattr(o, 'rating', 1200) == 1200):
                                         return False
-                                    o_rating = getattr(o, 'rating', 1200)
-                                    if o_rating == 1200:
-                                        o_cfg_games = getattr(o, 'config_games_played', 0) or 0
-                                        o_prov_games = getattr(o, 'provisional_games', 0) or 0
-                                        if o_cfg_games <= 10 and o_prov_games < 10:
-                                            return False
-                                    return True
+                            o_rating = getattr(o, 'rating', 1200)
+                            if o_rating == 1200:
+                                o_cfg_games = getattr(o, 'config_games_played', 0) or 0
+                                o_prov_games = getattr(o, 'provisional_games', 0) or 0
+                                if o_cfg_games <= 10 and o_prov_games < 10:
+                                    return False
+                            return True
 
-                                with get_db() as conn_p:
-                                    for p in self.players + quitters_snapshot:
-                                        # Strict User Mandate: Only affect ratings of people who played from the beginning of the round and had a score >= 1
-                                        played_from_start = (
-                                            not getattr(p, 'joined_mid_round', False) and
-                                            (not round_starters or str(p.user_id) in round_starters)
-                                        )
-                                        has_score = (getattr(p, 'score', 0) >= 1)
-                                        is_eligible_human = (not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and not is_player_guest(p))
+                        with get_db() as conn_p:
+                            for p in self.players + quitters_snapshot:
+                                # Strict User Mandate: Only affect ratings of people who played from the beginning of the round and had a score >= 1
+                                played_from_start = (
+                                    not getattr(p, 'joined_mid_round', False) and
+                                    (not round_starters or str(p.user_id) in round_starters)
+                                )
+                                has_score = (getattr(p, 'score', 0) >= 1)
+                                is_eligible_human = (not getattr(p, 'is_ai', False) and not getattr(p, 'is_guest', False) and not is_player_guest(p))
 
-                                        if not (played_from_start and has_score and is_eligible_human):
-                                            p.rating_change = 0
-                                            continue
+                                if not (played_from_start and has_score and is_eligible_human):
+                                    p.rating_change = 0
+                                    continue
 
-                                        if p.user_id in rating_changes:
-                                            simulated_change = rating_changes[p.user_id]
-                                            is_p_unrated = getattr(p, 'is_unrated', False) or (
-                                                0 < getattr(p, 'provisional_games', 0) < 10 and getattr(p, 'rating', 1200) == 1200
-                                            )
-                                            if is_p_unrated:
-                                                # 10-Game Unrated Placement:
-                                                # User starts unrated and rating remains unchanged for first 10 games (with white square).
-                                                # Only rounds played alongside at least one established rated opponent count toward placement.
-                                                p.is_unrated = True
-                                                p.rating_change = 0
-                                                opponents = [
-                                                    o for o in active_humans
-                                                    if o.user_id != p.user_id and _is_established_opponent(o)
-                                                ] if p in active_humans else []
-                                                # User Mandate: Don't count a user's play if nobody is in the room as well as if no rating-established player playing along with them.
-                                                if len(active_humans) >= 2 and opponents:
-                                                    opp_score = sum(getattr(o, 'score', 0) for o in opponents)
-                                                    opp_rating = sum(float(getattr(o, 'rating', 1200)) for o in opponents)
-                                                    user_score = getattr(p, 'score', 0)
+                                if p.user_id in rating_changes:
+                                    simulated_change = rating_changes[p.user_id]
+                                    is_p_unrated = getattr(p, 'is_unrated', False) or (
+                                        0 < getattr(p, 'provisional_games', 0) < 10 and getattr(p, 'rating', 1200) == 1200
+                                    )
+                                    if is_p_unrated:
+                                        # 10-Game Unrated Placement:
+                                        # User starts unrated and rating remains unchanged for first 10 games (with white square).
+                                        # Only rounds played alongside at least one established rated opponent count toward placement.
+                                        p.is_unrated = True
+                                        p.rating_change = 0
+                                        opponents = [
+                                            o for o in active_humans
+                                            if o.user_id != p.user_id and _is_established_opponent(o)
+                                        ] if p in active_humans else []
+                                        # User Mandate: Don't count a user's play if nobody is in the room as well as if no rating-established player playing along with them.
+                                        if len(active_humans) >= 2 and opponents:
+                                            opp_score = sum(getattr(o, 'score', 0) for o in opponents)
+                                            opp_rating = sum(float(getattr(o, 'rating', 1200)) for o in opponents)
+                                            user_score = getattr(p, 'score', 0)
 
-                                                    if opp_score > 0 and user_score > 0:
-                                                        r_round = opp_rating * (float(user_score) / float(opp_score))
-                                                    elif opp_score == 0 and user_score > 0:
-                                                        r_round = (opp_rating / len(opponents)) * 1.5
-                                                    elif user_score == 0:
-                                                        r_round = 400.0
-                                                    else:
-                                                        r_round = 1200.0
-
-                                                    r_round = max(1.0, min(3000.0, r_round))
-                                                    p.provisional_games = getattr(p, 'provisional_games', 0) + 1
-                                                    p.provisional_ratings_sum = getattr(p, 'provisional_ratings_sum', 0.0) + r_round
-                                                    p.provisional_rating = p.provisional_ratings_sum / p.provisional_games
-                                                    p.config_games_played = (getattr(p, 'config_games_played', 0) or 0) + 1
-
-                                                    print(f"[RatingPlacement] {p.username} placement game {p.provisional_games}/10: round_equilibrium={r_round:.1f}, running_avg={p.provisional_rating:.1f}")
-
-                                                    if p.provisional_games >= 10:
-                                                        # 10 games completed: establish approximate rating
-                                                        raw_approx = int(round(p.provisional_ratings_sum / 10.0))
-                                                        # User mandate: In the event the user cheats, make highest rating establishment 2300.
-                                                        established_rating = max(1, min(2300, raw_approx))
-                                                        p.rating = established_rating
-                                                        p.is_unrated = False
-
-                                                        conn_p.execute('''
-                                                            INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, provisional_games, provisional_ratings_sum, provisional_rating, games_played)
-                                                            VALUES (?, ?, ?, 0, 10, ?, ?, 1)
-                                                            ON CONFLICT(user_id, config_key) DO UPDATE SET
-                                                                rating = excluded.rating,
-                                                                is_unrated = 0,
-                                                                provisional_games = 10,
-                                                                provisional_ratings_sum = excluded.provisional_ratings_sum,
-                                                                provisional_rating = excluded.provisional_rating,
-                                                                games_played = COALESCE(user_ratings.games_played, 0) + 1
-                                                        ''', (p.user_id, config_key, established_rating, p.provisional_ratings_sum, established_rating))
-
-                                                        conn_p.execute('UPDATE users SET rating = MAX(400, ?) WHERE id = ?', (established_rating, p.user_id))
-                                                        print(f"[RatingPlacement] 🎯 Established rating for {p.username} in {config_key}: {established_rating} (raw was {raw_approx})")
-                                                    else:
-                                                        conn_p.execute('''
-                                                            INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, provisional_games, provisional_ratings_sum, provisional_rating, games_played)
-                                                            VALUES (?, ?, 1200, 1, ?, ?, ?, 1)
-                                                            ON CONFLICT(user_id, config_key) DO UPDATE SET
-                                                                is_unrated = 1,
-                                                                provisional_games = excluded.provisional_games,
-                                                                provisional_ratings_sum = excluded.provisional_ratings_sum,
-                                                                provisional_rating = excluded.provisional_rating,
-                                                                games_played = COALESCE(user_ratings.games_played, 0) + 1
-                                                        ''', (p.user_id, config_key, p.provisional_games, p.provisional_ratings_sum, p.provisional_rating))
-                                                else:
-                                                    print(f"[RatingPlacement] {p.username} round skipped for placement in {config_key} (nobody in room or no established rated opponents).")
+                                            if opp_score > 0 and user_score > 0:
+                                                r_round = opp_rating * (float(user_score) / float(opp_score))
+                                            elif opp_score == 0 and user_score > 0:
+                                                r_round = (opp_rating / len(opponents)) * 1.5
+                                            elif user_score == 0:
+                                                r_round = 400.0
                                             else:
-                                                p.rating_change = simulated_change
-                                                p.rating += p.rating_change
+                                                r_round = 1200.0
 
-                                                # User Mandate: Don't count a user's play if nobody is in the room as well as if no rating-established player playing along with them.
-                                                has_established_opponent = any(
-                                                    o.user_id != p.user_id and _is_established_opponent(o)
-                                                    for o in active_humans
-                                                ) if p in active_humans else False
+                                            r_round = max(1.0, min(3000.0, r_round))
+                                            p.provisional_games = getattr(p, 'provisional_games', 0) + 1
+                                            p.provisional_ratings_sum = getattr(p, 'provisional_ratings_sum', 0.0) + r_round
+                                            p.provisional_rating = p.provisional_ratings_sum / p.provisional_games
+                                            p.config_games_played = (getattr(p, 'config_games_played', 0) or 0) + 1
 
-                                                if len(active_humans) >= 2 and has_established_opponent:
-                                                    p.config_games_played = (getattr(p, 'config_games_played', 0) or 0) + 1
-                                                    # Update Global Rating
-                                                    if p.rating_change != 0:
-                                                        conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
-                                                    
-                                                    # Update Config-Specific Rating
-                                                    conn_p.execute('''
-                                                        INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, games_played)
-                                                        VALUES (?, ?, MAX(400, 1200 + ?), 0, 1)
-                                                        ON CONFLICT(user_id, config_key) DO UPDATE SET 
-                                                            rating = MAX(400, rating + ?),
-                                                            games_played = COALESCE(user_ratings.games_played, 0) + 1
-                                                    ''', (p.user_id, config_key, p.rating_change, p.rating_change))
-                                                else:
-                                                    p.rating_change = 0
+                                            print(f"[RatingPlacement] {p.username} placement game {p.provisional_games}/10: round_equilibrium={r_round:.1f}, running_avg={p.provisional_rating:.1f}")
+
+                                            if p.provisional_games >= 10:
+                                                # 10 games completed: establish approximate rating
+                                                raw_approx = int(round(p.provisional_ratings_sum / 10.0))
+                                                # User mandate: In the event the user cheats, make highest rating establishment 2300.
+                                                established_rating = max(1, min(2300, raw_approx))
+                                                p.rating = established_rating
+                                                p.is_unrated = False
+
+                                                conn_p.execute('''
+                                                    INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, provisional_games, provisional_ratings_sum, provisional_rating, games_played)
+                                                    VALUES (?, ?, ?, 0, 10, ?, ?, 1)
+                                                    ON CONFLICT(user_id, config_key) DO UPDATE SET
+                                                        rating = excluded.rating,
+                                                        is_unrated = 0,
+                                                        provisional_games = 10,
+                                                        provisional_ratings_sum = excluded.provisional_ratings_sum,
+                                                        provisional_rating = excluded.provisional_rating,
+                                                        games_played = COALESCE(user_ratings.games_played, 0) + 1
+                                                ''', (p.user_id, config_key, established_rating, p.provisional_ratings_sum, established_rating))
+
+                                                conn_p.execute('UPDATE users SET rating = MAX(400, ?) WHERE id = ?', (established_rating, p.user_id))
+                                                print(f"[RatingPlacement] 🎯 Established rating for {p.username} in {config_key}: {established_rating} (raw was {raw_approx})")
+                                            else:
+                                                conn_p.execute('''
+                                                    INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, provisional_games, provisional_ratings_sum, provisional_rating, games_played)
+                                                    VALUES (?, ?, 1200, 1, ?, ?, ?, 1)
+                                                    ON CONFLICT(user_id, config_key) DO UPDATE SET
+                                                        is_unrated = 1,
+                                                        provisional_games = excluded.provisional_games,
+                                                        provisional_ratings_sum = excluded.provisional_ratings_sum,
+                                                        provisional_rating = excluded.provisional_rating,
+                                                        games_played = COALESCE(user_ratings.games_played, 0) + 1
+                                                ''', (p.user_id, config_key, p.provisional_games, p.provisional_ratings_sum, p.provisional_rating))
+                                        else:
+                                            print(f"[RatingPlacement] {p.username} round skipped for placement in {config_key} (nobody in room or no established rated opponents).")
+                                    else:
+                                        p.rating_change = simulated_change
+                                        p.rating += p.rating_change
+
+                                        # User Mandate: Don't count a user's play if nobody is in the room as well as if no rating-established player playing along with them.
+                                        has_established_opponent = any(
+                                            o.user_id != p.user_id and _is_established_opponent(o)
+                                            for o in active_humans
+                                        ) if p in active_humans else False
+
+                                        if len(active_humans) >= 2 and has_established_opponent:
+                                            p.config_games_played = (getattr(p, 'config_games_played', 0) or 0) + 1
+                                            # Update Global Rating
+                                            if p.rating_change != 0:
+                                                conn_p.execute('UPDATE users SET rating = MAX(400, rating + ?) WHERE id = ?', (p.rating_change, p.user_id))
+                                            
+                                            # Update Config-Specific Rating
+                                            conn_p.execute('''
+                                                INSERT INTO user_ratings (user_id, config_key, rating, is_unrated, games_played)
+                                                VALUES (?, ?, MAX(400, 1200 + ?), 0, 1)
+                                                ON CONFLICT(user_id, config_key) DO UPDATE SET 
+                                                    rating = MAX(400, rating + ?),
+                                                    games_played = COALESCE(user_ratings.games_played, 0) + 1
+                                            ''', (p.user_id, config_key, p.rating_change, p.rating_change))
                                         else:
                                             p.rating_change = 0
+                                else:
+                                    p.rating_change = 0
 
-                                    # 5. Distribute Abandonment Bounty (User Request: At the end when results are shown)
-                                    if self.abandonment_bounty > 0:
-                                        eligible_receivers = [
-                                            p for p in self.players 
-                                            if not p.is_ai and not getattr(p, 'is_guest', False) and not is_player_guest(p)
-                                            and not getattr(p, 'joined_mid_round', False)
-                                            and (not round_starters or str(p.user_id) in round_starters)
-                                            and getattr(p, 'score', 0) >= 1
-                                            and not getattr(p, 'is_unrated', False)
-                                        ]
-                                        if eligible_receivers:
-                                            count = len(eligible_receivers)
-                                            share = self.abandonment_bounty // count
-                                            remainder = self.abandonment_bounty % count
+                            # 5. Distribute Abandonment Bounty (User Request: At the end when results are shown)
+                            if self.abandonment_bounty > 0:
+                                eligible_receivers = [
+                                    p for p in self.players 
+                                    if not p.is_ai and not getattr(p, 'is_guest', False) and not is_player_guest(p)
+                                    and not getattr(p, 'joined_mid_round', False)
+                                    and (not round_starters or str(p.user_id) in round_starters)
+                                    and getattr(p, 'score', 0) >= 1
+                                    and not getattr(p, 'is_unrated', False)
+                                ]
+                                if eligible_receivers:
+                                    count = len(eligible_receivers)
+                                    share = self.abandonment_bounty // count
+                                    remainder = self.abandonment_bounty % count
 
-                                            # Determine the per-format rating cap so bounty never busts the ceiling
-                                            fmt = (self.current_board_format or '').lower()
-                                            if 'triple' in fmt:
-                                                rating_cap = 48
-                                            elif 'double' in fmt:
-                                                rating_cap = 32
-                                            else:
-                                                rating_cap = 16
+                                    # Determine the per-format rating cap so bounty never busts the ceiling
+                                    fmt = (self.current_board_format or '').lower()
+                                    if 'triple' in fmt:
+                                        rating_cap = 48
+                                    elif 'double' in fmt:
+                                        rating_cap = 32
+                                    else:
+                                        rating_cap = 16
 
-                                            config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
+                                    config_key = f"{self.game_type.replace('solo_', '')}|{self.board_dimensions}|{self.time_limit}"
 
-                                            for i, target in enumerate(eligible_receivers):
-                                                bonus = share + (1 if i < remainder else 0)
-                                                if bonus <= 0: continue
+                                    for i, target in enumerate(eligible_receivers):
+                                        bonus = share + (1 if i < remainder else 0)
+                                        if bonus <= 0: continue
 
-                                                # Cap: only give as much bonus as keeps total_change <= rating_cap
-                                                current_change = getattr(target, 'rating_change', 0)
-                                                headroom = max(0, rating_cap - current_change)
-                                                bonus = min(bonus, headroom)
-                                                if bonus <= 0:
-                                                    with open(RATING_AUDIT_PATH, 'a') as log:
-                                                        log.write(f"[{time.time()}] Round-End Bounty SKIPPED for {target.username}: already at cap ({current_change}/{rating_cap})\n")
-                                                    continue
+                                        # Cap: only give as much bonus as keeps total_change <= rating_cap
+                                        current_change = getattr(target, 'rating_change', 0)
+                                        headroom = max(0, rating_cap - current_change)
+                                        bonus = min(bonus, headroom)
+                                        if bonus <= 0:
+                                            with open(RATING_AUDIT_PATH, 'a') as log:
+                                                log.write(f"[{time.time()}] Round-End Bounty SKIPPED for {target.username}: already at cap ({current_change}/{rating_cap})\n")
+                                            continue
 
-                                                # Apply to DB
-                                                conn_p.execute('UPDATE users SET rating = rating + ? WHERE id = ?', (bonus, target.user_id))
-                                                conn_p.execute('''
-                                                    INSERT INTO user_ratings (user_id, config_key, rating)
-                                                    VALUES (?, ?, 1200 + ?)
-                                                    ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
-                                                ''', (target.user_id, config_key, bonus, bonus))
+                                        # Apply to DB
+                                        conn_p.execute('UPDATE users SET rating = rating + ? WHERE id = ?', (bonus, target.user_id))
+                                        conn_p.execute('''
+                                            INSERT INTO user_ratings (user_id, config_key, rating)
+                                            VALUES (?, ?, 1200 + ?)
+                                            ON CONFLICT(user_id, config_key) DO UPDATE SET rating = rating + ?
+                                        ''', (target.user_id, config_key, bonus, bonus))
 
-                                                # Apply in-memory
-                                                target.rating += bonus
-                                                if not hasattr(target, 'rating_change'): target.rating_change = 0
-                                                target.rating_change = getattr(target, 'rating_change', 0) + bonus
+                                        # Apply in-memory
+                                        target.rating += bonus
+                                        if not hasattr(target, 'rating_change'): target.rating_change = 0
+                                        target.rating_change = getattr(target, 'rating_change', 0) + bonus
 
-                                                if not hasattr(target, 'bonus_notices'): target.bonus_notices = []
-                                                target.bonus_notices.append(f"Received +{bonus} from round abandonment pool")
+                                        if not hasattr(target, 'bonus_notices'): target.bonus_notices = []
+                                        target.bonus_notices.append(f"Received +{bonus} from round abandonment pool")
 
-                                                with open(RATING_AUDIT_PATH, 'a') as log:
-                                                    log.write(f"[{time.time()}] Round-End Bounty Payout: +{bonus} to {target.username} (Room: {self.room_id}, Pool: {self.abandonment_bounty}, Cap: {rating_cap})\n")
+                                        with open(RATING_AUDIT_PATH, 'a') as log:
+                                            log.write(f"[{time.time()}] Round-End Bounty Payout: +{bonus} to {target.username} (Room: {self.room_id}, Pool: {self.abandonment_bounty}, Cap: {rating_cap})\n")
 
-                                            # Reset pool AFTER successful distribution
-                                            self.abandonment_bounty = 0
-                        except Exception as e:
-                            print(f"[GameRoom] Rating error: {e}")
+                                    # Reset pool AFTER successful distribution
+                                    self.abandonment_bounty = 0
+                except Exception as e:
+                    print(f"[GameRoom] Rating error: {e}")
 
+                # Store data for results screen and RESET mid-round flag for NEXT round
+                for p in self.players:
+                    p.previous_round_score = p.score
+                    p.previous_submitted_words = list(p.submitted_words)
+                    p.joined_mid_round = False
+
+                if active_pool and max_score > 0:
+                    winner_names = [p.username for p in active_pool if p.score == max_score]
+                    msg = f"🏆 {winner_names[0]} won!" if len(winner_names) == 1 else f"🏆 Tie!"
+                    self.add_chat_message("SYSTEM", msg, is_system=True, color='#ffd700', is_winner=True)
+
+                # Asynchronous Post-Round Processing (Heavy persistence operations)
+                def process_results_async():
+                    try:
                         # Save history and word tally immediately at the start of intermission
                         global _room_manager_instance
                         rm = _room_manager_instance
@@ -2781,17 +2782,6 @@ class GameRoom:
                                 rm.log_word_tally(self, player_words, round_num=self.current_round, round_start_time=self.round_start_time)
                             except Exception as db_save_err:
                                 print(f"[GameRoom] Error in immediate database save: {db_save_err}")
-
-                        # Store data for results screen and RESET mid-round flag for NEXT round
-                        for p in self.players:
-                            p.previous_round_score = p.score
-                            p.previous_submitted_words = list(p.submitted_words)
-                            p.joined_mid_round = False
-
-                        if active_pool and max_score > 0:
-                            winner_names = [p.username for p in active_pool if p.score == max_score]
-                            msg = f"🏆 {winner_names[0]} won!" if len(winner_names) == 1 else f"🏆 Tie!"
-                            self.add_chat_message("SYSTEM", msg, is_system=True, color='#ffd700', is_winner=True)
 
                     except Exception as e:
                         print(f"[GameRoom] Post-round error: {e}")

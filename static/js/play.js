@@ -1160,6 +1160,7 @@ async function ejectToLobby(reason = "inactivity") {
     }
     window.currentRoomId = null;
     window.lastGameState = null;
+    window._predictedRatingChanges = null;
     window._lastGameStateFetchedTime = 0;
     lastGameInteractionTime = Date.now();
     window._wasEverInRoster = false;
@@ -1579,6 +1580,7 @@ function clearGameUIAndCache() {
         BoardAudio.suspend();
     }
     window.lastGameState = null;
+    window._predictedRatingChanges = null;
     window.lastDisplayAllWordsArgs = null;
     window.lastRenderedStateJSON = null;
     window.lastRenderedBoardJSON = null;
@@ -2342,6 +2344,9 @@ async function _doUpdateGameState(incomingState = null) {
         // Capture previous state for transition logic BEFORE updating window.lastGameState
         const previousState = window.lastGameState;
         window.lastGameState = state;  // Store immediately so timer/music updates see current state!
+        if (state.state === 'active' || (state.state === 'intermission' && state.players && state.players.some(p => p.rating_change !== undefined && p.rating_change !== 0))) {
+            window._predictedRatingChanges = null;
+        }
 
         // Immediate Timer Synchronization:
         // Sync and tick local timer immediately upon receiving authoritative state from server.
@@ -4849,6 +4854,44 @@ function resetPlayersToViewAll() {
 }
 window.resetPlayersToViewAll = resetPlayersToViewAll;
 
+function computePredictedRatingChanges(players, boardFormat = 'Normal') {
+    if (!players || !Array.isArray(players) || players.length === 0) return {};
+    const changes = {};
+    players.forEach(p => { if (p && p.user_id !== undefined) changes[p.user_id] = 0; });
+    const competitiveHumans = players.filter(p =>
+        p &&
+        !p.is_ai &&
+        !(p.username && p.username.toLowerCase().startsWith('guest_')) &&
+        !p.is_guest &&
+        !p.joined_mid_round &&
+        (p.score || 0) >= 1
+    );
+    const activePool = competitiveHumans.filter(p => !p.is_unrated && (p.score || 0) >= 1);
+    if (activePool.length < 2) return changes;
+    const scoreSum = activePool.reduce((sum, p) => sum + (Number(p.score) || 0), 0);
+    const ratingSum = activePool.reduce((sum, p) => sum + (Number(p.rating) || 1200), 0);
+    if (scoreSum <= 0 || ratingSum <= 0) return changes;
+    const K = 40;
+    activePool.forEach(p => {
+        const theRating = Number(p.rating) || 1200;
+        const theScore = Number(p.score) || 0;
+        const expectedRatio = theRating / ratingSum;
+        const actualRatio = theScore / scoreSum;
+        const rawChange = K * (actualRatio - expectedRatio);
+        let change = Math.round(rawChange);
+        change = Math.max(-16, Math.min(16, change));
+        const fmtLower = String(boardFormat || '').toLowerCase();
+        if (fmtLower.includes('triple')) {
+            change = change * 3;
+        } else if (fmtLower.includes('double')) {
+            change = change * 2;
+        }
+        changes[p.user_id] = change;
+    });
+    return changes;
+}
+window.computePredictedRatingChanges = computePredictedRatingChanges;
+
 function renderPlayers(players, currentUser = null, state = null) {
     window.renderPlayers = renderPlayers;
     console.log('[RenderPlayers] Players:', players && players.length);
@@ -4968,17 +5011,34 @@ function renderPlayers(players, currentUser = null, state = null) {
         // Override rating for Guest users or Unrated users
         const isGuest = p.username.startsWith('Guest_');
         const isUnrated = Boolean(p.is_unrated);
-        const displayRating = isGuest ? 0 : (isUnrated ? 'Unrated' : p.rating);
+        let displayRating = isGuest ? 0 : (isUnrated ? 'Unrated' : p.rating);
 
         let changeTxt = '0';
         let changeClass = 'change-neutral';
         if (!isUnrated) {
-            if (p.rating_change > 0) {
-                changeTxt = `+${p.rating_change}`;
+            let effChange = p.rating_change || 0;
+            // Instant calculation fallback as soon as the round ends
+            const isRoundOver = (state && (state.state === 'intermission' || state.intermission === true)) || 
+                                (window.lastGameState && (window.lastGameState.state === 'intermission' || window.lastGameState.intermission === true)) ||
+                                (typeof localEndTime === 'number' && localEndTime > 0 && (localEndTime - (Date.now() / 1000)) <= 0);
+
+            if (effChange === 0 && isRoundOver && !isGuest && (p.score || 0) >= 1) {
+                if (window._predictedRatingChanges && window._predictedRatingChanges[p.user_id] !== undefined) {
+                    effChange = window._predictedRatingChanges[p.user_id];
+                }
+            }
+
+            if (effChange > 0) {
+                changeTxt = `+${effChange}`;
                 changeClass = 'change-positive';
-            } else if (p.rating_change < 0) {
-                changeTxt = `${p.rating_change}`;
+            } else if (effChange < 0) {
+                changeTxt = `${effChange}`;
                 changeClass = 'change-negative';
+            }
+
+            // If using predicted change before server state returned, reflect in displayRating
+            if (p.rating_change === 0 && effChange !== 0 && typeof displayRating === 'number') {
+                displayRating = Math.max(400, displayRating + effChange);
             }
         }
 
@@ -4988,7 +5048,7 @@ function renderPlayers(players, currentUser = null, state = null) {
         let ratingDisplay = ratingDisplayStr;
         if (isSubanagrams || isUnrated) {
             ratingDisplay = 'Unrated';
-        } else if (isGuest && displayRating === 0 && p.rating_change === 0) {
+        } else if (isGuest && displayRating === 0 && (p.rating_change === 0 || !p.rating_change)) {
             ratingDisplay = 'Guest';
         }
 
@@ -8222,6 +8282,12 @@ function updateLocalTimer() {
         // User Request: Automatic/instant transition at 0:00
         const currentState = (window.lastGameState && window.lastGameState.state) || 'active';
         console.log(`[play.js] Local timer reached 0:00 in ${currentState} state - Scheduling rapid server poll.`);
+
+        // Precompute predicted rating changes immediately at 0:00 so the UI displays (+7) with zero latency
+        if (currentState === 'active' && window.lastGameState && Array.isArray(window.lastGameState.players)) {
+            const fmt = window.lastGameState.current_board_format || window.lastGameState.previous_board_format || 'Normal';
+            window._predictedRatingChanges = computePredictedRatingChanges(window.lastGameState.players, fmt);
+        }
         
         // User Request: In game rooms, change to the "VIEW ALL" state of the Players list immediately at the start and end of a round.
         if (typeof resetPlayersToViewAll === 'function') {
@@ -12677,6 +12743,7 @@ async function leaveCurrentRoom() {
     window._localSubmittedWords = new Set();
     window._localSubmittedWordsList = [];
     window.lastGameState = null;
+    window._predictedRatingChanges = null;
     window.lastRawGameState = null;
     window._lastParamString = null;
     window._displayedParams = null;
