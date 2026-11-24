@@ -518,9 +518,13 @@
     gap: 2px;
     border: 1px solid transparent;
     transition: all 0.2s;
-    cursor: pointer;
+    cursor: default;
     box-sizing: border-box;
     color: var(--text-primary);
+}
+
+.player-item.is-intermission {
+    cursor: pointer;
 }
 
 .player-row-top,
@@ -629,6 +633,13 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
     height: 15px;
     border-radius: 3px;
     border: 1px solid rgba(var(--text-primary-rgb), 0.3);
+    cursor: pointer !important;
+    transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.rating-square:hover {
+    transform: scale(1.15);
+    filter: brightness(1.2);
 }
 
 .player-username {
@@ -639,11 +650,15 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
     text-overflow: ellipsis;
     white-space: nowrap;
     text-align: left !important;
-    cursor: pointer;
+    cursor: default;
     transition: color 0.15s ease, text-decoration 0.15s ease;
 }
 
-.player-username:hover {
+.player-item.is-intermission .player-username {
+    cursor: pointer;
+}
+
+.player-item.is-intermission .player-username:hover {
     color: #409cff !important;
     text-decoration: underline;
 }

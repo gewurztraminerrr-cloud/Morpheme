@@ -4962,6 +4962,12 @@ function renderPlayers(players, currentUser = null, state = null) {
         }
     }
 
+    const curGameState = state || window.lastGameState;
+    const isIntermission = Boolean(curGameState && (curGameState.state === 'intermission' || curGameState.intermission === true));
+    if (!isIntermission && selectedPlayerUsername) {
+        selectedPlayerUsername = null;
+    }
+
     if (!players || players.length === 0) {
         listEl.innerHTML = '<p class="placeholder">No players</p>';
         return;
@@ -5055,8 +5061,9 @@ function renderPlayers(players, currentUser = null, state = null) {
         const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
         const userClass = (p.username.toLowerCase() === (currentUser || "").toLowerCase()) ? ' current-user' : '';
 
-        // Highlight if selected
-        const selectedClass = (p.username === selectedPlayerUsername) ? ' selected-player' : '';
+        // Highlight if selected (ONLY during intermission)
+        const selectedClass = (isIntermission && p.username === selectedPlayerUsername) ? ' selected-player' : '';
+        const intermissionClass = isIntermission ? ' is-intermission' : '';
 
         // Highlight if found selected word (Golden Highlight)
         let finderClass = '';
@@ -5132,16 +5139,18 @@ function renderPlayers(players, currentUser = null, state = null) {
         const flagTitleAttr = flagCountryName ? ` title="${flagCountryName.replace(/"/g, '&quot;')}"` : '';
 
         const itemTitle = isIntermission ? 'Click to view notepad' : '';
-        const userTitle = (p.username === selectedPlayerUsername)
-            ? 'Click to revert to your words'
-            : 'Click to highlight found words in All Words';
+        const userTitle = isIntermission 
+            ? ((p.username === selectedPlayerUsername)
+                ? 'Click to revert to your words'
+                : 'Click to highlight found words in All Words')
+            : '';
 
         return `
-        <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}"${itemTitle ? ` title="${itemTitle}"` : ''}>
+        <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}${intermissionClass}" data-username="${p.username}"${itemTitle ? ` title="${itemTitle}"` : ''}>
             <div class="player-row-top">
                 <span class="player-rank${rankClass}"${rankStyle ? ` style="${rankStyle}"` : ''}>#${rank}</span>
-                <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) window.showMiniProfile('${p.username}'); event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
-                <span class="player-username" style="text-align: left !important;" title="${userTitle}">${p.username}</span>
+                <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${p.username}'); } event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
+                <span class="player-username" style="text-align: left !important;"${userTitle ? ` title="${userTitle}"` : ''}>${p.username}</span>
                 <span class="player-rating-val">${ratingDisplay}</span>
             </div>
             <div class="player-row-bottom">
@@ -5160,7 +5169,7 @@ function renderPlayers(players, currentUser = null, state = null) {
     if (html === lastPlayersHtml) return;
 
     // Smooth in-place class toggle: if player cards already exist with the same usernames,
-    // toggle .selected-player in place to preserve animations without destroying the DOM.
+    // toggle .selected-player and .is-intermission in place to preserve animations without destroying the DOM.
     const existingItems = listEl.querySelectorAll('.player-item');
     if (existingItems.length === players.length && lastPlayersHtml !== null) {
         let sameStructure = true;
@@ -5173,7 +5182,21 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (sameStructure) {
             existingItems.forEach(item => {
                 const uname = item.dataset.username;
-                item.classList.toggle('selected-player', uname === selectedPlayerUsername);
+                item.classList.toggle('selected-player', isIntermission && uname === selectedPlayerUsername);
+                item.classList.toggle('is-intermission', isIntermission);
+                if (isIntermission) {
+                    item.title = 'Click to view notepad';
+                    const uEl = item.querySelector('.player-username');
+                    if (uEl) {
+                        uEl.title = (uname === selectedPlayerUsername)
+                            ? 'Click to revert to your words'
+                            : 'Click to highlight found words in All Words';
+                    }
+                } else {
+                    item.removeAttribute('title');
+                    const uEl = item.querySelector('.player-username');
+                    if (uEl) uEl.removeAttribute('title');
+                }
             });
             lastPlayersHtml = html;
             return;
@@ -5189,16 +5212,42 @@ function renderPlayers(players, currentUser = null, state = null) {
     // RESTORE SCROLL POSITION (Prevents jumping on score updates)
     listEl.scrollTop = oldScrollTop;
 
-    // Add click listeners for selection and notepad
-    const items = listEl.querySelectorAll('.player-item');
-    items.forEach(item => {
-        const username = item.dataset.username;
-        const usernameEl = item.querySelector('.player-username');
+    // Unified click event delegation on listEl:
+    // 1. Colored square (rating) -> Open Mini-Profile at ANY time
+    // 2. Username text -> Highlight user found words under All Words ONLY during intermission
+    // 3. Anywhere else on cell -> Notepad appears ONLY during intermission
+    if (!listEl.hasPlayerRosterClickListener) {
+        listEl.addEventListener('click', (e) => {
+            const curState = window.lastGameState;
+            const inIntermission = Boolean(curState && (curState.state === 'intermission' || curState.intermission === true));
 
-        // Clicking specifically on username text toggles highlight in All Words and slides to Words panel
-        if (usernameEl) {
-            usernameEl.addEventListener('click', (e) => {
-                e.stopPropagation();
+            // 1. Colored square indicating rating -> Show Mini-Profile at ANY time
+            const ratingSquare = e.target.closest('.rating-square');
+            if (ratingSquare) {
+                const pItem = ratingSquare.closest('.player-item');
+                const uName = pItem ? pItem.dataset.username : null;
+                if (uName && typeof window.showMiniProfile === 'function') {
+                    if (window.getSelection) {
+                        try { window.getSelection().removeAllRanges(); } catch (err) {}
+                    }
+                    if (typeof window.closeNotepadPopup === 'function') {
+                        window.closeNotepadPopup();
+                    }
+                    window.showMiniProfile(uName);
+                }
+                return;
+            }
+
+            const item = e.target.closest('.player-item');
+            if (!item || !item.dataset.username) return;
+            const uName = item.dataset.username;
+
+            // 2. Username clicked -> Highlight what user found under All Words ONLY during intermission
+            const usernameEl = e.target.closest('.player-username');
+            if (usernameEl) {
+                if (!inIntermission) {
+                    return; // Do NOT highlight a user during a round!
+                }
 
                 // Close notepad if open
                 if (typeof window.closeNotepadPopup === 'function') {
@@ -5206,10 +5255,10 @@ function renderPlayers(players, currentUser = null, state = null) {
                 }
 
                 // Toggle selection
-                if (selectedPlayerUsername === username) {
+                if (selectedPlayerUsername === uName) {
                     selectedPlayerUsername = null; // Revert back to own words
                 } else {
-                    selectedPlayerUsername = username;
+                    selectedPlayerUsername = uName;
                     // Ensure 'found' (All Words) tab is active
                     if (typeof activeWordsTab !== 'undefined' && activeWordsTab !== 'found') {
                         const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
@@ -5232,18 +5281,18 @@ function renderPlayers(players, currentUser = null, state = null) {
                 if (window.lastGameState) {
                     _doUpdateGameState(window.lastGameState);
                 }
-            });
-        }
+                return;
+            }
 
-        // Clicking anywhere else on player card opens notepad popup during intermission
-        item.addEventListener('click', () => {
-            if (window.lastGameState && window.lastGameState.state === 'intermission') {
+            // 3. Anywhere else on the cell -> Notepad appears ONLY during intermission
+            if (inIntermission) {
                 if (typeof window.showNotepadPopup === 'function') {
-                    window.showNotepadPopup(username);
+                    window.showNotepadPopup(uName);
                 }
             }
         });
-    });
+        listEl.hasPlayerRosterClickListener = true;
+    }
 }
 window.renderPlayers = renderPlayers;
 
