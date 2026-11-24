@@ -20,11 +20,21 @@ window.emojiToCountryCode = function(emoji) {
 
 window.getFlagHtml = function(flag, extraStyles = '') {
     if (!flag || flag === '🏳️') {
-        return flag || '';
+        if (flag === '🏳️') {
+            return `<span class="flag-icon-img" title="Unknown" style="display: inline-block; vertical-align: middle; margin-right: 4px; margin-left: 0; cursor: default; ${extraStyles}">🏳️</span>`;
+        }
+        return '';
     }
     const code = window.emojiToCountryCode(flag);
     if (code && code.length === 2) {
-        return `<img src="https://flagcdn.com/w40/${code.toLowerCase()}.png" class="flag-icon-img" alt="${code}" title="${code}" style="width: 1.25em; height: auto; display: inline-block; vertical-align: middle; margin-right: 4px; margin-left: 0; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); ${extraStyles}">`;
+        const countryName = (window.getCountryName ? window.getCountryName(code) : '') || code;
+        const escapedName = String(countryName).replace(/"/g, '&quot;');
+        return `<img src="https://flagcdn.com/w40/${code.toLowerCase()}.png" class="flag-icon-img" alt="${escapedName}" title="${escapedName}" style="width: 1.25em; height: auto; display: inline-block; vertical-align: middle; margin-right: 4px; margin-left: 0; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,0.2); cursor: default; ${extraStyles}">`;
+    }
+    const countryName = window.getCountryName ? window.getCountryName(flag) : '';
+    if (countryName) {
+        const escapedName = String(countryName).replace(/"/g, '&quot;');
+        return `<span class="flag-icon-img" title="${escapedName}" style="display: inline-block; vertical-align: middle; margin-right: 4px; margin-left: 0; cursor: default; ${extraStyles}">${flag}</span>`;
     }
     return flag;
 };
@@ -279,6 +289,49 @@ window.ALL_FLAGS = [
     { code: 'ZM', flag: '🇿🇲', name: 'Zambia' },
     { code: 'ZW', flag: '🇿🇼', name: 'Zimbabwe' }
 ];
+
+window.COUNTRY_CODE_TO_NAME = {};
+window.COUNTRY_FLAG_TO_NAME = {};
+
+window.initCountryMaps = function() {
+    if (window.ALL_FLAGS && Array.isArray(window.ALL_FLAGS)) {
+        for (let i = 0; i < window.ALL_FLAGS.length; i++) {
+            const item = window.ALL_FLAGS[i];
+            if (item.code) window.COUNTRY_CODE_TO_NAME[item.code.toUpperCase()] = item.name;
+            if (item.flag) window.COUNTRY_FLAG_TO_NAME[item.flag] = item.name;
+        }
+    }
+};
+window.initCountryMaps();
+
+window.getCountryName = function(codeOrFlag) {
+    if (!codeOrFlag) return '';
+    const trimmed = String(codeOrFlag).trim();
+    if (trimmed === '🏳️') return 'Unknown';
+    if (!window.COUNTRY_CODE_TO_NAME || Object.keys(window.COUNTRY_CODE_TO_NAME).length === 0) {
+        if (window.initCountryMaps) window.initCountryMaps();
+    }
+    if (window.COUNTRY_FLAG_TO_NAME && window.COUNTRY_FLAG_TO_NAME[trimmed]) {
+        return window.COUNTRY_FLAG_TO_NAME[trimmed];
+    }
+    const upper = trimmed.toUpperCase();
+    if (window.COUNTRY_CODE_TO_NAME && window.COUNTRY_CODE_TO_NAME[upper]) {
+        return window.COUNTRY_CODE_TO_NAME[upper];
+    }
+    const code = window.emojiToCountryCode ? window.emojiToCountryCode(trimmed) : '';
+    if (code && window.COUNTRY_CODE_TO_NAME && window.COUNTRY_CODE_TO_NAME[code.toUpperCase()]) {
+        return window.COUNTRY_CODE_TO_NAME[code.toUpperCase()];
+    }
+    try {
+        const c = code || (trimmed.length === 2 && /^[A-Za-z]{2}$/.test(trimmed) ? trimmed : '');
+        if (c && window.Intl && Intl.DisplayNames) {
+            const dn = new Intl.DisplayNames(['en'], { type: 'region' });
+            const resolved = dn.of(c.toUpperCase());
+            if (resolved) return resolved;
+        }
+    } catch (e) {}
+    return trimmed;
+};
 
 const parseUTCTimestamp = (isoStr) => {
     if (!isoStr) return new Date();

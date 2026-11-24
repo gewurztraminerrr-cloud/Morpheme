@@ -14298,7 +14298,10 @@ window.loadWordsGoodAtTool = async function(targetUsername, resetPage) {
             const statFinds = document.getElementById('good-at-stat-finds');
             const statRarest = document.getElementById('good-at-stat-rarest');
 
-            if (statUser) statUser.textContent = `${data.country_flag ? data.country_flag + ' ' : ''}${data.username}`;
+            if (statUser) {
+                const fHtml = (window.getFlagHtml && data.country_flag) ? window.getFlagHtml(data.country_flag) : (data.country_flag ? data.country_flag + ' ' : '');
+                statUser.innerHTML = `${fHtml}${typeof escapeHtmlTools === 'function' ? escapeHtmlTools(data.username) : data.username}`;
+            }
             if (statUnique) statUnique.textContent = (data.total_unique_words || 0).toLocaleString();
             if (statFinds) statFinds.textContent = (data.total_finds || 0).toLocaleString();
             if (statRarest) {

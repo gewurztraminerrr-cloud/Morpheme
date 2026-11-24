@@ -5057,6 +5057,9 @@ function renderPlayers(players, currentUser = null, state = null) {
         const rankClass = (rank === 1) ? ' rank-1 rank-gold' : (rank === 2) ? ' rank-2 rank-silver' : (rank === 3) ? ' rank-bronze rank-3' : ` rank-${rank} rank-other`;
         const rankStyle = (rank === 1) ? 'color: #ffd700; opacity: 1;' : (rank === 2) ? 'color: #e2e8f0; opacity: 1;' : (rank === 3) ? 'color: #cd7f32; opacity: 1;' : 'color: #60a5fa; opacity: 0.9;';
 
+        const flagCountryName = (window.getCountryName ? window.getCountryName(p.country_flag) : '') || '';
+        const flagTitleAttr = flagCountryName ? ` title="${flagCountryName.replace(/"/g, '&quot;')}"` : '';
+
         return `
         <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}" data-username="${p.username}">
             <div class="player-row-top">
@@ -5066,7 +5069,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                 <span class="player-rating-val">${ratingDisplay}</span>
             </div>
             <div class="player-row-bottom">
-                <span class="player-flag">${window.getFlagHtml ? window.getFlagHtml(p.country_flag) : (p.country_flag || '🏳️')}</span>
+                <span class="player-flag"${flagTitleAttr}>${window.getFlagHtml ? window.getFlagHtml(p.country_flag) : (p.country_flag || '🏳️')}</span>
                 <span class="player-input-icon" title="${inputTitle}">${inputIcon}</span>
                 ${trophyHtml}
                 ${chatDisabledHtml}
