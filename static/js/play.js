@@ -6397,23 +6397,38 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         });
     }
 
-    // Calculate available lengths from dictionary-filtered words
-    const lengthsSet = new Set();
+    // Calculate available lengths and found counts from dictionary-filtered words
+    const lengthStats = {};
+    let totalDictWords = dictFilteredWords.length;
+    let totalDictFound = 0;
+
     for (let i = 0; i < dictFilteredWords.length; i++) {
-        lengthsSet.add(dictFilteredWords[i].len);
+        const item = dictFilteredWords[i];
+        const l = item.len;
+        if (!lengthStats[l]) {
+            lengthStats[l] = { total: 0, found: 0 };
+        }
+        lengthStats[l].total++;
+        const isFound = (targetWordsSet && targetWordsSet.size > 0)
+            ? targetWordsSet.has(item.wordUpper)
+            : (allFoundSet && allFoundSet.has(item.wordUpper));
+        if (isFound) {
+            lengthStats[l].found++;
+            totalDictFound++;
+        }
     }
-    const availableLengths = [...lengthsSet].sort((a, b) => a - b);
+    const availableLengths = Object.keys(lengthStats).map(Number).sort((a, b) => a - b);
 
     if (filterDropdown) {
         const prevSelection = window.selectedAllWordsLength || 'all';
-        const currentLengthsStr = availableLengths.join(',');
-        if (filterDropdown.dataset.currentLengths !== currentLengthsStr) {
-            let optionsHtml = '<option value="all">All Lengths</option>';
+        const currentOptionsKey = `${selectedDict}:${availableLengths.map(l => `${l}:${lengthStats[l].found}/${lengthStats[l].total}`).join(',')}:${totalDictFound}/${totalDictWords}`;
+        if (filterDropdown.dataset.currentOptionsKey !== currentOptionsKey) {
+            let optionsHtml = `<option value="all">All (${totalDictFound}/${totalDictWords})</option>`;
             availableLengths.forEach(len => {
-                optionsHtml += `<option value="${len}">${len}LW</option>`;
+                optionsHtml += `<option value="${len}">${len}LW (${lengthStats[len].found}/${lengthStats[len].total})</option>`;
             });
             filterDropdown.innerHTML = optionsHtml;
-            filterDropdown.dataset.currentLengths = currentLengthsStr;
+            filterDropdown.dataset.currentOptionsKey = currentOptionsKey;
         }
 
         if (availableLengths.includes(parseInt(prevSelection)) || prevSelection === 'all') {
