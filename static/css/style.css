@@ -6407,11 +6407,12 @@ body.login-active .nav-btn:not(.active) {
 
 .page {
     display: none;
-    animation: fadeIn 0.5s ease;
+    animation: none !important;
 }
 
 .page.active {
     display: block;
+    animation: none !important;
 }
 
 @keyframes fadeIn {

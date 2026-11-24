@@ -2361,34 +2361,43 @@ window.showPage = showPage;
         }
     }
 
-    // 1. Update Page Visibility
-    document.querySelectorAll('.page').forEach(page => {
-        const isMatch = (page.id === pageId) || (page.dataset && page.dataset.pageId === pageId.replace('page-', ''));
-        if (isMatch) {
-            // Default immediately to blank content panel with side menus visible on all screen sizes
-            if (page.id === 'page-tools' && typeof window.resetToolsTab === 'function' && !window._navigatingViaDefPopup) {
-                window.resetToolsTab(true);
-            } else if (page.id === 'page-mods' && typeof window.resetModsTab === 'function' && !window._navigatingViaDefPopup) {
-                window.resetModsTab(true);
-            } else if (page.id === 'page-settings' && typeof window.resetSettingsTab === 'function' && !window._navigatingViaDefPopup) {
-                window.resetSettingsTab(true);
-            } else if (page.id === 'page-forums' && typeof window.resetForumTab === 'function' && !window._navigatingViaDefPopup) {
-                window.resetForumTab(true);
-            }
-            page.classList.add('active');
-            page.style.display = (page.id === 'page-lobby' || page.id === 'page-profile' || page.id === 'page-tools' || page.id === 'page-settings' || page.id === 'page-mods' || page.id === 'page-forums') ? 'flex' : 'block';
-            page.style.opacity = '1';
-            page.style.visibility = 'visible';
-            page.scrollTop = 0;
-            window.scrollTo(0, 0);
-            if (typeof updateTopMenuHeight === 'function') {
-                updateTopMenuHeight();
-            }
-            const layout = page.querySelector('.tools-split-layout');
-            if (layout && !window._navigatingViaDefPopup) {
-                layout.scrollLeft = 0;
-            }
-        } else {
+    // 1. Update Page Visibility (Two-pass activation so there is never an empty frame exposing body)
+    const allPages = document.querySelectorAll('.page');
+    let targetPage = null;
+    allPages.forEach(p => {
+        if ((p.id === pageId) || (p.dataset && p.dataset.pageId === pageId.replace('page-', ''))) {
+            targetPage = p;
+        }
+    });
+
+    if (targetPage) {
+        // Default immediately to blank content panel with side menus visible on all screen sizes
+        if (targetPage.id === 'page-tools' && typeof window.resetToolsTab === 'function' && !window._navigatingViaDefPopup) {
+            window.resetToolsTab(true);
+        } else if (targetPage.id === 'page-mods' && typeof window.resetModsTab === 'function' && !window._navigatingViaDefPopup) {
+            window.resetModsTab(true);
+        } else if (targetPage.id === 'page-settings' && typeof window.resetSettingsTab === 'function' && !window._navigatingViaDefPopup) {
+            window.resetSettingsTab(true);
+        } else if (targetPage.id === 'page-forums' && typeof window.resetForumTab === 'function' && !window._navigatingViaDefPopup) {
+            window.resetForumTab(true);
+        }
+        targetPage.classList.add('active');
+        targetPage.style.display = (targetPage.id === 'page-lobby' || targetPage.id === 'page-profile' || targetPage.id === 'page-tools' || targetPage.id === 'page-settings' || targetPage.id === 'page-mods' || targetPage.id === 'page-forums') ? 'flex' : 'block';
+        targetPage.style.opacity = '1';
+        targetPage.style.visibility = 'visible';
+        targetPage.scrollTop = 0;
+        window.scrollTo(0, 0);
+        if (typeof updateTopMenuHeight === 'function') {
+            updateTopMenuHeight();
+        }
+        const layout = targetPage.querySelector('.tools-split-layout');
+        if (layout && !window._navigatingViaDefPopup) {
+            layout.scrollLeft = 0;
+        }
+    }
+
+    allPages.forEach(page => {
+        if (page !== targetPage) {
             page.classList.remove('active');
             page.style.display = 'none';
             // When leaving Tools, Mods, Settings, or Forums, immediately reset tab state so previous tab never flashes upon return (unless navigating via definition popup)
@@ -2410,6 +2419,11 @@ window.showPage = showPage;
     });
     if (pageId !== 'page-loading') {
         document.body.classList.remove('loading-active');
+        const pLoad = document.getElementById('page-loading');
+        if (pLoad) {
+            pLoad.classList.remove('active');
+            pLoad.style.display = 'none';
+        }
     }
     document.body.classList.toggle('lobby-active', pageId === 'page-lobby');
     document.body.classList.toggle('play-active', pageId === 'page-play');
@@ -4092,10 +4106,15 @@ function _isKeyboardOpen() {
     return !!(el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT'));
 }
 
+let _lastVh = 0;
 function _updateVhVariable() {
     // Skip updating --vh if the soft keyboard is open, preventing DOM-wide style invalidation & blackouts
     if (_isKeyboardOpen()) return;
-    document.documentElement.style.setProperty('--vh', (window.innerHeight * 0.01) + 'px');
+    const currentVh = window.innerHeight * 0.01;
+    if (Math.abs(currentVh - _lastVh) > 0.5) {
+        _lastVh = currentVh;
+        document.documentElement.style.setProperty('--vh', currentVh + 'px');
+    }
 }
 
 function _restoreAllMobilePanels() {
@@ -4240,18 +4259,17 @@ document.addEventListener('visibilitychange', () => {
         } catch (e) {}
     }
 
-    // When returning from minimizing (e.g. swiping up from bottom and tapping squircle Home button),
-    // re-assert fullscreen and sync theme color to permanently eliminate black top row
+    // When returning from minimizing, sync theme color and restore layout cleanly without flashing black
     function handleResumeFullscreen() {
         if (!isMobileDevice()) return;
         const pLoad = document.getElementById('page-loading');
         if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed) return;
-        if (document.fullscreenElement || document.webkitFullscreenElement) return;
         
-        needsResumeFullscreen = true;
-        attemptFullscreen(true);
         if (typeof window.syncThemeColorMeta === 'function') {
             window.syncThemeColorMeta();
+        }
+        if (typeof scheduleMobileViewportRecovery === 'function') {
+            scheduleMobileViewportRecovery();
         }
     }
 
@@ -4261,29 +4279,6 @@ document.addEventListener('visibilitychange', () => {
         }
     });
     window.addEventListener('pageshow', handleResumeFullscreen, { passive: true });
-    window.addEventListener('focus', handleResumeFullscreen, { passive: true });
-
-    // Safety check for all text inputs (game room word/chat inputs, modal inputs, search inputs, etc.)
-    // to ensure fullscreen is cleanly exited when interacting with or focusing text inputs to prevent Android virtual keyboard 2s black screen.
-    // ALSO: On first user touch anywhere after returning from minimize, immediately re-engage fullscreen if lost!
-    ['pointerdown', 'touchstart'].forEach(evtType => {
-        document.addEventListener(evtType, (e) => {
-            if (!isMobileDevice()) return;
-            const target = e.target;
-            const isInput = target && (
-                target.tagName === 'INPUT' || 
-                target.tagName === 'TEXTAREA' || 
-                (target.closest && target.closest('#full-list-modal, #tool-combo, .chat-input-section, .word-input-section, .score-sum-controls, #lobby-chat-drawer'))
-            );
-            // If returning from minimize or lost fullscreen, immediately re-engage on first user touch!
-            if (needsResumeFullscreen || (!document.fullscreenElement && !document.webkitFullscreenElement)) {
-                const pLoad = document.getElementById('page-loading');
-                if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed) return;
-                attemptFullscreen(true);
-                needsResumeFullscreen = false;
-            }
-        }, { passive: true });
-    });
 
     window.triggerMobileFullscreen = function(force) {
         attemptFullscreen(force !== false);

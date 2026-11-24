@@ -312,6 +312,7 @@ async function addAddedWord() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 60000);
 
+    const isMob = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     try {
         const response = await fetch('/api/mods/added_words/add', {
             method: 'POST',
@@ -326,42 +327,48 @@ async function addAddedWord() {
             const msg = data.message || `Word(s) added successfully.`;
             showModStatus(`✅ ${msg}`, false, 'added-word-status-area');
             if (window._comboClientCache) window._comboClientCache.clear();
-            if (window.loadAddedWords) window.loadAddedWords('added');
+            if (window._cachedFullWordLists) window._cachedFullWordLists = {};
+            const toolsActive = document.getElementById('page-tools')?.classList.contains('active');
+            const listsPaneActive = document.getElementById('tool-pane-lists')?.classList.contains('active');
+            if (toolsActive && listsPaneActive && typeof window.loadAddedWords === 'function') {
+                window.loadAddedWords('added');
+            }
         } else {
             const errorMsg = data.error || "Failed to add word.";
             showModStatus(`❌ ${errorMsg}`, true, 'added-word-status-area');
         }
-        if (wordInput) wordInput.focus();
+        if (wordInput && !isMob) wordInput.focus();
     } catch (err) {
         clearTimeout(timeoutId);
         console.error("Error adding word:", err);
         const errMsg = (err.name === 'AbortError') ? '❌ Request timed out adding word.' : '❌ Network error adding word.';
         showModStatus(errMsg, true, 'added-word-status-area');
-        if (wordInput) wordInput.focus();
+        if (wordInput && !isMob) wordInput.focus();
     }
 }
 
 async function removeAddedWord() {
     const wordInput = document.getElementById('added-word-input');
     const rawVal = wordInput ? wordInput.value.trim() : '';
+    const isMob = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     if (!rawVal) {
         showModStatus('Please enter a word to remove.', true, 'added-word-status-area');
-        if (wordInput) wordInput.focus();
+        if (wordInput && !isMob) wordInput.focus();
         return;
     }
 
     // Letters, commas, spaces allowed
     if (!/^[A-Za-z,\s]+$/.test(rawVal)) {
         showModStatus('❌ Invalid entry: only letters (A–Z) and commas are allowed.', true, 'added-word-status-area');
-        if (wordInput) wordInput.focus();
+        if (wordInput && !isMob) wordInput.focus();
         return;
     }
 
     // Instantly clear input and keep focus for lightning-fast consecutive removal
     if (wordInput) {
         wordInput.value = '';
-        wordInput.focus();
+        if (!isMob) wordInput.focus();
     }
 
     showModStatus(`Removing word(s)...`, false, 'added-word-status-area');
@@ -383,18 +390,23 @@ async function removeAddedWord() {
             const msg = data.message || `Word(s) removed from Added Words list.`;
             showModStatus(`✅ ${msg}`, false, 'added-word-status-area');
             if (window._comboClientCache) window._comboClientCache.clear();
-            if (window.loadAddedWords) window.loadAddedWords('added');
+            if (window._cachedFullWordLists) window._cachedFullWordLists = {};
+            const toolsActive = document.getElementById('page-tools')?.classList.contains('active');
+            const listsPaneActive = document.getElementById('tool-pane-lists')?.classList.contains('active');
+            if (toolsActive && listsPaneActive && typeof window.loadAddedWords === 'function') {
+                window.loadAddedWords('added');
+            }
         } else {
             const errorMsg = data.error || data.message || "Failed to remove word.";
             showModStatus(`❌ ${errorMsg}`, true, 'added-word-status-area');
         }
-        if (wordInput) wordInput.focus();
+        if (wordInput && !isMob) wordInput.focus();
     } catch (err) {
         clearTimeout(timeoutId);
         console.error("Error removing added word:", err);
         const errMsg = (err.name === 'AbortError') ? '❌ Request timed out removing word.' : '❌ Network error removing word.';
         showModStatus(errMsg, true, 'added-word-status-area');
-        if (wordInput) wordInput.focus();
+        if (wordInput && !isMob) wordInput.focus();
     }
 }
 window.addAddedWord = addAddedWord;
@@ -478,8 +490,13 @@ async function submitDictionaryToDatabase() {
             const triggerBtn = document.getElementById('dict-upload-trigger-btn');
             if (triggerBtn) triggerBtn.innerText = "Select .txt File";
             
-            // Refresh added words list if open
-            if (window.loadAddedWords) window.loadAddedWords('added');
+            // Invalidate full word lists cache
+            if (window._cachedFullWordLists) window._cachedFullWordLists = {};
+            const toolsActive = document.getElementById('page-tools')?.classList.contains('active');
+            const listsPaneActive = document.getElementById('tool-pane-lists')?.classList.contains('active');
+            if (toolsActive && listsPaneActive && typeof window.loadAddedWords === 'function') {
+                window.loadAddedWords('added');
+            }
         } else {
             if (statusEl) {
                 statusEl.innerText = "Error: " + (data.error || "Upload failed.");
@@ -1211,7 +1228,12 @@ window.promptAddAddedWord = async function() {
         if (data.success) {
             alert(data.message);
             if (window._comboClientCache) window._comboClientCache.clear();
-            if (window.loadAddedWords) window.loadAddedWords();
+            if (window._cachedFullWordLists) window._cachedFullWordLists = {};
+            const toolsActive = document.getElementById('page-tools')?.classList.contains('active');
+            const listsPaneActive = document.getElementById('tool-pane-lists')?.classList.contains('active');
+            if (toolsActive && listsPaneActive && typeof window.loadAddedWords === 'function') {
+                window.loadAddedWords('added');
+            }
         } else {
             alert(data.error);
         }
@@ -1236,7 +1258,12 @@ window.promptRemoveAddedWord = async function() {
         if (data.success && (!data.not_found || (data.removed_words && data.removed_words.length > 0))) {
             alert(data.message || `Word "${word}" removed.`);
             if (window._comboClientCache) window._comboClientCache.clear();
-            if (window.loadAddedWords) window.loadAddedWords('added');
+            if (window._cachedFullWordLists) window._cachedFullWordLists = {};
+            const toolsActive = document.getElementById('page-tools')?.classList.contains('active');
+            const listsPaneActive = document.getElementById('tool-pane-lists')?.classList.contains('active');
+            if (toolsActive && listsPaneActive && typeof window.loadAddedWords === 'function') {
+                window.loadAddedWords('added');
+            }
         } else {
             alert(data.error || data.message || `The sequence '${word}' is not present in AW.`);
         }
