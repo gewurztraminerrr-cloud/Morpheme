@@ -422,8 +422,25 @@ class GameRoom:
         if self.min_rating is not None: self.min_rating = int(self.min_rating)
         if self.max_rating is not None: self.max_rating = int(self.max_rating)
         
-        if self.time_limit >= 7200:
-            self.current_word_count_range = '200-300'
+        is_24h = (self.time_limit >= 7200) or ('24h' in str(self.room_id).lower()) or ('86400' in str(self.room_id)) or (str(self.game_type).lower() == '24h')
+        if is_24h:
+            grid_floor = 3
+            if '4x6' in str(self.board_dimensions): grid_floor = 4
+            elif '5x7' in str(self.board_dimensions): grid_floor = 5
+            elif '6x8' in str(self.board_dimensions) or '3x3x3' in str(self.board_dimensions): grid_floor = 6
+            self.current_min_length = grid_floor
+            self.current_board_format = 'Valued Letters'
+            self.current_word_count_range = '300-400'
+            self.current_difficulty = 'Medium'
+            self.spinner_params = {
+                'board_format': 'Valued Letters',
+                'word_count_range': '300-400',
+                'dictionary': 'NWL',
+                'difficulty': 'Medium',
+                'min_word_length': grid_floor,
+                'bonus_word_length': 0,
+                'use_added_words': False,
+            }
             self.state = 'active'
             self.current_round = max(1, self.current_round)
         
@@ -10313,6 +10330,18 @@ class RoomManager:
             m_len_target = sp_target.get('min_word_length', 3)
             wc_target = sp_target.get('word_count_range', '300-400' if use_aw_target else '100-200')
             diff_target = sp_target.get('difficulty', 'Medium')
+
+            is_24h_room = (room.time_limit >= 7200) or ('24h' in str(room.room_id).lower()) or ('86400' in str(room.room_id)) or (str(getattr(room, 'game_type', '')).lower() == '24h')
+            if is_24h_room:
+                fmt_target = 'Valued Letters'
+                wc_target = '300-400'
+                diff_target = 'Medium'
+                grid_floor = 3
+                if '4x6' in str(room.board_dimensions): grid_floor = 4
+                elif '5x7' in str(room.board_dimensions): grid_floor = 5
+                elif '6x8' in str(room.board_dimensions) or '3x3x3' in str(room.board_dimensions): grid_floor = 6
+                m_len_target = grid_floor
+                use_aw_target = False
 
             if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
                 if room.initial_solo_params.get('difficulty') and str(room.initial_solo_params.get('difficulty')).lower() != 'random':

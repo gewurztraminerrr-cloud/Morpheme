@@ -1157,6 +1157,8 @@ def seed_pregenerated_cache_bg():
             ("4x6", "CSW + AW", (400, 500), "Normal", 5, "Medium", True),
             ("5x7", "NWL", (200, 300), "Normal", 5, "Medium", False),
             ("5x7", "NWL", (300, 400), "Normal", 5, "Medium", False),
+            ("5x7", "NWL", (300, 400), "Valued Letters", 5, "Medium", False),
+            ("5x7", "CSW", (300, 400), "Valued Letters", 5, "Medium", False),
             ("5x7", "CSW", (300, 400), "Either/Or", 5, "Medium", False),
             ("5x7", "NWL", (300, 400), "Equality Freq", 5, "Medium", False),
             ("5x7", "CSW", (100, 200), "Normal", 6, "Hard", False),
@@ -1164,6 +1166,8 @@ def seed_pregenerated_cache_bg():
             ("5x7", "NWL + AW", (300, 400), "Normal", 5, "Medium", True),
             ("5x7", "CSW + AW", (400, 500), "Normal", 5, "Medium", True),
             ("6x8", "NWL", (300, 400), "Normal", 6, "Medium", False),
+            ("6x8", "NWL", (300, 400), "Valued Letters", 6, "Medium", False),
+            ("6x8", "CSW", (300, 400), "Valued Letters", 6, "Medium", False),
             ("6x8", "NWL", (400, 600), "Normal", 6, "Medium", False),
             ("6x8", "NWL", (400, 600), "Equality Freq", 6, "Medium", False),
             ("6x8", "CSW", (200, 300), "Normal", 7, "Medium", False),
@@ -1293,23 +1297,31 @@ class BoardGenerator:
                 "Hard": (0.40, 1.0)
             }
         elif is_5x7:
-            ranges = {
-                "Easy": (0.0, 0.29),
-                "Medium": (0.30, 0.44),
-                "Hard": (0.45, 1.0)
-            }
-        elif is_6x8:
-            ranges = {
-                "Easy": (0.0, 0.34),
-                "Medium": (0.35, 0.49),
-                "Hard": (0.50, 1.0)
-            }
-        elif is_cube:
-            ranges = {
-                "Easy": (0.0, 0.34),
-                "Medium": (0.35, 0.49),
-                "Hard": (0.50, 1.0)
-            }
+            if min_word_length and int(min_word_length) >= 5:
+                ranges = {
+                    "Easy": (0.0, 0.14),
+                    "Medium": (0.15, 0.32),
+                    "Hard": (0.33, 1.0)
+                }
+            else:
+                ranges = {
+                    "Easy": (0.0, 0.22),
+                    "Medium": (0.23, 0.36),
+                    "Hard": (0.37, 1.0)
+                }
+        elif is_6x8 or is_cube:
+            if min_word_length and int(min_word_length) >= 6:
+                ranges = {
+                    "Easy": (0.0, 0.15),
+                    "Medium": (0.16, 0.33),
+                    "Hard": (0.34, 1.0)
+                }
+            else:
+                ranges = {
+                    "Easy": (0.0, 0.24),
+                    "Medium": (0.25, 0.38),
+                    "Hard": (0.39, 1.0)
+                }
         else:
             ranges = {
                 "Easy": (0.0, 0.15),
@@ -3231,7 +3243,7 @@ class BoardGenerator:
                     count = len(all_words_dict)
                 elif ratio < min_ratio and difficulty in ["Medium", "Hard"]:
                     print(f"[BoardGen] ATTEMPT {attempts}: {difficulty} board ratio {ratio:.2f} is below min {min_ratio:.2f}. Running targeted uniqueness booster...")
-                    board, all_words_dict, ratio = self._boost_uniqueness(board, depth, dictionary, min_word_length, min_ratio, rows, cols)
+                    board, all_words_dict, ratio = self._boost_uniqueness(board, depth, dictionary, min_word_length, min_ratio, rows, cols, min_words=min_words)
                     count = len(all_words_dict)
                     
                 # Detect compound AW dict names like 'NWL + AW' and 'CSW + AW'
@@ -3344,7 +3356,7 @@ class BoardGenerator:
                             board, all_words_dict, ratio = self._sanitize_uniqueness(board, depth, dictionary, min_word_length, max_ratio, rows, cols)
                             final_achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
                         elif target_diff_norm in ["Medium", "Hard"] and ratio < min_ratio:
-                            board, all_words_dict, ratio = self._boost_uniqueness(board, depth, dictionary, min_word_length, min_ratio, rows, cols)
+                            board, all_words_dict, ratio = self._boost_uniqueness(board, depth, dictionary, min_word_length, min_ratio, rows, cols, min_words=min_words)
                             final_achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
                         if final_achieved_diff != target_diff_norm and attempts < 60:
                             print(f"[BoardGen] ATTEMPT {attempts}: Final ratio {ratio:.3f} classifies as '{final_achieved_diff}', expected '{target_diff_norm}'. Retrying...")
@@ -3562,7 +3574,7 @@ class BoardGenerator:
             min_req_ratio, max_req_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=min_word_length)
             if difficulty in ["Medium", "Hard"] and ratio < min_req_ratio:
                 print(f"[BoardGen] (best_board fallback) Boosting uniqueness for {difficulty} board: current {ratio:.2%} < {min_req_ratio:.2%}")
-                board, final_solve, ratio = self._boost_uniqueness(board, depth, dictionary, min_word_length, min_req_ratio, rows, cols)
+                board, final_solve, ratio = self._boost_uniqueness(board, depth, dictionary, min_word_length, min_req_ratio, rows, cols, min_words=min_words)
             elif difficulty == "Easy" and ratio > max_req_ratio:
                 print(f"[BoardGen] (best_board fallback) Sanitizing uniqueness for Easy board: current {ratio:.2%} > {max_req_ratio:.2%}")
                 board, final_solve, ratio = self._sanitize_uniqueness(board, depth, dictionary, min_word_length, max_req_ratio, rows, cols)
@@ -3893,7 +3905,7 @@ class BoardGenerator:
                 min_req_ratio, max_req_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=display_min)
                 if difficulty in ["Medium", "Hard"] and ratio < min_req_ratio:
                     print(f"[BoardGen] Boosting uniqueness for {difficulty} board: current ratio {ratio:.2%}, min required {min_req_ratio:.2%}")
-                    board, final_solve, ratio = self._boost_uniqueness(board, depth, dictionary, display_min, min_req_ratio, rows, cols)
+                    board, final_solve, ratio = self._boost_uniqueness(board, depth, dictionary, display_min, min_req_ratio, rows, cols, min_words=min_words)
                 elif difficulty == "Easy" and ratio > max_req_ratio:
                     print(f"[BoardGen] Sanitizing uniqueness for Easy board: current ratio {ratio:.2%}, max allowed {max_req_ratio:.2%}")
                     board, final_solve, ratio = self._sanitize_uniqueness(board, depth, dictionary, display_min, max_req_ratio, rows, cols)
@@ -4386,6 +4398,7 @@ class BoardGenerator:
             min_ratio = kwargs.get('min_ratio', args[3] if len(args) > 3 else 0.28)
             rows = kwargs.get('rows', args[4] if len(args) > 4 else (len(board) if board else 4))
             cols = kwargs.get('cols', args[5] if len(args) > 5 else (len(board[0]) if board and isinstance(board[0], (list, str)) else 4))
+        min_words = kwargs.get('min_words', 0)
         all_words_dict = self._solve_board(
             board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=5.0
         )
@@ -4393,6 +4406,7 @@ class BoardGenerator:
         if ratio >= min_ratio:
             return board, all_words_dict, ratio
 
+        min_acceptable_words = max(min_words, int(len(all_words_dict) * 0.80)) if min_words else int(len(all_words_dict) * 0.70)
         rare_boosters = ['J', 'Z', 'X', 'Q', 'K', 'V', 'W', 'Y', 'B', 'F']
         for iteration in range(5):
             if ratio >= min_ratio:
@@ -4415,14 +4429,14 @@ class BoardGenerator:
                                     board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=2.0
                                 )
                                 temp_ratio = self.get_uniqueness_ratio(board, list(temp_dict.keys()), rows, cols, dictionary, depth)
-                                if temp_ratio > best_ratio:
+                                if temp_ratio > best_ratio and len(temp_dict) >= min_acceptable_words:
                                     best_ratio = temp_ratio
                                     best_cell = (f, r, c) if depth > 1 else (r, c)
                                     best_char = b_char
                                     best_dict = temp_dict
                                 if depth > 1: board[f][r][c] = orig
                                 else: board[r][c] = orig
-                                if temp_ratio >= min_ratio:
+                                if temp_ratio >= min_ratio and len(temp_dict) >= min_acceptable_words:
                                     break
                             if best_ratio >= min_ratio:
                                 break
@@ -4434,7 +4448,7 @@ class BoardGenerator:
                 else: board[best_cell[0]][best_cell[1]] = best_char
                 ratio = best_ratio
                 all_words_dict = best_dict
-                print(f"[BoardGen] Boosted uniqueness at cell {best_cell}: new ratio {ratio:.2%}")
+                print(f"[BoardGen] Boosted uniqueness at cell {best_cell}: new ratio {ratio:.2%}, words {len(all_words_dict)}")
             else:
                 break
 

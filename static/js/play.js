@@ -2494,10 +2494,12 @@ async function _doUpdateGameState(incomingState = null) {
 
             const boardEl = document.getElementById('game-board');
             if (boardEl) {
-                let loadingMsg = "GENERATING NEXT BOARD…";
-                if (state.current_board_format) {
-                    loadingMsg = `GENERATING ${state.current_board_format.toUpperCase()}…`;
+                const is24H = !!((state && ((state.time_limit >= 7200) || (state.room_id && (state.room_id.includes('24h') || state.room_id.includes('86400'))) || (state.game_type === '24h'))));
+                let fmt = state.current_board_format;
+                if (is24H && (!fmt || fmt.toLowerCase() === 'normal')) {
+                    fmt = 'Valued Letters';
                 }
+                let loadingMsg = fmt ? `GENERATING ${fmt.toUpperCase()}…` : "GENERATING NEXT BOARD…";
                 ensureLoadingCardStyles();
                 boardEl.innerHTML = `
                     <div class="loading-container">
@@ -8823,13 +8825,17 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     
     // IF board is empty OR has no letters (and NOT in intermission), show loading spinner
     if (!hasLetters && (!state || state.state !== 'intermission')) {
+        const is24H = !!((state && ((state.time_limit >= 7200) || (state.room_id && (state.room_id.includes('24h') || state.room_id.includes('86400'))) || (state.game_type === '24h'))) ||
+                         (window.lastGameState && ((window.lastGameState.time_limit >= 7200) || (window.lastGameState.room_id && (window.lastGameState.room_id.includes('24h') || window.lastGameState.room_id.includes('86400'))) || (window.lastGameState.game_type === '24h'))));
+        let fmt = (state && state.current_board_format) || (window.lastGameState && window.lastGameState.current_board_format);
+        if (is24H && (!fmt || fmt.toLowerCase() === 'normal')) {
+            fmt = 'Valued Letters';
+        }
         let loadingMsg = "GENERATING NEXT BOARD...";
         if (state && state.state === 'loading') {
-            loadingMsg = "GENERATING NEXT BOARD...";
-        } else if (state && state.current_board_format) {
-            loadingMsg = `GENERATING ${state.current_board_format.toUpperCase()}...`;
-        } else if (window.lastGameState && window.lastGameState.current_board_format) {
-            loadingMsg = `GENERATING ${window.lastGameState.current_board_format.toUpperCase()}...`;
+            loadingMsg = fmt ? `GENERATING ${fmt.toUpperCase()}...` : "GENERATING NEXT BOARD...";
+        } else if (fmt) {
+            loadingMsg = `GENERATING ${fmt.toUpperCase()}...`;
         }
         
         if (!window._boardLoadingStartTime) {
