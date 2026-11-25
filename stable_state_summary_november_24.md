@@ -668,13 +668,41 @@
 
 ---
 
+### AE. Continuous 'Loading...' Overlay Across Room Entry
+- **User Mandate & Problem**:
+  - "Please keep the “Loading…” message visible at all times while the room they pressed to enter loads, and have it disappear once the user enters the room. I have seen it before very recently where the “Loading…” message disappears, and then 20 seconds later they enter the room. The user will not know this and will get confused, and may be tempted to press it again"
+- **Root Cause Analysis**:
+  1. **Premature Auto-Hide Timeout**:
+     - `showLoadingOverlay` previously had a hardcoded default 25-second auto-hide timeout (`timeoutDuration = autoHideMs || 25000`). When rooms required board generation/search or constraint satisfaction taking >25s, the overlay self-dismissed while the user remained on the lobby/configuration screen, leaving the UI appearing frozen for 20s before navigation completed.
+  2. **Uncoordinated Failsafe Dismissals**:
+     - Page navigation transitions and opening screen watchdog routines invoked `hideLoadingOverlay()` unconditionally without checking whether a room entry request (`window._isEnteringRoom`, `_isCreatingRoom`, or `_isStartingSoloMatch`) was active.
+  3. **Solo Match Flag Disconnect**:
+     - `startSoloMatch` in `private_matches.js` set `_isStartingSoloMatch` but omitted `_isEnteringRoom`, allowing lobby/page watchdogs to hide the overlay prematurely.
+  4. **Short Double-Click Guard Window**:
+     - Room entry click guards expired after only 10 seconds, allowing users to accidentally double-click room entry buttons during longer server-side generation phases.
+- **Remediation**:
+  1. **Forced Visibility Guard in Overlay Controller (`templates/index.html` & `static/js/app.js`)**:
+     - `window.hideLoadingOverlay(force = false)` strictly refuses to hide if `!force && (window._isEnteringRoom || window._isCreatingRoom || window._isStartingSoloMatch)`.
+     - In `showLoadingOverlay`, if an entry operation is active, the auto-hide timeout defaults to 120s failsafe and explicitly checks `_isEnteringRoom || _isCreatingRoom || _isStartingSoloMatch` before closing.
+  2. **Unified Entry State Management (`static/js/private_matches.js`, `static/js/lobby.js`, `templates/index.html`)**:
+     - `startSoloMatch` sets `window._isEnteringRoom = true`, `window._isStartingSoloMatch = true`, `window._isEnteringRoomTime = Date.now()`, and triggers `showLoadingOverlay('Loading...', 120000)`.
+     - Extended all room button double-click cooldown checks across `enterLobbyRoom`, `enterLobbyRoomInline`, `createRoom`, `handleJoinRoomInline`, and `startSoloMatch` from 10s to 90s.
+     - On genuine error or rejection (account timed out, room full, invalid config), `hideLoadingOverlay(true)` is invoked with `force=true` and error alerts are displayed.
+  3. **Authoritative Room Render Dismissal (`static/js/play.js`)**:
+     - The overlay is dismissed (`window.hideLoadingOverlay(true)`) and room entering flags are reset (`_isEnteringRoom = false; _isCreatingRoom = false; _isStartingSoloMatch = false;`) only when the room view actually renders in `updateGameState`, `renderBoard`, `renderSplitNotepads`, or `renderFCFSNotepads`.
+  4. **Cache Busters Incremented (`templates/index.html`)**:
+     - Incremented `app.js`, `lobby.js`, `play.js`, and `private_matches.js` cache busters to `v=1795390025`.
+- **Commit History**: `5611ccfd`.
+
+---
+
 ## 2. Infrastructure, Server Health & Resource Usage
 
 | Node / Environment | Host / Port | Git Revision | Status | Response Latency |
 | :--- | :--- | :--- | :--- | :--- |
-| **GoDaddy Production VPS** | `132.148.72.249:443` (`morpheme.games`) | `4b4c50b6` | **Healthy** (PM2 Process 0) | ~60ms |
-| **GitHub Remote** | `gewurztraminerrr-cloud/Morpheme:main` | `4b4c50b6` | **Synchronized** | Verified |
-| **Localhost Environment** | `127.0.0.1:5001` | `4b4c50b6` | **Healthy** (Waitress Daemon) | <5ms |
+| **GoDaddy Production VPS** | `132.148.72.249:443` (`morpheme.games`) | `5611ccfd` | **Healthy** (PM2 Process 0) | ~60ms |
+| **GitHub Remote** | `gewurztraminerrr-cloud/Morpheme:main` | `5611ccfd` | **Synchronized** | Verified |
+| **Localhost Environment** | `127.0.0.1:5001` | `5611ccfd` | **Healthy** (Waitress Daemon) | <5ms |
 
 ### Key System Metrics Verified
 - **Production HTTP Code**: `200 OK`

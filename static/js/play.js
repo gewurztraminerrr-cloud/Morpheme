@@ -4532,8 +4532,9 @@ async function _doUpdateGameState(incomingState = null) {
         if (didRenderRoomView && !isRetryingInitialJoin) {
             window._isEnteringRoom = false;
             window._isCreatingRoom = false;
+            window._isStartingSoloMatch = false;
             if (typeof window.hideLoadingOverlay === 'function') {
-                window.hideLoadingOverlay();
+                window.hideLoadingOverlay(true);
             }
         }
     }
@@ -8733,7 +8734,8 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     if ((hasLetters || (state && state.state === 'intermission')) && window.hideLoadingOverlay) {
         window._isEnteringRoom = false;
         window._isCreatingRoom = false;
-        window.hideLoadingOverlay();
+        window._isStartingSoloMatch = false;
+        window.hideLoadingOverlay(true);
     }
 
     // Determine dimensions early
@@ -10755,8 +10757,9 @@ function reapplyBoardHighlights() {
 function renderSplitNotepads(players, state) {
     window._isEnteringRoom = false;
     window._isCreatingRoom = false;
+    window._isStartingSoloMatch = false;
     if (window.hideLoadingOverlay) {
-        window.hideLoadingOverlay();
+        window.hideLoadingOverlay(true);
     }
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;
@@ -11052,8 +11055,9 @@ function renderSplitNotepads(players, state) {
 function renderFCFSNotepads(players, state) {
     window._isEnteringRoom = false;
     window._isCreatingRoom = false;
+    window._isStartingSoloMatch = false;
     if (window.hideLoadingOverlay) {
-        window.hideLoadingOverlay();
+        window.hideLoadingOverlay(true);
     }
     const boardEl = document.getElementById('game-board');
     if (!boardEl) return;

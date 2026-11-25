@@ -2320,7 +2320,7 @@ window.showPage = showPage;
         }
     }
 
-    if (pageId !== 'page-play' && !window._isEnteringRoom && !window._isCreatingRoom && window.hideLoadingOverlay) {
+    if (pageId !== 'page-play' && !window._isEnteringRoom && !window._isCreatingRoom && !window._isStartingSoloMatch && window.hideLoadingOverlay) {
         window.hideLoadingOverlay();
     }
     // 0. Synchronize URL Hash (for Reload/Navigation consistency)
@@ -4390,13 +4390,20 @@ window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = null) 
         clearTimeout(window._loadingOverlayTimeout);
         window._loadingOverlayTimeout = null;
     }
-    const timeoutDuration = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : 45000;
+    const isEntering = !!(window._isEnteringRoom || window._isCreatingRoom || window._isStartingSoloMatch);
+    const timeoutDuration = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : (isEntering ? 120000 : 45000);
     window._loadingOverlayTimeout = setTimeout(() => {
-        if (window.hideLoadingOverlay) window.hideLoadingOverlay();
+        if (window._isEnteringRoom || window._isCreatingRoom || window._isStartingSoloMatch) {
+            return; // Never auto-hide while room loading is in progress
+        }
+        if (window.hideLoadingOverlay) window.hideLoadingOverlay(true);
     }, timeoutDuration);
 };
 
-window.hideLoadingOverlay = function() {
+window.hideLoadingOverlay = function(force = false) {
+    if (!force && (window._isEnteringRoom || window._isCreatingRoom || window._isStartingSoloMatch)) {
+        return; // Refuse to hide while actively waiting for room entry
+    }
     if (window._loadingOverlayTimeout) {
         clearTimeout(window._loadingOverlayTimeout);
         window._loadingOverlayTimeout = null;

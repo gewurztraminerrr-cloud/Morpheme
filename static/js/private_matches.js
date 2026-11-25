@@ -616,11 +616,14 @@
     }
 
     async function startSoloMatch() {
-        if (window._isStartingSoloMatch) {
+        const now = Date.now();
+        if (window._isStartingSoloMatch || (window._isEnteringRoom && window._isEnteringRoomTime && (now - window._isEnteringRoomTime < 90000))) {
             console.warn('[private_matches.js] startSoloMatch already in progress');
             return;
         }
         window._isStartingSoloMatch = true;
+        window._isEnteringRoom = true;
+        window._isEnteringRoomTime = now;
 
         const startSoloBtn = document.getElementById('start-solo-btn');
         if (startSoloBtn) {
@@ -631,7 +634,7 @@
 
         // Show loading notice IMMEDIATELY so the user is never stalled
         if (typeof window.showLoadingOverlay === 'function') {
-            window.showLoadingOverlay('Loading...');
+            window.showLoadingOverlay('Loading...', 120000);
         }
 
         const getVal = (id, def = 'random') => {
@@ -657,10 +660,11 @@
 
         const feasibility = checkBoardConfigFeasibility(params);
         if (!feasibility.feasible) {
-            if (typeof window.hideLoadingOverlay === 'function') {
-                window.hideLoadingOverlay();
-            }
+            window._isEnteringRoom = false;
             window._isStartingSoloMatch = false;
+            if (typeof window.hideLoadingOverlay === 'function') {
+                window.hideLoadingOverlay(true);
+            }
             if (startSoloBtn) {
                 startSoloBtn.disabled = false;
                 startSoloBtn.style.opacity = '1';
@@ -706,8 +710,10 @@
                     window.startGamePolling();
                 }
             } else {
+                window._isEnteringRoom = false;
+                window._isStartingSoloMatch = false;
                 if (typeof window.hideLoadingOverlay === 'function') {
-                    window.hideLoadingOverlay();
+                    window.hideLoadingOverlay(true);
                 }
                 const title = data.title || 'Configuration Notice';
                 const msg = data.message || data.error || 'Failed to create solo match.';
@@ -719,11 +725,12 @@
             }
         } catch (e) {
             console.error('[private_matches.js] Error creating solo match:', e);
+            window._isEnteringRoom = false;
+            window._isStartingSoloMatch = false;
             if (typeof window.hideLoadingOverlay === 'function') {
-                window.hideLoadingOverlay();
+                window.hideLoadingOverlay(true);
             }
         } finally {
-            window._isStartingSoloMatch = false;
             if (startSoloBtn) {
                 startSoloBtn.disabled = false;
                 startSoloBtn.style.opacity = '1';
@@ -1300,7 +1307,7 @@
         if (btn) {
             e.preventDefault();
             if (typeof window.showLoadingOverlay === 'function') {
-                window.showLoadingOverlay('Loading...');
+                window.showLoadingOverlay('Loading...', 120000);
             }
             console.log('[private_matches.js] Global delegation intercepted Start Solo Match click');
             startSoloMatch();
