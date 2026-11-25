@@ -516,9 +516,9 @@
             var isEntering = !!(window._isEnteringRoom || window._isCreatingRoom || window._isStartingSoloMatch);
             var timeoutDuration = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : (isEntering ? 120000 : 45000);
             window._loadingOverlayTimeout = setTimeout(function() {
-                if (window._isEnteringRoom || window._isCreatingRoom || window._isStartingSoloMatch) {
-                    return; // Never auto-hide while room loading is in progress
-                }
+                window._isEnteringRoom = false;
+                window._isCreatingRoom = false;
+                window._isStartingSoloMatch = false;
                 if (window.hideLoadingOverlay) window.hideLoadingOverlay(true);
             }, timeoutDuration);
         };
@@ -3432,7 +3432,7 @@
 
                         <!-- Solo Tab Content -->
                         <div id="sf-tab-solo" class="sf-tab-content">
-                            <button id="start-solo-btn" class="sf-primary-btn" onclick="window._isEnteringRoom=true;window._isStartingSoloMatch=true;window._isEnteringRoomTime=Date.now();if(window.showLoadingOverlay)window.showLoadingOverlay('Loading...', 120000);">Start Solo Match</button>
+                            <button id="start-solo-btn" class="sf-primary-btn">Start Solo Match</button>
                         </div>
 
                         <!-- With Friends Tab Content -->
@@ -10799,9 +10799,9 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1795390007"></script>
     <script src="/js/forum.js?v=1795390001"></script>
-    <script src="/js/app.js?v=1795390029"></script>
+    <script src="/js/app.js?v=1795390030"></script>
     <script src="/js/lobby.js?v=1795390026"></script>
-    <script src="/js/play.js?v=1795390029"></script>
+    <script src="/js/play.js?v=1795390030"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
@@ -10809,7 +10809,7 @@
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1795260000"></script>
-    <script src="/js/private_matches.js?v=1795390029"></script>
+    <script src="/js/private_matches.js?v=1795390030"></script>
     <script src="/js/donate.js?v=33806"></script>
     
     <!-- Hybrid App / WebView Javascript File Picker Bridge -->

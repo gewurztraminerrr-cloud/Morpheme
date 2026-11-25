@@ -615,15 +615,16 @@
         return { feasible: true };
     }
 
-    async function startSoloMatch() {
-        const now = Date.now();
-        if (window._isStartingSoloMatch || (window._isEnteringRoom && window._isEnteringRoomTime && (now - window._isEnteringRoomTime < 90000))) {
+    async function startSoloMatch(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        if (window._isSoloCreating) {
             console.warn('[private_matches.js] startSoloMatch already in progress');
             return;
         }
+        window._isSoloCreating = true;
         window._isStartingSoloMatch = true;
         window._isEnteringRoom = true;
-        window._isEnteringRoomTime = now;
+        window._isEnteringRoomTime = Date.now();
 
         const startSoloBtn = document.getElementById('start-solo-btn');
         if (startSoloBtn) {
@@ -662,6 +663,7 @@
         if (!feasibility.feasible) {
             window._isEnteringRoom = false;
             window._isStartingSoloMatch = false;
+            window._isSoloCreating = false;
             if (typeof window.hideLoadingOverlay === 'function') {
                 window.hideLoadingOverlay(true);
             }
@@ -706,6 +708,14 @@
                 if (typeof window.switchPlayPanel === 'function') {
                     window.switchPlayPanel('board', false);
                 }
+                if (data.state && typeof window.updateGameState === 'function') {
+                    window.updateGameState(data.state);
+                }
+                window._isEnteringRoom = false;
+                window._isStartingSoloMatch = false;
+                if (typeof window.hideLoadingOverlay === 'function') {
+                    window.hideLoadingOverlay(true);
+                }
                 if (window.startGamePolling) {
                     window.startGamePolling();
                 }
@@ -731,6 +741,7 @@
                 window.hideLoadingOverlay(true);
             }
         } finally {
+            window._isSoloCreating = false;
             if (startSoloBtn) {
                 startSoloBtn.disabled = false;
                 startSoloBtn.style.opacity = '1';

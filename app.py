@@ -17845,8 +17845,14 @@ def create_solo_match():
         room._round_start_init_time = time.time()
         threading.Thread(target=room_manager.start_round, args=(room_id,), daemon=True).start()
     
+    state = None
+    try:
+        state, _ = get_room_state_dict(room_id, uid=session.get('user_id'))
+    except Exception as se:
+        print(f"[create_solo_match] warning getting state: {se}")
+
     print(f"[app.py] Solo match creation complete. Returning success to client instantly.")
-    return jsonify({'success': True, 'room_id': room_id})
+    return jsonify({'success': True, 'room_id': room_id, 'state': state})
 
 # --- PRIVATE MATCHES ---
 
@@ -18290,13 +18296,13 @@ if __name__ == '__main__':
             host='0.0.0.0',
             port=5001,
             threads=64,
-            connection_limit=1000,
-            channel_timeout=120,
+            connection_limit=300,
+            channel_timeout=60,
             cleanup_interval=10,
             backlog=256
         )
     except Exception as e:
         print(f"Server startup error: {e}. Attempting fallback...")
         from waitress import serve
-        serve(app, host='0.0.0.0', port=5001, threads=16, connection_limit=500, channel_timeout=20)
+        serve(app, host='0.0.0.0', port=5001, threads=16, connection_limit=200, channel_timeout=20)
 
