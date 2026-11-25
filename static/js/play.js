@@ -4893,405 +4893,410 @@ function computePredictedRatingChanges(players, boardFormat = 'Normal') {
 window.computePredictedRatingChanges = computePredictedRatingChanges;
 
 function renderPlayers(players, currentUser = null, state = null) {
-    window.renderPlayers = renderPlayers;
-    console.log('[RenderPlayers] Players:', players && players.length);
-    const listEl = document.getElementById('players-list');
-    const headingEl = document.getElementById('players-heading');
-    const findMeBtn = document.getElementById('find-me-btn');
-    const findFriendsBtn = document.getElementById('find-friends-btn');
-    const showEveryoneBtn = document.getElementById('show-everyone-btn');
+    try {
+        window.renderPlayers = renderPlayers;
+        console.log('[RenderPlayers] Players:', players && players.length);
+        const listEl = document.getElementById('players-list');
+        if (!listEl) return;
+        const headingEl = document.getElementById('players-heading');
+        const findMeBtn = document.getElementById('find-me-btn');
+        const findFriendsBtn = document.getElementById('find-friends-btn');
+        const showEveryoneBtn = document.getElementById('show-everyone-btn');
 
-    const isTournament = Boolean(window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
-    const playerActionsRow = document.querySelector('.player-actions-row');
+        const isTournament = Boolean(window.isTournamentPlay || (typeof isTournamentPlay !== 'undefined' && isTournamentPlay) || localStorage.getItem('tournament_play_active') || document.body.classList.contains('is-tournament-round'));
+        const playerActionsRow = document.querySelector('.player-actions-row');
 
-    if (isTournament) {
-        if (headingEl) headingEl.style.setProperty('display', 'none', 'important');
-        if (playerActionsRow) playerActionsRow.style.setProperty('display', 'none', 'important');
-        if (findMeBtn) findMeBtn.style.setProperty('display', 'none', 'important');
-        if (findFriendsBtn) findFriendsBtn.style.setProperty('display', 'none', 'important');
-        if (showEveryoneBtn) showEveryoneBtn.style.setProperty('display', 'none', 'important');
-    } else {
-        if (headingEl) headingEl.style.removeProperty('display');
-        let activePlayerCount = 0;
-        if (state && (state.state === 'intermission' || state.intermission === true)) {
-            // Intermission: Count only players who actively participated (did not DNP)
-            activePlayerCount = players ? players.filter(p => 
-                p.words_count > 0 || p.score > 0 || (p.invalid_words && p.invalid_words.length > 0)
-            ).length : 0;
-        } else {
-            // Active: Count all active players currently in the room (excluding spectators)
-            activePlayerCount = players ? players.length : 0;
-        }
-        if (headingEl) headingEl.textContent = `Players [${activePlayerCount}]`;
-        const gameState = state || window.lastGameState;
-        const gt = (gameState && gameState.game_type) ? String(gameState.game_type).toLowerCase() : '';
-        const dims = (gameState && gameState.board_dimensions) ? String(gameState.board_dimensions).toLowerCase() : '';
-        const isFCFS = gt === 'fcfs' || gt === 'solo_fcfs';
-        const isSplit = gt === 'split' || gt === 'solo_split';
-        const isCube = gt === '3d' || gt === 'cube' || gt === 'solo_3d' || gt === '3d_cube' || dims === '3x3x3';
-        const hidePlayerActionButtons = isFCFS || isSplit || isCube;
-
-        if (hidePlayerActionButtons) {
-            playersFilterMode = 'everyone';
+        if (isTournament) {
+            if (headingEl) headingEl.style.setProperty('display', 'none', 'important');
             if (playerActionsRow) playerActionsRow.style.setProperty('display', 'none', 'important');
             if (findMeBtn) findMeBtn.style.setProperty('display', 'none', 'important');
             if (findFriendsBtn) findFriendsBtn.style.setProperty('display', 'none', 'important');
             if (showEveryoneBtn) showEveryoneBtn.style.setProperty('display', 'none', 'important');
         } else {
-            if (playerActionsRow) {
-                playerActionsRow.style.removeProperty('display');
-                playerActionsRow.style.display = '';
-            }
-            if (findMeBtn) {
-                findMeBtn.style.removeProperty('display');
-                findMeBtn.style.display = 'block';
-            }
-            if (findFriendsBtn) {
-                findFriendsBtn.style.removeProperty('display');
-                findFriendsBtn.style.display = 'block';
-            }
-            if (showEveryoneBtn) {
-                showEveryoneBtn.style.removeProperty('display');
-                showEveryoneBtn.style.display = 'block';
-            }
-
-            // Update active highlight classes dynamically
-            if (findMeBtn) findMeBtn.classList.toggle('active', playersFilterMode === 'me');
-            if (findFriendsBtn) findFriendsBtn.classList.toggle('active', playersFilterMode === 'friends');
-            if (showEveryoneBtn) showEveryoneBtn.classList.toggle('active', playersFilterMode === 'everyone');
-        }
-    }
-
-    const curGameState = state || window.lastGameState;
-    const isIntermission = Boolean(curGameState && (curGameState.state === 'intermission' || curGameState.intermission === true));
-    if (!isIntermission && selectedPlayerUsername) {
-        selectedPlayerUsername = null;
-    }
-
-    if (!players || players.length === 0) {
-        listEl.innerHTML = '<p class="placeholder">No players</p>';
-        return;
-    }
-
-    // Deduplicate players list by user_id and username
-    const seenUserKeys = new Set();
-    const uniquePlayers = [];
-    (players || []).forEach(p => {
-        const uKey = String(p.user_id || p.username || '').toLowerCase();
-        const unameKey = String(p.username || '').toLowerCase();
-        if (!seenUserKeys.has(uKey) && !seenUserKeys.has(unameKey)) {
-            seenUserKeys.add(uKey);
-            seenUserKeys.add(unameKey);
-            uniquePlayers.push(p);
-        }
-    });
-
-    // Sort players by score (Highest First), placing users with "0 pts" first ahead of "DNP" users, break ties with Rating
-    const sortedPlayers = [...uniquePlayers].sort((a, b) => compareGameRoomPlayers(a, b, state));
-
-    // Attach click handler via event delegation parent or recreate list
-    // Recreating list is fine here
-
-    // Top 3 + Nearby Logic (simplified for brevity: show top 20)
-    // For now, render ALL players (scrollable if > 8)
-    let itemsToRender = sortedPlayers.map((p, idx) => ({ ...p, originalRank: idx + 1 }));
-
-    if (playersFilterMode === 'friends' && currentUser) {
-        itemsToRender = itemsToRender.filter(p =>
-            p.username.toLowerCase() === (currentUser || "").toLowerCase() ||
-            userFriendsCache.some(f => f.username.toLowerCase() === p.username.toLowerCase())
-        );
-    } else if (playersFilterMode === 'me' && currentUser) {
-        const myIdx = itemsToRender.findIndex(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
-        if (myIdx !== -1) {
-            const start = Math.max(0, myIdx - 2);
-            const end = Math.min(itemsToRender.length, myIdx + 3);
-            itemsToRender = itemsToRender.slice(start, end);
-        }
-    }
-
-    const html = itemsToRender.map((p) => {
-        const index = p.originalRank - 1; // Use original rank for visuals if needed
-        const rank = p.originalRank;
-
-        // Override rating for Guest users or Unrated users
-        const isGuest = p.username.startsWith('Guest_');
-        const isUnrated = Boolean(p.is_unrated);
-        let displayRating = isGuest ? 0 : (isUnrated ? 'Unrated' : p.rating);
-
-        let changeTxt = '0';
-        let changeClass = 'change-neutral';
-        if (!isUnrated) {
-            let effChange = p.rating_change || 0;
-            // Instant calculation fallback as soon as the round ends
-            const isRoundOver = (state && (state.state === 'intermission' || state.intermission === true)) || 
-                                (window.lastGameState && (window.lastGameState.state === 'intermission' || window.lastGameState.intermission === true)) ||
-                                (typeof localEndTime === 'number' && localEndTime > 0 && (localEndTime - (Date.now() / 1000)) <= 0);
-
-            if (effChange === 0 && isRoundOver && !isGuest && (p.score || 0) >= 1) {
-                if (window._predictedRatingChanges && window._predictedRatingChanges[p.user_id] !== undefined) {
-                    effChange = window._predictedRatingChanges[p.user_id];
-                }
-            }
-
-            if (effChange > 0) {
-                changeTxt = `+${effChange}`;
-                changeClass = 'change-positive';
-            } else if (effChange < 0) {
-                changeTxt = `${effChange}`;
-                changeClass = 'change-negative';
-            }
-
-            // If using predicted change before server state returned, reflect in displayRating
-            if (p.rating_change === 0 && effChange !== 0 && typeof displayRating === 'number') {
-                displayRating = Math.max(400, displayRating + effChange);
-            }
-        }
-
-        // Final display string (User request: in brackets next to rating)
-        const isSubanagrams = (state && state.game_type === 'subanagrams') || (window.lastGameState && window.lastGameState.game_type === 'subanagrams');
-        const ratingDisplayStr = `${displayRating} <span class="${changeClass}">(${changeTxt})</span>`;
-        let ratingDisplay = ratingDisplayStr;
-        if (isSubanagrams || isUnrated) {
-            ratingDisplay = 'Unrated';
-        } else if (isGuest && displayRating === 0 && (p.rating_change === 0 || !p.rating_change)) {
-            ratingDisplay = 'Guest';
-        }
-
-        const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
-        const userClass = (p.username.toLowerCase() === (currentUser || "").toLowerCase()) ? ' current-user' : '';
-
-        // Highlight if selected (ONLY during intermission)
-        const selectedClass = (isIntermission && p.username === selectedPlayerUsername) ? ' selected-player' : '';
-        const intermissionClass = isIntermission ? ' is-intermission' : '';
-
-        // Highlight if found selected word (Golden Highlight)
-        let finderClass = '';
-        if (highlightedFoundWord && !isSubanagrams) {
-            const hasChosenWord = p.submitted_words && p.submitted_words.some(sw => {
-                const w = (typeof sw === 'object' ? sw.word : sw) || '';
-                return w.toUpperCase() === highlightedFoundWord;
-            });
-            if (hasChosenWord) {
-                finderClass = ' finder-highlight';
-            }
-        }
-
-        // Calculate rating color
-        let ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
-        if (isUnrated) {
-            ratingColor = '#ffffff'; // User mandate: square color of white for unrated
-        } else if (isSubanagrams) {
-            ratingColor = '#777';
-        } else if (!isGuest && p.games_played === 0) {
-            ratingColor = '#0044ff';
-        }
-        const shineClass = (isSubanagrams || isUnrated || (!isGuest && p.games_played === 0)) ? '' : (window.getRatingShineClass ? window.getRatingShineClass(displayRating) : '');
-
-        // Chat disabled icon logic (Crossed-out horn: user cannot read chats)
-        const isSelf = (p.username === (state.your_username || window.currentUsername) || (state.your_user_id && p.user_id === state.your_user_id));
-
-        // Input Method Icon: Keep the word-submission method visible all throughout intermission
-        let playerMethod = p.input_method;
-        if (isSelf && currentInputMethod) {
-            playerMethod = currentInputMethod;
-        }
-        let inputIcon = '🖱️';
-        let inputTitle = 'Input Method: Mousing';
-        if (playerMethod === 'keyboard') {
-            inputIcon = '⌨️';
-            inputTitle = 'Input Method: Typing';
-        } else if (playerMethod === 'touch') {
-            inputIcon = '📱';
-            inputTitle = 'Input Method: Swiping';
-        }
-
-        // Trophy Logic (Exceptional Performance) - User Directive: Displayed strictly during intermission
-        const isIntermission = (state && state.state === 'intermission') || (window.lastGameState && window.lastGameState.state === 'intermission');
-        const peVal = (typeof p.performance_efficiency === 'number' && p.performance_efficiency > 0) ? p.performance_efficiency : 0;
-        const trophyTitle = peVal > 0 ? `Exceptional Performance (PE: ${peVal.toFixed(2)}x)` : `Exceptional Performance`;
-        const trophyHtml = (p.has_exceptional_round && isIntermission && !p.is_ai) ? `<span title="${trophyTitle}" class="trophy-icon">🏆</span>` : '';
-        let hasChatDisabled = false;
-        if (isSelf) {
-            if (window.userSettings && window.userSettings.game_room_chat !== undefined) {
-                hasChatDisabled = (window.userSettings.game_room_chat === false || window.userSettings.game_room_chat === 'false');
+            if (headingEl) headingEl.style.removeProperty('display');
+            let activePlayerCount = 0;
+            if (state && (state.state === 'intermission' || state.intermission === true)) {
+                // Intermission: Count only players who actively participated (did not DNP)
+                activePlayerCount = players ? players.filter(p => 
+                    p.words_count > 0 || p.score > 0 || (p.invalid_words && p.invalid_words.length > 0)
+                ).length : 0;
             } else {
-                try {
-                    const cached = localStorage.getItem('morpheme_game_room_chat');
-                    if (cached !== null) {
-                        hasChatDisabled = (cached === 'false' || cached === false);
-                    } else {
-                        hasChatDisabled = (p.game_room_chat === false || p.game_room_chat === 'false');
-                    }
-                } catch (e) {
-                    hasChatDisabled = (p.game_room_chat === false || p.game_room_chat === 'false');
-                }
+                // Active: Count all active players currently in the room (excluding spectators)
+                activePlayerCount = players ? players.length : 0;
             }
-        } else {
-            hasChatDisabled = (p.game_room_chat === false || p.game_room_chat === 'false');
-        }
-        const chatDisabledHtml = hasChatDisabled ? `<span title="Chat disabled (cannot read chats)" class="chat-disabled-icon">🔇</span>` : '';
+            if (headingEl) headingEl.textContent = `Players [${activePlayerCount}]`;
+            const gameState = state || window.lastGameState;
+            const gt = (gameState && gameState.game_type) ? String(gameState.game_type).toLowerCase() : '';
+            const dims = (gameState && gameState.board_dimensions) ? String(gameState.board_dimensions).toLowerCase() : '';
+            const isFCFS = gt === 'fcfs' || gt === 'solo_fcfs';
+            const isSplit = gt === 'split' || gt === 'solo_split';
+            const isCube = gt === '3d' || gt === 'cube' || gt === 'solo_3d' || gt === '3d_cube' || dims === '3x3x3';
+            const hidePlayerActionButtons = isFCFS || isSplit || isCube;
 
-        const rankClass = (rank === 1) ? ' rank-1 rank-gold' : (rank === 2) ? ' rank-2 rank-silver' : (rank === 3) ? ' rank-bronze rank-3' : ` rank-${rank} rank-other`;
-        const rankStyle = (rank === 1) ? 'color: #ffd700; opacity: 1;' : (rank === 2) ? 'color: #e2e8f0; opacity: 1;' : (rank === 3) ? 'color: #cd7f32; opacity: 1;' : 'color: #60a5fa; opacity: 0.9;';
+            if (hidePlayerActionButtons) {
+                playersFilterMode = 'everyone';
+                if (playerActionsRow) playerActionsRow.style.setProperty('display', 'none', 'important');
+                if (findMeBtn) findMeBtn.style.setProperty('display', 'none', 'important');
+                if (findFriendsBtn) findFriendsBtn.style.setProperty('display', 'none', 'important');
+                if (showEveryoneBtn) showEveryoneBtn.style.setProperty('display', 'none', 'important');
+            } else {
+                if (playerActionsRow) {
+                    playerActionsRow.style.removeProperty('display');
+                    playerActionsRow.style.display = '';
+                }
+                if (findMeBtn) {
+                    findMeBtn.style.removeProperty('display');
+                    findMeBtn.style.display = 'block';
+                }
+                if (findFriendsBtn) {
+                    findFriendsBtn.style.removeProperty('display');
+                    findFriendsBtn.style.display = 'block';
+                }
+                if (showEveryoneBtn) {
+                    showEveryoneBtn.style.removeProperty('display');
+                    showEveryoneBtn.style.display = 'block';
+                }
 
-        const flagCountryName = (window.getCountryName ? window.getCountryName(p.country_flag) : '') || '';
-        const flagTitleAttr = flagCountryName ? ` title="${flagCountryName.replace(/"/g, '&quot;')}"` : '';
-
-        const itemTitle = isIntermission ? 'Click to view notepad' : '';
-        const userTitle = isIntermission 
-            ? ((p.username === selectedPlayerUsername)
-                ? 'Click to revert to your words'
-                : 'Click to highlight found words in All Words')
-            : '';
-
-        return `
-        <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}${intermissionClass}" data-username="${p.username}"${itemTitle ? ` title="${itemTitle}"` : ''}>
-            <div class="player-row-top">
-                <span class="player-rank${rankClass}"${rankStyle ? ` style="${rankStyle}"` : ''}>#${rank}</span>
-                <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${p.username}'); } event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
-                <span class="player-username" style="text-align: left !important;"${userTitle ? ` title="${userTitle}"` : ''}>${p.username}</span>
-                <span class="player-rating-val">${ratingDisplay}</span>
-            </div>
-            <div class="player-row-bottom">
-                <span class="player-flag"${flagTitleAttr}>${window.getFlagHtml ? window.getFlagHtml(p.country_flag) : (p.country_flag || '🏳️')}</span>
-                <span class="player-input-icon" title="${inputTitle}">${inputIcon}</span>
-                ${trophyHtml}
-                ${chatDisabledHtml}
-                <div style="flex:1;"></div>
-                <span class="player-words-count">${p.words_count} words</span>
-                <span class="player-score-val">${isPlayerDNP(p, state) ? 'DNP' : Math.max(0, p.score) + ' pts'}</span>
-            </div>
-        </div>
-        `;
-    }).join('');
-
-    if (html === lastPlayersHtml) return;
-
-    // Smooth in-place class toggle: if player cards already exist with the same usernames,
-    // toggle .selected-player and .is-intermission in place to preserve animations without destroying the DOM.
-    const existingItems = listEl.querySelectorAll('.player-item');
-    if (existingItems.length === players.length && lastPlayersHtml !== null) {
-        let sameStructure = true;
-        for (let i = 0; i < players.length; i++) {
-            if (existingItems[i].dataset.username !== players[i].username) {
-                sameStructure = false;
-                break;
+                // Update active highlight classes dynamically
+                if (findMeBtn) findMeBtn.classList.toggle('active', playersFilterMode === 'me');
+                if (findFriendsBtn) findFriendsBtn.classList.toggle('active', playersFilterMode === 'friends');
+                if (showEveryoneBtn) showEveryoneBtn.classList.toggle('active', playersFilterMode === 'everyone');
             }
         }
-        if (sameStructure) {
-            existingItems.forEach(item => {
-                const uname = item.dataset.username;
-                item.classList.toggle('selected-player', isIntermission && uname === selectedPlayerUsername);
-                item.classList.toggle('is-intermission', isIntermission);
-                if (isIntermission) {
-                    item.title = 'Click to view notepad';
-                    const uEl = item.querySelector('.player-username');
-                    if (uEl) {
-                        uEl.title = (uname === selectedPlayerUsername)
-                            ? 'Click to revert to your words'
-                            : 'Click to highlight found words in All Words';
-                    }
-                } else {
-                    item.removeAttribute('title');
-                    const uEl = item.querySelector('.player-username');
-                    if (uEl) uEl.removeAttribute('title');
-                }
-            });
-            lastPlayersHtml = html;
+
+        const curGameState = state || window.lastGameState || {};
+        const isIntermission = Boolean(curGameState && (curGameState.state === 'intermission' || curGameState.intermission === true));
+        if (!isIntermission && selectedPlayerUsername) {
+            selectedPlayerUsername = null;
+        }
+
+        if (!players || players.length === 0) {
+            listEl.innerHTML = '<p class="placeholder">No players</p>';
             return;
         }
-    }
-    
-    // SAVE SCROLL POSITION
-    const oldScrollTop = listEl.scrollTop;
-    
-    lastPlayersHtml = html;
-    listEl.innerHTML = html;
 
-    // RESTORE SCROLL POSITION (Prevents jumping on score updates)
-    listEl.scrollTop = oldScrollTop;
+        // Deduplicate players list by user_id and username
+        const seenUserKeys = new Set();
+        const uniquePlayers = [];
+        (players || []).forEach(p => {
+            const uKey = String(p.user_id || p.username || '').toLowerCase();
+            const unameKey = String(p.username || '').toLowerCase();
+            if (!seenUserKeys.has(uKey) && !seenUserKeys.has(unameKey)) {
+                seenUserKeys.add(uKey);
+                seenUserKeys.add(unameKey);
+                uniquePlayers.push(p);
+            }
+        });
 
-    // Unified click event delegation on listEl:
-    // 1. Colored square (rating) -> Open Mini-Profile at ANY time
-    // 2. Username text -> Highlight user found words under All Words ONLY during intermission
-    // 3. Anywhere else on cell -> Notepad appears ONLY during intermission
-    if (!listEl.hasPlayerRosterClickListener) {
-        listEl.addEventListener('click', (e) => {
-            const curState = window.lastGameState;
-            const inIntermission = Boolean(curState && (curState.state === 'intermission' || curState.intermission === true));
+        // Sort players by score (Highest First), placing users with "0 pts" first ahead of "DNP" users, break ties with Rating
+        const sortedPlayers = [...uniquePlayers].sort((a, b) => compareGameRoomPlayers(a, b, curGameState));
 
-            // 1. Colored square indicating rating -> Show Mini-Profile at ANY time
-            const ratingSquare = e.target.closest('.rating-square');
-            if (ratingSquare) {
-                const pItem = ratingSquare.closest('.player-item');
-                const uName = pItem ? pItem.dataset.username : null;
-                if (uName && typeof window.showMiniProfile === 'function') {
-                    if (window.getSelection) {
-                        try { window.getSelection().removeAllRanges(); } catch (err) {}
+        // Attach click handler via event delegation parent or recreate list
+        // Recreating list is fine here
+
+        // Top 3 + Nearby Logic (simplified for brevity: show top 20)
+        // For now, render ALL players (scrollable if > 8)
+        let itemsToRender = sortedPlayers.map((p, idx) => ({ ...p, originalRank: idx + 1 }));
+
+        if (playersFilterMode === 'friends' && currentUser) {
+            itemsToRender = itemsToRender.filter(p =>
+                p.username.toLowerCase() === (currentUser || "").toLowerCase() ||
+                userFriendsCache.some(f => f.username.toLowerCase() === p.username.toLowerCase())
+            );
+        } else if (playersFilterMode === 'me' && currentUser) {
+            const myIdx = itemsToRender.findIndex(p => p.username.toLowerCase() === (currentUser || "").toLowerCase());
+            if (myIdx !== -1) {
+                const start = Math.max(0, myIdx - 2);
+                const end = Math.min(itemsToRender.length, myIdx + 3);
+                itemsToRender = itemsToRender.slice(start, end);
+            }
+        }
+
+        const html = itemsToRender.map((p) => {
+            const index = p.originalRank - 1; // Use original rank for visuals if needed
+            const rank = p.originalRank;
+
+            // Override rating for Guest users or Unrated users
+            const isGuest = p.username.startsWith('Guest_');
+            const isUnrated = Boolean(p.is_unrated);
+            let displayRating = isGuest ? 0 : (isUnrated ? 'Unrated' : p.rating);
+
+            let changeTxt = '0';
+            let changeClass = 'change-neutral';
+            if (!isUnrated) {
+                let effChange = p.rating_change || 0;
+                // Instant calculation fallback as soon as the round ends
+                const isRoundOver = (curGameState && (curGameState.state === 'intermission' || curGameState.intermission === true)) || 
+                                    (typeof localEndTime === 'number' && localEndTime > 0 && (localEndTime - (Date.now() / 1000)) <= 0);
+
+                if (effChange === 0 && isRoundOver && !isGuest && (p.score || 0) >= 1) {
+                    if (window._predictedRatingChanges && window._predictedRatingChanges[p.user_id] !== undefined) {
+                        effChange = window._predictedRatingChanges[p.user_id];
                     }
+                }
+
+                if (effChange > 0) {
+                    changeTxt = `+${effChange}`;
+                    changeClass = 'change-positive';
+                } else if (effChange < 0) {
+                    changeTxt = `${effChange}`;
+                    changeClass = 'change-negative';
+                }
+
+                // If using predicted change before server state returned, reflect in displayRating
+                if (p.rating_change === 0 && effChange !== 0 && typeof displayRating === 'number') {
+                    displayRating = Math.max(400, displayRating + effChange);
+                }
+            }
+
+            // Final display string (User request: in brackets next to rating)
+            const isSubanagrams = (curGameState && curGameState.game_type === 'subanagrams');
+            const ratingDisplayStr = `${displayRating} <span class="${changeClass}">(${changeTxt})</span>`;
+            let ratingDisplay = ratingDisplayStr;
+            if (isSubanagrams || isUnrated) {
+                ratingDisplay = 'Unrated';
+            } else if (isGuest && displayRating === 0 && (p.rating_change === 0 || !p.rating_change)) {
+                ratingDisplay = 'Guest';
+            }
+
+            const bonusClass = p.found_bonus_word ? ' bonus-finder' : '';
+            const userClass = (p.username.toLowerCase() === (currentUser || "").toLowerCase()) ? ' current-user' : '';
+
+            // Highlight if selected (ONLY during intermission)
+            const selectedClass = (isIntermission && p.username === selectedPlayerUsername) ? ' selected-player' : '';
+            const intermissionClass = isIntermission ? ' is-intermission' : '';
+
+            // Highlight if found selected word (Golden Highlight)
+            let finderClass = '';
+            if (highlightedFoundWord && !isSubanagrams) {
+                const hasChosenWord = p.submitted_words && p.submitted_words.some(sw => {
+                    const w = (typeof sw === 'object' ? sw.word : sw) || '';
+                    return w.toUpperCase() === highlightedFoundWord;
+                });
+                if (hasChosenWord) {
+                    finderClass = ' finder-highlight';
+                }
+            }
+
+            // Calculate rating color
+            let ratingColor = window.getRatingColor ? window.getRatingColor(displayRating) : '#fff';
+            if (isUnrated) {
+                ratingColor = '#ffffff'; // User mandate: square color of white for unrated
+            } else if (isSubanagrams) {
+                ratingColor = '#777';
+            } else if (!isGuest && p.games_played === 0) {
+                ratingColor = '#0044ff';
+            }
+            const shineClass = (isSubanagrams || isUnrated || (!isGuest && p.games_played === 0)) ? '' : (window.getRatingShineClass ? window.getRatingShineClass(displayRating) : '');
+
+            // Chat disabled icon logic (Crossed-out horn: user cannot read chats)
+            const myUname = (curGameState && curGameState.your_username) || window.currentUsername;
+            const myUid = curGameState && curGameState.your_user_id;
+            const isSelf = (p.username === myUname || (myUid && p.user_id === myUid));
+
+            // Input Method Icon: Keep the word-submission method visible all throughout intermission
+            let playerMethod = p.input_method;
+            if (isSelf && currentInputMethod) {
+                playerMethod = currentInputMethod;
+            }
+            let inputIcon = '🖱️';
+            let inputTitle = 'Input Method: Mousing';
+            if (playerMethod === 'keyboard') {
+                inputIcon = '⌨️';
+                inputTitle = 'Input Method: Typing';
+            } else if (playerMethod === 'touch') {
+                inputIcon = '📱';
+                inputTitle = 'Input Method: Swiping';
+            }
+
+            // Trophy Logic (Exceptional Performance) - User Directive: Displayed strictly during intermission
+            const peVal = (typeof p.performance_efficiency === 'number' && p.performance_efficiency > 0) ? p.performance_efficiency : 0;
+            const trophyTitle = peVal > 0 ? `Exceptional Performance (PE: ${peVal.toFixed(2)}x)` : `Exceptional Performance`;
+            const trophyHtml = (p.has_exceptional_round && isIntermission && !p.is_ai) ? `<span title="${trophyTitle}" class="trophy-icon">🏆</span>` : '';
+            let hasChatDisabled = false;
+            if (isSelf) {
+                if (window.userSettings && window.userSettings.game_room_chat !== undefined) {
+                    hasChatDisabled = (window.userSettings.game_room_chat === false || window.userSettings.game_room_chat === 'false');
+                } else {
+                    try {
+                        const cached = localStorage.getItem('morpheme_game_room_chat');
+                        if (cached !== null) {
+                            hasChatDisabled = (cached === 'false' || cached === false);
+                        } else {
+                            hasChatDisabled = (p.game_room_chat === false || p.game_room_chat === 'false');
+                        }
+                    } catch (e) {
+                        hasChatDisabled = (p.game_room_chat === false || p.game_room_chat === 'false');
+                    }
+                }
+            } else {
+                hasChatDisabled = (p.game_room_chat === false || p.game_room_chat === 'false');
+            }
+            const chatDisabledHtml = hasChatDisabled ? `<span title="Chat disabled (cannot read chats)" class="chat-disabled-icon">🔇</span>` : '';
+
+            const rankClass = (rank === 1) ? ' rank-1 rank-gold' : (rank === 2) ? ' rank-2 rank-silver' : (rank === 3) ? ' rank-bronze rank-3' : ` rank-${rank} rank-other`;
+            const rankStyle = (rank === 1) ? 'color: #ffd700; opacity: 1;' : (rank === 2) ? 'color: #e2e8f0; opacity: 1;' : (rank === 3) ? 'color: #cd7f32; opacity: 1;' : 'color: #60a5fa; opacity: 0.9;';
+
+            const flagCountryName = (window.getCountryName ? window.getCountryName(p.country_flag) : '') || '';
+            const flagTitleAttr = flagCountryName ? ` title="${flagCountryName.replace(/"/g, '&quot;')}"` : '';
+
+            const itemTitle = isIntermission ? 'Click to view notepad' : '';
+            const userTitle = isIntermission 
+                ? ((p.username === selectedPlayerUsername)
+                    ? 'Click to revert to your words'
+                    : 'Click to highlight found words in All Words')
+                : '';
+
+            return `
+            <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}${intermissionClass}" data-username="${p.username}"${itemTitle ? ` title="${itemTitle}"` : ''}>
+                <div class="player-row-top">
+                    <span class="player-rank${rankClass}"${rankStyle ? ` style="${rankStyle}"` : ''}>#${rank}</span>
+                    <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${p.username}'); } event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
+                    <span class="player-username" style="text-align: left !important;"${userTitle ? ` title="${userTitle}"` : ''}>${p.username}</span>
+                    <span class="player-rating-val">${ratingDisplay}</span>
+                </div>
+                <div class="player-row-bottom">
+                    <span class="player-flag"${flagTitleAttr}>${window.getFlagHtml ? window.getFlagHtml(p.country_flag) : (p.country_flag || '🏳️')}</span>
+                    <span class="player-input-icon" title="${inputTitle}">${inputIcon}</span>
+                    ${trophyHtml}
+                    ${chatDisabledHtml}
+                    <div style="flex:1;"></div>
+                    <span class="player-words-count">${p.words_count} words</span>
+                    <span class="player-score-val">${isPlayerDNP(p, curGameState) ? 'DNP' : Math.max(0, p.score) + ' pts'}</span>
+                </div>
+            </div>
+            `;
+        }).join('');
+
+        if (html === lastPlayersHtml) return;
+
+        // Smooth in-place class toggle: if player cards already exist with the same usernames,
+        // toggle .selected-player and .is-intermission in place to preserve animations without destroying the DOM.
+        const existingItems = listEl.querySelectorAll('.player-item');
+        if (existingItems.length === players.length && lastPlayersHtml !== null) {
+            let sameStructure = true;
+            for (let i = 0; i < players.length; i++) {
+                if (existingItems[i].dataset.username !== players[i].username) {
+                    sameStructure = false;
+                    break;
+                }
+            }
+            if (sameStructure) {
+                existingItems.forEach(item => {
+                    const uname = item.dataset.username;
+                    item.classList.toggle('selected-player', isIntermission && uname === selectedPlayerUsername);
+                    item.classList.toggle('is-intermission', isIntermission);
+                    if (isIntermission) {
+                        item.title = 'Click to view notepad';
+                        const uEl = item.querySelector('.player-username');
+                        if (uEl) {
+                            uEl.title = (uname === selectedPlayerUsername)
+                                ? 'Click to revert to your words'
+                                : 'Click to highlight found words in All Words';
+                        }
+                    } else {
+                        item.removeAttribute('title');
+                        const uEl = item.querySelector('.player-username');
+                        if (uEl) uEl.removeAttribute('title');
+                    }
+                });
+                lastPlayersHtml = html;
+                return;
+            }
+        }
+        
+        // SAVE SCROLL POSITION
+        const oldScrollTop = listEl.scrollTop;
+        
+        lastPlayersHtml = html;
+        listEl.innerHTML = html;
+
+        // RESTORE SCROLL POSITION (Prevents jumping on score updates)
+        listEl.scrollTop = oldScrollTop;
+
+        // Unified click event delegation on listEl:
+        // 1. Colored square (rating) -> Open Mini-Profile at ANY time
+        // 2. Username text -> Highlight user found words under All Words ONLY during intermission
+        // 3. Anywhere else on cell -> Notepad appears ONLY during intermission
+        if (!listEl.hasPlayerRosterClickListener) {
+            listEl.addEventListener('click', (e) => {
+                const curState = window.lastGameState;
+                const inIntermission = Boolean(curState && (curState.state === 'intermission' || curState.intermission === true));
+
+                // 1. Colored square indicating rating -> Show Mini-Profile at ANY time
+                const ratingSquare = e.target.closest('.rating-square');
+                if (ratingSquare) {
+                    const pItem = ratingSquare.closest('.player-item');
+                    const uName = pItem ? pItem.dataset.username : null;
+                    if (uName && typeof window.showMiniProfile === 'function') {
+                        if (window.getSelection) {
+                            try { window.getSelection().removeAllRanges(); } catch (err) {}
+                        }
+                        if (typeof window.closeNotepadPopup === 'function') {
+                            window.closeNotepadPopup();
+                        }
+                        window.showMiniProfile(uName);
+                    }
+                    return;
+                }
+
+                const item = e.target.closest('.player-item');
+                if (!item || !item.dataset.username) return;
+                const uName = item.dataset.username;
+
+                // 2. Username clicked -> Highlight what user found under All Words ONLY during intermission
+                const usernameEl = e.target.closest('.player-username');
+                if (usernameEl) {
+                    if (!inIntermission) {
+                        return; // Do NOT highlight a user during a round!
+                    }
+
+                    // Close notepad if open
                     if (typeof window.closeNotepadPopup === 'function') {
                         window.closeNotepadPopup();
                     }
-                    window.showMiniProfile(uName);
-                }
-                return;
-            }
 
-            const item = e.target.closest('.player-item');
-            if (!item || !item.dataset.username) return;
-            const uName = item.dataset.username;
-
-            // 2. Username clicked -> Highlight what user found under All Words ONLY during intermission
-            const usernameEl = e.target.closest('.player-username');
-            if (usernameEl) {
-                if (!inIntermission) {
-                    return; // Do NOT highlight a user during a round!
-                }
-
-                // Close notepad if open
-                if (typeof window.closeNotepadPopup === 'function') {
-                    window.closeNotepadPopup();
-                }
-
-                // Toggle selection
-                if (selectedPlayerUsername === uName) {
-                    selectedPlayerUsername = null; // Revert back to own words
-                } else {
-                    selectedPlayerUsername = uName;
-                    // Ensure 'found' (All Words) tab is active
-                    if (typeof activeWordsTab !== 'undefined' && activeWordsTab !== 'found') {
-                        const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
-                        if (foundTabBtn) foundTabBtn.click();
+                    // Toggle selection
+                    if (selectedPlayerUsername === uName) {
+                        selectedPlayerUsername = null; // Revert back to own words
+                    } else {
+                        selectedPlayerUsername = uName;
+                        // Ensure 'found' (All Words) tab is active
+                        if (typeof activeWordsTab !== 'undefined' && activeWordsTab !== 'found') {
+                            const foundTabBtn = document.querySelector('.word-tab[data-tab="found"]');
+                            if (foundTabBtn) foundTabBtn.click();
+                        }
+                        // Slide over to Words panel
+                        if (typeof window.switchPlayPanel === 'function') {
+                            window.switchPlayPanel('words', true);
+                        }
+                        const wordsScroller = document.getElementById('submitted-words-list');
+                        if (wordsScroller) wordsScroller.scrollTop = 0;
                     }
-                    // Slide over to Words panel
-                    if (typeof window.switchPlayPanel === 'function') {
-                        window.switchPlayPanel('words', true);
+
+                    // Instantly toggle .selected-player on existing player cards in-place without DOM teardown
+                    listEl.querySelectorAll('.player-item').forEach(pItem => {
+                        pItem.classList.toggle('selected-player', pItem.dataset.username === selectedPlayerUsername);
+                    });
+
+                    window.lastRenderedIntermissionKey = null;
+                    if (window.lastGameState) {
+                        _doUpdateGameState(window.lastGameState);
                     }
-                    const wordsScroller = document.getElementById('submitted-words-list');
-                    if (wordsScroller) wordsScroller.scrollTop = 0;
+                    return;
                 }
 
-                // Instantly toggle .selected-player on existing player cards in-place without DOM teardown
-                listEl.querySelectorAll('.player-item').forEach(pItem => {
-                    pItem.classList.toggle('selected-player', pItem.dataset.username === selectedPlayerUsername);
-                });
-
-                window.lastRenderedIntermissionKey = null;
-                if (window.lastGameState) {
-                    _doUpdateGameState(window.lastGameState);
+                // 3. Anywhere else on the cell -> Notepad appears ONLY during intermission
+                if (inIntermission) {
+                    if (typeof window.showNotepadPopup === 'function') {
+                        window.showNotepadPopup(uName);
+                    }
                 }
-                return;
-            }
-
-            // 3. Anywhere else on the cell -> Notepad appears ONLY during intermission
-            if (inIntermission) {
-                if (typeof window.showNotepadPopup === 'function') {
-                    window.showNotepadPopup(uName);
-                }
-            }
-        });
-        listEl.hasPlayerRosterClickListener = true;
+            });
+            listEl.hasPlayerRosterClickListener = true;
+        }
+    } catch (err) {
+        console.error('[RenderPlayers Error]', err);
     }
 }
 window.renderPlayers = renderPlayers;
