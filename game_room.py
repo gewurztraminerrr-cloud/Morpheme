@@ -3371,29 +3371,29 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
     # Also accept if candidate was already staged as room.next_round_bonus for THIS upcoming round and is not in immediate_exclude!
     cand_str = str(candidate or '').upper().strip()
     is_staged_for_this_round = (room and cand_str and cand_str == str(getattr(room, 'next_round_bonus', '') or '').upper().strip())
-    if cand_str and cand_str not in ('NONE', 'NULL', 'PLANETS') and len(cand_str) == target_len and not cand_str.endswith(('ING', 'INGS')):
+    if cand_str and cand_str not in ('NONE', 'NULL', 'PLANETS') and len(cand_str) == target_len and not cand_str.endswith(('ING', 'INGS')) and 'ING' not in cand_str:
         if not words_upper_set or cand_str in words_upper_set:
             if cand_str not in exclude_set or (is_staged_for_this_round and cand_str not in immediate_exclude):
                 _record_room_bonus_word(room, cand_str)
                 return cand_str
 
     # 2. Check exact matches of target_len on the board (strictly excluding full history first, then immediate_exclude, then relaxing immediate_exclude)
-    valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in exclude_set]
+    valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper() and w.upper() not in exclude_set]
     if not valid_exact and words_list:
-        valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in immediate_exclude]
+        valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper() and w.upper() not in immediate_exclude]
     if not valid_exact and words_list:
-        valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS'))]
+        valid_exact = [w for w in words_list if len(w) == target_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
     if valid_exact:
         chosen = random.choice(valid_exact).upper()
         _record_room_bonus_word(room, chosen)
         return chosen
 
     # 3. Fallback on board: closest length (6..10) from words_list (never return a word not on the board when words_list exists!)
-    valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in exclude_set]
+    valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper() and w.upper() not in exclude_set]
     if not valid_range and words_list:
-        valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and w.upper() not in immediate_exclude]
+        valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper() and w.upper() not in immediate_exclude]
     if not valid_range and words_list:
-        valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS'))]
+        valid_range = [w for w in words_list if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
     if valid_range:
         valid_range.sort(key=lambda w: abs(len(w) - target_len))
         closest_l = len(valid_range[0])
@@ -3403,10 +3403,10 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
             _record_room_bonus_word(room, chosen)
             return chosen
 
-    # 4. Any valid word on board not ending in ING/INGS, then literally any word on board
-    any_valid = [w for w in words_list if not w.upper().endswith(('ING', 'INGS')) and w.upper() not in immediate_exclude]
+    # 4. Any valid word on board not ending in ING/INGS and not containing ING, then literally any word on board
+    any_valid = [w for w in words_list if not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper() and w.upper() not in immediate_exclude]
     if not any_valid and words_list:
-        any_valid = [w for w in words_list if not w.upper().endswith(('ING', 'INGS'))]
+        any_valid = [w for w in words_list if not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
     if not any_valid and words_list:
         any_valid = list(words_list)
     if any_valid:
@@ -3418,14 +3418,14 @@ def pick_distinct_bonus_word(room, candidate, target_words, target_len, dictiona
     # 5. Only if words_list was empty (before board exists): pick a fresh target_len word from dictionary
     if rm and hasattr(rm, '_get_bonus_word'):
         chosen = rm._get_bonus_word(length=target_len, dictionary=dictionary, alternating=is_checkerboard, exclude=list(exclude_set))
-        if chosen and chosen.upper() not in immediate_exclude:
+        if chosen and chosen.upper() not in immediate_exclude and 'ING' not in chosen.upper() and not chosen.upper().endswith(('ING', 'INGS')):
             chosen = chosen.upper()
             _record_room_bonus_word(room, chosen)
             return chosen
 
     from word_validator import word_validator
     cand_dict = word_validator.csw_by_len.get(target_len, []) if 'CSW' in str(dictionary).upper() else word_validator.nwl_by_len.get(target_len, [])
-    fallback_pool = [w for w in cand_dict if not w.upper().endswith(('ING', 'INGS')) and w.upper() not in exclude_set]
+    fallback_pool = [w for w in cand_dict if not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper() and w.upper() not in exclude_set]
     if fallback_pool:
         chosen = random.choice(fallback_pool).upper()
         _record_room_bonus_word(room, chosen)
@@ -3453,7 +3453,8 @@ def ensure_bonus_word_on_board(room, target_len=8):
         bw_up and 
         bw_up in all_words_upper_map and 
         bw_up not in ('NONE', 'NULL', 'PLANETS') and 
-        not bw_up.endswith(('ING', 'INGS'))
+        not bw_up.endswith(('ING', 'INGS')) and
+        'ING' not in bw_up
     )
     if is_valid:
         return
@@ -3465,17 +3466,17 @@ def ensure_bonus_word_on_board(room, target_len=8):
 
     prev_bw = str(getattr(room, 'previous_bonus_word', '') or '').upper().strip()
 
-    # 1. Exact length matches on board (not ending in ING/INGS, not previous)
-    exact_cands = [w for w in all_words_upper_map.keys() if len(w) == target_len and not w.endswith(('ING', 'INGS')) and w != prev_bw]
+    # 1. Exact length matches on board (not ending in ING/INGS, not containing ING, not previous)
+    exact_cands = [w for w in all_words_upper_map.keys() if len(w) == target_len and not w.endswith(('ING', 'INGS')) and 'ING' not in w and w != prev_bw]
     if not exact_cands:
-        exact_cands = [w for w in all_words_upper_map.keys() if len(w) == target_len and not w.endswith(('ING', 'INGS'))]
+        exact_cands = [w for w in all_words_upper_map.keys() if len(w) == target_len and not w.endswith(('ING', 'INGS')) and 'ING' not in w]
     if exact_cands:
         room.bonus_word = random.choice(exact_cands)
     else:
-        # 2. Closest length in [6..10] on board (not ending in ING/INGS, not previous)
-        range_cands = [w for w in all_words_upper_map.keys() if 6 <= len(w) <= 10 and not w.endswith(('ING', 'INGS')) and w != prev_bw]
+        # 2. Closest length in [6..10] on board (not ending in ING/INGS, not containing ING, not previous)
+        range_cands = [w for w in all_words_upper_map.keys() if 6 <= len(w) <= 10 and not w.endswith(('ING', 'INGS')) and 'ING' not in w and w != prev_bw]
         if not range_cands:
-            range_cands = [w for w in all_words_upper_map.keys() if 6 <= len(w) <= 10 and not w.endswith(('ING', 'INGS'))]
+            range_cands = [w for w in all_words_upper_map.keys() if 6 <= len(w) <= 10 and not w.endswith(('ING', 'INGS')) and 'ING' not in w]
         if range_cands:
             range_cands.sort(key=lambda w: abs(len(w) - target_len))
             closest_len = len(range_cands[0])
@@ -3483,7 +3484,7 @@ def ensure_bonus_word_on_board(room, target_len=8):
             room.bonus_word = random.choice(pool)
         else:
             # 3. Any non-ING word on board
-            any_cands = [w for w in all_words_upper_map.keys() if not w.endswith(('ING', 'INGS'))]
+            any_cands = [w for w in all_words_upper_map.keys() if not w.endswith(('ING', 'INGS')) and 'ING' not in w]
             if any_cands:
                 any_cands.sort(key=lambda w: abs(len(w) - target_len))
                 room.bonus_word = any_cands[0]
@@ -4146,16 +4147,27 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
         if m_cnt < target_m_cnt:
             print(f"[get_emergency_fallback_board] Final Mania audit: board had only {m_cnt} '{m_l}' (needed {target_m_cnt}). Applying abundance...")
-            bg._apply_mania_to_board(board, m_l, set(), is_checkerboard=False)
+            bg._apply_mania_to_board(board, m_l, set(), is_checkerboard=False, difficulty=difficulty or "Medium")
             emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
             words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
             paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
 
-    # MANDATE: Bonus Word MUST match declared bonus_word_length if specified, or in [6..10], and never end in ING/INGS
+    # Strict Medium/Hard guard for emergency fallback boards
+    norm_diff_em = SpinnerSet.strip_difficulty_pct(difficulty or "Medium")
+    if norm_diff_em in ["Medium", "Hard"]:
+        is_3d_em = len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list)
+        d_em = 6 if is_3d_em else 1
+        if bg._has_ing_sequence(board, d_em):
+            bg._guarantee_no_ing(board, d_em, protected_positions=None)
+            emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
+            words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
+            paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
+
+    # MANDATE: Bonus Word MUST match declared bonus_word_length if specified, or in [6..10], and never contain/end in ING/INGS
     target_bw_len = sequence_length if sequence_length else None
-    bw_candidates = [w for w in words_filtered if (len(w) == target_bw_len if target_bw_len else (6 <= len(w) <= 10)) and not w.upper().endswith(('ING', 'INGS'))]
+    bw_candidates = [w for w in words_filtered if (len(w) == target_bw_len if target_bw_len else (6 <= len(w) <= 10)) and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
     if not bw_candidates:
-        bw_candidates = [w for w in words_filtered if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS'))]
+        bw_candidates = [w for w in words_filtered if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
     if bw_candidates:
         bonus_word = bw_candidates[0]
     else:
@@ -5987,8 +5999,8 @@ class RoomManager:
                         if solo_pop:
                             swords_filtered = [w for w in swords if len(w) >= m_len]
                             spaths_filtered = {w: p for w, p in (spaths or {}).items() if len(w) >= m_len}
-                            if not sbonus_word or len(sbonus_word) != target_bw_len or sbonus_word not in swords_filtered or sbonus_word.upper().endswith(('ING', 'INGS')):
-                                _exact_bw_s = [w for w in swords_filtered if len(w) == target_bw_len and not w.upper().endswith(('ING', 'INGS'))]
+                            if not sbonus_word or len(sbonus_word) != target_bw_len or sbonus_word not in swords_filtered or sbonus_word.upper().endswith(('ING', 'INGS')) or 'ING' in sbonus_word.upper():
+                                _exact_bw_s = [w for w in swords_filtered if len(w) == target_bw_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                                 if _exact_bw_s:
                                     sbonus_word = random.choice(_exact_bw_s).upper()
                                 else:
@@ -6076,15 +6088,15 @@ class RoomManager:
                             # Only re-roll if the embedded word is absent or not in all_words.
                             _cached_bw = final_bonus_word
                             _target_bw_len = int(room.spinner_params.get('bonus_word_length', 8) or 8)
-                            if _cached_bw and len(_cached_bw) == _target_bw_len and _cached_bw in all_words_filtered and not _cached_bw.upper().endswith(('ING', 'INGS')):
+                            if _cached_bw and len(_cached_bw) == _target_bw_len and _cached_bw in all_words_filtered and not _cached_bw.upper().endswith(('ING', 'INGS')) and 'ING' not in _cached_bw.upper():
                                 bonus_word = _cached_bw
                                 room.bonus_word = bonus_word
                             else:
                                 # Embedded bonus word does not match target length — pick matching length word from board
-                                _bw_candidates = [w for w in all_words_filtered if len(w) == _target_bw_len and not w.upper().endswith(('ING', 'INGS'))]
+                                _bw_candidates = [w for w in all_words_filtered if len(w) == _target_bw_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                                 if not _bw_candidates:
                                     _bw_len = max(m_len, min(len(w) for w in all_words_filtered) if all_words_filtered else 6)
-                                    _bw_candidates = [w for w in all_words_filtered if len(w) == _bw_len]
+                                    _bw_candidates = [w for w in all_words_filtered if len(w) == _bw_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                                 if _bw_candidates:
                                     bonus_word = random.choice(_bw_candidates)
                                     room.bonus_word = bonus_word
@@ -6304,6 +6316,14 @@ class RoomManager:
                     print(f"[RoomManager] Aborting start_round board application for {room_id}: Room is ALREADY active with board!")
                     room.starting_round = False
                     return True
+            board, s_words, s_paths, bonus_cell, bonus_word, _ = self.sanitize_board_for_room_difficulty(
+                room, board, list(room.all_words), room.all_words_paths, bonus_cell, bonus_word,
+                room.current_board_format, room.current_difficulty, dictionary=room.current_dictionary, min_len=room.current_min_length
+            )
+            if s_words:
+                room.all_words = set(s_words)
+                room.all_words_paths = s_paths
+                room.total_words_count = len(room.all_words)
             room.board = board
             room.bonus_cell = bonus_cell
 
@@ -6927,8 +6947,8 @@ class RoomManager:
                                             
                                         if actual_cnt >= min_accept:
                                             target_bw_exact = int(new_params.get('bonus_word_length', 8) or 8)
-                                            if not final_bonus_word or len(final_bonus_word) != target_bw_exact or final_bonus_word not in fw_filtered or final_bonus_word.upper().endswith(('ING', 'INGS')):
-                                                exact_bw_cands = [w for w in fw_filtered if len(w) == target_bw_exact and not w.upper().endswith(('ING', 'INGS'))]
+                                            if not final_bonus_word or len(final_bonus_word) != target_bw_exact or final_bonus_word not in fw_filtered or final_bonus_word.upper().endswith(('ING', 'INGS')) or 'ING' in final_bonus_word.upper():
+                                                exact_bw_cands = [w for w in fw_filtered if len(w) == target_bw_exact and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                                                 if exact_bw_cands:
                                                     final_bonus_word = random.choice(exact_bw_cands).upper()
                                                 else:
@@ -6969,8 +6989,8 @@ class RoomManager:
                             fw_filt = [w for w in c_w if len(w) >= m_len]
                             actual_wc = len(fw_filt)
                             if is_board_count_valid(actual_wc, target_sp_range):
-                                if not c_bw or len(c_bw) != bw_len or c_bw not in fw_filt or c_bw.upper().endswith(('ING', 'INGS')):
-                                    _c_bw_cands = [w for w in fw_filt if len(w) == bw_len and not w.upper().endswith(('ING', 'INGS'))]
+                                if not c_bw or len(c_bw) != bw_len or c_bw not in fw_filt or c_bw.upper().endswith(('ING', 'INGS')) or 'ING' in c_bw.upper():
+                                    _c_bw_cands = [w for w in fw_filt if len(w) == bw_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                                     if _c_bw_cands:
                                         c_bw = random.choice(_c_bw_cands).upper()
                                     else:
@@ -7013,14 +7033,18 @@ class RoomManager:
                                     target_bw_l = int(_solo_bw)
                                 except Exception:
                                     pass
-                        if not final_bonus_word or len(final_bonus_word) != target_bw_l or final_bonus_word not in all_words or final_bonus_word.upper().endswith(('ING', 'INGS')):
-                            _bw_cands = [w for w in all_words if len(w) == target_bw_l and not w.upper().endswith(('ING', 'INGS'))]
+                        if not final_bonus_word or len(final_bonus_word) != target_bw_l or final_bonus_word not in all_words or final_bonus_word.upper().endswith(('ING', 'INGS')) or 'ING' in final_bonus_word.upper():
+                            _bw_cands = [w for w in all_words if len(w) == target_bw_l and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                             if _bw_cands:
                                 final_bonus_word = random.choice(_bw_cands).upper()
                         if final_bonus_word:
                             new_params['bonus_word_length'] = len(final_bonus_word)
                         
                         # Stage the board data in the room immediately
+                        board, all_words, all_words_dict, bonus_cell, final_bonus_word, board_format_ret = self.sanitize_board_for_room_difficulty(
+                            room, board, all_words, all_words_dict, bonus_cell, final_bonus_word,
+                            board_format_ret, new_params.get('difficulty'), dictionary=new_params.get('dictionary'), min_len=new_params.get('min_word_length')
+                        )
                         room.next_round_board = board
                         room.next_round_words = all_words
                         room.next_round_word_paths = all_words_dict
@@ -8093,16 +8117,16 @@ class RoomManager:
 
                     # LOCAL PREPARATION: Calculate all derived metrics without touching target_room yet
                     # Update word to the ACTUAL embedded word if different (MANDATORY consistency)
-                    if final_bonus_word and len(final_bonus_word) == bw_l and final_bonus_word in all_words and not final_bonus_word.upper().endswith(('ING', 'INGS')):
+                    if final_bonus_word and len(final_bonus_word) == bw_l and final_bonus_word in all_words and not final_bonus_word.upper().endswith(('ING', 'INGS')) and 'ING' not in final_bonus_word.upper():
                         bonus_word = final_bonus_word
                     else:
-                        exact_bw_cands = [w for w in all_words if len(w) == bw_l and not w.upper().endswith(('ING', 'INGS'))]
+                        exact_bw_cands = [w for w in all_words if len(w) == bw_l and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                         if exact_bw_cands:
                             bonus_word = random.choice(exact_bw_cands).upper()
-                        elif final_bonus_word and len(final_bonus_word) >= 6 and final_bonus_word in all_words:
+                        elif final_bonus_word and len(final_bonus_word) >= 6 and final_bonus_word in all_words and not final_bonus_word.upper().endswith(('ING', 'INGS')) and 'ING' not in final_bonus_word.upper():
                             bonus_word = final_bonus_word
                         else:
-                            scorable = [w for w in all_words if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS'))]
+                            scorable = [w for w in all_words if 6 <= len(w) <= 10 and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                             if scorable:
                                 scorable.sort(key=lambda w: abs(len(w) - bw_l))
                                 bonus_word = scorable[0]
@@ -8225,6 +8249,10 @@ class RoomManager:
                             print(f"[RoomManager] Late board search discarded inside lock for {room_id}: 0:50 fallback or 0:45 reveal already locked board & params.")
                             return
 
+                        board, all_words, all_words_dict, final_bonus_cell, bonus_word, updated_format = self.sanitize_board_for_room_difficulty(
+                            target_room, board, all_words, all_words_dict, final_bonus_cell, bonus_word,
+                            updated_format, params.get('difficulty'), dictionary=params.get('dictionary'), min_len=params.get('min_word_length')
+                        )
                         target_room.next_round_board = board
                         target_room.next_round_words = list(all_words)
                         target_room.next_round_word_paths = all_words_dict
@@ -9009,6 +9037,19 @@ class RoomManager:
                 room.added_words = list(getattr(room, 'next_round_added_words', []) or [])
 
                 # ATOMIC PROMOTION: Carry staging data to active room state
+                if getattr(room, 'game_type', None) != 'subanagrams' and room.next_round_board:
+                    san_b, san_w, san_p, san_c, san_bw, _ = self.sanitize_board_for_room_difficulty(
+                        room, room.next_round_board, getattr(room, 'next_round_words', []),
+                        getattr(room, 'next_round_word_paths', {}), getattr(room, 'next_round_bonus_cell', None),
+                        getattr(room, 'next_round_bonus', None), getattr(room, 'next_round_format', None),
+                        getattr(room, 'current_difficulty', None) or (room.spinner_params.get('difficulty') if isinstance(room.spinner_params, dict) else 'Medium')
+                    )
+                    room.next_round_board = san_b
+                    if san_w:
+                        room.next_round_words = san_w
+                        room.next_round_word_paths = san_p
+                        room.next_round_bonus = san_bw
+                        room.next_round_bonus_cell = san_c
                 room.board = room.next_round_board
                 room._board_promoted_this_transition = True
                 if getattr(room, 'game_type', None) == 'subanagrams':
@@ -9886,6 +9927,35 @@ class RoomManager:
     def _get_factchecked_wc_range(self, count, use_added_words=False, dictionary=None):
         return SpinnerSet.get_factchecked_wc_range(count, use_added_words=use_added_words, dictionary=dictionary)
 
+    def sanitize_board_for_room_difficulty(self, room, board, words, paths, bonus_cell, bonus_word, board_format, difficulty, dictionary=None, min_len=None):
+        """Ironclad safeguard ensuring no Medium/Hard room ever serves an ING sequence."""
+        try:
+            if not board or not isinstance(board, list):
+                return board, words, paths, bonus_cell, bonus_word, board_format
+            diff_base = SpinnerSet.strip_difficulty_pct(difficulty or getattr(room, 'current_difficulty', 'Medium'))
+            if diff_base in ["Medium", "Hard"]:
+                is_3d = len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list)
+                depth = 6 if is_3d else 1
+                if self.board_generator._has_ing_sequence(board, depth):
+                    print(f"[RoomManager] 🛡️ SANITIZE GUARD: Room {getattr(room, 'room_id', '')} (diff={diff_base}) board had 'ING' sequence. Force breaking...")
+                    self.board_generator._guarantee_no_ing(board, depth, protected_positions=None)
+                    use_aw = bool(getattr(room, 'use_added_words', False))
+                    d_target = dictionary or getattr(room, 'current_dictionary', 'NWL')
+                    m_target = int(min_len or getattr(room, 'current_min_length', 3) or 3)
+                    final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
+                    new_paths = self.board_generator._solve_board(
+                        board, d_target, (0, 99999), m_target, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=use_aw
+                    )
+                    new_words = sorted(list(new_paths.keys()))
+                    if bonus_word and (bonus_word not in new_words or 'ING' in bonus_word.upper() or bonus_word.upper().endswith(('ING', 'INGS'))):
+                        bw_cands = [w for w in new_words if len(w) == len(bonus_word) and 'ING' not in w.upper() and not w.upper().endswith(('ING', 'INGS'))]
+                        if bw_cands:
+                            bonus_word = random.choice(bw_cands).upper()
+                    return board, new_words, new_paths, bonus_cell, bonus_word, board_format
+        except Exception as err:
+            print(f"[RoomManager] Error in sanitize_board_for_room_difficulty: {err}")
+        return board, words, paths, bonus_cell, bonus_word, board_format
+
     def _get_board_fingerprint(self, board):
         """Return a deterministic string fingerprint of a 2D or 3D board for dedup tracking."""
         try:
@@ -9937,12 +10007,18 @@ class RoomManager:
                 if dictionary == 'CSW': words = [w for w in word_validator.csw_words if len(w) == length]
                 else: words = [w for w in word_validator.nwl_words if len(w) == length]
 
-        # USER MANDATE: Never allow a word ending in ING or INGS to be a Bonus Word across ANY difficulty or format!
+        # USER MANDATE: Never allow a word ending in ING or INGS (or containing ING on Medium/Hard) to be a Bonus Word!
         import random
-        valid_words = [w for w in words if not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
-        if not valid_words:
-            all_dict_words = word_validator.csw_by_len.get(length, []) if dictionary == 'CSW' else word_validator.nwl_by_len.get(length, [])
-            valid_words = [w for w in all_dict_words if not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
+        if exclude_ing:
+            valid_words = [w for w in words if not w.upper().endswith("ING") and not w.upper().endswith("INGS") and "ING" not in w.upper()]
+            if not valid_words:
+                all_dict_words = word_validator.csw_by_len.get(length, []) if dictionary == 'CSW' else word_validator.nwl_by_len.get(length, [])
+                valid_words = [w for w in all_dict_words if not w.upper().endswith("ING") and not w.upper().endswith("INGS") and "ING" not in w.upper()]
+        else:
+            valid_words = [w for w in words if not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
+            if not valid_words:
+                all_dict_words = word_validator.csw_by_len.get(length, []) if dictionary == 'CSW' else word_validator.nwl_by_len.get(length, [])
+                valid_words = [w for w in all_dict_words if not w.upper().endswith("ING") and not w.upper().endswith("INGS")]
         
         # PREVENT REPEATS: Filter out words in history or currently active in the room
         final_exclude = set()

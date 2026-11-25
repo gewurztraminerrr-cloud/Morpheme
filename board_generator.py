@@ -522,6 +522,15 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                 except Exception as _diff_chk_err:
                     print(f"[BoardGen] Warning checking cached difficulty in any_cached: {_diff_chk_err}")
 
+            dims_p = str(dimensions).lower().split('x')
+            d_cnt = int(dims_p[0]) if len(dims_p) == 3 else 1
+            if difficulty and _normalize_difficulty_base(difficulty) in ["Medium", "Hard"]:
+                if BoardGenerator()._has_ing_sequence(board, d_cnt):
+                    print(f"[BoardGen] Discarding any_cached board for {dimensions}: has forbidden 'ING' sequence on {difficulty}")
+                    cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
+                    conn.commit()
+                    continue
+
             final_bonus_word = data.get("final_bonus_word", data.get("bonus_word", ""))
             
             # Consume ONLY the board we are actually serving (mismatched boards stay in the pool)
@@ -698,11 +707,22 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                             return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
                     except Exception as _diff_chk_err:
                         print(f"[BoardGen] Warning checking cached difficulty: {_diff_chk_err}")
+
+                dims_p = str(dimensions).lower().split('x')
+                d_cnt = int(dims_p[0]) if len(dims_p) == 3 else 1
+                if difficulty and _normalize_difficulty_base(difficulty) in ["Medium", "Hard"]:
+                    if BoardGenerator()._has_ing_sequence(board, d_cnt):
+                        print(f"[BoardGen] Discarding compatible cached board for {dimensions}: has forbidden 'ING' sequence on {difficulty}")
+                        try: conn.close()
+                        except: pass
+                        conn = None
+                        return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
+
                 final_bonus_word = data.get("final_bonus_word", "")
                 if bonus_word_len:
                     target_bw_int = int(bonus_word_len)
-                    if not final_bonus_word or len(final_bonus_word) != target_bw_int or final_bonus_word not in all_words or final_bonus_word.upper().endswith(('ING', 'INGS')):
-                        exact_cands = [w for w in all_words if len(w) == target_bw_int and not w.upper().endswith(('ING', 'INGS'))]
+                    if not final_bonus_word or len(final_bonus_word) != target_bw_int or final_bonus_word not in all_words or final_bonus_word.upper().endswith(('ING', 'INGS')) or 'ING' in final_bonus_word.upper():
+                        exact_cands = [w for w in all_words if len(w) == target_bw_int and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                         if exact_cands:
                             final_bonus_word = random.choice(exact_cands).upper()
                         else:
@@ -785,6 +805,14 @@ def pop_cached_board(param_key_str):
                 print(f"[BoardGen] Discarding cached board for {param_key_str[:60]}: only {matching_min_words} words of length {pk_min} (needed >= 3)")
                 continue
 
+            pk_diff = pk_data.get('difficulty', '')
+            if pk_diff and _normalize_difficulty_base(pk_diff) in ["Medium", "Hard"]:
+                is_3d_pk = isinstance(board, list) and len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list)
+                depth_pk = 6 if is_3d_pk else 1
+                if BoardGenerator()._has_ing_sequence(board, depth_pk):
+                    print(f"[BoardGen] Discarding cached board for {param_key_str[:60]}: has forbidden 'ING' sequence on {pk_diff}")
+                    continue
+
             bonus_cell = tuple(data["bonus_cell"]) if data.get("bonus_cell") else None
             board_format_ret = data.get("board_format_ret", "Normal")
             bonus_cell = _sanitize_special_tiles_for_format(board, board_format_ret, bonus_cell)
@@ -796,7 +824,7 @@ def pop_cached_board(param_key_str):
             ratio = data["ratio"]
             final_bonus_word = data["final_bonus_word"]
             if pk_bw_len > 0 and final_bonus_word and len(final_bonus_word) != pk_bw_len:
-                exact_cands = [w for w in all_words if len(w) == pk_bw_len and not w.upper().endswith(('ING', 'INGS'))]
+                exact_cands = [w for w in all_words if len(w) == pk_bw_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                 if exact_cands:
                     final_bonus_word = random.choice(exact_cands).upper()
             
@@ -879,7 +907,7 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     print(f"[BoardGen] [Refill] Max attempts reached ({attempts}) for {param_key_str}. Stopping refill worker.")
                     break
                 bw_len = bonus_word_len if (bonus_word_len and bonus_word_len > 0) else random.choice([6, 7, 8, 9, 10])
-                potential_dict_words = [w for w in dictionary_set if len(w) == bw_len and not w.upper().endswith(('ING', 'INGS'))]
+                potential_dict_words = [w for w in dictionary_set if len(w) == bw_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                 bonus_word = random.choice(potential_dict_words) if potential_dict_words else None
 
                 # Generate a single board using backend logic
@@ -916,16 +944,8 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     attempts = 0
                 
                 if normalized_diff in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
-                    protected_positions = None
-                    if final_bonus_word:
-                        fb_upper = final_bonus_word.upper()
-                        if fb_upper in all_words_dict:
-                            protected_positions = all_words_dict[fb_upper]
-
-                    if generator_instance._has_ing_sequence(board, depth, protected_positions=protected_positions):
-                        generator_instance._guarantee_no_ing(board, depth, protected_positions=protected_positions)
-                        if generator_instance._has_ing_sequence(board, depth):
-                            generator_instance._guarantee_no_ing(board, depth, protected_positions=None)
+                    if generator_instance._has_ing_sequence(board, depth):
+                        generator_instance._guarantee_no_ing(board, depth, protected_positions=None)
                         display_min = min_word_length
                         final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
                         all_words_dict = generator_instance._solve_board(
@@ -1676,7 +1696,7 @@ class BoardGenerator:
 
         # If it has "ING" sequence, break it up by replacing one of the tiles (preferably unprotected, but force-replace if needed)
         for _ in range(50):
-            if not self._has_ing_sequence(board, depth, protected_positions=protected_positions):
+            if not self._has_ing_sequence(board, depth):
                 break
                 
             # Scan and find the first ING path
@@ -1684,8 +1704,6 @@ class BoardGenerator:
             
             def find_path(idx, r, c, f, current_path):
                 if idx == 3:
-                    if protected and all(p in protected for p in current_path):
-                        return None
                     return current_path
                 target = "ING"[idx]
                 if is_3d:
@@ -1963,8 +1981,6 @@ class BoardGenerator:
 
         def dfs(r, c, f, idx, visited):
             if idx == 3:
-                if protected and all(p in protected for p in visited):
-                    return False
                 return True
             if is_3d:
                 neighbors = self._get_cube_neighbors(f, r, c)
@@ -2097,15 +2113,15 @@ class BoardGenerator:
         # 1. Check if requested bonus_word is already in all_words_dict with exact length and not excluded
         if isinstance(bonus_word, str) and len(bonus_word.strip()) == req_len:
             bw_up = bonus_word.strip().upper()
-            if bw_up in all_words_dict and not bw_up.endswith(("ING", "INGS")) and bw_up not in exclude_set:
+            if bw_up in all_words_dict and not bw_up.endswith(("ING", "INGS")) and "ING" not in bw_up and bw_up not in exclude_set:
                 return bw_up, all_words_dict
 
         # 2. Check if any word in all_words_dict has the exact requested length (excluding ING/INGS and exclude_set)
-        exact_clean = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS")) and w.upper() not in exclude_set]
+        exact_clean = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS")) and "ING" not in w.upper() and w.upper() not in exclude_set]
         if exact_clean:
             return random.choice(exact_clean).upper(), all_words_dict
 
-        exact_any = [w for w in all_words_dict if len(w) == req_len and w.upper() not in exclude_set]
+        exact_any = [w for w in all_words_dict if len(w) == req_len and "ING" not in w.upper() and w.upper() not in exclude_set]
         if exact_any:
             return random.choice(exact_any).upper(), all_words_dict
 
@@ -2117,9 +2133,9 @@ class BoardGenerator:
         else:
             pool_set = word_validator.nwl_words
 
-        cands = [w for w in pool_set if len(w) == req_len and not w.endswith(("ING", "INGS")) and "Q" not in w and w.upper() not in exclude_set]
+        cands = [w for w in pool_set if len(w) == req_len and not w.endswith(("ING", "INGS")) and "ING" not in w and "Q" not in w and w.upper() not in exclude_set]
         if not cands:
-            cands = [w for w in pool_set if len(w) == req_len and not w.endswith(("ING", "INGS")) and "Q" not in w]
+            cands = [w for w in pool_set if len(w) == req_len and not w.endswith(("ING", "INGS")) and "ING" not in w and "Q" not in w]
 
         if cands:
             random.shuffle(cands)
@@ -2127,25 +2143,25 @@ class BoardGenerator:
                 emb = self._embed_bonus_word_cube(board, cand_word, is_checkerboard=is_checkerboard) if depth > 1 else self._embed_bonus_word(board, cand_word, is_checkerboard=is_checkerboard)
                 if emb:
                     norm_d = _normalize_difficulty_base(difficulty)
-                    if norm_d in ["Medium", "Hard"] and self._has_ing_sequence(board, depth, protected_positions=emb):
-                        self._guarantee_no_ing(board, depth, protected_positions=emb)
+                    if norm_d in ["Medium", "Hard"] and self._has_ing_sequence(board, depth):
+                        self._guarantee_no_ing(board, depth, protected_positions=None)
                     all_words_dict = self._solve_board(
                         board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=use_aw_flag
                     )
                     if cand_word in all_words_dict:
                         return cand_word, all_words_dict
-                    exact_after = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS")) and w.upper() not in exclude_set]
+                    exact_after = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS")) and "ING" not in w.upper() and w.upper() not in exclude_set]
                     if exact_after:
                         return random.choice(exact_after).upper(), all_words_dict
 
         # Fallback: exact matches first
-        exact_sub = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS")) and w.upper() not in exclude_set]
+        exact_sub = [w for w in all_words_dict if len(w) == req_len and not w.upper().endswith(("ING", "INGS")) and "ING" not in w.upper() and w.upper() not in exclude_set]
         if exact_sub:
             return random.choice(exact_sub).upper(), all_words_dict
 
-        suitable = [w for w in all_words_dict if len(w) >= int(min_word_length or 3) and not w.upper().endswith(("ING", "INGS")) and w.upper() not in exclude_set]
+        suitable = [w for w in all_words_dict if len(w) >= int(min_word_length or 3) and not w.upper().endswith(("ING", "INGS")) and "ING" not in w.upper() and w.upper() not in exclude_set]
         if not suitable:
-            suitable = [w for w in all_words_dict if w.upper() not in exclude_set]
+            suitable = [w for w in all_words_dict if "ING" not in w.upper() and w.upper() not in exclude_set]
         if not suitable:
             suitable = list(all_words_dict.keys())
         if suitable:
@@ -2170,7 +2186,7 @@ class BoardGenerator:
                 target_len = max(int(min_word_length or 3), 4)
                 csw_cands = [
                     w for w in (word_validator.csw_words - word_validator.nwl_words)
-                    if target_len <= len(w) <= target_len + 1 and not w.endswith(("ING", "INGS")) and "Q" not in w
+                    if target_len <= len(w) <= target_len + 1 and not w.endswith(("ING", "INGS")) and "ING" not in w and "Q" not in w
                 ]
                 if csw_cands:
                     chosen_csw = random.choice(csw_cands).upper()
@@ -2184,7 +2200,7 @@ class BoardGenerator:
                 target_len = max(int(min_word_length or 3), 4)
                 aw_cands = [
                     w for w in word_validator.added_words
-                    if target_len <= len(w) <= target_len + 1 and not w.endswith(("ING", "INGS")) and "Q" not in w
+                    if target_len <= len(w) <= target_len + 1 and not w.endswith(("ING", "INGS")) and "ING" not in w and "Q" not in w
                 ]
                 if aw_cands:
                     chosen_aw = random.choice(aw_cands).upper()
@@ -2194,8 +2210,8 @@ class BoardGenerator:
 
         if need_re_solve:
             norm_d = _normalize_difficulty_base(difficulty)
-            if norm_d in ["Medium", "Hard"] and self._has_ing_sequence(board, depth, protected_positions=protected_positions):
-                self._guarantee_no_ing(board, depth, protected_positions=protected_positions)
+            if norm_d in ["Medium", "Hard"] and self._has_ing_sequence(board, depth):
+                self._guarantee_no_ing(board, depth, protected_positions=None)
             all_words_dict = self._solve_board(
                 board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=use_aw_flag
             )
@@ -2241,8 +2257,16 @@ class BoardGenerator:
         # Try to pop a pre-generated board from the cache
         cached_res = pop_cached_board(param_key_str)
         if cached_res:
-            refill_board_cache_bg(self, param_key_str, target_count=3)
-            return cached_res
+            c_b = cached_res[0]
+            is_3d_c = isinstance(c_b, list) and len(c_b) > 0 and isinstance(c_b[0], list) and len(c_b[0]) > 0 and isinstance(c_b[0][0], list)
+            depth_c = 6 if is_3d_c else 1
+            norm_d_c = _normalize_difficulty_base(difficulty)
+            if norm_d_c in ["Medium", "Hard"] and self._has_ing_sequence(c_b, depth_c):
+                print(f"[BoardGen] Discarding popped cached board for {param_key_str[:60]}: has forbidden 'ING' sequence on {norm_d_c} board.")
+                cached_res = None
+            else:
+                refill_board_cache_bg(self, param_key_str, target_count=3)
+                return cached_res
 
         # Fallback to synchronous generation
         res = self._generate_board_internal(
@@ -2326,7 +2350,7 @@ class BoardGenerator:
                 target_ratio_m = 0.20 if m_letter in UNCOMMON_MANIA_LETTERS else 0.33
                 target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
                 if m_cnt < target_m_cnt:
-                    self._apply_mania_to_board(board, m_letter, set(), is_checkerboard=False)
+                    self._apply_mania_to_board(board, m_letter, set(), is_checkerboard=False, difficulty=difficulty, depth=depth)
                     needs_final_resolve = True
 
         if needs_final_resolve:
@@ -2434,13 +2458,33 @@ class BoardGenerator:
                     target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
                     if m_cnt < target_m_cnt:
                         print(f"[BoardGen] Final Mania audit: board had only {m_cnt} '{m_letter}' (needed {target_m_cnt}). Re-applying abundance...")
-                        self._apply_mania_to_board(board, m_letter, set(), is_checkerboard=False)
+                        self._apply_mania_to_board(board, m_letter, set(), is_checkerboard=False, difficulty=difficulty, depth=depth)
                         all_words_dict = self._solve_board(
                             board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
                         )
                         all_words = sorted(list(all_words_dict.keys()))
         except Exception as _post_audit_err:
             print(f"[BoardGen] Warning in post-audit count/dict enforcement: {_post_audit_err}")
+
+        # ABSOLUTE FINAL GATEKEEPER: Ensure no 'ING' sequence on Medium or Hard difficulty
+        try:
+            r_cnt_f = len(board[0]) if is_3d else len(board)
+            c_cnt_f = len(board[0][0]) if is_3d else len(board[0])
+            cur_achieved_diff = self.get_difficulty_label(ratio, r_cnt_f, c_cnt_f, dictionary, depth, min_word_length=min_word_length)
+            cur_target_diff = _normalize_difficulty_base(difficulty)
+            if cur_target_diff in ["Medium", "Hard"] or cur_achieved_diff in ["Medium", "Hard"]:
+                if self._has_ing_sequence(board, depth):
+                    print(f"[BoardGen] 🛡️ FINAL GATEKEEPER: Breaking unexpected 'ING' sequence on {cur_achieved_diff} (target {cur_target_diff}) board before return.")
+                    self._guarantee_no_ing(board, depth, protected_positions=None)
+                    display_min = min_word_length
+                    final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
+                    all_words_dict = self._solve_board(
+                        board, dictionary, (0, 99999), display_min, max_depth=final_depth, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+                    )
+                    all_words = sorted(list(all_words_dict.keys()))
+                    ratio = self.get_uniqueness_ratio(board, all_words, r_cnt_f, c_cnt_f, dictionary, depth)
+        except Exception as _gatekeeper_err:
+            print(f"[BoardGen] Warning in final ING gatekeeper: {_gatekeeper_err}")
 
         # Trigger background refill to populate the cache up to 3
         refill_board_cache_bg(self, param_key_str, target_count=10)
@@ -2746,7 +2790,7 @@ class BoardGenerator:
 
             if "mania" in board_format.lower():
                 mania_letter = board_format.split()[0].upper()
-                self._apply_mania_to_board(board, mania_letter, all_excluded, is_checkerboard=is_checkerboard)
+                self._apply_mania_to_board(board, mania_letter, all_excluded, is_checkerboard=is_checkerboard, difficulty=difficulty, depth=depth)
                 # Add mania cells to excluded to protect them from optimization
                 for f in range(depth):
                     for r in range(rows):
@@ -3516,7 +3560,7 @@ class BoardGenerator:
                 
             # 3. Apply Mania abundance and register cells as excluded to protect them
             if mania_letter:
-                self._apply_mania_to_board(board, mania_letter, all_excluded, is_checkerboard=is_checkerboard)
+                self._apply_mania_to_board(board, mania_letter, all_excluded, is_checkerboard=is_checkerboard, difficulty=difficulty, depth=depth)
                 for f in range(depth):
                     for r in range(rows):
                         for c in range(cols):
@@ -3984,6 +4028,14 @@ class BoardGenerator:
                 if _is_bonus_letter_format(board_format) and actual_bonus and actual_bonus in final_solve:
                     bonus_cell = final_solve[actual_bonus][0]
                 bonus_cell = _sanitize_special_tiles_for_format(final_board, board_format, bonus_cell)
+
+                if _normalize_difficulty_base(difficulty) in ["Medium", "Hard"] and self._has_ing_sequence(final_board, depth):
+                    self._guarantee_no_ing(final_board, depth, protected_positions=None)
+                    final_solve = self._solve_board(
+                        final_board, dictionary, (0, 99999), min_word_length, 
+                        max_depth=final_depth, store_paths=True, timeout=10.0, use_added_words=use_added_words
+                    )
+                    ratio = self.get_uniqueness_ratio(final_board, list(final_solve.keys()), rows, cols, dictionary, depth)
                 
                 if not mark_board_hash_used(board_hash):
                     print(f"[BoardGen] Race condition: Procedure IO-Base board hash {board_hash} was already used. Retrying...")
@@ -5534,7 +5586,7 @@ class BoardGenerator:
 
         return board
 
-    def _apply_mania_to_board(self, board, mania_letter, exclude_cells, is_checkerboard=False):
+    def _apply_mania_to_board(self, board, mania_letter, exclude_cells, is_checkerboard=False, difficulty="Medium", depth=1):
         """
         Fill board with the mania letter.
         For rare letters (Q, Z, J, X, K), let a minimum of 1/5 (20%) of all letters on the board be the abundant letter.
@@ -5545,9 +5597,10 @@ class BoardGenerator:
             return
 
         is_3d = len(board) > 0 and isinstance(board[0], list) and isinstance(board[0][0], list)
-        depth_val = len(board) if is_3d else 1
+        depth_val = len(board) if is_3d else depth
         rows, cols = (len(board[0]), len(board[0][0])) if is_3d else (len(board), len(board[0]))
         total_cells = rows * cols * depth_val
+        norm_diff = _normalize_difficulty_base(difficulty)
 
         # Determine mania type
         is_mania_vowel = self._is_vowel(mania_letter)
@@ -5623,12 +5676,21 @@ class BoardGenerator:
             if filled >= needed:
                 break
             if is_3d:
-                f, r, c = pos
-                board[f][r][c] = mania_letter
+                f_p, r_p, c_p = pos
             else:
-                r, c = pos
-                board[r][c] = mania_letter
+                f_p, r_p, c_p = 0, pos[0], pos[1]
+
+            if norm_diff in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, mania_letter, r_p, c_p, f_p, depth=depth_val):
+                continue
+
+            if is_3d:
+                board[f_p][r_p][c_p] = mania_letter
+            else:
+                board[r_p][c_p] = mania_letter
             filled += 1
+
+        if norm_diff in ["Medium", "Hard"] and self._has_ing_sequence(board, depth_val):
+            self._guarantee_no_ing(board, depth_val, protected_positions=None)
 
     def _embed_bonus_word(self, board, bonus_word, is_checkerboard=False):
         """Embed bonus word using backtracking to find a valid path.
