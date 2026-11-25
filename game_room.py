@@ -5067,35 +5067,27 @@ class RoomManager:
                                 if s_dict == 'AW': s_dict = 'NWL'
                             s_bw_len = int(s_sp.get('bonus_word_length', 8) or 8)
                             s_diff = SpinnerSet.strip_difficulty_pct(s_sp.get('difficulty', 'Medium'))
+                            s_wc = s_sp.get('word_count_range', '100-200')
                             
-                            pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw, bonus_word_len=s_bw_len, difficulty=s_diff)
+                            # Fast non-blocking cache cascade for instant solo room creation (<5ms)
+                            pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw, bonus_word_len=s_bw_len, difficulty=s_diff, word_count_range=s_wc)
                             if not pre_pop:
-                                try:
-                                    s_wc = s_sp.get('word_count_range', '100-200')
-                                    s_target_bw = self._get_bonus_word(
-                                        length=s_bw_len,
-                                        dictionary=s_dict,
-                                        alternating=('checkerboard' in str(s_fmt).lower()),
-                                        difficulty=s_diff
-                                    )
-                                    e_res = self.board_generator.generate_board(
-                                        dimensions=room.board_dimensions,
-                                        bonus_word=s_target_bw,
-                                        word_count_range=s_wc,
-                                        board_format=s_fmt,
-                                        dictionary=s_dict,
-                                        min_word_length=s_min_len,
-                                        difficulty=s_diff,
-                                        is_emergency=False,
-                                        timeout=25.0,
-                                        use_added_words=s_use_aw
-                                    )
-                                    if e_res:
-                                        g_b, g_w, g_c, g_f, g_p, g_r, g_bw = e_res[0], e_res[1], e_res[2], e_res[3], e_res[4], e_res[5], e_res[6]
-                                        g_params = e_res[8] if len(e_res) > 8 else s_sp
-                                        pre_pop = (g_b, g_w, g_c, g_f, g_p, g_r, g_bw, g_params)
-                                except Exception as e_sgen:
-                                    print(f"[RoomManager] Solo emergency generate error: {e_sgen}")
+                                pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw, bonus_word_len=s_bw_len, difficulty=s_diff)
+                            if not pre_pop:
+                                pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw)
+                            if not pre_pop:
+                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=s_min_len, target_format=s_fmt, dictionary=s_dict, use_added_words=s_use_aw, word_count_range=s_wc)
+                            if not pre_pop:
+                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=s_min_len, target_format=s_fmt, dictionary=s_dict, use_added_words=s_use_aw)
+                            if not pre_pop:
+                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=s_min_len)
+                            if not pre_pop:
+                                pre_pop = pop_any_cached_board(room.board_dimensions)
+                            if not pre_pop:
+                                pre_pop = get_emergency_fallback_board(
+                                    room.board_dimensions, s_fmt, room.time_limit,
+                                    dictionary=s_dict, use_added_words=s_use_aw, target_range=s_wc, min_word_length=s_min_len, difficulty=s_diff
+                                )
                         else:
                             sp_kick = SpinnerSet.generate_params(room.board_dimensions, is_24h=(room.time_limit >= 7200))
                             k_dict = sp_kick.get('dictionary', 'NWL')
@@ -6402,13 +6394,19 @@ class RoomManager:
                     print(f"[RoomManager] Aborting start_round board application for {room_id}: Room is ALREADY active with board!")
                     room.starting_round = False
                     return True
+            candidate_words = list(room.all_words or all_words or [])
+            candidate_paths = room.all_words_paths if room.all_words_paths is not None else (all_words_dict or {})
             board, s_words, s_paths, bonus_cell, bonus_word, _ = self.sanitize_board_for_room_difficulty(
-                room, board, list(room.all_words), room.all_words_paths, bonus_cell, bonus_word,
+                room, board, candidate_words, candidate_paths, bonus_cell, bonus_word,
                 room.current_board_format, room.current_difficulty, dictionary=room.current_dictionary, min_len=room.current_min_length
             )
             if s_words:
                 room.all_words = set(s_words)
                 room.all_words_paths = s_paths
+                room.total_words_count = len(room.all_words)
+            else:
+                room.all_words = set(candidate_words)
+                room.all_words_paths = candidate_paths
                 room.total_words_count = len(room.all_words)
             room.board = board
             room.bonus_cell = bonus_cell

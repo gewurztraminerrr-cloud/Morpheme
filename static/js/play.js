@@ -2308,6 +2308,12 @@ async function _doUpdateGameState(incomingState = null) {
             stopPolling();
             window.currentRoomId = null;
             localStorage.removeItem('last_joined_room');
+            window._isEnteringRoom = false;
+            window._isCreatingRoom = false;
+            window._isStartingSoloMatch = false;
+            if (typeof window.hideLoadingOverlay === 'function') {
+                window.hideLoadingOverlay(true);
+            }
             if (window.showAlertModal) {
                 window.showAlertModal('Configuration Notice', state.board_gen_error || 'Finding a board that meets these specific criteria takes too long and may not be achievable.<br><br>We recommend adjusting your parameters—such as choosing a slightly lower word count range or a shorter minimum word length—to start your match right away.');
             }
@@ -3117,7 +3123,7 @@ async function _doUpdateGameState(incomingState = null) {
             }
             try {
                 renderBoard(boardToRender, grayed, is3D, state);
-                if (boardHasLetters || state.state === 'intermission') {
+                if (boardHasLetters || state.state === 'intermission' || state.state === 'loading' || state.state === 'active') {
                     didRenderRoomView = true;
                 }
             } catch (bErr) {
@@ -8740,7 +8746,7 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         }
     }
 
-    if ((hasLetters || (state && state.state === 'intermission')) && window.hideLoadingOverlay) {
+    if ((hasLetters || (state && (state.state === 'intermission' || state.state === 'loading' || state.state === 'active'))) && window.hideLoadingOverlay) {
         window._isEnteringRoom = false;
         window._isCreatingRoom = false;
         window._isStartingSoloMatch = false;

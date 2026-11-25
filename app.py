@@ -8543,10 +8543,11 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
             room.check_and_update_state()
         room_manager.check_6x8_rescue(room)
 
-        # Safeguard: if room is active but has no board/letters, force instant board immediately!
+        # Safeguard: if room is active but has no board/letters, or stuck in loading, force instant board immediately!
         has_letters = bool(room.board and len(room.board) > 0 and any(any(c and str(c).strip() for c in row) for row in room.board))
-        if room.state == 'active' and not has_letters and not getattr(room, 'starting_round', False):
-            print(f"[get_room_state] Room {room_id} is active but has empty board. Force-loading instant board now...")
+        is_stuck_loading = (room.state == 'loading') and (time.time() - getattr(room, '_round_start_init_time', 0) > 3.0)
+        if (room.state == 'active' and not has_letters and not getattr(room, 'starting_round', False)) or is_stuck_loading:
+            print(f"[get_room_state] Room {room_id} is {room.state} but has empty board / stuck. Force-loading instant board now...")
             room_manager.force_instant_board(room_id)
 
         # Safeguard: if room is intermission and time is up, trigger next round or break stall immediately

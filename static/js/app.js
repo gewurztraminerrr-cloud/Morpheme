@@ -4393,9 +4393,9 @@ window.showLoadingOverlay = function(message = 'Loading...', autoHideMs = null) 
     const isEntering = !!(window._isEnteringRoom || window._isCreatingRoom || window._isStartingSoloMatch);
     const timeoutDuration = (typeof autoHideMs === 'number' && autoHideMs > 0) ? autoHideMs : (isEntering ? 120000 : 45000);
     window._loadingOverlayTimeout = setTimeout(() => {
-        if (window._isEnteringRoom || window._isCreatingRoom || window._isStartingSoloMatch) {
-            return; // Never auto-hide while room loading is in progress
-        }
+        window._isEnteringRoom = false;
+        window._isCreatingRoom = false;
+        window._isStartingSoloMatch = false;
         if (window.hideLoadingOverlay) window.hideLoadingOverlay(true);
     }, timeoutDuration);
 };
