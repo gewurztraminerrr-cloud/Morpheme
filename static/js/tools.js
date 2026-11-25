@@ -3934,7 +3934,7 @@ async function renderProfile(user) {
             const greatestPE = user.max_pe || 0;
             const peFormatted = greatestPE ? (greatestPE / 100).toFixed(2) + 'x' : '0.00x';
             const peHeader = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
+                <div class="pe-summary-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); text-transform: uppercase; letter-spacing: 0.5px;">Exceptional Performances</span>
                     <span style="font-size: 0.9rem; font-weight: 800; color: #3b82f6;">Greatest PE: <span style="color: var(--text-primary);">${peFormatted}</span></span>
                 </div>
@@ -3949,7 +3949,7 @@ async function renderProfile(user) {
         } else {
             const displayWords = user.best_words.slice(0, 200);
             const bwHeader = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
+                <div class="bw-summary-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); text-transform: uppercase; letter-spacing: 0.5px;">Best Words (Relative Good Finds)</span>
                     <span style="font-size: 0.85rem; font-weight: 700; color: #ffd700;">Latest ${displayWords.length} Finds</span>
                 </div>
@@ -5365,9 +5365,7 @@ function renderRatingsGrid(configRatings, user = null) {
                 const box = document.createElement('div');
                 box.className = 'rating-box clickable';
                 box.title = "Click to view achievements for this room type";
-                box.style.cssText = 'cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.1); transition: background 0.2s, transform 0.2s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; outline: none;';
-                box.onmouseenter = () => { box.style.background = 'rgba(var(--text-primary-rgb), 0.08)'; };
-                box.onmouseleave = () => { box.style.background = 'rgba(var(--text-primary-rgb), 0.04)'; };
+                box.style.cssText = 'cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; transition: background 0.2s, transform 0.2s; touch-action: manipulation; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; outline: none;';
                 box.innerHTML = `
                     <div class="rating-box-swatch" style="background: ${rColor};"></div>
                     <div class="rating-box-info" style="flex: 1;">
