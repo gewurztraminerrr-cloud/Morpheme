@@ -644,8 +644,9 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
 
 .player-username {
     font-weight: 600;
-    flex: 1;
-    min-width: 80px;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -11949,7 +11950,8 @@ body.theme-white .m-scroller-thumb.dragging {
     .player-username {
         min-width: 0 !important;
         text-align: left !important;
-        flex: 1 !important;
+        flex: 0 0 auto !important;
+        max-width: 110px !important;
     }
 
     .player-rating-val {

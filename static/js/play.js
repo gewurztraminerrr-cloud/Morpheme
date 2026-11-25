@@ -5153,6 +5153,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                     <span class="player-rank${rankClass}"${rankStyle ? ` style="${rankStyle}"` : ''}>#${rank}</span>
                     <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${p.username}'); } event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
                     <span class="player-username" style="text-align: left !important;"${userTitle ? ` title="${userTitle}"` : ''}>${p.username}</span>
+                    <div style="flex:1;"></div>
                     <span class="player-rating-val">${ratingDisplay}</span>
                 </div>
                 <div class="player-row-bottom">
