@@ -5171,9 +5171,9 @@ function renderPlayers(players, currentUser = null, state = null) {
         if (html === lastPlayersHtml) return;
 
         // Smooth in-place class toggle: if player cards already exist with the same usernames,
-        // toggle .selected-player and .is-intermission in place to preserve animations without destroying the DOM.
+        // toggle .selected-player in place ONLY during intermission when scores and ranks never change.
         const existingItems = listEl.querySelectorAll('.player-item');
-        if (existingItems.length === players.length && lastPlayersHtml !== null) {
+        if (isIntermission && existingItems.length === players.length && lastPlayersHtml !== null) {
             let sameStructure = true;
             for (let i = 0; i < players.length; i++) {
                 if (existingItems[i].dataset.username !== players[i].username) {
@@ -5184,20 +5184,14 @@ function renderPlayers(players, currentUser = null, state = null) {
             if (sameStructure) {
                 existingItems.forEach(item => {
                     const uname = item.dataset.username;
-                    item.classList.toggle('selected-player', isIntermission && uname === selectedPlayerUsername);
-                    item.classList.toggle('is-intermission', isIntermission);
-                    if (isIntermission) {
-                        item.title = 'Click to view notepad';
-                        const uEl = item.querySelector('.player-username');
-                        if (uEl) {
-                            uEl.title = (uname === selectedPlayerUsername)
-                                ? 'Click to revert to your words'
-                                : 'Click to highlight found words in All Words';
-                        }
-                    } else {
-                        item.removeAttribute('title');
-                        const uEl = item.querySelector('.player-username');
-                        if (uEl) uEl.removeAttribute('title');
+                    item.classList.toggle('selected-player', uname === selectedPlayerUsername);
+                    item.classList.toggle('is-intermission', true);
+                    item.title = 'Click to view notepad';
+                    const uEl = item.querySelector('.player-username');
+                    if (uEl) {
+                        uEl.title = (uname === selectedPlayerUsername)
+                            ? 'Click to revert to your words'
+                            : 'Click to highlight found words in All Words';
                     }
                 });
                 lastPlayersHtml = html;
@@ -12044,7 +12038,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                                         is_bonus: isBonusWord,
                                         time: Date.now() / 1000
                                     });
+                                    myPlayer.score = (myPlayer.score || 0) + localPts;
                                 }
+                                myPlayer.words_count = myPlayer.submitted_words.length;
                             }
 
                             if (typeof updateGameState === 'function') {
@@ -12311,6 +12307,7 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             time: Date.now() / 1000
                         });
                     }
+                    me.words_count = me.submitted_words.length;
                     renderPlayers(currentState.players, currentUser, currentState);
                 }
 
