@@ -1256,31 +1256,7 @@ class BoardGenerator:
         is_6x8 = (rows == 6 and cols == 8) or (rows == 8 and cols == 6)
         is_4x6 = (rows == 4 and cols == 6) or (rows == 6 and cols == 4)
         is_cube = depth > 1
-        if rows * cols <= 16 and int(min_word_length) >= 5:
-            ranges = {
-                "Easy": (0.0, 0.06),
-                "Medium": (0.03, 0.22),
-                "Hard": (0.18, 1.0)
-            }
-        elif rows * cols <= 24 and int(min_word_length) >= 6:
-            ranges = {
-                "Easy": (0.0, 0.08),
-                "Medium": (0.05, 0.25),
-                "Hard": (0.22, 1.0)
-            }
-        elif rows * cols <= 35 and int(min_word_length) >= 7:
-            ranges = {
-                "Easy": (0.0, 0.12),
-                "Medium": (0.08, 0.30),
-                "Hard": (0.26, 1.0)
-            }
-        elif rows * cols <= 24 and int(min_word_length) >= 4:
-            ranges = {
-                "Easy": (0.0, 0.15),
-                "Medium": (0.16, 0.29),
-                "Hard": (0.30, 1.0)
-            }
-        elif rows == 4 and cols == 4 and depth == 1:
+        if (rows == 4 and cols == 4 and depth == 1) or (rows * cols <= 16 and depth == 1):
             ranges = {
                 "Easy": (0.0, 0.15),
                 "Medium": (0.16, 0.29),
@@ -1312,9 +1288,9 @@ class BoardGenerator:
             }
         else:
             ranges = {
-                "Easy": (0.0, 0.19),
-                "Medium": (0.20, 0.35),
-                "Hard": (0.36, 1.0)
+                "Easy": (0.0, 0.15),
+                "Medium": (0.16, 0.29),
+                "Hard": (0.30, 1.0)
             }
             
         base_range = ranges.get(difficulty, (0.0, 1.0))
@@ -3863,10 +3839,13 @@ class BoardGenerator:
 
                 # Fallback metadata
                 ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
-                min_req_ratio, _ = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=display_min)
+                min_req_ratio, max_req_ratio = self._get_uniqueness_range(difficulty, rows, cols, dictionary, depth, min_word_length=display_min)
                 if difficulty in ["Medium", "Hard"] and ratio < min_req_ratio:
                     print(f"[BoardGen] Boosting uniqueness for {difficulty} board: current ratio {ratio:.2%}, min required {min_req_ratio:.2%}")
                     board, final_solve, ratio = self._boost_uniqueness(board, depth, dictionary, display_min, min_req_ratio, rows, cols)
+                elif difficulty == "Easy" and ratio > max_req_ratio:
+                    print(f"[BoardGen] Sanitizing uniqueness for Easy board: current ratio {ratio:.2%}, max allowed {max_req_ratio:.2%}")
+                    board, final_solve, ratio = self._sanitize_uniqueness(board, depth, dictionary, display_min, max_req_ratio, rows, cols)
                 
                 final_solve = self._ensure_dictionary_distinct_words(
                     board, final_solve, dictionary, use_aw_flag, display_min, final_depth, depth, is_checkerboard, protected_positions=all_excluded, bonus_cell=None, difficulty=difficulty
@@ -4280,7 +4259,8 @@ class BoardGenerator:
                 best_ratio = ratio
                 best_words_dict = all_words_dict
                 
-                test_letters = ['B', 'F', 'V', 'W', 'Y', 'M', 'P', 'D', 'G']
+                test_letters = ['E', 'A', 'R', 'I', 'O', 'T', 'N', 'S', 'L', 'C', 'D', 'P', 'M', 'H', 'U', 'B', 'G']
+                min_acceptable_words = int(len(all_words_dict) * 0.70)
                 for char in test_letters:
                     if char == orig_char:
                         continue
@@ -4294,7 +4274,7 @@ class BoardGenerator:
                     )
                     temp_ratio = self.get_uniqueness_ratio(board, list(temp_dict.keys()), rows, cols, dictionary, depth)
                     
-                    if temp_ratio < best_ratio:
+                    if temp_ratio < best_ratio and len(temp_dict) >= min_acceptable_words:
                         best_ratio = temp_ratio
                         best_char = char
                         best_words_dict = temp_dict
@@ -4427,20 +4407,26 @@ class BoardGenerator:
                             print(f"[BoardGen] ⚠️ Failed to load unique set for {clean_dict_name}. Using fallback words.")
                             dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                 else:
-                    # Load full dictionary for Easy (e.g. NWL.txt)
+                    # Load common/non-unique dictionary for Easy (e.g. NWL.txt minus uniqueNWL)
                     base_dir = os.path.dirname(os.path.abspath(__file__))
                     dict_file = 'added_words' if clean_dict_name == 'AW' else clean_dict_name
                     path = os.path.join(base_dir, 'dictionaries', f"{dict_file}.txt")
                     try:
                         with open(path, "r") as f:
-                            dictionary = [line.strip().upper() for line in f if line.strip()]
-                        print(f"[BoardGen] Using FULL dictionary ({clean_dict_name}.txt) for Easy Word Soup.")
+                            raw_words = [line.strip().upper() for line in f if line.strip()]
+                        loaded_unique = self._get_difficulty_set(clean_dict_name)
+                        if loaded_unique:
+                            common_words = [w for w in raw_words if w not in loaded_unique]
+                            dictionary = common_words if common_words else raw_words
+                        else:
+                            dictionary = raw_words
+                        print(f"[BoardGen] Using {len(dictionary)} COMMON words for Easy Word Soup.")
                     except Exception as e:
                         print(f"[BoardGen] Error loading full dictionary {clean_dict_name}: {e}. Using fallback words.")
                         dictionary = ["EXAMPLE", "BOARDS", "PUZZLE", "BOGGLE", "WONDER"]
                 
-                # Append custom added words if enabled
-                if use_added_words:
+                # Append custom added words if enabled (only for Medium / Hard so Easy isn't corrupted with hard words)
+                if use_added_words and difficulty != "Easy":
                     from word_validator import word_validator
                     if word_validator.added_words:
                         dictionary = list(dictionary) + list(word_validator.added_words)
