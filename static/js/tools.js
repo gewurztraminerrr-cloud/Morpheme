@@ -4400,9 +4400,29 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
     const currentTimeEl = document.getElementById(useOverlay ? 'replay-current-time' : 'integrated-current-time');
     const progressBar = document.getElementById(useOverlay ? 'replay-progress-bar' : 'integrated-progress-bar');
 
+    const updateStartBtnLabel = (label, icon = '▶') => {
+        if (!startBtn) return;
+        const labelEl = startBtn.querySelector('.replay-btn-label');
+        const iconEl = startBtn.querySelector('.btn-icon');
+        if (labelEl) {
+            labelEl.textContent = label;
+            if (iconEl && icon) iconEl.textContent = icon;
+        } else {
+            startBtn.innerHTML = `
+                <span class="replay-btn-title">
+                    <span class="btn-icon">${icon}</span> <span class="replay-btn-label">${label}</span>
+                </span>
+                <span class="replay-btn-subtext">Words recorded with millisecond precision</span>
+            `;
+        }
+    };
+
     if (startBtn) {
         startBtn.classList.remove('hidden');
-        startBtn.innerText = "▶ Watch Replay";
+        startBtn.disabled = false;
+        startBtn.classList.remove('disabled');
+        startBtn.removeAttribute('aria-disabled');
+        updateStartBtnLabel("Watch Replay", "▶");
     }
     if (skipBtn) skipBtn.classList.add('hidden');
     if (progressUI) progressUI.classList.add('hidden');
@@ -4685,6 +4705,25 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
         console.log(`[Review] First Word: ${sortedWords[0].word} @ ${sortedWords[0].timestamp}, Rel: ${sortedWords[0].timestamp - startTime}`);
     }
 
+    const userWordsMap = new Map();
+    (sortedWords || []).forEach(w => {
+        const key = String(w.word || '').trim().toUpperCase();
+        if (key && !userWordsMap.has(key)) {
+            userWordsMap.set(key, w);
+        }
+    });
+
+    const calcWordScore = (wStr) => {
+        const l = (wStr || '').length;
+        if (l <= 2) return 0;
+        if (l <= 4) return 1;
+        if (l === 5) return 2;
+        if (l === 6) return 3;
+        if (l === 7) return 5;
+        if (l === 8) return 9;
+        return 11 + (l - 9) * 4;
+    };
+
     const renderWord = (word) => {
         const wTimestamp = parseFloat(word.timestamp) || 0;
         let relTimeSec = Math.max(0, wTimestamp - startTime);
@@ -4704,7 +4743,34 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
         `;
     };
 
-    const showAllWords = (keepProgressUI = false) => {
+    const renderAllWordItem = (wStr) => {
+        const upper = String(wStr).trim().toUpperCase();
+        const userObj = userWordsMap.get(upper);
+        const isGot = !!userObj;
+
+        let pts = isGot ? (userObj.points !== undefined ? userObj.points : calcWordScore(upper)) : calcWordScore(upper);
+        let ptsClass = 'walkthrough-pts';
+        if (pts < 0) ptsClass += ' penalty';
+
+        if (isGot) {
+            return `
+            <div class="walkthrough-item reveal is-got" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${upper.replace(/'/g, "\\'")}')">
+                <span class="walkthrough-badge-got">✓ GOT</span>
+                <span class="walkthrough-word">${upper}</span>
+                <span class="${ptsClass}">+${pts} pts</span>
+            </div>
+            `;
+        } else {
+            return `
+            <div class="walkthrough-item reveal is-missed" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${upper.replace(/'/g, "\\'")}')">
+                <span class="walkthrough-word">${upper}</span>
+                <span class="${ptsClass}">${pts} pts</span>
+            </div>
+            `;
+        }
+    };
+
+    const showUserWords = (keepProgressUI = false) => {
         const displayWords = [...sortedWords];
 
         if (walkthroughList) {
@@ -4719,7 +4785,7 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
         if (skipBtn) skipBtn.classList.add('hidden');
         if (startBtn) {
             startBtn.classList.remove('hidden');
-            startBtn.innerText = "▶ Watch Replay";
+            updateStartBtnLabel("Watch Replay", "▶");
         }
         if (replayModal) replayModal.classList.remove('replay-active');
         if (walkthroughList) walkthroughList.classList.remove('collapsed-3');
@@ -4744,12 +4810,123 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
         if (currentScoreEl) currentScoreEl.innerText = `${round.total_score} pts`;
     };
 
-    // ALWAYS Show All Words initially
-    showAllWords();
+    const showAllTabWords = async () => {
+        if (!walkthroughList) return;
+
+        let allWords = round.all_words || [];
+        if (!allWords || allWords.length === 0) {
+            walkthroughList.innerHTML = '<p class="placeholder" style="text-align:center; padding:30px; font-weight:600; color:rgba(255,255,255,0.7);">Loading all words...</p>';
+            try {
+                const params = new URLSearchParams();
+                if (round.game_id) params.append('game_id', round.game_id);
+                if (round.room_id) params.append('room_id', round.room_id);
+                if (round.round_number) params.append('round_number', round.round_number);
+                if (round.timestamp) params.append('timestamp', round.timestamp);
+                const resp = await fetch(`/api/round-replay?${params.toString()}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.round && data.round.all_words) {
+                        round.all_words = data.round.all_words;
+                        allWords = round.all_words;
+                    }
+                }
+            } catch (e) {
+                console.warn("[showAllTabWords] Fetch all words failed:", e);
+            }
+        }
+
+        // If still empty, fall back to user's words
+        if (!allWords || allWords.length === 0) {
+            allWords = Array.from(userWordsMap.keys());
+        }
+
+        // Sort all words by length descending, then alphabetically
+        const sortedAll = [...allWords].sort((a, b) => {
+            const diff = b.length - a.length;
+            if (diff !== 0) return diff;
+            return a.localeCompare(b);
+        });
+
+        const html = sortedAll.map(w => renderAllWordItem(w)).join('');
+        walkthroughList.innerHTML = html;
+        walkthroughList.scrollTop = 0;
+
+        if (typeof window.updateReplayScroller === 'function') {
+            setTimeout(window.updateReplayScroller, 50);
+            setTimeout(window.updateReplayScroller, 200);
+        }
+    };
+
+    let currentTab = 'user'; // 'user' or 'all'
+    const tabUserBtn = document.getElementById(useOverlay ? 'replay-tab-user-entry' : 'integrated-tab-user-entry');
+    const tabAllBtn = document.getElementById(useOverlay ? 'replay-tab-all' : 'integrated-tab-all');
+
+    const setTab = (tabName) => {
+        currentTab = tabName;
+        if (tabName === 'user') {
+            if (tabUserBtn) {
+                tabUserBtn.classList.add('active');
+                tabUserBtn.setAttribute('aria-selected', 'true');
+            }
+            if (tabAllBtn) {
+                tabAllBtn.classList.remove('active');
+                tabAllBtn.setAttribute('aria-selected', 'false');
+            }
+            // Enable Watch Replay button
+            if (startBtn) {
+                startBtn.disabled = false;
+                startBtn.classList.remove('disabled');
+                startBtn.removeAttribute('aria-disabled');
+            }
+            showUserWords();
+        } else {
+            if (tabAllBtn) {
+                tabAllBtn.classList.add('active');
+                tabAllBtn.setAttribute('aria-selected', 'true');
+            }
+            if (tabUserBtn) {
+                tabUserBtn.classList.remove('active');
+                tabUserBtn.setAttribute('aria-selected', 'false');
+            }
+            // Disable Watch Replay button
+            if (startBtn) {
+                startBtn.disabled = true;
+                startBtn.classList.add('disabled');
+                startBtn.setAttribute('aria-disabled', 'true');
+            }
+            // Stop any ongoing replay
+            if (window.replayInterval) {
+                clearInterval(window.replayInterval);
+                window.replayInterval = null;
+            }
+            if (skipBtn) skipBtn.classList.add('hidden');
+            if (progressUI) progressUI.classList.add('hidden');
+            if (replayModal) replayModal.classList.remove('replay-active');
+            if (walkthroughList) walkthroughList.classList.remove('collapsed-3');
+            showAllTabWords();
+        }
+    };
+
+    if (tabUserBtn) {
+        tabUserBtn.onclick = (e) => {
+            e.stopPropagation();
+            setTab('user');
+        };
+    }
+    if (tabAllBtn) {
+        tabAllBtn.onclick = (e) => {
+            e.stopPropagation();
+            setTab('all');
+        };
+    }
+
+    // Default to User Entry tab initially
+    setTab('user');
 
     // Interactive Replay
     if (startBtn) {
         startBtn.onclick = () => {
+            if (currentTab === 'all') return; // Guard
             console.log(`[Review] Starting Replay...`);
             
             if (window.replayInterval) {
@@ -4878,11 +5055,11 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
                     if (skipBtn) skipBtn.classList.add('hidden');
                     if (startBtn) {
                         startBtn.classList.remove('hidden');
-                        startBtn.innerText = "↺ Replay";
+                        updateStartBtnLabel("Replay", "↺");
                     }
                     if (progressBar) progressBar.style.width = '100%';
                     if (currentTimeEl) currentTimeEl.innerText = `${formatReplayTime(roundDuration)} / ${formatReplayTime(roundDuration)}`;
-                    showAllWords(true);
+                    showUserWords(true);
                 }
             }, tick);
         };
@@ -4891,7 +5068,7 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
     if (skipBtn) {
         skipBtn.onclick = () => {
             if (window.replayInterval) clearInterval(window.replayInterval);
-            showAllWords();
+            showUserWords();
         };
     }
 };

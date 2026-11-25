@@ -2554,6 +2554,7 @@ class GameRoom:
                         'score': max_score,
                         'board': [list(row) for row in self.board] if self.board else [],
                         'words': winner_words,
+                        'all_words': sorted(list(getattr(self, 'all_words', []))) if getattr(self, 'all_words', None) else [],
                         'bonus_word': getattr(self, 'bonus_word', ''),
                         'timestamp': int(time.time() * 1000),
                         'round_duration': self.time_limit,

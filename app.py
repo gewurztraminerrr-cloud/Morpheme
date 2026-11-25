@@ -15129,6 +15129,13 @@ def get_round_replay():
                     target_player = next((p for p in players if getattr(p, 'username', '') == username), None) if username else (players[0] if players else None)
                     p_words = getattr(target_player, 'submitted_words', []) if target_player else []
                     p_score = getattr(target_player, 'score', 0) if target_player else 0
+                    all_w = sorted(list(getattr(room, 'all_words', []))) if getattr(room, 'all_words', None) else []
+                    if not all_w and room.board:
+                        try:
+                            from board_generator import solve_board
+                            all_w = solve_board(room.board)
+                        except Exception:
+                            all_w = []
                     return jsonify({
                         'success': True,
                         'round': {
@@ -15139,6 +15146,7 @@ def get_round_replay():
                             'board': room.board,
                             'dimensions': getattr(room, 'board_dimensions', f"{len(room.board)}x{len(room.board[0])}"),
                             'words': p_words,
+                            'all_words': all_w,
                             'total_score': p_score,
                             'round_start_time': getattr(room, 'round_start_time', 0),
                             'round_duration': getattr(room, 'time_limit', 60),
@@ -15154,6 +15162,26 @@ def get_round_replay():
 
         board = json.loads(row['board_json']) if row['board_json'] else []
         words = json.loads(row['words_json']) if row['words_json'] else []
+        all_words = []
+        if 'all_solutions_json' in row.keys() and row['all_solutions_json']:
+            try:
+                all_words = json.loads(row['all_solutions_json'])
+            except Exception:
+                all_words = []
+        if not all_words and row['room_id'] and row['round_number']:
+            try:
+                cur.execute("SELECT all_solutions_json FROM round_history WHERE room_id = ? AND round_number = ? AND all_solutions_json IS NOT NULL AND length(all_solutions_json) > 2 LIMIT 1", (row['room_id'], row['round_number']))
+                alt = cur.fetchone()
+                if alt and alt['all_solutions_json']:
+                    all_words = json.loads(alt['all_solutions_json'])
+            except Exception:
+                pass
+        if not all_words and board:
+            try:
+                from board_generator import solve_board
+                all_words = solve_board(board)
+            except Exception as e:
+                print("[round-replay] solve_board fallback failed:", e)
         
         dims = row['board_dimensions']
         if not dims:
@@ -15170,6 +15198,7 @@ def get_round_replay():
             'board': board,
             'dimensions': dims,
             'words': words,
+            'all_words': sorted(list(set(all_words))),
             'total_score': row['total_score'],
             'round_start_time': row['round_start_time'],
             'round_duration': row['round_duration'] or 60,
