@@ -11136,6 +11136,10 @@ WIKI_COMMON_NOUN_OVERRIDES = {
     'PIRARUCU': ('Arapaima', 'https://en.wikipedia.org/wiki/Arapaima'),
     'PIRARUCUS': ('Arapaima', 'https://en.wikipedia.org/wiki/Arapaima'),
     'CALYPSO': ('Calypso music', 'https://en.wikipedia.org/wiki/Calypso_music'),
+    'COGENER': ('Congener (chemistry)', 'https://en.wikipedia.org/wiki/Congener_(chemistry)'),
+    'COGENERS': ('Congener (chemistry)', 'https://en.wikipedia.org/wiki/Congener_(chemistry)'),
+    'CONGENER': ('Congener (chemistry)', 'https://en.wikipedia.org/wiki/Congener_(chemistry)'),
+    'CONGENERS': ('Congener (chemistry)', 'https://en.wikipedia.org/wiki/Congener_(chemistry)'),
     'FARADAY': ('Faraday constant', 'https://en.wikipedia.org/wiki/Faraday_constant'),
     'TURKEY': ('Turkey (bird)', 'https://en.wikipedia.org/wiki/Turkey_(bird)'),
     'COLT': ('Colt (horse)', 'https://en.wikipedia.org/wiki/Colt_(horse)'),
@@ -11284,6 +11288,8 @@ def resolve_wiki_common_noun(word: str, definition: str = '', lemma: str = None)
         title = f"{title} (crossing)"
     elif any(k in def_lower for k in ('hat', 'cap', 'headwear')) and title in ('Panama',):
         title = f"{title} hat"
+    elif any(k in def_lower for k in ('same kind', 'same nature', 'related chemical', 'congener', 'substance', 'nature')) and title in ('Congener', 'Cogener'):
+        title = "Congener (chemistry)"
     elif any(k in def_lower for k in ('chess', 'game piece', 'board game')) and title in ('Rook', 'Pawn'):
         title = f"{title} (chess)"
 
@@ -11793,44 +11799,114 @@ def get_wikipedia_summary():
     # 3. Disambiguation bullet resolution: if result is a disambiguation page, resolve to matching topic bullet
     if result.get('is_disambiguation'):
         try:
-            parse_url = f"https://en.wikipedia.org/w/api.php?action=parse&page={safe_title}&prop=text&mobileformat=1&format=json"
+            # Collect definitions for the target word, cross-references, and Wikipedia destination title
+            app_defs = [def_text] if def_text else []
+            if ref_cand:
+                r_def, _ = lookup_word_definition_and_pronunciation(ref_cand.upper())
+                if r_def and r_def not in app_defs:
+                    app_defs.append(r_def)
+
+            dest_head = (result.get('title') or '').split('(')[0].strip().upper()
+            if dest_head and dest_head != target_word:
+                h_def, _ = lookup_word_definition_and_pronunciation(dest_head)
+                if h_def and h_def not in app_defs:
+                    app_defs.append(h_def)
+
+            parse_target = (result.get('title') or lookup_title).split('(')[0].strip()
+            parse_safe = urllib.parse.quote(parse_target.replace(' ', '_'), safe='')
+            parse_url = f"https://en.wikipedia.org/w/api.php?action=parse&page={parse_safe}&prop=text&redirects=1&format=json"
             p_req = urllib.request.Request(parse_url, headers=headers)
             with urllib.request.urlopen(p_req, timeout=3.5) as p_resp:
                 p_data = json.loads(p_resp.read().decode('utf-8'))
                 html = p_data.get('parse', {}).get('text', {}).get('*', '')
                 if html:
                     items = re.findall(r'<li>(.*?)</li>', html, re.DOTALL)
-                    raw_words = re.findall(r'[a-zA-Z]{3,}', def_lower)
-                    stemmed_def = {w.rstrip('s') for w in raw_words}
-                    best_cand_title = None
-                    for item in items:
+                    stop_words = {'the', 'and', 'for', 'with', 'that', 'this', 'from', 'also', 'may', 'refer', 'term', 'something', 'refers', 'such', 'other', 'also'}
+                    def_words = set()
+                    for d in app_defs:
+                        for w in re.findall(r'[a-zA-Z]{3,}', d.lower()):
+                            if w not in stop_words:
+                                def_words.add(w.rstrip('s'))
+
+                    synonyms = set(def_words)
+                    try:
+                        from nltk.corpus import wordnet as wn
+                        for w in def_words:
+                            for s in wn.synsets(w):
+                                for l in s.lemmas():
+                                    cl = l.name().lower().replace('_', ' ')
+                                    for sw in re.findall(r'[a-zA-Z]{3,}', cl):
+                                        if sw not in stop_words:
+                                            synonyms.add(sw.rstrip('s'))
+                    except Exception:
+                        pass
+
+                    candidates = []
+                    for item in items[:15]:
                         m_link = re.search(r'<a\s+href="/wiki/([^"#:]+)"', item)
-                        if m_link:
-                            cand_page = urllib.parse.unquote(m_link.group(1)).replace('_', ' ')
-                            cand_text = re.sub(r'<[^>]+>', '', item).lower()
-                            bullet_raw = re.findall(r'[a-zA-Z]{3,}', cand_text)
-                            bullet_stemmed = {w.rstrip('s') for w in bullet_raw}
-                            matching_kws = (stemmed_def & bullet_stemmed) - {'the', 'and', 'for', 'with', 'that', 'this', 'from', 'also', 'may', 'refer', 'term'}
-                            if matching_kws:
-                                best_cand_title = cand_page
-                                break
-                    if best_cand_title:
-                        best_safe = urllib.parse.quote(best_cand_title.replace(' ', '_'), safe='')
-                        best_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{best_safe}"
-                        b_req = urllib.request.Request(best_url, headers=headers)
-                        with urllib.request.urlopen(b_req, timeout=3.5) as b_resp:
-                            b_data = json.loads(b_resp.read().decode('utf-8'))
-                            if b_data.get('type') != 'disambiguation' and not is_proper_noun(b_data.get('description'), b_data.get('extract')):
-                                if lookup_title.lower() != b_data.get('title', '').lower():
-                                    result['title'] = f"{lookup_title} ({b_data.get('title')})"
-                                else:
-                                    result['title'] = b_data.get('title') or best_cand_title
-                                result['description'] = b_data.get('description') or ''
-                                result['extract'] = b_data.get('extract') or ''
-                                result['url'] = b_data.get('content_urls', {}).get('desktop', {}).get('page') or f"https://en.wikipedia.org/wiki/{best_safe}"
-                                result['thumbnail'] = b_data.get('thumbnail', {}).get('source') if b_data.get('thumbnail') else None
-                                result['is_disambiguation'] = False
-                                result['is_proper_only'] = False
+                        if not m_link:
+                            continue
+                        cand_page = urllib.parse.unquote(m_link.group(1)).replace('_', ' ')
+                        cand_text = re.sub(r'<[^>]+>', '', item).strip()
+                        if is_proper_noun(None, cand_text):
+                            continue
+
+                        cand_safe = urllib.parse.quote(cand_page.replace(' ', '_'), safe='')
+                        s_url = f"https://en.wikipedia.org/api/rest_v1/page/summary/{cand_safe}"
+                        try:
+                            s_req = urllib.request.Request(s_url, headers=headers)
+                            with urllib.request.urlopen(s_req, timeout=3.0) as s_resp:
+                                s_data = json.loads(s_resp.read().decode('utf-8'))
+                        except Exception:
+                            continue
+
+                        if s_data.get('type') == 'disambiguation':
+                            continue
+                        if is_proper_noun(s_data.get('description'), s_data.get('extract')):
+                            continue
+
+                        s_title = s_data.get('title') or cand_page
+                        s_desc = s_data.get('description') or ''
+                        s_extract = s_data.get('extract') or ''
+
+                        bullet_words = {w.rstrip('s') for w in re.findall(r'[a-zA-Z]{3,}', cand_text.lower()) if w not in stop_words}
+                        summary_words = {w.rstrip('s') for w in re.findall(r'[a-zA-Z]{3,}', f"{s_desc} {s_extract}".lower()) if w not in stop_words}
+
+                        d_matches = (def_words & bullet_words) | (def_words & summary_words)
+                        s_matches = (synonyms & bullet_words) | (synonyms & summary_words)
+
+                        score = len(d_matches) * 4 + len(s_matches) * 2
+
+                        dest_root = parse_target.lower().rstrip('s')
+                        if dest_root in s_title.lower():
+                            score += 6
+                        else:
+                            score -= 10
+
+                        if re.match(r'^[A-Z][a-z]+\s+[a-z]+$', s_title):
+                            score -= 5
+
+                        candidates.append({
+                            'score': score,
+                            'title': s_title,
+                            'description': s_desc,
+                            'extract': s_extract,
+                            'url': s_data.get('content_urls', {}).get('desktop', {}).get('page') or f"https://en.wikipedia.org/wiki/{cand_safe}",
+                            'thumbnail': s_data.get('thumbnail', {}).get('source') if s_data.get('thumbnail') else None
+                        })
+
+                    if candidates:
+                        candidates.sort(key=lambda x: x['score'], reverse=True)
+                        best = candidates[0]
+                        if best['score'] > 0:
+                            result['title'] = best['title']
+                            result['description'] = best['description']
+                            result['extract'] = best['extract']
+                            result['url'] = best['url']
+                            result['thumbnail'] = best['thumbnail']
+                            result['is_disambiguation'] = False
+                            result['is_proper_only'] = False
+                            result['bullets'] = []
         except Exception:
             pass
 
