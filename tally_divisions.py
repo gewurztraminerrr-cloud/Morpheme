@@ -167,7 +167,7 @@ def rebuild_word_stats_from_db(db_path: str = None) -> int:
                     SELECT wf.word, COUNT(*) FROM word_finds wf
                     JOIN users u ON wf.user_id = u.id
                     WHERE u.username NOT LIKE 'Guest_%'
-                      AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%'))
+                      AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%' AND wf.room_id NOT LIKE '%solo%'))
                     GROUP BY wf.word
                 """).fetchall():
                     if w and cnt:

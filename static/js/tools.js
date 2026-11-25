@@ -8952,15 +8952,16 @@ window.setupWordDefActionButtons = function (prefix, word, dictionary = null) {
             fcBtn.title = `Find Count (FC): found by ${cnt} player${cnt === 1 ? '' : 's'}`;
         };
 
-        if (window._wordTallyCache[cleanWord] !== undefined) {
-            const tallyData = window._wordTallyCache[cleanWord];
-            const cnt = (tallyData && typeof tallyData.count === 'number') ? tallyData.count : 0;
+        const now = Date.now();
+        const cached = window._wordTallyCache[cleanWord];
+        if (cached && (now - (cached.time || 0) < 5000)) {
+            const cnt = (cached.data && typeof cached.data.count === 'number') ? cached.data.count : (typeof cached.count === 'number' ? cached.count : 0);
             updateFcBtn(cnt);
         } else {
-            fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
+            fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}?t=${now}`)
                 .then(res => res.json())
                 .then(data => {
-                    window._wordTallyCache[cleanWord] = data;
+                    window._wordTallyCache[cleanWord] = { time: Date.now(), data: data, count: (data && typeof data.count === 'number') ? data.count : 0 };
                     const cnt = (data && typeof data.count === 'number') ? data.count : 0;
                     if (fcBtn.dataset.word === cleanWord) {
                         updateFcBtn(cnt);
@@ -12467,15 +12468,16 @@ window.showWordDefinitionPopup = async function (word, event) {
             fcBtn.title = `Find Count (FC): found by ${cnt} player${cnt === 1 ? '' : 's'}`;
         };
 
-        if (window._wordTallyCache[cleanWord] !== undefined) {
-            const tallyData = window._wordTallyCache[cleanWord];
-            const cnt = (tallyData && typeof tallyData.count === 'number') ? tallyData.count : 0;
+        const now = Date.now();
+        const cached = window._wordTallyCache[cleanWord];
+        if (cached && (now - (cached.time || 0) < 5000)) {
+            const cnt = (cached.data && typeof cached.data.count === 'number') ? cached.data.count : (typeof cached.count === 'number' ? cached.count : 0);
             updateFcPopover(cnt);
         } else {
-            fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
+            fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}?t=${now}`)
                 .then(res => res.json())
                 .then(data => {
-                    window._wordTallyCache[cleanWord] = data;
+                    window._wordTallyCache[cleanWord] = { time: Date.now(), data: data, count: (data && typeof data.count === 'number') ? data.count : 0 };
                     const cnt = (data && typeof data.count === 'number') ? data.count : 0;
                     if (fcBtn.dataset.word === cleanWord) {
                         updateFcPopover(cnt);

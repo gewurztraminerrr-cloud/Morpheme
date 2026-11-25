@@ -4839,16 +4839,16 @@ def init_db():
         conn.execute('CREATE INDEX IF NOT EXISTS idx_word_finds_rh_id ON word_finds(round_history_id)')
         conn.commit()
 
-        # Find Count rules: purge any 24h-room or Guest finds
+        # Find Count rules: purge any 24h-room, Solo room, or Guest finds
         try:
             conn.execute("""
                 DELETE FROM word_finds
-                WHERE room_id LIKE '%24h%' OR room_id LIKE '%86400%'
+                WHERE room_id LIKE '%24h%' OR room_id LIKE '%86400%' OR room_id LIKE '%solo%'
                    OR user_id IN (SELECT id FROM users WHERE username LIKE 'Guest_%')
             """)
             conn.commit()
         except Exception as purge_err:
-            print(f"[init_db] Notice purging 24h/guest word_finds: {purge_err}")
+            print(f"[init_db] Notice purging 24h/solo/guest word_finds: {purge_err}")
 
         # MIGRATION: Ensure user_word_tallies table exists and is indexed
         try:
@@ -4877,7 +4877,7 @@ def init_db():
                     FROM word_finds wf
                     JOIN users u ON wf.user_id = u.id
                     WHERE u.username NOT LIKE 'Guest_%'
-                      AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%'))
+                      AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%' AND wf.room_id NOT LIKE '%solo%'))
                     GROUP BY wf.user_id, wf.word
                 """)
                 conn.commit()
@@ -5147,7 +5147,7 @@ def _get_word_finds(word):
                 LEFT JOIN round_history rh ON wf.round_history_id = rh.id
                 WHERE wf.word = ?
                   AND u.username NOT LIKE 'Guest_%'
-                  AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%'))
+                  AND (wf.room_id IS NULL OR (wf.room_id NOT LIKE '%24h%' AND wf.room_id NOT LIKE '%86400%' AND wf.room_id NOT LIKE '%solo%'))
             """, (word,))
             for row in wf_cursor.fetchall():
                 ts_val = row['timestamp']
@@ -5169,7 +5169,7 @@ def _get_word_finds(word):
         except Exception as wf_err:
             pass
 
-        # 1. Query round_history (Excluding 24h rooms and Multiplayer Subanagrams)
+        # 1. Query round_history (Excluding 24h rooms, Solo rooms, and Multiplayer Subanagrams)
         cursor = conn.execute("""
             SELECT rh.id AS game_id, rh.timestamp, u.username, u.country_flag, rh.words_json, rh.room_id, rh.round_number
             FROM round_history rh
@@ -5177,8 +5177,8 @@ def _get_word_finds(word):
             WHERE rh.words_json LIKE ?
               AND u.username NOT LIKE 'Guest_%'
               AND (rh.round_duration IS NULL OR rh.round_duration < 7200)
-              AND (rh.game_type IS NULL OR (rh.game_type != 'subanagrams' AND rh.game_type != '24h'))
-              AND (rh.room_id IS NULL OR (rh.room_id NOT LIKE '%24h%' AND rh.room_id NOT LIKE '%86400%'))
+              AND (rh.game_type IS NULL OR (rh.game_type != 'subanagrams' AND rh.game_type != '24h' AND rh.game_type != 'solo_accumulative' AND rh.game_type NOT LIKE 'solo%'))
+              AND (rh.room_id IS NULL OR (rh.room_id NOT LIKE '%24h%' AND rh.room_id NOT LIKE '%86400%' AND rh.room_id NOT LIKE '%solo%'))
         """, (f'%"{word}"%',))
         
         for row in cursor.fetchall():
@@ -5251,6 +5251,7 @@ def _get_word_finds(word):
             FROM private_match_turns pmt
             JOIN users u ON pmt.user_id = u.id
             WHERE pmt.submitted_words LIKE ?
+              AND (pmt.match_id IS NULL OR (pmt.match_id NOT LIKE '%24h%' AND pmt.match_id NOT LIKE '%86400%' AND pmt.match_id NOT LIKE '%solo%'))
         """, (f'%"{word}"%',))
         
         for row in cursor.fetchall():
@@ -5286,17 +5287,19 @@ def _get_word_finds(word):
         conn.close()
 
     # 4. Check active/in-memory rooms for live finds not yet written to round_history
+    # MANDATE: Never include Solo rooms, 24h rooms, or Multiplayer Subanagrams
     try:
         from game_room import room_manager
         if room_manager and hasattr(room_manager, 'rooms'):
             for r_id, room in list(room_manager.rooms.items()):
-                # Exclude 24h rooms and Multiplayer Subanagrams
-                if getattr(room, 'time_limit', 0) >= 7200:
+                # Exclude 24h rooms, Solo rooms, and Multiplayer Subanagrams
+                if getattr(room, 'time_limit', 0) >= 7200 or getattr(room, 'is_solo', False):
                     continue
-                if getattr(room, 'game_type', None) in ('subanagrams', '24h'):
+                g_type = str(getattr(room, 'game_type', '') or '').lower()
+                if g_type in ('subanagrams', '24h', 'solo_accumulative') or g_type.startswith('solo'):
                     continue
-                r_id_str = str(getattr(room, 'room_id', ''))
-                if '24h' in r_id_str or '86400' in r_id_str:
+                r_id_str = str(getattr(room, 'room_id', '') or '').lower()
+                if '24h' in r_id_str or '86400' in r_id_str or 'solo' in r_id_str:
                     continue
 
                 # If round history has already been saved for this round, don't re-add from in-memory
@@ -12276,6 +12279,9 @@ def prune_non_visible_round_history():
                             stale_rows = c.execute(f"SELECT user_id, words_json, timestamp, room_id, round_number FROM round_history WHERE id IN ({placeholders})", chunk).fetchall()
                             for uid, w_json, ts, r_id, r_num in stale_rows:
                                 if uid and uid != -1:
+                                    r_id_str = str(r_id or '').lower()
+                                    if '24h' in r_id_str or '86400' in r_id_str or 'solo' in r_id_str:
+                                        continue
                                     w_list = json.loads(w_json) if w_json else []
                                     for item in w_list:
                                         pts = item.get('points', 0) if isinstance(item, dict) else 0

@@ -10758,8 +10758,10 @@ class RoomManager:
                     rh_id = cur_rh.lastrowid
 
                     # Also persist player word finds into lightweight word_finds table for Find Count
-                    # Find Count rules: never record 24h rooms or Guest finds, and strictly ignore invalid/penalty guesses
-                    if u_id != -1 and u_name != 'System' and room.time_limit < 7200 and not str(u_name).startswith('Guest_'):
+                    # Find Count rules: NEVER record Solo rooms, 24h rooms, or Guest finds, and strictly ignore invalid/penalty guesses
+                    is_solo_rh = getattr(room, 'is_solo', False) or ('solo' in str(room.room_id).lower()) or str(getattr(room, 'game_type', '')).startswith('solo')
+                    is_24h_rh = (getattr(room, 'time_limit', 0) >= 7200) or ('24h' in str(room.room_id).lower()) or ('86400' in str(room.room_id)) or (getattr(room, 'game_type', '') == '24h')
+                    if u_id != -1 and u_name != 'System' and not is_solo_rh and not is_24h_rh and not str(u_name).startswith('Guest_'):
                         try:
                             for entry in words_data:
                                 pts = entry.get('points', 0) if isinstance(entry, dict) else 0
@@ -10854,8 +10856,10 @@ class RoomManager:
         Also maintains a global cumulative tally in word_stats.json.
         """
         try:
-            # USER REQUEST: Do not include words found in 24h rooms or Subanagrams in the word tally file
-            if getattr(room, 'time_limit', 0) >= 7200 or getattr(room, 'game_type', None) in ('subanagrams', '24h') or '24h' in str(getattr(room, 'room_id', '')) or '86400' in str(getattr(room, 'room_id', '')) or getattr(room, 'is_solo', False):
+            # USER REQUEST: Do not include words found in 24h rooms, Solo rooms, or Subanagrams in the word tally file
+            is_solo_tally = getattr(room, 'is_solo', False) or ('solo' in str(getattr(room, 'room_id', '')).lower()) or str(getattr(room, 'game_type', '')).startswith('solo')
+            is_24h_tally = (getattr(room, 'time_limit', 0) >= 7200) or ('24h' in str(getattr(room, 'room_id', '')).lower()) or ('86400' in str(getattr(room, 'room_id', ''))) or (getattr(room, 'game_type', None) in ('subanagrams', '24h'))
+            if is_solo_tally or is_24h_tally:
                 print(f"[WordTally] Skipping tally for {getattr(room, 'game_type', 'unknown')} room: {getattr(room, 'room_id', '')}")
                 return
 

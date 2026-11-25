@@ -13725,6 +13725,9 @@ async function fetchDefinition(word) {
     const is24H = !!((s && ((s.time_limit >= 7200) || (s.room_id && (s.room_id.includes('24h') || s.room_id.includes('86400'))) || (s.game_type === '24h'))) ||
         (window.currentRoomId && (window.currentRoomId.includes('24h') || window.currentRoomId.includes('86400'))) ||
         (window.location.hash && (window.location.hash.includes('24h') || window.location.hash.includes('86400'))));
+    const isSolo = !!((s && (s.is_solo || (s.room_id && s.room_id.toLowerCase().includes('solo')) || (s.game_type && s.game_type.includes('solo')))) ||
+        (window.currentRoomId && window.currentRoomId.toLowerCase().includes('solo')) ||
+        (window.location.hash && window.location.hash.toLowerCase().includes('solo')));
     if (defFireworksActive) return; // Keep fireworks playing in 24h room when all words found
 
     const cleanWord = String(word).trim().toUpperCase();
@@ -13826,7 +13829,7 @@ async function fetchDefinition(word) {
     // 2. FC Button: Count finders from this round and total find count including this round
     if (fcBtn) {
         fcBtn.dataset.word = cleanWord;
-        if (is24H) {
+        if (is24H || isSolo) {
             fcBtn.innerHTML = 'FC';
             fcBtn.title = 'Search word in Find Count (Tools)';
             fcBtn.onclick = (e) => {
@@ -13836,23 +13839,25 @@ async function fetchDefinition(word) {
                 }
             };
             if (!window._wordTallyCache) window._wordTallyCache = {};
-            const updateFc24h = (cnt) => {
+            const updateFcIsolated = (cnt) => {
                 fcBtn.innerHTML = `FC <span class="fc-btn-count" style="font-size: 0.82em; font-weight: 600; margin-left: 2px;">(${cnt})</span>`;
             };
-            if (window._wordTallyCache[cleanWord] !== undefined) {
-                const cnt = (window._wordTallyCache[cleanWord] && typeof window._wordTallyCache[cleanWord].count === 'number') ? window._wordTallyCache[cleanWord].count : 0;
-                updateFc24h(cnt);
+            const now = Date.now();
+            const cached = window._wordTallyCache[cleanWord];
+            if (cached && (now - (cached.time || 0) < 5000)) {
+                const cnt = (cached.data && typeof cached.data.count === 'number') ? cached.data.count : (typeof cached.count === 'number' ? cached.count : 0);
+                updateFcIsolated(cnt);
             } else {
-                fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
+                fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}?t=${now}`)
                     .then(res => res.json())
                     .then(data => {
-                        window._wordTallyCache[cleanWord] = data;
+                        window._wordTallyCache[cleanWord] = { time: Date.now(), data: data, count: (data && typeof data.count === 'number') ? data.count : 0 };
                         if (window._currentDefWord === cleanWord && fcBtn.dataset.word === cleanWord) {
-                            updateFc24h(data && typeof data.count === 'number' ? data.count : 0);
+                            updateFcIsolated(data && typeof data.count === 'number' ? data.count : 0);
                         }
                     })
                     .catch(err => {
-                        console.error('[fetchDefinition] Error fetching 24h word tally for FC:', err);
+                        console.error('[fetchDefinition] Error fetching word tally for FC:', err);
                     });
             }
         } else {
@@ -13877,16 +13882,18 @@ async function fetchDefinition(word) {
             fcBtn.title = isSub ? 'Find Count (FC: Room / Outside)' : 'Find Count (FC)';
 
             if (!window._wordTallyCache) window._wordTallyCache = {};
-            if (window._wordTallyCache[cleanWord]) {
-                const tallyData = window._wordTallyCache[cleanWord];
+            const now = Date.now();
+            const cached = window._wordTallyCache[cleanWord];
+            if (cached && (now - (cached.time || 0) < 5000)) {
+                const tallyData = cached.data || cached;
                 const outsideCount = (tallyData && typeof tallyData.count === 'number') ? tallyData.count : 0;
                 const totalCombined = isSub ? outsideCount : calculateCombinedFindCount(tallyData, roundFinders);
                 fcBtn.innerHTML = `FC <span class="fc-btn-count" style="font-size: 0.82em; font-weight: 600; margin-left: 2px;">[${roundFindersCount} / ${totalCombined}]</span>`;
             } else {
-                fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}`)
+                fetch(`/api/word_tally/${encodeURIComponent(cleanWord)}?t=${now}`)
                     .then(res => res.json())
                     .then(data => {
-                        window._wordTallyCache[cleanWord] = data;
+                        window._wordTallyCache[cleanWord] = { time: Date.now(), data: data, count: (data && typeof data.count === 'number') ? data.count : 0 };
                         if (window._currentDefWord === cleanWord && fcBtn.dataset.word === cleanWord) {
                             const outsideCount = (data && typeof data.count === 'number') ? data.count : 0;
                             const totalCombined = isSub ? outsideCount : calculateCombinedFindCount(data, roundFinders);
@@ -16540,15 +16547,17 @@ window.showFinderModal = function (word) {
         modal.style.display = 'flex';
         window._hasPriorityModal = true;
 
-        if (window._wordTallyCache && window._wordTallyCache[wordUpper]) {
-            renderModalContent(window._wordTallyCache[wordUpper]);
+        const now = Date.now();
+        const cached = window._wordTallyCache && window._wordTallyCache[wordUpper];
+        if (cached && (now - (cached.time || 0) < 5000)) {
+            renderModalContent(cached.data || cached);
         } else {
             body.innerHTML = '<p class="placeholder" style="padding: 20px; text-align: center;">Loading tally...</p>';
-            fetch(`/api/word_tally/${wordUpper}`)
+            fetch(`/api/word_tally/${encodeURIComponent(wordUpper)}?t=${now}`)
                 .then(res => res.json())
                 .then(data => {
                     if (!window._wordTallyCache) window._wordTallyCache = {};
-                    window._wordTallyCache[wordUpper] = data;
+                    window._wordTallyCache[wordUpper] = { time: Date.now(), data: data, count: (data && typeof data.count === 'number') ? data.count : 0 };
                     renderModalContent(data);
                 })
                 .catch(err => {
