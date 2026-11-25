@@ -4489,7 +4489,6 @@ async function _doUpdateGameState(incomingState = null) {
 
         // --- SCORE SUM TAB (24H Only) ---
         const scoreSumListEl = document.getElementById('score-sum-list');
-        const is24H = (state.time_limit >= 7200) || (state.room_id && (state.room_id.includes('24h') || state.room_id.includes('86400')));
         if (scoreSumListEl && is24H) {
             if (state.daily_score_sums && Array.isArray(state.daily_score_sums)) {
                 window._dailyScoreSumsData = state.daily_score_sums.filter(p => (typeof p.score_sum === 'number' ? p.score_sum : parseInt(p.score_sum, 10)) > 0);
