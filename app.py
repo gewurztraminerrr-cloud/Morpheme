@@ -3810,13 +3810,35 @@ def prune_forum_threads():
     if not is_mod(session.get('username')):
         return jsonify({'error': 'Unauthorized'}), 403
     data = request.get_json(silent=True) or {}
-    limit = data.get('limit', 300)
+    default_limit = data.get('limit', 300)
     try:
-        limit = int(limit)
+        default_limit = int(default_limit)
     except (ValueError, TypeError):
-        limit = 300
-    if limit < 1:
-        limit = 300
+        default_limit = 300
+    if default_limit < 1:
+        default_limit = 300
+
+    raw_cat_ids = data.get('category_ids')
+    selected_cat_ids = None
+    if raw_cat_ids is not None:
+        selected_cat_ids = set()
+        for cid in raw_cat_ids:
+            try:
+                selected_cat_ids.add(int(cid))
+            except (ValueError, TypeError):
+                pass
+
+    cat_limits = {}
+    raw_limits = data.get('category_limits', {})
+    if isinstance(raw_limits, dict):
+        for k, v in raw_limits.items():
+            try:
+                cid = int(k)
+                lim = int(v)
+                if lim >= 1:
+                    cat_limits[cid] = lim
+            except (ValueError, TypeError):
+                pass
 
     conn = sqlite3.connect(DB_PATH, timeout=30)
     try:
@@ -3825,6 +3847,12 @@ def prune_forum_threads():
         category_results = []
         
         for cat_id, cat_name in categories:
+            # If specific categories were selected, only affect those categories!
+            if selected_cat_ids is not None and cat_id not in selected_cat_ids:
+                continue
+
+            limit = cat_limits.get(cat_id, default_limit)
+
             # Query all posts in category ordered by:
             # 1. is_pinned DESC (preserve pinned threads)
             # 2. last_activity DESC (most recent comment timestamp or post timestamp)
@@ -3861,7 +3889,8 @@ def prune_forum_threads():
                     'category_name': cat_name,
                     'before_count': post_count,
                     'pruned_count': pruned_this_cat,
-                    'after_count': limit
+                    'after_count': limit,
+                    'limit': limit
                 })
             else:
                 category_results.append({
@@ -3869,14 +3898,24 @@ def prune_forum_threads():
                     'category_name': cat_name,
                     'before_count': post_count,
                     'pruned_count': 0,
-                    'after_count': post_count
+                    'after_count': post_count,
+                    'limit': limit
                 })
                 
-        msg = f"Pruning complete. {total_pruned} threads pruned across {len(category_results)} categories (capped at {limit} active threads per category)." if total_pruned > 0 else f"All categories already have {limit} or fewer threads. No threads pruned."
+        if selected_cat_ids is not None:
+            scope_desc = f"{len(category_results)} selected categories"
+        else:
+            scope_desc = f"{len(category_results)} categories"
+
+        if total_pruned > 0:
+            msg = f"Pruning complete. {total_pruned} threads pruned across {scope_desc}."
+        else:
+            msg = f"No threads pruned. All {scope_desc} are already within their specified thread limits."
+
         return jsonify({
             'success': True,
             'total_pruned': total_pruned,
-            'max_threads_per_category': limit,
+            'max_threads_per_category': default_limit,
             'categories': category_results,
             'message': msg
         })

@@ -6668,32 +6668,47 @@
                                 ✂️ Prune Category Threads
                             </div>
                             <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 14px; line-height: 1.5;">
-                                Set the maximum number of most recently-replied threads to keep alive in each Category.
-                                Any threads beyond this limit (based on latest reply timestamp or creation date) will be permanently pruned along with their replies, reactions, and bookmarks. Pinned threads are prioritized and preserved.
+                                Set thread capacity individually per Category, or apply a bulk limit. Select one or more Categories to prune only those chosen. Any threads beyond a Category's limit (based on latest reply or creation date) will be permanently pruned along with their replies, reactions, and bookmarks. Pinned threads are prioritized and preserved.
                             </p>
                             
                             <!-- Control Row: Number Input & Action Buttons -->
-                            <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: center;">
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center;">
                                 <div style="display: inline-flex; align-items: center; gap: 8px; background: var(--bg-surface); padding: 6px 12px; border-radius: 6px; border: 1px solid var(--input-border);">
                                     <label for="forum-thread-keep-limit-input" style="font-size: 0.85rem; color: var(--text-secondary); margin: 0; white-space: nowrap; font-weight: 600;">
-                                        Threads to Keep Alive:
+                                        Bulk Limit:
                                     </label>
-                                    <input type="number" id="forum-thread-keep-limit-input" value="300" min="1" max="10000" step="10" style="width: 80px; padding: 5px 8px; text-align: center; font-weight: 700; border-radius: 4px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); font-size: 0.95rem;">
+                                    <input type="number" id="forum-thread-keep-limit-input" value="300" min="1" max="10000" step="10" style="width: 75px; padding: 5px 8px; text-align: center; font-weight: 700; border-radius: 4px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); font-size: 0.95rem;">
+                                    <button type="button" id="forum-apply-bulk-limit-btn" style="padding: 5px 10px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background: rgba(59, 130, 246, 0.15); color: #3b82f6; border: 1px solid rgba(59, 130, 246, 0.35); cursor: pointer; white-space: nowrap;" title="Apply this limit to all selected categories (or all categories if none selected)">
+                                        Apply to Selected
+                                    </button>
                                 </div>
-                                <button type="button" id="prune-forum-threads-btn" class="mod-full-btn remove" style="min-width: 210px; background: #dc2626; border-color: #b91c1c; color: #ffffff; font-weight: 700;">
-                                    ✂️ Prune Threads to Top 300
+
+                                <div style="display: inline-flex; gap: 6px; align-items: center;">
+                                    <button type="button" id="forum-select-all-btn" class="mod-btn" style="padding: 6px 12px; font-size: 0.82rem; font-weight: 600; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--input-border); cursor: pointer; color: var(--text-primary);">
+                                        Select All
+                                    </button>
+                                    <button type="button" id="forum-deselect-all-btn" class="mod-btn" style="padding: 6px 12px; font-size: 0.82rem; font-weight: 600; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--input-border); cursor: pointer; color: var(--text-primary);">
+                                        Deselect All
+                                    </button>
+                                </div>
+
+                                <button type="button" id="prune-forum-threads-btn" class="mod-full-btn remove" style="min-width: 210px; background: #dc2626; border-color: #b91c1c; color: #ffffff; font-weight: 700; cursor: pointer;">
+                                    ✂️ Prune Selected Categories
                                 </button>
-                                <button type="button" id="refresh-forum-threads-btn" class="mod-full-btn" style="min-width: 140px; background: var(--bg-surface); border: 1px solid var(--input-border);">
+                                <button type="button" id="refresh-forum-threads-btn" class="mod-full-btn" style="min-width: 130px; background: var(--bg-surface); border: 1px solid var(--input-border); cursor: pointer;">
                                     🔄 Refresh Status
                                 </button>
                             </div>
 
                             <!-- Category breakdown list -->
-                            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-primary); display: flex; justify-content: space-between; align-items: center;">
-                                <span>Category Thread Status</span>
+                            <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 8px; color: var(--text-primary); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px;">
+                                <span>
+                                    Category Thread Status
+                                    <span id="forum-selection-summary" style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary); margin-left: 6px;">(0 selected)</span>
+                                </span>
                                 <span id="forum-total-summary-badge" style="font-size: 0.78rem; padding: 2px 8px; border-radius: 6px; background: var(--bg-surface); border: 1px solid var(--card-border, rgba(0,0,0,0.1));">Loading...</span>
                             </div>
-                            <div id="forum-categories-list-container" style="background: var(--bg-surface); border: 1px solid var(--card-border, rgba(0,0,0,0.1)); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto;">
+                            <div id="forum-categories-list-container" style="background: var(--bg-surface); border: 1px solid var(--card-border, rgba(0,0,0,0.1)); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; max-height: 480px; overflow-y: auto;">
                                 <div style="text-align: center; padding: 16px; color: var(--text-secondary); font-size: 0.85rem;">
                                     Loading categories...
                                 </div>
@@ -10810,7 +10825,7 @@
     <script src="/js/tools.js?v=1795390001"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1795260000"></script>
+    <script src="/js/mods.js?v=1795390033"></script>
     <script src="/js/private_matches.js?v=1795390031"></script>
     <script src="/js/donate.js?v=33806"></script>
     
