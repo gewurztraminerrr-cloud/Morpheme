@@ -1615,7 +1615,6 @@ class GameRoom:
         # Check if 3D board [face][row][col]
         is_3d = (board and isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list))
         
-        MAX_SHADES = 5
         print(f"[Density] Initializing for format={board_format}. Board: is_3d={is_3d}. Words with paths: {len(all_words_paths) if all_words_paths else 0}")
         if is_3d:
             depth, rows, cols = len(board), len(board[0]), len(board[0][0])
@@ -1644,15 +1643,7 @@ class GameRoom:
                         if raw_counts[f][r][c] > max_count:
                             max_count = raw_counts[f][r][c]
 
-            density_grid = [[[0 for _ in range(cols)] for _ in range(rows)] for _ in range(depth)]
-            for f in range(depth):
-                for r in range(rows):
-                    for c in range(cols):
-                        cnt = raw_counts[f][r][c]
-                        if cnt > 0 and max_count > 0:
-                            density_grid[f][r][c] = min(MAX_SHADES, max(1, math.ceil((cnt / max_count) * MAX_SHADES)))
-                        else:
-                            density_grid[f][r][c] = 0
+            density_grid = raw_counts
         else:
             rows, cols = len(board), len(board[0])
             raw_counts = [[0 for _ in range(cols)] for _ in range(rows)]
@@ -1671,16 +1662,9 @@ class GameRoom:
                     if raw_counts[r][c] > max_count:
                         max_count = raw_counts[r][c]
 
-            density_grid = [[0 for _ in range(cols)] for _ in range(rows)]
-            for r in range(rows):
-                for c in range(cols):
-                    cnt = raw_counts[r][c]
-                    if cnt > 0 and max_count > 0:
-                        density_grid[r][c] = min(MAX_SHADES, max(1, math.ceil((cnt / max_count) * MAX_SHADES)))
-                    else:
-                        density_grid[r][c] = 0
+            density_grid = raw_counts
         
-        max_d = MAX_SHADES
+        max_d = max(1, max_count)
 
         if is_staging:
             self.next_round_cell_density = [row[:] for row in density_grid] if not is_3d else [[row[:] for row in face] for face in density_grid]

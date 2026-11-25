@@ -9013,15 +9013,26 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                     let densityStyle = "";
                     if (window.lastGameState && window.lastGameState.cell_density && bFormat && bFormat.toLowerCase().includes('density')) {
                          const grid = window.lastGameState.cell_density;
-                         const maxD = Math.max(1, (state && state.max_cell_density) || (window.lastGameState && window.lastGameState.max_cell_density) || 5);
+                         let maxD = (state && state.max_cell_density) || (window.lastGameState && window.lastGameState.max_cell_density) || 0;
+                         if (!maxD && grid && Array.isArray(grid)) {
+                             for (let f_idx of grid) {
+                                 if (Array.isArray(f_idx)) {
+                                     for (let r_idx of f_idx) {
+                                         if (Array.isArray(r_idx)) {
+                                             for (let sub_v of r_idx) if (typeof sub_v === 'number' && sub_v > maxD) maxD = sub_v;
+                                         }
+                                     }
+                                 }
+                             }
+                         }
+                         maxD = Math.max(1, maxD);
                          if (grid && grid[f]) {
                              const cur = grid[f][r][c];
                              if (cur === 0) {
                                  densityStyle = "background: #ffffff !important; color: #000000 !important; box-shadow: inset 0 0 10px rgba(0,0,0,0.1) !important;";
                              } else if (cur > 0) {
-                                 // HIGH CONTRAST GRAYSCALE: Linear ratio matching 5-step implementation
                                  const ratio = Math.max(0, Math.min(1, cur / maxD));
-                                 const grayVal = Math.max(20, Math.round(100 - (ratio * 80)));
+                                 const grayVal = Math.min(97, Math.max(20, Math.round(100 - (ratio * 80))));
                                  const textColor = (grayVal <= 55) ? '#ffffff' : '#000000';
                                  densityStyle = `background: hsl(0, 0%, ${grayVal}%) !important; color: ${textColor} !important; transition: background 0.4s ease, color 0.4s ease;`;
                              }
@@ -9626,7 +9637,21 @@ function applyDensityToCell(cell, r = null, c = null, f = null, state = null) {
     if (hasDensityData && isDensityMode) {
          cell.classList.add('is-density');
          const grid = densityData;
-         const maxD = Math.max(1, (state && state.max_cell_density) || (window.lastGameState && window.lastGameState.max_cell_density) || 5);
+         let maxD = (state && state.max_cell_density) || (window.lastGameState && window.lastGameState.max_cell_density) || 0;
+         if (!maxD && grid && Array.isArray(grid)) {
+             for (let r_idx of grid) {
+                 if (Array.isArray(r_idx)) {
+                     for (let v_idx of r_idx) {
+                         if (Array.isArray(v_idx)) {
+                             for (let sub_v of v_idx) if (typeof sub_v === 'number' && sub_v > maxD) maxD = sub_v;
+                         } else if (typeof v_idx === 'number' && v_idx > maxD) {
+                             maxD = v_idx;
+                         }
+                     }
+                 }
+             }
+         }
+         maxD = Math.max(1, maxD);
          let cur = -1;
          
          if (typeof f !== 'undefined' && grid[f] && grid[f][r]) {
@@ -9642,8 +9667,8 @@ function applyDensityToCell(cell, r = null, c = null, f = null, state = null) {
              textColor = '#000000';
          } else if (cur > 0) {
              const ratio = Math.max(0, Math.min(1, cur / maxD));
-             // Linear 5-step range: 20% (darkest) to 100% (white) - exactly one shade lighter per valid word
-             grayLightness = Math.max(20, Math.round(100 - (ratio * 80)));
+             // Linear range based on remaining words: 20% (darkest) to 97% (almost white until 0 remaining words)
+             grayLightness = Math.min(97, Math.max(20, Math.round(100 - (ratio * 80))));
              hslColor = `hsl(0, 0%, ${grayLightness}%)`;
              textColor = (grayLightness <= 55) ? '#ffffff' : '#000000';
          }
