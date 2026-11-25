@@ -3361,6 +3361,11 @@ async function _doUpdateGameState(incomingState = null) {
                 const remainingList = document.getElementById('remaining-words-list');
                 if (remainingList) remainingList.innerHTML = '';
 
+                // Immediately reset and render Word Length Radar for the new round
+                if (typeof updateWordLengthRadar === 'function') {
+                    updateWordLengthRadar(state);
+                }
+
                 // User Request: In game rooms, change to the "VIEW ALL" state of the Players list immediately at the start and end of a round.
                 resetPlayersToViewAll();
 
@@ -4555,23 +4560,27 @@ function updateWordLengthRadar(state) {
 
     // 1. Calculate Totals By Length for the board
     let totalByLen = {};
-    if (!isIntermission && state.total_counts_by_len) {
-        totalByLen = state.total_counts_by_len;
-    } else {
-        totalByLen = state.previous_total_counts_by_len || state.total_counts_by_len || {};
-    }
+    const wordList = isIntermission
+        ? ((state.previous_all_words && state.previous_all_words.length > 0) ? state.previous_all_words : (state.all_words || []))
+        : (state.all_words || []);
 
-    // Check if we can derive from all_words
-    const wordList = isIntermission ? (state.previous_all_words || state.all_words) : state.all_words;
     if (wordList && Array.isArray(wordList) && wordList.length > 0) {
-        const fromList = {};
         wordList.forEach(w => {
             const str = (typeof w === 'string' ? w : (w && w.word) || '');
-            if (str && str.length > 0) fromList[str.length] = (fromList[str.length] || 0) + 1;
+            if (str && str.length > 0) {
+                totalByLen[str.length] = (totalByLen[str.length] || 0) + 1;
+            }
         });
-        const validKeys = Object.keys(totalByLen).filter(k => !k.startsWith('_') && parseInt(totalByLen[k], 10) > 0);
-        if (validKeys.length === 0) {
-            totalByLen = fromList;
+    }
+
+    const validLengths = Object.keys(totalByLen).filter(k => !k.startsWith('_') && parseInt(totalByLen[k], 10) > 0);
+    if (validLengths.length === 0) {
+        if (!isIntermission && state.total_counts_by_len && (!state.total_counts_by_len._round || state.total_counts_by_len._round === state.current_round)) {
+            totalByLen = { ...state.total_counts_by_len };
+        } else if (isIntermission) {
+            totalByLen = { ...(state.previous_total_counts_by_len || state.total_counts_by_len || {}) };
+        } else if (state.total_counts_by_len) {
+            totalByLen = { ...state.total_counts_by_len };
         }
     }
 
@@ -4588,9 +4597,15 @@ function updateWordLengthRadar(state) {
             (currentUserId && p.user_id && String(p.user_id) === String(currentUserId))
         ) : null;
         if (me) {
-            const pWords = (me.submitted_words && Array.isArray(me.submitted_words) && me.submitted_words.length > 0)
-                ? me.submitted_words
-                : (me.previous_submitted_words || []);
+            let pWords = [];
+            if (isIntermission) {
+                pWords = (me.submitted_words && Array.isArray(me.submitted_words) && me.submitted_words.length > 0)
+                    ? me.submitted_words
+                    : (me.previous_submitted_words || []);
+            } else {
+                // When round is active, strictly count words submitted in this active round! Never fall back to previous round!
+                pWords = (me.submitted_words && Array.isArray(me.submitted_words)) ? me.submitted_words : [];
+            }
             myFoundStrs = pWords.map(w => (typeof w === 'string' ? w : (w && w.word) || '').toUpperCase()).filter(w => w && !w.includes('?'));
         }
     }
@@ -4678,7 +4693,9 @@ function updateWordLengthRadar(state) {
         '5L': 'linear-gradient(90deg, #f59e0b, #fbbf24)',
         '6L': 'linear-gradient(90deg, #8b5cf6, #a78bfa)',
         '7L': 'linear-gradient(90deg, #ec4899, #f472b6)',
+        '7L+': 'linear-gradient(90deg, #ec4899, #f472b6)',
         '8L': 'linear-gradient(90deg, #6366f1, #818cf8)',
+        '8L+': 'linear-gradient(90deg, #6366f1, #818cf8)',
         'default': 'linear-gradient(90deg, #6366f1, #a855f7)'
     };
 
@@ -14795,6 +14812,11 @@ function resetPlayUI() {
 
     // Refresh layout sizing
     setTimeout(checkBoardOverflow, 100);
+
+    // Refresh and sync Word Length Radar on UI reset
+    if (typeof updateWordLengthRadar === 'function' && window.lastGameState) {
+        updateWordLengthRadar(window.lastGameState);
+    }
 }
 
 async function initTournamentPlay() {
