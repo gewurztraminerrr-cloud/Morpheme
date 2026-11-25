@@ -3079,9 +3079,9 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     overscroll-behavior-y: contain;
     touch-action: pan-y;
     /* Scrollable list */
-    padding-left: 22px;
+    padding-left: 8px;
     padding-right: 8px;
-    /* Space for scrollbar and active glowing indicator pin */
+    /* Equal padding on left and right side of cell */
     margin-bottom: 10px;
 }
 
@@ -3103,9 +3103,9 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     overscroll-behavior-y: contain;
     touch-action: pan-y;
     /* Scrollable list */
-    padding-left: 22px;
+    padding-left: 8px;
     padding-right: 8px;
-    /* Space for scrollbar and active glowing indicator pin */
+    /* Equal padding on left and right side of cell */
     margin-bottom: 10px;
 }
 
@@ -3530,10 +3530,10 @@ body.theme-light-gray .notepad-item.bonus-word:not(.finder-active) .word-text {
 #previous-words-list .word-item.finder-active::before {
     content: '▶' !important;
     position: absolute !important;
-    left: -20px !important;
+    left: -7px !important;
     top: 50% !important;
     transform: translateY(-50%);
-    font-size: 13px !important;
+    font-size: 10px !important;
     line-height: 1 !important;
     color: var(--selected-border-color, #60a5fa) !important;
     filter: drop-shadow(0 0 6px var(--selected-border-color, #3b82f6)) drop-shadow(0 0 12px var(--selected-border-color, rgba(96, 165, 250, 0.8)));
