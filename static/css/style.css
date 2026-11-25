@@ -5160,6 +5160,127 @@ body.is-mobile #mini-profile-ban-btn {
     color: rgba(255, 255, 255, 0.65) !important;
 }
 
+/* Lighter-Colored Layouts Overrides (High-contrast, crystal clear green rows & text) */
+[class*="theme-white"] .walkthrough-item.is-got,
+[class*="theme-light"] .walkthrough-item.is-got,
+[class*="theme-light-"] .walkthrough-item.is-got,
+body.theme-white .walkthrough-item.is-got,
+body.theme-light .walkthrough-item.is-got,
+body.theme-light-gray .walkthrough-item.is-got,
+html[class*="theme-white"] .walkthrough-item.is-got,
+html[class*="theme-light"] .walkthrough-item.is-got {
+    background: #dcfce7 !important;
+    border-left: 4px solid #16a34a !important;
+    border-bottom: 1px solid #bbf7d0 !important;
+    border-radius: 6px !important;
+}
+
+[class*="theme-white"] .walkthrough-item.is-got::before,
+[class*="theme-light"] .walkthrough-item.is-got::before,
+[class*="theme-light-"] .walkthrough-item.is-got::before,
+body.theme-white .walkthrough-item.is-got::before,
+body.theme-light .walkthrough-item.is-got::before,
+body.theme-light-gray .walkthrough-item.is-got::before,
+html[class*="theme-white"] .walkthrough-item.is-got::before,
+html[class*="theme-light"] .walkthrough-item.is-got::before {
+    background: #16a34a !important;
+    border: 3px solid #ffffff !important;
+    box-shadow: 0 0 0 1.5px #15803d, 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+}
+
+[class*="theme-white"] .walkthrough-item.is-got .walkthrough-word,
+[class*="theme-light"] .walkthrough-item.is-got .walkthrough-word,
+[class*="theme-light-"] .walkthrough-item.is-got .walkthrough-word,
+body.theme-white .walkthrough-item.is-got .walkthrough-word,
+body.theme-light .walkthrough-item.is-got .walkthrough-word,
+body.theme-light-gray .walkthrough-item.is-got .walkthrough-word,
+html[class*="theme-white"] .walkthrough-item.is-got .walkthrough-word,
+html[class*="theme-light"] .walkthrough-item.is-got .walkthrough-word {
+    color: #14532d !important;
+    font-weight: 900 !important;
+    text-shadow: none !important;
+}
+
+[class*="theme-white"] .walkthrough-item.is-got .walkthrough-badge-got,
+[class*="theme-light"] .walkthrough-item.is-got .walkthrough-badge-got,
+[class*="theme-light-"] .walkthrough-item.is-got .walkthrough-badge-got,
+body.theme-white .walkthrough-item.is-got .walkthrough-badge-got,
+body.theme-light .walkthrough-item.is-got .walkthrough-badge-got,
+body.theme-light-gray .walkthrough-item.is-got .walkthrough-badge-got,
+html[class*="theme-white"] .walkthrough-item.is-got .walkthrough-badge-got,
+html[class*="theme-light"] .walkthrough-item.is-got .walkthrough-badge-got {
+    background: #16a34a !important;
+    color: #ffffff !important;
+    border: 1px solid #15803d !important;
+    font-weight: 800 !important;
+    box-shadow: 0 1px 2px rgba(22, 101, 52, 0.25) !important;
+}
+
+[class*="theme-white"] .walkthrough-item.is-got .walkthrough-pts,
+[class*="theme-light"] .walkthrough-item.is-got .walkthrough-pts,
+[class*="theme-light-"] .walkthrough-item.is-got .walkthrough-pts,
+body.theme-white .walkthrough-item.is-got .walkthrough-pts,
+body.theme-light .walkthrough-item.is-got .walkthrough-pts,
+body.theme-light-gray .walkthrough-item.is-got .walkthrough-pts,
+html[class*="theme-white"] .walkthrough-item.is-got .walkthrough-pts,
+html[class*="theme-light"] .walkthrough-item.is-got .walkthrough-pts {
+    background: #bbf7d0 !important;
+    color: #14532d !important;
+    border: 1.5px solid #86efac !important;
+    font-weight: 800 !important;
+}
+
+[class*="theme-white"] .walkthrough-item.is-got .walkthrough-time,
+[class*="theme-light"] .walkthrough-item.is-got .walkthrough-time,
+[class*="theme-light-"] .walkthrough-item.is-got .walkthrough-time,
+body.theme-white .walkthrough-item.is-got .walkthrough-time,
+body.theme-light .walkthrough-item.is-got .walkthrough-time,
+body.theme-light-gray .walkthrough-item.is-got .walkthrough-time,
+html[class*="theme-white"] .walkthrough-item.is-got .walkthrough-time,
+html[class*="theme-light"] .walkthrough-item.is-got .walkthrough-time {
+    color: #15803d !important;
+    font-weight: 800 !important;
+}
+
+[class*="theme-white"] .walkthrough-item.is-missed .walkthrough-word,
+[class*="theme-light"] .walkthrough-item.is-missed .walkthrough-word,
+[class*="theme-light-"] .walkthrough-item.is-missed .walkthrough-word,
+body.theme-white .walkthrough-item.is-missed .walkthrough-word,
+body.theme-light .walkthrough-item.is-missed .walkthrough-word,
+body.theme-light-gray .walkthrough-item.is-missed .walkthrough-word,
+html[class*="theme-white"] .walkthrough-item.is-missed .walkthrough-word,
+html[class*="theme-light"] .walkthrough-item.is-missed .walkthrough-word {
+    color: #1e293b !important;
+    font-weight: 700 !important;
+}
+
+[class*="theme-white"] .walkthrough-item.is-missed .walkthrough-pts,
+[class*="theme-light"] .walkthrough-item.is-missed .walkthrough-pts,
+[class*="theme-light-"] .walkthrough-item.is-missed .walkthrough-pts,
+body.theme-white .walkthrough-item.is-missed .walkthrough-pts,
+body.theme-light .walkthrough-item.is-missed .walkthrough-pts,
+body.theme-light-gray .walkthrough-item.is-missed .walkthrough-pts,
+html[class*="theme-white"] .walkthrough-item.is-missed .walkthrough-pts,
+html[class*="theme-light"] .walkthrough-item.is-missed .walkthrough-pts {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #cbd5e1 !important;
+    font-weight: 700 !important;
+}
+
+[class*="theme-white"] .walkthrough-item.is-missed::before,
+[class*="theme-light"] .walkthrough-item.is-missed::before,
+[class*="theme-light-"] .walkthrough-item.is-missed::before,
+body.theme-white .walkthrough-item.is-missed::before,
+body.theme-light .walkthrough-item.is-missed::before,
+body.theme-light-gray .walkthrough-item.is-missed::before,
+html[class*="theme-white"] .walkthrough-item.is-missed::before,
+html[class*="theme-light"] .walkthrough-item.is-missed::before {
+    background: #94a3b8 !important;
+    border: 3px solid #ffffff !important;
+    box-shadow: 0 0 0 1px #cbd5e1 !important;
+}
+
 .section-hint {
     font-size: 0.8rem;
     color: rgba(var(--text-primary-rgb), 0.5);
