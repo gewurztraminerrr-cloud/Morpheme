@@ -7412,6 +7412,35 @@ body[class*="theme-white"] #mod-tab-ban #timeout-hours-input {
     color: var(--highlight-typing-text-color, #000) !important;
 }
 
+/* Density format: keep tile background shades in place during word entry */
+.game-board.format-density .board-cell.typing-highlight,
+.board-cell.is-density.typing-highlight,
+.cube-face .board-cell.typing-highlight.is-density,
+.cube-cell.typing-highlight.is-density {
+    outline: 2px solid #ffffff !important;
+    outline-offset: -2px !important;
+    box-shadow: inset 0 0 0 3px #ffcc00, 0 0 14px rgba(255, 204, 0, 0.7) !important;
+}
+
+.game-board.format-density .board-cell.typing-highlight[data-letter],
+.board-cell.is-density.typing-highlight[data-letter] {
+    color: inherit !important;
+}
+
+.game-board.format-density .board-cell.selected,
+.board-cell.is-density.selected,
+.cube-face .board-cell.selected.is-density,
+.cube-cell.selected.is-density {
+    outline: 2px solid #ffffff !important;
+    outline-offset: -2px !important;
+    box-shadow: inset 0 0 0 3px #3b82f6, 0 0 14px rgba(59, 130, 246, 0.7) !important;
+}
+
+.game-board.format-density .board-cell.selected[data-letter],
+.board-cell.is-density.selected[data-letter] {
+    color: inherit !important;
+}
+
 .board-cell.review-highlight {
     background: #ffd700 !important;
     /* Gold */

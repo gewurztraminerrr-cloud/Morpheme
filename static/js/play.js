@@ -8875,6 +8875,23 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
         return;
     }
 
+    // In-place Density Update: If only cell density changed (letters and board structure unchanged),
+    // update tile shading in place without destroying and rebuilding board DOM!
+    if (boardJSON === lastRenderedBoardJSON && 
+        grayed === lastRenderedGrayed && 
+        isBoardRotated === lastRenderedRotation && 
+        isUserTransposed === lastRenderedUserTranspose &&
+        boardEl.classList.contains('game-board') &&
+        boardEl.querySelectorAll('.board-cell').length > 0) {
+        lastRenderedDensityJSON = densityJSON;
+        boardEl.querySelectorAll('.board-cell').forEach(cell => {
+            applyDensityToCell(cell, null, null, null, state);
+        });
+        reapplyBoardHighlights();
+        if (typeof checkBoardOverflow === 'function') checkBoardOverflow();
+        return;
+    }
+
     // GESTURE SAFETY: If user is actively holding down/swiping tiles with a path in progress, defer board DOM replacement until touch/mouse release
     if (typeof mouseState !== 'undefined' && mouseState && mouseState.isDown && mouseState.selectedPath && mouseState.selectedPath.length > 0 && lastRenderedBoardJSON !== null) {
         console.log('[play.js] Deferring board re-render while user is actively swiping a word');
@@ -8889,6 +8906,10 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
     lastRenderedUserTranspose = isUserTransposed;
 
     boardEl.className = isSubanagrams ? 'game-board is-subanagrams-board' : 'game-board';
+    const activeFmt = (state && state.current_board_format) ? state.current_board_format : ((window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal');
+    const isDensityFmt = activeFmt.toLowerCase().includes('density');
+    boardEl.classList.toggle('format-density', isDensityFmt);
+    document.body.classList.toggle('format-density', isDensityFmt);
     [
         'display', 'flex-direction', 'align-items', 'justify-content',
         'grid-template-columns', 'grid-template-rows', 'grid-column', 'grid-row',
@@ -8972,23 +8993,16 @@ function renderBoard(board, grayed = false, is3D = false, state = null) {
                     let densityStyle = "";
                     if (window.lastGameState && window.lastGameState.cell_density && bFormat && bFormat.toLowerCase().includes('density')) {
                          const grid = window.lastGameState.cell_density;
-                         const maxD = window.lastGameState.max_cell_density || 1;
+                         const maxD = Math.max(1, (state && state.max_cell_density) || (window.lastGameState && window.lastGameState.max_cell_density) || 5);
                          if (grid && grid[f]) {
                              const cur = grid[f][r][c];
                              if (cur === 0) {
                                  densityStyle = "background: #ffffff !important; color: #000000 !important; box-shadow: inset 0 0 10px rgba(0,0,0,0.1) !important;";
-                             } else {
-                                 // HIGH CONTRAST GRAYSCALE: Normalizing by GLOBAL MAX density
+                             } else if (cur > 0) {
+                                 // HIGH CONTRAST GRAYSCALE: Linear ratio matching 5-step implementation
                                  const ratio = Math.max(0, Math.min(1, cur / maxD));
-                                 // 100% (white) to 0% (black)
-                                 const grayVal = Math.round(100 - (ratio * 100));
-                                 let textColor;
-                                 if (grayVal <= 60) {
-                                     textColor = '#ffffff';
-                                 } else {
-                                     const textL = Math.round(20 * (100 - grayVal) / 40);
-                                     textColor = `hsl(0, 0%, ${textL}%)`;
-                                 }
+                                 const grayVal = Math.max(20, Math.round(100 - (ratio * 80)));
+                                 const textColor = (grayVal <= 55) ? '#ffffff' : '#000000';
                                  densityStyle = `background: hsl(0, 0%, ${grayVal}%) !important; color: ${textColor} !important; transition: background 0.4s ease, color 0.4s ease;`;
                              }
                          }
@@ -9567,33 +9581,32 @@ function applyDensityToCell(cell, r = null, c = null, f = null, state = null) {
     const densityData = (state && state.cell_density) ? state.cell_density : (window.lastGameState && window.lastGameState.cell_density);
     const hasDensityData = densityData && Array.isArray(densityData) && densityData.length > 0;
     const boardFormat = (state && state.current_board_format) ? state.current_board_format : (window.lastGameState && window.lastGameState.current_board_format) || 'Normal';
-    
-    // USER REQUEST: If this is the bonus cell or has selection/flash highlights,
+    const isDensityMode = boardFormat.toLowerCase().includes('density');
+
+    // USER REQUEST: If this is the bonus cell or has celebratory flash highlights,
     // do NOT apply density shading to the background.
     // The highlight styles must take absolute precedence.
-    const isHighlighted = cell.classList.contains('selected') || 
-                          cell.classList.contains('current') || 
-                          cell.classList.contains('typing-highlight') || 
-                          cell.classList.contains('review-highlight') || 
-                          cell.classList.contains('intermission-highlight') || 
-                          cell.classList.contains('bonus-highlight') ||
-                          cell.classList.contains('tile-flash-blue') ||
-                          cell.classList.contains('tile-flash-green') ||
-                          cell.classList.contains('tile-flash-red') ||
-                          cell.classList.contains('tile-flash-purple');
-                          
-    if (isHighlighted) {
+    const isSpecialHighlight = cell.classList.contains('bonus-highlight') ||
+                               cell.classList.contains('tile-flash-blue') ||
+                               cell.classList.contains('tile-flash-green') ||
+                               cell.classList.contains('tile-flash-red') ||
+                               cell.classList.contains('tile-flash-purple');
+                               
+    if (isSpecialHighlight) {
         cell.style.removeProperty('background');
         cell.style.removeProperty('background-color');
         cell.style.removeProperty('color');
         cell.style.removeProperty('box-shadow');
+        cell.style.removeProperty('outline');
         cell.style.removeProperty('transition');
+        cell.classList.remove('is-density');
         return;
     }
 
-    if (hasDensityData && boardFormat.toLowerCase().includes('density')) {
+    if (hasDensityData && isDensityMode) {
+         cell.classList.add('is-density');
          const grid = densityData;
-         const maxD = Math.max(1, window.lastGameState.max_cell_density || 1);
+         const maxD = Math.max(1, (state && state.max_cell_density) || (window.lastGameState && window.lastGameState.max_cell_density) || 5);
          let cur = -1;
          
          if (typeof f !== 'undefined' && grid[f] && grid[f][r]) {
@@ -9602,18 +9615,20 @@ function applyDensityToCell(cell, r = null, c = null, f = null, state = null) {
              cur = grid[r][c];
          }
          
+         let hslColor, textColor, grayLightness;
          if (cur === 0) {
-             cell.style.setProperty('background', '#ffffff', 'important');
-             cell.style.setProperty('background-color', '#ffffff', 'important');
-             cell.style.setProperty('color', '#000000', 'important');
-             cell.style.setProperty('box-shadow', 'inset 0 0 10px rgba(0,0,0,0.1)', 'important');
+             grayLightness = 100;
+             hslColor = '#ffffff';
+             textColor = '#000000';
          } else if (cur > 0) {
-             // HIGH CONTRAST GRAYSCALE: Linear ratio matching 3D implementation
              const ratio = Math.max(0, Math.min(1, cur / maxD));
-             // Issue 6: Clamp to minimum 20% lightness so tiles are never pure black (always readable)
-             const grayLightness = Math.max(20, Math.round(100 - (ratio * 100)));
-             const hslColor = `hsl(0, 0%, ${grayLightness}%)`;
-             
+             // Linear 5-step range: 20% (darkest) to 100% (white) - exactly one shade lighter per valid word
+             grayLightness = Math.max(20, Math.round(100 - (ratio * 80)));
+             hslColor = `hsl(0, 0%, ${grayLightness}%)`;
+             textColor = (grayLightness <= 55) ? '#ffffff' : '#000000';
+         }
+
+         if (cur >= 0) {
              // Trigger animation if density changed
              const lastD = cell.dataset.lastD;
              if (lastD !== undefined && Number(lastD) !== cur) {
@@ -9623,29 +9638,45 @@ function applyDensityToCell(cell, r = null, c = null, f = null, state = null) {
              }
              cell.dataset.lastD = cur;
 
-              cell.style.setProperty('background', hslColor, 'important');
-              cell.style.setProperty('background-color', hslColor, 'important');
-              cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease', 'important');
-              
-              let textColor;
-              if (grayLightness <= 60) {
-                  textColor = '#ffffff';
-              } else {
-                  const textL = Math.round(20 * (100 - grayLightness) / 40);
-                  textColor = `hsl(0, 0%, ${textL}%)`;
-              }
-              cell.style.setProperty('color', textColor, 'important');
+             // Keep tile shades on the board firmly in place:
+             // The background and text color stay consistent and are never stripped during typing
+             cell.style.setProperty('background', hslColor, 'important');
+             cell.style.setProperty('background-color', hslColor, 'important');
+             cell.style.setProperty('color', textColor, 'important');
+             cell.style.setProperty('transition', 'background 0.4s ease, color 0.4s ease', 'important');
+
+             // Selection & typing highlights are shown via crisp outline / ring overlays,
+             // leaving the tile shade underneath completely undisturbed
+             if (cell.classList.contains('typing-highlight')) {
+                 cell.style.setProperty('box-shadow', 'inset 0 0 0 3px #ffcc00, 0 0 14px rgba(255, 204, 0, 0.7)', 'important');
+                 cell.style.setProperty('outline', '2px solid #ffffff', 'important');
+             } else if (cell.classList.contains('selected') || cell.classList.contains('current')) {
+                 cell.style.setProperty('box-shadow', 'inset 0 0 0 3px #3b82f6, 0 0 14px rgba(59, 130, 246, 0.7)', 'important');
+                 cell.style.setProperty('outline', '2px solid #ffffff', 'important');
+             } else if (cell.classList.contains('review-highlight') || cell.classList.contains('intermission-highlight')) {
+                 cell.style.setProperty('box-shadow', 'inset 0 0 0 3px #ffd700, 0 0 16px rgba(255, 215, 0, 0.8)', 'important');
+                 cell.style.setProperty('outline', '2px solid #ffffff', 'important');
+             } else {
+                 cell.style.removeProperty('outline');
+                 if (cur === 0) {
+                     cell.style.setProperty('box-shadow', 'inset 0 0 10px rgba(0,0,0,0.1)', 'important');
+                 } else {
+                     cell.style.removeProperty('box-shadow');
+                 }
+             }
          }
-    } else if (boardFormat.toLowerCase().includes('density')) {
+    } else if (isDensityMode) {
         // We have no density data BUT we are in density mode. 
         // Do NOT clear the style yet - wait for a state that has it.
         // This prevents the "brief flickers" during heartbeats.
     } else {
         // Reset ONLY if we are truly no longer in density format
+        cell.classList.remove('is-density');
         cell.style.removeProperty('background');
         cell.style.removeProperty('background-color');
         cell.style.removeProperty('color');
         cell.style.removeProperty('box-shadow');
+        cell.style.removeProperty('outline');
         cell.style.removeProperty('transition');
         delete cell.dataset.lastD;
     }

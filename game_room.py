@@ -1562,6 +1562,7 @@ class GameRoom:
 
     def initialize_density(self, board, all_words_paths, board_format, is_staging=False):
         """Pre-calculates word density per cell for the 'Density' format. Reset global tracking."""
+        import math
         self.global_round_found_words = set()
         
         fmt_low = str(board_format).lower()
@@ -1595,10 +1596,11 @@ class GameRoom:
         # Check if 3D board [face][row][col]
         is_3d = (board and isinstance(board[0], list) and len(board[0]) > 0 and isinstance(board[0][0], list))
         
+        MAX_SHADES = 5
         print(f"[Density] Initializing for format={board_format}. Board: is_3d={is_3d}. Words with paths: {len(all_words_paths) if all_words_paths else 0}")
         if is_3d:
             depth, rows, cols = len(board), len(board[0]), len(board[0][0])
-            density_grid = [[[0 for _ in range(cols)] for _ in range(rows)] for _ in range(depth)]
+            raw_counts = [[[0 for _ in range(cols)] for _ in range(rows)] for _ in range(depth)]
             words_processed = 0
             for word, path in (all_words_paths or {}).items():
                 if not path or not isinstance(path, (list, tuple)): continue
@@ -1613,32 +1615,53 @@ class GameRoom:
                         else: continue
                         
                         if 0 <= f < depth and 0 <= r < rows and 0 <= c < cols:
-                            density_grid[f][r][c] += 1
+                            raw_counts[f][r][c] += 1
                     except (IndexError, TypeError, ValueError): continue
+
+            max_count = 0
+            for f in range(depth):
+                for r in range(rows):
+                    for c in range(cols):
+                        if raw_counts[f][r][c] > max_count:
+                            max_count = raw_counts[f][r][c]
+
+            density_grid = [[[0 for _ in range(cols)] for _ in range(rows)] for _ in range(depth)]
+            for f in range(depth):
+                for r in range(rows):
+                    for c in range(cols):
+                        cnt = raw_counts[f][r][c]
+                        if cnt > 0 and max_count > 0:
+                            density_grid[f][r][c] = min(MAX_SHADES, max(1, math.ceil((cnt / max_count) * MAX_SHADES)))
+                        else:
+                            density_grid[f][r][c] = 0
         else:
             rows, cols = len(board), len(board[0])
-            density_grid = [[0 for _ in range(cols)] for _ in range(rows)]
+            raw_counts = [[0 for _ in range(cols)] for _ in range(rows)]
             for word, path in (all_words_paths or {}).items():
                 if not path or not isinstance(path, (list, tuple)): continue
                 for node in path:
                     try:
                         r, c = node[-2:]
                         if 0 <= r < rows and 0 <= c < cols:
-                            density_grid[r][c] += 1
+                            raw_counts[r][c] += 1
                     except (IndexError, TypeError, ValueError): continue
+
+            max_count = 0
+            for r in range(rows):
+                for c in range(cols):
+                    if raw_counts[r][c] > max_count:
+                        max_count = raw_counts[r][c]
+
+            density_grid = [[0 for _ in range(cols)] for _ in range(rows)]
+            for r in range(rows):
+                for c in range(cols):
+                    cnt = raw_counts[r][c]
+                    if cnt > 0 and max_count > 0:
+                        density_grid[r][c] = min(MAX_SHADES, max(1, math.ceil((cnt / max_count) * MAX_SHADES)))
+                    else:
+                        density_grid[r][c] = 0
         
-        # Find max density for heatmap normalization
-        import math
-        max_d = 0
-        if is_3d:
-            for f in range(len(density_grid)):
-                for r in range(len(density_grid[f])):
-                    for c in range(len(density_grid[f][r])):
-                        max_d = max(max_d, density_grid[f][r][c])
-        else:
-            for r in range(len(density_grid)):
-                for c in range(len(density_grid[r])):
-                    max_d = max(max_d, density_grid[r][c])
+        max_d = MAX_SHADES
 
         if is_staging:
             self.next_round_cell_density = [row[:] for row in density_grid] if not is_3d else [[row[:] for row in face] for face in density_grid]
@@ -1650,7 +1673,7 @@ class GameRoom:
             self.max_cell_density = max_d
             self.initialize_player_densities()
         
-        print(f"[Density] Initialization complete. Max density: {max_d}")
+        print(f"[Density] Initialization complete. Max density steps: {max_d}")
     
     def _recalculate_player_score(self, player):
         """
@@ -3107,7 +3130,7 @@ class GameRoom:
                 ai.submitted_words.append(wd)
                 
                 # USER: Density decrement for bots
-                self.update_density_for_word(wd['word'])
+                self.update_density_for_word(ai, wd['word'])
                 
                 # FCFS Sync for bots: Also add to shared room lists
                 if self.game_type == 'fcfs':
