@@ -1976,6 +1976,10 @@ class GameRoom:
         for pass_idx in range(2):
             req_range = target_range if pass_idx == 0 else None
             req_diff = diff_val if pass_idx == 0 else None
+            if getattr(self, 'is_solo', False) and getattr(self, 'initial_solo_params', None):
+                _solo_d_req = self.initial_solo_params.get('difficulty', 'random')
+                if _solo_d_req and str(_solo_d_req).lower() != 'random':
+                    req_diff = SpinnerSet.strip_difficulty_pct(_solo_d_req)
             for _ in range(10):
                 candidate = pop_compatible_cached_board(
                     self.board_dimensions,
@@ -2028,6 +2032,16 @@ class GameRoom:
                         print(f"[GameRoom] ensure_next_board_ready: Candidate had 0 Added Words for +AW dictionary. Discarding...")
                         continue
                 
+                if req_diff:
+                    _p_chk = self.board_dimensions.split('x')
+                    _d_chk = int(_p_chk[0]) if len(_p_chk) == 3 else 1
+                    _r_chk = int(_p_chk[1] if len(_p_chk) == 3 else _p_chk[0])
+                    _c_chk = int(_p_chk[2] if len(_p_chk) == 3 else _p_chk[1])
+                    _chk_d = _bg.get_difficulty_label(fr, rows=_r_chk, cols=_c_chk, dictionary=dict_val, depth=_d_chk, min_word_length=f_min_l)
+                    if _chk_d != req_diff:
+                        print(f"[GameRoom] ensure_next_board_ready: Candidate actual difficulty '{_chk_d}' != requested '{req_diff}'. Discarding...")
+                        continue
+
                 f_wc = req_range or (fparams.get('word_count_range', '100-200') if fparams else '100-200')
                 min_accept = 50
                 try:
@@ -3788,6 +3802,10 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         
         norm_target_diff = SpinnerSet.strip_difficulty_pct(difficulty) if difficulty else None
         diff_order = [norm_target_diff] if norm_target_diff else ['Medium', 'Easy', 'Hard']
+        _p_dims = str(dimensions).split("x")
+        _d_fb = int(_p_dims[0]) if len(_p_dims) == 3 else 1
+        _r_fb = int(_p_dims[1] if len(_p_dims) == 3 else _p_dims[0])
+        _c_fb = int(_p_dims[2] if len(_p_dims) == 3 else _p_dims[1])
         for (cml, ctr, cfmt, cdict, caw) in cache_candidates:
             for cdiff in diff_order:
                 try:
@@ -3796,14 +3814,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                     if cached and len(cached) >= 7:
                         cboard, cwords, cbonus_cell, cfmt_ret, cpaths, cratio, cbonus_word = cached[:7]
                         if norm_target_diff and not is_aw:
-                            if norm_target_diff == 'Hard' and cratio < 0.35:
-                                print(f"[get_emergency_fallback_board] Rejecting cached board with low ratio {cratio} for Hard difficulty target")
-                                continue
-                            elif norm_target_diff == 'Easy' and cratio > 0.25:
-                                print(f"[get_emergency_fallback_board] Rejecting cached board with high ratio {cratio} for Easy difficulty target")
-                                continue
-                            elif norm_target_diff == 'Medium' and (cratio <= 0.25 or cratio >= 0.35):
-                                print(f"[get_emergency_fallback_board] Rejecting cached board with ratio {cratio} outside Medium target")
+                            act_diff = bg.get_difficulty_label(cratio, _r_fb, _c_fb, base_dict, depth=_d_fb, min_word_length=cml)
+                            if act_diff != norm_target_diff:
+                                print(f"[get_emergency_fallback_board] Rejecting cached board with actual difficulty {act_diff} != target {norm_target_diff} (ratio {cratio})")
                                 continue
                         if cwords and len(cwords) >= 20:
                             print(f"[get_emergency_fallback_board] INSTANT CACHE HIT: min={cml}, range={ctr}, fmt={cfmt}, dict={cdict} → {len(cwords)} words")
@@ -3917,6 +3930,9 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
                         print(f"[get_emergency_fallback_board] Ultimate cached board has 0 CSW-only words for CSW dictionary. REJECTING...")
                     elif is_aw and aw_cnt_ult == 0:
                         print(f"[get_emergency_fallback_board] Ultimate cached board has 0 Added Words for +AW dictionary. REJECTING...")
+                    elif norm_target_diff and not is_aw and bg.get_difficulty_label(ratio, _r_fb, _c_fb, dictionary, depth=_d_fb, min_word_length=final_min) != norm_target_diff:
+                        act_diff_ult = bg.get_difficulty_label(ratio, _r_fb, _c_fb, dictionary, depth=_d_fb, min_word_length=final_min)
+                        print(f"[get_emergency_fallback_board] Ultimate cached board had actual difficulty {act_diff_ult} != target {norm_target_diff}. REJECTING cached board...")
                     else:
                         is_aw_ult = use_added_words or ('+ AW' in str(dictionary).upper()) or ('+AW' in str(dictionary).upper())
                         orig_base_dict = str(dictionary or 'NWL').replace('+ AW', '').replace('+AW', '').strip()
@@ -4207,7 +4223,8 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             print(f"[get_emergency_fallback_board] Background board generation error: {async_err}")
 
     threading.Thread(target=_async_bg_generate, daemon=True).start()
-    return board, words_filtered, bonus_cell, fmt, paths_filtered, 0.5, bonus_word, target_range_resolved, eparams
+    target_ratio_em = 0.08 if norm_diff_em == 'Easy' else (0.22 if norm_diff_em == 'Medium' else 0.40)
+    return board, words_filtered, bonus_cell, fmt, paths_filtered, target_ratio_em, bonus_word, target_range_resolved, eparams
 
     # Last resort if no static fallback exists in cache
     print(f"[get_emergency_fallback_board] CRITICAL: Static fallback cache empty! Returning empty mock board.")
@@ -5069,21 +5086,80 @@ class RoomManager:
                             s_diff = SpinnerSet.strip_difficulty_pct(s_sp.get('difficulty', 'Medium'))
                             s_wc = s_sp.get('word_count_range', '100-200')
                             
-                            # Fast non-blocking cache cascade for instant solo room creation (<5ms)
+                            is_explicit_diff = bool(isp.get('difficulty') and str(isp.get('difficulty')).lower() != 'random')
+                            is_explicit_fmt = bool(isp.get('board_format') and str(isp.get('board_format')).lower() != 'random')
+
+                            # Fast non-blocking cache cascade for instant solo room creation
+                            # Tier 1: Strict match with target difficulty and word count
                             pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw, bonus_word_len=s_bw_len, difficulty=s_diff, word_count_range=s_wc)
                             if not pre_pop:
+                                # Tier 2: Match target difficulty without strict word count
                                 pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw, bonus_word_len=s_bw_len, difficulty=s_diff)
                             if not pre_pop:
-                                pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw)
-                            if not pre_pop:
-                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=s_min_len, target_format=s_fmt, dictionary=s_dict, use_added_words=s_use_aw, word_count_range=s_wc)
-                            if not pre_pop:
-                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=s_min_len, target_format=s_fmt, dictionary=s_dict, use_added_words=s_use_aw)
-                            if not pre_pop:
-                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=s_min_len)
-                            if not pre_pop:
-                                pre_pop = pop_any_cached_board(room.board_dimensions)
-                            if not pre_pop:
+                                # Tier 3: Match target difficulty without bonus word len restriction
+                                pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw, difficulty=s_diff)
+                            
+                            if not pre_pop and not is_explicit_fmt:
+                                # If format was random, try Normal format with target difficulty
+                                pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, 'Normal', s_min_len, s_use_aw, difficulty=s_diff)
+
+                            # ONLY if difficulty was random can we drop difficulty to pop any cached board
+                            if not pre_pop and not is_explicit_diff:
+                                if not is_explicit_fmt:
+                                    pre_pop = pop_compatible_cached_board(room.board_dimensions, s_dict, s_fmt, s_min_len, s_use_aw)
+                                    if not pre_pop:
+                                        pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=s_min_len, target_format=s_fmt, dictionary=s_dict, use_added_words=s_use_aw, word_count_range=s_wc)
+                                    if not pre_pop:
+                                        pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=s_min_len, target_format=s_fmt, dictionary=s_dict, use_added_words=s_use_aw)
+                                    if not pre_pop:
+                                        pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=s_min_len)
+                                    if not pre_pop:
+                                        pre_pop = pop_any_cached_board(room.board_dimensions)
+
+                            # STRICT AUDIT: If difficulty was explicitly requested, ensure popped board's actual uniqueness ratio matches!
+                            if pre_pop and is_explicit_diff:
+                                _dims_parts = str(room.board_dimensions).lower().split('x')
+                                _d0 = int(_dims_parts[0]) if len(_dims_parts) == 3 else 1
+                                _r0 = int(_dims_parts[1] if len(_dims_parts) == 3 else _dims_parts[0])
+                                _c0 = int(_dims_parts[2] if len(_dims_parts) == 3 else _dims_parts[1])
+                                _chk_ratio = pre_pop[5]
+                                _act_diff = self.board_generator.get_difficulty_label(_chk_ratio, _r0, _c0, s_dict, depth=_d0, min_word_length=s_min_len)
+                                if _act_diff != s_diff:
+                                    print(f"[RoomManager] Popped cached board actual difficulty {_act_diff} != requested {s_diff}. Discarding pop...")
+                                    pre_pop = None
+
+                            # If cache had no compliant board, perform synchronous live generation with exact parameters
+                            if not pre_pop and (is_explicit_diff or is_explicit_fmt):
+                                print(f"[RoomManager] No cached board strictly matching {s_diff} / {s_fmt} for {room_id}. Performing live generation...")
+                                bonus_w_gen = self._get_bonus_word(length=s_bw_len, dictionary=s_dict) if hasattr(self, '_get_bonus_word') else 'PLANETS'
+                                live_res = self.board_generator.generate_board(
+                                    dimensions=room.board_dimensions,
+                                    bonus_word=bonus_w_gen,
+                                    word_count_range=s_wc,
+                                    board_format=s_fmt,
+                                    dictionary=s_dict,
+                                    min_word_length=s_min_len,
+                                    difficulty=s_diff,
+                                    timeout=4.0,
+                                    use_added_words=s_use_aw
+                                )
+                                if live_res and len(live_res) >= 6:
+                                    lb_b, lb_w, lb_c, lb_f, lb_p, lb_r = live_res[:6]
+                                    lb_bw = live_res[6] if len(live_res) >= 7 else bonus_w_gen
+                                    lb_params = {
+                                        'dictionary': s_dict,
+                                        'board_format': lb_f or s_fmt,
+                                        'min_word_length': s_min_len,
+                                        'word_count_range': s_wc,
+                                        'difficulty': s_diff,
+                                        'use_added_words': s_use_aw,
+                                        'bonus_word_len': len(lb_bw),
+                                        'dimensions': room.board_dimensions
+                                    }
+                                    pre_pop = (lb_b, lb_w, lb_c, lb_f, lb_p, lb_r, lb_bw, lb_params)
+                                    print(f"[RoomManager] Live generation succeeded for {room_id}: {s_fmt} {s_diff} ({lb_r:.2%}, {len(lb_w)} words)")
+
+                            if not pre_pop and not is_explicit_diff:
                                 pre_pop = get_emergency_fallback_board(
                                     room.board_dimensions, s_fmt, room.time_limit,
                                     dictionary=s_dict, use_added_words=s_use_aw, target_range=s_wc, min_word_length=s_min_len, difficulty=s_diff
@@ -5142,12 +5218,14 @@ class RoomManager:
                             wc_lbl = SpinnerSet.get_factchecked_wc_range(wc_cnt, use_added_words=raw_aw, dictionary=raw_dict)
 
                             # Construct spinner params ONCE from exact board parameters
-                            _create_diff_lbl = r_params.get('difficulty', 'Medium')
+                            _dims_parts = str(room.board_dimensions).lower().split('x')
+                            _d0 = int(_dims_parts[0]) if len(_dims_parts) == 3 else 1
+                            _r0 = int(_dims_parts[1] if len(_dims_parts) == 3 else _dims_parts[0])
+                            _c0 = int(_dims_parts[2] if len(_dims_parts) == 3 else _dims_parts[1])
+                            _actual_diff_base = self.board_generator.get_difficulty_label(r_ratio, _r0, _c0, raw_dict, depth=_d0, min_word_length=board_min_l)
+                            _create_diff_lbl = SpinnerSet.format_difficulty_with_pct(_actual_diff_base, r_ratio)
                             _target_bw_create = len(r_bonus_word) if r_bonus_word else 8
                             if room.is_solo and getattr(room, 'initial_solo_params', None):
-                                _solo_d_c = room.initial_solo_params.get('difficulty', 'random')
-                                if _solo_d_c and str(_solo_d_c).lower() != 'random':
-                                    _create_diff_lbl = SpinnerSet.format_difficulty_with_pct(SpinnerSet.strip_difficulty_pct(_solo_d_c), r_ratio)
                                 if 's_bw_len' in locals():
                                     _target_bw_create = s_bw_len
                             elif 'sp_kick' in locals() and isinstance(sp_kick, dict):
@@ -6070,9 +6148,18 @@ class RoomManager:
                             print(f"[RoomManager] Solo cached board format {sfmt} mismatch with {target_fmt}. Discarding pop...")
                             solo_pop = None
                         else:
-                            _rep, _rw, _rp = sync_board_checkerboard_and_resolve(self.board_generator, sboard, target_fmt, m_len, room.spinner_params.get('dictionary', 'NWL'), use_aw_flag, sbonus_cell)
-                            if _rep and _rw:
-                                swords, spaths = _rw, _rp
+                            _s_dims = room.board_dimensions.split('x')
+                            _s_d0 = int(_s_dims[0]) if len(_s_dims) == 3 else 1
+                            _s_r0 = int(_s_dims[1] if len(_s_dims) == 3 else _s_dims[0])
+                            _s_c0 = int(_s_dims[2] if len(_s_dims) == 3 else _s_dims[1])
+                            _act_s_diff = self.board_generator.get_difficulty_label(sratio, _s_r0, _s_c0, target_dict_raw, depth=_s_d0, min_word_length=m_len)
+                            if _act_s_diff != SpinnerSet.strip_difficulty_pct(target_diff_solo):
+                                print(f"[RoomManager] Solo cached board actual difficulty {_act_s_diff} != target {target_diff_solo}. Discarding pop...")
+                                solo_pop = None
+                            else:
+                                _rep, _rw, _rp = sync_board_checkerboard_and_resolve(self.board_generator, sboard, target_fmt, m_len, room.spinner_params.get('dictionary', 'NWL'), use_aw_flag, sbonus_cell)
+                                if _rep and _rw:
+                                    swords, spaths = _rw, _rp
 
                         if solo_pop:
                             swords_filtered = [w for w in swords if len(w) >= m_len]
