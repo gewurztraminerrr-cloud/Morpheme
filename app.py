@@ -8690,7 +8690,7 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
                                         if room.initial_solo_params.get('difficulty') and str(room.initial_solo_params.get('difficulty')).lower() != 'random':
                                             nd_diff = room.initial_solo_params['difficulty']
                                         if room.initial_solo_params.get('board_format') and str(room.initial_solo_params.get('board_format')).lower() != 'random':
-                                            nd_fmt = room.initial_solo_params['board_format']
+                                            nd_fmt = SpinnerSet.resolve_specific_format(room.initial_solo_params['board_format'], nd_fmt)
                                         if room.initial_solo_params.get('min_word_length') and str(room.initial_solo_params.get('min_word_length')).lower() != 'random':
                                             nd_min = room.initial_solo_params['min_word_length']
                                         if room.initial_solo_params.get('dictionary') and str(room.initial_solo_params.get('dictionary')).lower() != 'random':
@@ -8720,8 +8720,8 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
                                             if room.initial_solo_params.get('difficulty') and str(room.initial_solo_params.get('difficulty')).lower() != 'random':
                                                 room.next_round_spinner_params['difficulty'] = room.initial_solo_params['difficulty']
                                             if room.initial_solo_params.get('board_format') and str(room.initial_solo_params.get('board_format')).lower() != 'random':
-                                                room.next_round_spinner_params['board_format'] = room.initial_solo_params['board_format']
-                                                room.next_round_format = room.initial_solo_params['board_format']
+                                                room.next_round_spinner_params['board_format'] = SpinnerSet.resolve_specific_format(room.initial_solo_params['board_format'], room.next_round_spinner_params.get('board_format'))
+                                                room.next_round_format = room.next_round_spinner_params['board_format']
                                         room.solving_complete = True
                                     else:
                                         room.next_round_board = None
@@ -17810,9 +17810,10 @@ def create_solo_match():
         board_format = SpinnerSet._spin_board_format(is_24h=False, dimensions=board_dimensions)
     elif not board_format:
         board_format = 'Normal'
+    if not is_24h_room:
+        board_format = SpinnerSet.resolve_specific_format(board_format, None)
 
-    # First-round difficulty randomization
-    target_difficulty = parameters.get('difficulty', 'random')
+    # First-round difficulty randomization    target_difficulty = parameters.get('difficulty', 'random')
     if target_difficulty == 'random' or not target_difficulty:
         target_difficulty = SpinnerSet._spin_difficulty(board_dimensions)
 

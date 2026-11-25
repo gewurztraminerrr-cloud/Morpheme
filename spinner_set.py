@@ -495,6 +495,29 @@ class SpinnerSet:
         return result
 
     @staticmethod
+    def resolve_specific_format(requested, actual=None):
+        """Turn a generic format request into a concrete, displayable one.
+        'Mania' -> '<L> Mania' and 'Bounce' -> 'Bounce <N>x'. If the board's actual format
+        is already a concrete variant of the request, keep it so label and board always match."""
+        req = str(requested or '').strip()
+        low = req.lower()
+        act = str(actual or '').strip()
+        if low == 'mania':
+            parts = act.split()
+            if len(parts) == 2 and parts[1].lower() == 'mania' and len(parts[0]) == 1 and parts[0].isalpha():
+                return f"{parts[0].upper()} Mania"
+            if _rng.random() < 0.33:
+                letter = _rng.choice(['A', 'E', 'I', 'O', 'U'])
+            else:
+                letter = _rng.choice(list('BCDFGHJKLMNPQRSTVWXYZ'))
+            return f"{letter} Mania"
+        if low == 'bounce':
+            if act.lower().startswith('bounce ') and act.lower().endswith('x'):
+                return act
+            return _rng.choice(['Bounce 1x', 'Bounce 2x', 'Bounce 3x'])
+        return requested
+
+    @staticmethod
     def generate_subanagrams_params(previous_params=None):
         """Generate randomized parameters for Subanagrams mode adhering strictly to
         the Subanagrams Spinner Set Odds window in templates/index.html.

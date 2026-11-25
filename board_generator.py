@@ -529,6 +529,9 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                     
                 bonus_cell = tuple(data["bonus_cell"]) if data.get("bonus_cell") else None
                 board_format_ret = data.get("board_format_ret", data.get("board_format", target_format or "Normal"))
+                if not cached_mania_board_is_valid(board, board_format_ret):
+                    print(f"[BoardGen] Discarding any_cached board: format '{board_format_ret}' lacks its required letter abundance")
+                    continue
                 if target_format and not allow_format_relaxation:
                     if str(board_format_ret).strip().lower() != str(target_format).strip().lower():
                         continue
@@ -576,6 +579,32 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
             try: conn.close()
             except: pass
     return None
+
+def cached_mania_board_is_valid(board, board_format):
+    """A '<L> Mania' board must really contain its letter in the required abundance
+    (20% for uncommon letters, 33% otherwise). Non-Mania formats always pass."""
+    try:
+        parts = str(board_format or '').split()
+        if len(parts) != 2 or parts[1].lower() != 'mania':
+            return str(board_format or '').strip().lower() != 'mania'
+        letter = parts[0].upper()
+        if len(letter) != 1 or not letter.isalpha():
+            return False
+        flat = []
+        def _walk(x):
+            if isinstance(x, (list, tuple)):
+                for y in x: _walk(y)
+            else:
+                flat.append(str(x).upper())
+        _walk(board)
+        cells = [c for c in flat if c.strip()]
+        if not cells:
+            return False
+        ratio = 0.20 if letter in {'Q', 'Z', 'J', 'X', 'K'} else 0.33
+        need = max(2, round(len(cells) * ratio))
+        return sum(1 for c in cells if c == letter) >= need
+    except Exception:
+        return False
 
 def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len=None, word_count_range=None, difficulty=None):
     if isinstance(dimensions, (tuple, list)):
@@ -730,6 +759,12 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
                     return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
                 bonus_cell = tuple(data["bonus_cell"]) if data.get("bonus_cell") else None
                 board_format_ret = data.get("board_format_ret", board_format)
+                if not cached_mania_board_is_valid(board, board_format_ret):
+                    print(f"[BoardGen] Discarding compatible cached board: format '{board_format_ret}' lacks its required letter abundance")
+                    try: conn.close()
+                    except: pass
+                    conn = None
+                    return pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_length, use_added_words, bonus_word_len, word_count_range, difficulty)
                 bonus_cell = _sanitize_special_tiles_for_format(board, board_format_ret, bonus_cell)
                 
                 all_words_dict = {}
@@ -4420,6 +4455,8 @@ class BoardGenerator:
                 for c in range(cols):
                     for f in range(depth):
                         orig = board[f][r][c] if depth > 1 else board[r][c]
+                        if orig == getattr(self, 'active_mania_letter', None):
+                            continue
                         if orig in ['E', 'T', 'A', 'O', 'I', 'N', 'S', 'R']:
                             for b_char in rare_boosters:
                                 if depth > 1: board[f][r][c] = b_char
