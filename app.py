@@ -8682,11 +8682,24 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
                                     nd_fmt = sp_nxt.get('board_format', 'Normal')
                                     nd_min = sp_nxt.get('min_word_length', 3)
                                     nd_wc = sp_nxt.get('word_count_range', '300-400' if nd_aw else '100-200')
-                                    pre_next = pop_compatible_cached_board(room.board_dimensions, nd_dict, nd_fmt, nd_min, nd_aw)
+                                    nd_diff = sp_nxt.get('difficulty', 'Medium')
+                                    if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                                        if room.initial_solo_params.get('difficulty') and str(room.initial_solo_params.get('difficulty')).lower() != 'random':
+                                            nd_diff = room.initial_solo_params['difficulty']
+                                        if room.initial_solo_params.get('board_format') and str(room.initial_solo_params.get('board_format')).lower() != 'random':
+                                            nd_fmt = room.initial_solo_params['board_format']
+                                        if room.initial_solo_params.get('min_word_length') and str(room.initial_solo_params.get('min_word_length')).lower() != 'random':
+                                            nd_min = room.initial_solo_params['min_word_length']
+                                        if room.initial_solo_params.get('dictionary') and str(room.initial_solo_params.get('dictionary')).lower() != 'random':
+                                            nd_dict = room.initial_solo_params['dictionary']
+                                        if 'use_added_words' in room.initial_solo_params:
+                                            nd_aw = room.initial_solo_params['use_added_words']
+
+                                    pre_next = pop_compatible_cached_board(room.board_dimensions, nd_dict, nd_fmt, nd_min, nd_aw, difficulty=nd_diff)
                                     if not pre_next and nd_fmt == 'Normal':
-                                        pre_next = pop_any_cached_board(room.board_dimensions, min_word_length=nd_min, target_format='Normal', dictionary=nd_dict, use_added_words=nd_aw)
+                                        pre_next = pop_any_cached_board(room.board_dimensions, min_word_length=nd_min, target_format='Normal', dictionary=nd_dict, use_added_words=nd_aw, difficulty=nd_diff)
                                     if not pre_next:
-                                        pre_next = get_emergency_fallback_board(room.board_dimensions, nd_fmt, room.time_limit, dictionary=nd_dict, use_added_words=nd_aw, target_range=nd_wc, min_word_length=nd_min)
+                                        pre_next = get_emergency_fallback_board(room.board_dimensions, nd_fmt, room.time_limit, dictionary=nd_dict, use_added_words=nd_aw, target_range=nd_wc, min_word_length=nd_min, difficulty=nd_diff)
                                     if pre_next:
                                         if len(pre_next) >= 9:
                                             nb, nw, nc, nf, np, nr, nbw, _, nparams = pre_next
@@ -8700,6 +8713,12 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
                                         room.next_round_word_paths = np or {}
                                         room.next_round_uniqueness = nr
                                         room.next_round_spinner_params = nparams or {}
+                                        if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
+                                            if room.initial_solo_params.get('difficulty') and str(room.initial_solo_params.get('difficulty')).lower() != 'random':
+                                                room.next_round_spinner_params['difficulty'] = room.initial_solo_params['difficulty']
+                                            if room.initial_solo_params.get('board_format') and str(room.initial_solo_params.get('board_format')).lower() != 'random':
+                                                room.next_round_spinner_params['board_format'] = room.initial_solo_params['board_format']
+                                                room.next_round_format = room.initial_solo_params['board_format']
                                         room.solving_complete = True
                                     else:
                                         room.next_round_board = None

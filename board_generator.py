@@ -339,7 +339,7 @@ def mark_board_hash_used(board_hash, conn=None):
         return True
 
 
-def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, exclude_format=None, dictionary=None, use_added_words=None, word_count_range=None, difficulty=None):
+def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, exclude_format=None, dictionary=None, use_added_words=None, word_count_range=None, difficulty=None, allow_format_relaxation=False):
     if isinstance(dimensions, (tuple, list)):
         if len(dimensions) == 3:
             dimensions = f"{dimensions[0]}x{dimensions[1]}x{dimensions[2]}"
@@ -362,6 +362,8 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
     if use_added_words is not None:
         is_aw = bool(use_added_words or is_aw)
 
+    norm_diff = _normalize_difficulty_base(difficulty) if (difficulty and str(difficulty).lower() != 'random') else None
+
     conn = None
     try:
         conn = get_db_connection(timeout=60.0, row_factory=sqlite3.Row)
@@ -370,8 +372,8 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
         seen_ids = []
         # Multi-stage relaxation:
         # Tier 0: exact match (format, min_len, dict, aw, word_count_range, difficulty)
-        # Tier 1: relax word_count_range and difficulty
-        # Tier 2: relax target_format (allow any format)
+        # Tier 1: relax word_count_range
+        # Tier 2: relax target_format (only if allow_format_relaxation=True)
         # Tier 3: relax min_word_length (allow any min_len for this dimension)
         # Tier 4: relax dictionary & aw (allow ANY valid board for this dimension)
         for tier in range(5):
@@ -402,8 +404,12 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                         where_clauses.append("param_key LIKE ?")
                         query_params.append('%"use_added_words": false%')
 
+                if norm_diff:
+                    where_clauses.append("param_key LIKE ?")
+                    query_params.append(f'%"difficulty": "{norm_diff}"%')
+
                 fmt_idx = None
-                if tier < 2 and target_format:
+                if target_format and (tier < 2 or not allow_format_relaxation):
                     where_clauses.append("param_key LIKE ?")
                     fmt_idx = len(query_params)
                     query_params.append(f'%"board_format": "{target_format}"%')
@@ -415,7 +421,7 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                 cursor.execute(f"SELECT id, param_key, board_json FROM pregenerated_boards WHERE {where_sql} ORDER BY RANDOM() LIMIT 1;", tuple(query_params))
                 row = cursor.fetchone()
 
-                if not row and tier < 2 and target_format and fmt_idx is not None:
+                if not row and target_format and (tier < 2 or not allow_format_relaxation) and fmt_idx is not None:
                     # Try wildcard format match
                     query_params[fmt_idx] = f'%"board_format": "%{target_format}%"%'
                     cursor.execute(f"SELECT id, param_key, board_json FROM pregenerated_boards WHERE {where_sql} ORDER BY RANDOM() LIMIT 1;", tuple(query_params))
@@ -522,7 +528,10 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                     continue
                     
                 bonus_cell = tuple(data["bonus_cell"]) if data.get("bonus_cell") else None
-                board_format_ret = data.get("board_format_ret", target_format or "Normal")
+                board_format_ret = data.get("board_format_ret", data.get("board_format", target_format or "Normal"))
+                if target_format and not allow_format_relaxation:
+                    if str(board_format_ret).strip().lower() != str(target_format).strip().lower():
+                        continue
                 bonus_cell = _sanitize_special_tiles_for_format(board, board_format_ret, bonus_cell)
                 
                 all_words_dict = {}
@@ -530,15 +539,15 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
                     all_words_dict[w] = [tuple(coord) for coord in path]
                     
                 ratio = data.get("ratio", data.get("uniqueness_ratio", 0.0))
-                if tier == 0 and difficulty:
+                if norm_diff:
                     try:
                         dims_p = str(dimensions).lower().split('x')
                         d_cnt = int(dims_p[0]) if len(dims_p) == 3 else 1
                         r_cnt = int(dims_p[1] if len(dims_p) == 3 else dims_p[0]) if len(dims_p) >= 2 else 4
                         c_cnt = int(dims_p[2] if len(dims_p) == 3 else dims_p[1]) if len(dims_p) >= 2 else 4
                         achieved_cached_diff = BoardGenerator().get_difficulty_label(ratio, r_cnt, c_cnt, board_norm_dict or 'NWL', depth=d_cnt, min_word_length=min_l_int)
-                        if _normalize_difficulty_base(achieved_cached_diff) != _normalize_difficulty_base(difficulty):
-                            print(f"[BoardGen] Discarding any_cached board for {dimensions}: ratio {ratio:.3f} is '{achieved_cached_diff}', expected '{_normalize_difficulty_base(difficulty)}'")
+                        if _normalize_difficulty_base(achieved_cached_diff) != norm_diff:
+                            print(f"[BoardGen] Discarding any_cached board for {dimensions}: ratio {ratio:.3f} is '{achieved_cached_diff}', expected '{norm_diff}'")
                             continue
                     except Exception as _diff_chk_err:
                         print(f"[BoardGen] Warning checking cached difficulty in any_cached: {_diff_chk_err}")
@@ -594,7 +603,22 @@ def pop_compatible_cached_board(dimensions, dictionary, board_format, min_word_l
         conn = get_db_connection(timeout=60.0, row_factory=sqlite3.Row)
         cursor = conn.cursor()
         
-        cursor.execute("SELECT id, param_key FROM pregenerated_boards ORDER BY id DESC LIMIT 500;")
+        where_parts = []
+        sql_params = []
+        if dimensions:
+            where_parts.append('param_key LIKE ?')
+            sql_params.append(f'%"dimensions": "{dimensions}"%')
+        if board_format and str(board_format).lower() != 'normal':
+            where_parts.append('param_key LIKE ?')
+            sql_params.append(f'%"board_format": "{board_format}"%')
+        norm_diff = _normalize_difficulty_base(difficulty) if difficulty else None
+        if norm_diff:
+            where_parts.append('param_key LIKE ?')
+            sql_params.append(f'%"difficulty": "{norm_diff}"%')
+            
+        where_sql = ("WHERE " + " AND ".join(where_parts)) if where_parts else ""
+        query = f"SELECT id, param_key FROM pregenerated_boards {where_sql} ORDER BY id DESC LIMIT 500;"
+        cursor.execute(query, tuple(sql_params))
         rows = cursor.fetchall()
         
         d_target = str(dictionary).upper().replace("+ AW", "").replace("+AW", "").replace("ADDED", "").strip()
@@ -3293,11 +3317,18 @@ class BoardGenerator:
                     board, all_words_dict, ratio = self._sanitize_uniqueness(board, depth, dictionary, min_word_length, max_ratio, rows, cols)
                 
                 target_diff_norm = _normalize_difficulty_base(difficulty)
-                if target_diff_norm in ["Easy", "Medium", "Hard"] and attempts < 35:
+                if target_diff_norm in ["Easy", "Medium", "Hard"]:
                     final_achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
                     if final_achieved_diff != target_diff_norm:
-                        print(f"[BoardGen] ATTEMPT {attempts}: Final ratio {ratio:.3f} classifies as '{final_achieved_diff}', expected '{target_diff_norm}'. Retrying...")
-                        continue
+                        if target_diff_norm == "Easy" and ratio > max_ratio:
+                            board, all_words_dict, ratio = self._sanitize_uniqueness(board, depth, dictionary, min_word_length, max_ratio, rows, cols)
+                            final_achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
+                        elif target_diff_norm in ["Medium", "Hard"] and ratio < min_ratio:
+                            board, all_words_dict, ratio = self._boost_uniqueness(board, depth, dictionary, min_word_length, min_ratio, rows, cols)
+                            final_achieved_diff = self.get_difficulty_label(ratio, rows, cols, dictionary, depth, min_word_length=min_word_length)
+                        if final_achieved_diff != target_diff_norm and attempts < 60:
+                            print(f"[BoardGen] ATTEMPT {attempts}: Final ratio {ratio:.3f} classifies as '{final_achieved_diff}', expected '{target_diff_norm}'. Retrying...")
+                            continue
 
                 if mark_used and not mark_board_hash_used(board_hash):
                     print(f"[BoardGen] Race condition: board hash {board_hash} was already used. Retrying...")
@@ -4227,8 +4258,8 @@ class BoardGenerator:
             val_ctx = word_validator.use_added_words
         from word_validator import word_validator
 
-        # We will do up to 4 iterations of cell replacement
-        for iteration in range(4):
+        # We will do up to 8 iterations of cell replacement
+        for iteration in range(8):
             # 1. Identify which words are unique
             unique_words = [w for w in all_words_dict if w in unique_set]
             if not unique_words:
