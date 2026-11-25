@@ -3840,7 +3840,7 @@ async function renderProfile(user) {
         }
 
         return `
-        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 10px 15px; background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.08); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 620px;">
+        <div class="history-grid-item" onclick="watchRoundHistory('${round.room_id}', ${round.round_number}, true, ${round.game_id || 'null'})" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 10px 15px; background: rgba(var(--text-primary-rgb), 0.08); border: 1px solid rgba(var(--text-primary-rgb), 0.14); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 620px;">
             <div class="history-mode-tag ${typeClass}" style="font-size: 0.65rem; padding: 3px 6px; border-radius: 6px; text-align: center; width: fit-content; font-weight: 800; text-transform: uppercase;">${gameTypeLabel}</div>
 
             <!-- Board: dimension + time -->
@@ -3864,7 +3864,7 @@ async function renderProfile(user) {
         `;
     };
     window.roundGridHeader = `
-        <div class="history-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 12px 15px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
+        <div class="history-grid-header" style="display: grid; grid-template-columns: repeat(7, 1fr); gap:8px; padding: 12px 15px; background: rgba(var(--text-primary-rgb), 0.10); border: 1px solid rgba(var(--text-primary-rgb), 0.16); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
             <div>Mode</div>
             <div style="text-align: left;">Board</div>
             <div>Score</div>
@@ -3887,7 +3887,7 @@ async function renderProfile(user) {
         }
         const safeWord = String(w.word || '').replace(/'/g, "\\'");
         return `
-        <div class="history-grid-item" onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'})" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr; gap:8px; padding: 10px 15px; background: rgba(var(--text-primary-rgb), 0.03); border: 1px solid rgba(var(--text-primary-rgb), 0.08); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 620px;">
+        <div class="history-grid-item" onclick="watchRoundHistory('${w.room_id}', ${w.round_number}, true, ${w.game_id || 'null'})" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr; gap:8px; padding: 10px 15px; background: rgba(var(--text-primary-rgb), 0.08); border: 1px solid rgba(var(--text-primary-rgb), 0.14); border-radius: 10px; margin-bottom: 8px; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; overflow: hidden; min-width: 620px;">
             <div style="font-weight: 800; font-size: 0.95rem; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px;">
                 <span class="clickable-word-link" onclick="event.stopPropagation(); if(window.lookupWord){window.lookupWord('${safeWord}', event);}else if(window.showWordDefinitionPopup){window.showWordDefinitionPopup('${safeWord}', event);}" title="Click to view definition for ${w.word}">${w.word}</span>
             </div>
@@ -3901,7 +3901,7 @@ async function renderProfile(user) {
     };
 
     window.bestWordsGridHeader = `
-        <div class="history-grid-header" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr; gap:8px; padding: 12px 15px; background: rgba(var(--text-primary-rgb), 0.05); border: 1px solid rgba(var(--text-primary-rgb), 0.1); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
+        <div class="history-grid-header" style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1.5fr; gap:8px; padding: 12px 15px; background: rgba(var(--text-primary-rgb), 0.10); border: 1px solid rgba(var(--text-primary-rgb), 0.16); border-radius: 8px; margin-bottom: 12px; font-size: 0.7rem; color: var(--text-60, rgba(var(--text-primary-rgb), 0.6)); font-weight: 800; text-transform: uppercase; letter-spacing: 1px; min-width: 620px;">
             <div>Word</div>
             <div>Points</div>
             <div>Length</div>
@@ -3934,7 +3934,7 @@ async function renderProfile(user) {
             const greatestPE = user.max_pe || 0;
             const peFormatted = greatestPE ? (greatestPE / 100).toFixed(2) + 'x' : '0.00x';
             const peHeader = `
-                <div class="pe-summary-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
+                <div class="pe-summary-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.09); border: 1px solid rgba(var(--text-primary-rgb), 0.15); padding: 12px 20px; border-radius: 8px;">
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); text-transform: uppercase; letter-spacing: 0.5px;">Exceptional Performances</span>
                     <span style="font-size: 0.9rem; font-weight: 800; color: #3b82f6;">Greatest PE: <span style="color: var(--text-primary);">${peFormatted}</span></span>
                 </div>
@@ -3949,7 +3949,7 @@ async function renderProfile(user) {
         } else {
             const displayWords = user.best_words.slice(0, 200);
             const bwHeader = `
-                <div class="bw-summary-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.04); border: 1px solid rgba(var(--text-primary-rgb), 0.08); padding: 12px 20px; border-radius: 8px;">
+                <div class="bw-summary-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: rgba(var(--text-primary-rgb), 0.09); border: 1px solid rgba(var(--text-primary-rgb), 0.15); padding: 12px 20px; border-radius: 8px;">
                     <span style="font-size: 0.85rem; font-weight: 700; color: var(--text-70, rgba(var(--text-primary-rgb), 0.7)); text-transform: uppercase; letter-spacing: 0.5px;">Best Words (Relative Good Finds)</span>
                     <span style="font-size: 0.85rem; font-weight: 700; color: #ffd700;">Latest ${displayWords.length} Finds</span>
                 </div>
