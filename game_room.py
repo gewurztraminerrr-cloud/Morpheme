@@ -48,6 +48,17 @@ from word_validator import use_added_words_ctx
 
 _room_manager_instance = None
 
+def normalize_24h_room_key(room_id, board_dimensions=None):
+    if board_dimensions and board_dimensions != 'all':
+        return f"24h_{board_dimensions}"
+    s = str(room_id or '').lower()
+    for dim in ['4x4', '4x6', '5x7', '6x8', '3x3x3', '2x2x2', '3x3']:
+        if dim in s:
+            return f"24h_{dim}"
+    if s.startswith('24h_'):
+        return s
+    return f"24h_{s}"
+
 @dataclass
 class Player:
     user_id: int
@@ -4304,11 +4315,77 @@ class RoomManager:
                 print(f"[Heartbeat] CRITICAL: {e}\n{traceback.format_exc()}")
                 time.sleep(5)
                 
+    def load_daily_score_sums(self, room):
+        """
+        Query daily_score_sums for this 24h room and cache on room.daily_score_sums
+        so it is instantly available in the room state snapshot.
+        """
+        if not room or getattr(room, 'time_limit', 0) < 7200:
+            return []
+        try:
+            canonical_key = normalize_24h_room_key(getattr(room, 'room_id', ''), getattr(room, 'board_dimensions', ''))
+            dims = canonical_key.replace('24h_', '')
+            with get_db() as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    SELECT u.username, d.user_id, SUM(d.score_sum) as score_sum
+                    FROM daily_score_sums d
+                    JOIN users u ON d.user_id = u.id
+                    WHERE (d.room_id = ? OR d.room_id = ? OR d.room_id LIKE ?)
+                      AND d.score_sum > 0
+                    GROUP BY d.user_id, u.username
+                    HAVING SUM(d.score_sum) > 0
+                    ORDER BY score_sum DESC
+                ''', (canonical_key, str(room.room_id), f"%{dims}%"))
+                rows = cursor.fetchall()
+
+                # If no rows found, try automatic recovery from round_history
+                if not rows:
+                    try:
+                        conn.execute('''
+                            INSERT INTO daily_score_sums (user_id, room_id, score_sum)
+                            SELECT rh.user_id, ?, SUM(rh.total_score)
+                            FROM round_history rh
+                            WHERE rh.user_id > 0 
+                              AND (rh.board_dimensions = ? OR rh.room_id LIKE ? OR rh.room_id = ?)
+                              AND (rh.round_duration >= 7200 OR rh.room_id LIKE '%86400%' OR rh.room_id LIKE '%24h%')
+                            GROUP BY rh.user_id
+                            HAVING SUM(rh.total_score) > 0
+                            ON CONFLICT(user_id, room_id) DO UPDATE SET score_sum = MAX(daily_score_sums.score_sum, excluded.score_sum)
+                        ''', (canonical_key, dims, f"%{dims}%", canonical_key))
+                        conn.commit()
+
+                        cursor.execute('''
+                            SELECT u.username, d.user_id, SUM(d.score_sum) as score_sum
+                            FROM daily_score_sums d
+                            JOIN users u ON d.user_id = u.id
+                            WHERE (d.room_id = ? OR d.room_id = ? OR d.room_id LIKE ?)
+                              AND d.score_sum > 0
+                            GROUP BY d.user_id, u.username
+                            HAVING SUM(d.score_sum) > 0
+                            ORDER BY score_sum DESC
+                        ''', (canonical_key, str(room.room_id), f"%{dims}%"))
+                        rows = cursor.fetchall()
+                    except Exception as _bf_err:
+                        print(f"[load_daily_score_sums] Non-fatal backfill error: {_bf_err}")
+
+                players = [{'username': r[0], 'score_sum': r[2]} for r in rows if r[2] and r[2] > 0]
+                room.daily_score_sums = players
+                return players
+        except Exception as e:
+            print(f"[RoomManager] Error loading daily_score_sums for {getattr(room, 'room_id', '')}: {e}")
+            if not hasattr(room, 'daily_score_sums') or room.daily_score_sums is None:
+                room.daily_score_sums = []
+            return room.daily_score_sums
+
     def load_previous_day_data(self, room):
         """
         Load previous day (yesterday) data from the SQLite database
         if the in-memory variables are empty/vanished (e.g. after server restart).
         """
+        if getattr(room, 'time_limit', 0) >= 7200 and not getattr(room, 'daily_score_sums', None):
+            self.load_daily_score_sums(room)
+
         if getattr(room, 'previous_board', None) and getattr(room, 'previous_day_history', None):
             return # Already has in-memory data
             
@@ -5285,47 +5362,42 @@ class RoomManager:
         import json
         import datetime
         try:
-            with get_db() as conn:
-                room_id = room.room_id
-            
-            # ROBUST HISTORY FETCH: Find the most recent round for this room that is NOT the current one
-            # We search for the highest round_number < current_round, or just the most recent if current is 0/1.
+            room_id = room.room_id
             curr_round = room.current_round
-            
-            # Use timestamp to find "Recently finished" data (within last 36h to handle midnight rollovers)
             thirty_six_hours_ago = (datetime.datetime.now() - datetime.timedelta(hours=36)).strftime('%Y-%m-%d %H:%M:%S')
-            
-            # If current_round is 1 or 2 (new server session), find the latest from history
-            if curr_round <= 2:
-                # Get the absolute most recent round that ISN'T today's start if possible 
-                # (handled by date/timestamp filtering)
-                cursor = conn.execute('''
-                    SELECT user_id, words_json, round_number, timestamp, board_json, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths
-                    FROM round_history 
-                    WHERE room_id = ? AND timestamp >= ?
-                    ORDER BY timestamp DESC, id DESC
-                ''', (room_id, thirty_six_hours_ago))
-            else:
-                cursor = conn.execute('''
-                    SELECT user_id, words_json, round_number, timestamp, board_json, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths
-                    FROM round_history 
-                    WHERE room_id = ? AND round_number < ? AND timestamp >= ?
-                    ORDER BY timestamp DESC, round_number DESC
-                ''', (room_id, curr_round, thirty_six_hours_ago))
-            
-            rows = cursor.fetchall()
-            
-            if not rows:
-                 # Fallback: if no matches for stable ID, search by dimensions + game_type for the most recent 24h round
-                 parts = room_id.split('_')
-                 dims = parts[2] if len(parts) >= 3 else room.board_dimensions
-                 cursor = conn.execute('''
-                    SELECT user_id, words_json, round_number, timestamp, board_json, bonus_word, bonus_cell, board_format, all_solutions_json, all_words_paths
-                    FROM round_history 
-                    WHERE board_dimensions = ? AND game_type = ? AND timestamp >= ?
-                    ORDER BY timestamp DESC
-                 ''', (dims, room.game_type, thirty_six_hours_ago))
-                 rows = cursor.fetchall()
+
+            with get_db() as conn:
+                # If current_round is 1 or 2 (new server session), find the latest from history
+                if curr_round <= 2:
+                    cursor = conn.execute('''
+                        SELECT rh.user_id, rh.words_json, rh.round_number, rh.timestamp, rh.board_json, rh.bonus_word, rh.bonus_cell, rh.board_format, rh.all_solutions_json, rh.all_words_paths, u.username
+                        FROM round_history rh
+                        LEFT JOIN users u ON rh.user_id = u.id
+                        WHERE rh.room_id = ? AND rh.timestamp >= ?
+                        ORDER BY rh.timestamp DESC, rh.id DESC
+                    ''', (room_id, thirty_six_hours_ago))
+                else:
+                    cursor = conn.execute('''
+                        SELECT rh.user_id, rh.words_json, rh.round_number, rh.timestamp, rh.board_json, rh.bonus_word, rh.bonus_cell, rh.board_format, rh.all_solutions_json, rh.all_words_paths, u.username
+                        FROM round_history rh
+                        LEFT JOIN users u ON rh.user_id = u.id
+                        WHERE rh.room_id = ? AND rh.round_number < ? AND rh.timestamp >= ?
+                        ORDER BY rh.timestamp DESC, rh.round_number DESC
+                    ''', (room_id, curr_round, thirty_six_hours_ago))
+                
+                rows = cursor.fetchall()
+                
+                if not rows:
+                    parts = room_id.split('_')
+                    dims = parts[2] if len(parts) >= 3 else room.board_dimensions
+                    cursor = conn.execute('''
+                        SELECT rh.user_id, rh.words_json, rh.round_number, rh.timestamp, rh.board_json, rh.bonus_word, rh.bonus_cell, rh.board_format, rh.all_solutions_json, rh.all_words_paths, u.username
+                        FROM round_history rh
+                        LEFT JOIN users u ON rh.user_id = u.id
+                        WHERE rh.board_dimensions = ? AND rh.game_type = ? AND rh.timestamp >= ?
+                        ORDER BY rh.timestamp DESC
+                    ''', (dims, room.game_type, thirty_six_hours_ago))
+                    rows = cursor.fetchall()
 
             # INITIALIZE correctly to avoid UnboundLocalError if no rows exist
             recovered_board = None
@@ -5338,7 +5410,7 @@ class RoomManager:
 
             # First pass: extract board metadata
             for row in rows:
-                uid, words_json, round_num, ts, b_json, b_word, b_cell_json, b_format, sols_json, paths_json = row
+                uid, words_json, round_num, ts, b_json, b_word, b_cell_json, b_format, sols_json, paths_json = row[:10]
                 if b_json and not recovered_board:
                     recovered_board = json.loads(b_json)
                     recovered_bonus_word = b_word
@@ -5357,7 +5429,8 @@ class RoomManager:
 
             # Second pass: construct player history with dynamic recalculation for 24h rooms
             for row in rows:
-                uid, words_json, round_num, ts, b_json, b_word, b_cell_json, b_format, sols_json, paths_json = row
+                uid, words_json, round_num, ts, b_json, b_word, b_cell_json, b_format, sols_json, paths_json = row[:10]
+                db_username = row[10] if len(row) > 10 else None
                 uid_str = str(uid)
                 if uid_str not in history:
                     if uid == -1:
@@ -5365,9 +5438,7 @@ class RoomManager:
                     elif uid < 0:
                         uname = f"Guest_{abs(uid)}"
                     else:
-                        u_cursor = conn.execute("SELECT username FROM users WHERE id = ?", (uid,))
-                        u_row = u_cursor.fetchone()
-                        uname = u_row[0] if u_row else f"User {uid}"
+                        uname = db_username if db_username else f"User {uid}"
                     
                     parsed_words = json.loads(words_json) if words_json else []
                     if room.time_limit >= 7200 and parsed_words and recovered_board:
@@ -9662,6 +9733,7 @@ class RoomManager:
                     room.players = []
                     room.past_players = {}
                     room.spectators = []
+                    self.load_daily_score_sums(room)
                     print(f"[RoomManager] Reset 24h room {room_id} players for fresh new daily round and marked evicted_users for daily_reset notice.")
                 room.midnight_reset_occurred = False
                 if hasattr(room, 'intermission_stuck_start_time'):
@@ -10318,6 +10390,12 @@ class RoomManager:
                             VALUES (?, ?, ?)
                             ON CONFLICT(user_id, room_id) DO UPDATE SET score_sum = score_sum + excluded.score_sum
                         ''', (u_id, canonical_id, u_score))
+            
+            if room.time_limit >= 7200:
+                try:
+                    self.load_daily_score_sums(room)
+                except Exception as _ls_err:
+                    print(f"[save_round_history] Error reloading daily_score_sums: {_ls_err}")
             
             # Also mark this board's hash as permanently used (survives PM2 restarts)
             try:

@@ -8567,6 +8567,8 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
         # 2. On-demand database backfill for previous day's board/history
         if room.time_limit >= 7200:
             room_manager.load_previous_day_data(room)
+            if not getattr(room, 'daily_score_sums', None):
+                room_manager.load_daily_score_sums(room)
 
     try:
         if not room:
@@ -9189,6 +9191,7 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
                 'last_round_had_winner': getattr(room, 'last_round_had_winner', None),
                 'winners_history': getattr(room, 'winners_history', []),
                 'previous_day_history': getattr(room, 'previous_day_history', {}),
+                'daily_score_sums': getattr(room, 'daily_score_sums', []) or [] if room.time_limit >= 7200 else [],
                 'board_gen_failed': getattr(room, 'board_gen_failed', False),
                 'board_gen_error': getattr(room, 'board_gen_error', ''),
             }

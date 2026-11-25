@@ -4483,14 +4483,23 @@ async function _doUpdateGameState(incomingState = null) {
 
         // --- SCORE SUM TAB (24H Only) ---
         const scoreSumListEl = document.getElementById('score-sum-list');
-        if (scoreSumListEl && activeWordsTab === 'score-sum') {
-            const now = Date.now();
-            const needsFetch = window._dailyScoreSumsRoomId !== state.room_id || 
-                               (now - (window._lastDailyScoreSumsFetchTime || 0) > 30000);
-            if (needsFetch) {
-                fetchDailyScoreSums(state.room_id);
-            } else {
+        const is24H = (state.time_limit >= 7200) || (state.room_id && (state.room_id.includes('24h') || state.room_id.includes('86400')));
+        if (scoreSumListEl && is24H) {
+            if (state.daily_score_sums && Array.isArray(state.daily_score_sums)) {
+                window._dailyScoreSumsData = state.daily_score_sums.filter(p => (typeof p.score_sum === 'number' ? p.score_sum : parseInt(p.score_sum, 10)) > 0);
+                window._dailyScoreSumsRoomId = state.room_id;
+                window._dailyScoreSumsLoadedForRoom = state.room_id;
+                window._lastDailyScoreSumsFetchTime = Date.now();
                 renderDailyScoreSums();
+            } else {
+                const now = Date.now();
+                const needsFetch = window._dailyScoreSumsRoomId !== state.room_id || 
+                                   (now - (window._lastDailyScoreSumsFetchTime || 0) > 30000);
+                if (needsFetch && !window._isFetchingDailyScoreSums) {
+                    fetchDailyScoreSums(state.room_id);
+                } else if (activeWordsTab === 'score-sum') {
+                    renderDailyScoreSums();
+                }
             }
         }
 
@@ -4743,7 +4752,7 @@ function fetchDailyScoreSums(targetRoomId) {
     const listEl = document.getElementById('score-sum-list');
     
     // Only show "Loading rankings..." placeholder on initial cold load before data has ever been fetched for this room
-    if (listEl && window._dailyScoreSumsLoadedForRoom !== roomId) {
+    if (listEl && (!window._dailyScoreSumsData || window._dailyScoreSumsData.length === 0)) {
         listEl.innerHTML = '<p class="placeholder">Loading rankings...</p>';
     }
     
@@ -14735,7 +14744,11 @@ document.addEventListener('click', (e) => {
 
         if (activeWordsTab === 'score-sum') {
             const currentRoom = window.currentRoomId || (window.lastGameState ? window.lastGameState.room_id : null);
-            fetchDailyScoreSums(currentRoom);
+            if (window._dailyScoreSumsData && window._dailyScoreSumsData.length > 0) {
+                renderDailyScoreSums();
+            } else {
+                fetchDailyScoreSums(currentRoom);
+            }
         }
 
         // Update UI immediately for responsiveness
