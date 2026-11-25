@@ -2118,21 +2118,26 @@ body.is-subanagrams .timer-display #transpose-board-btn {
 
 @media (max-width: 600px) {
     body.is-subanagrams .word-input-section {
-        gap: 6px !important;
+        gap: 8px !important;
         flex-direction: column !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
+        margin-bottom: 8px !important;
     }
-    /* Enter button is the largest button and sits above the other row */
+    /* Enter button is the largest button, extended vertically to take up empty space */
     body.is-subanagrams .word-input-section #submit-word-btn,
     body.is-subanagrams.is-mobile .word-input-section #submit-word-btn {
         width: 100% !important;
         max-width: 100% !important;
-        height: 48px !important;
-        min-height: 48px !important;
-        max-height: 48px !important;
-        line-height: 48px !important;
+        flex: 1 1 auto !important;
+        height: 100% !important;
+        min-height: 80px !important;
+        max-height: none !important;
+        line-height: normal !important;
         padding: 0 14px !important;
-        font-size: 1.05rem !important;
+        font-size: 1.35rem !important;
         font-weight: 800 !important;
+        letter-spacing: 1px !important;
         box-sizing: border-box !important;
         margin: 0 !important;
         order: 1 !important;
@@ -2151,6 +2156,10 @@ body.is-subanagrams .timer-display #transpose-board-btn {
         margin: 0 !important;
         padding: 0 !important;
         gap: 6px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        max-height: 42px !important;
+        flex: 0 0 42px !important;
         order: 2 !important;
     }
     body.is-subanagrams .word-input-section #word-input,
@@ -10291,38 +10300,40 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: center !important;
-        gap: 6px !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
         width: calc(100% - 24px) !important;
         max-width: 480px !important;
-        margin: 6px auto 0 auto !important;
+        margin: 6px auto 8px auto !important;
         box-sizing: border-box !important;
+        flex: 1 1 auto !important;
+        min-height: 0 !important;
     }
 
-    /* Enter is the largest button and sits above the other row of elements */
+    /* Enter is the largest button, extended vertically to take up most empty space below letters */
     body.is-subanagrams .word-input-section #submit-word-btn,
     body.is-subanagrams.is-mobile .word-input-section #submit-word-btn {
         display: inline-flex !important;
         width: 100% !important;
         max-width: 100% !important;
-        flex: 1 1 100% !important;
+        flex: 1 1 auto !important;
         align-items: center !important;
         justify-content: center !important;
-        height: 48px !important;
-        min-height: 48px !important;
-        max-height: 48px !important;
-        line-height: 48px !important;
+        height: 100% !important;
+        min-height: 80px !important;
+        max-height: none !important;
+        line-height: normal !important;
         padding: 0 14px !important;
-        font-size: 1.05rem !important;
+        font-size: 1.35rem !important;
         font-weight: 800 !important;
-        letter-spacing: 0.5px !important;
+        letter-spacing: 1px !important;
         white-space: nowrap !important;
         box-sizing: border-box !important;
         margin: 0 !important;
         background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
         color: #ffffff !important;
         border: none !important;
-        border-radius: 8px !important;
+        border-radius: 10px !important;
         order: 1 !important;
         touch-action: manipulation !important;
         user-select: none !important;
@@ -10343,6 +10354,10 @@ body[class*="theme-light-"] .definitions-panel.winner-flash .intermission-winner
         margin: 0 !important;
         padding: 0 !important;
         gap: 6px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        max-height: 42px !important;
+        flex: 0 0 42px !important;
         order: 2 !important;
     }
 
@@ -19893,27 +19908,41 @@ body.is-desktop.is-subanagrams .word-input-section #shuffle-board-btn {
     flex: 0 0 auto !important;
 }
 
-/* Explicit Mobile Invariant for Multiplayer Subanagrams: Enter and Word Input run along the exact same full horizontal length */
+/* Explicit Mobile Invariant for Multiplayer Subanagrams: Enter and Word Input run along the exact same full horizontal length, with Enter extended vertically */
+body.is-mobile.is-subanagrams .word-input-section,
+body.is-subanagrams.is-mobile .word-input-section {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    margin: 6px auto 8px auto !important;
+}
+
 body.is-mobile.is-subanagrams .word-input-section #submit-word-btn,
 body.is-subanagrams.is-mobile #submit-word-btn {
     width: 100% !important;
     max-width: 100% !important;
-    height: 48px !important;
-    min-height: 48px !important;
-    max-height: 48px !important;
-    line-height: 48px !important;
+    flex: 1 1 auto !important;
+    height: 100% !important;
+    min-height: 80px !important;
+    max-height: none !important;
+    line-height: normal !important;
     padding: 0 14px !important;
-    font-size: 1.05rem !important;
+    font-size: 1.35rem !important;
     font-weight: 800 !important;
+    letter-spacing: 1px !important;
     box-sizing: border-box !important;
     margin: 0 !important;
     order: 1 !important;
+    border-radius: 10px !important;
 }
 
 body.is-mobile.is-subanagrams .word-input-row,
 body.is-subanagrams.is-mobile .word-input-row {
     width: 100% !important;
     max-width: 100% !important;
+    height: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+    flex: 0 0 42px !important;
     box-sizing: border-box !important;
     margin: 0 !important;
     padding: 0 !important;
