@@ -2235,6 +2235,8 @@
 
                 // Allow 120ms for the physical 3D flattening animation to complete visually before switching views
                 setTimeout(function() {
+                    window._lobbySnapCancelled = false;
+                    window._lobbySnapToMainDone = false;
                     window._currentLobbyPanel = 'main';
                     document.body.classList.remove('loading-active');
                     document.body.classList.add('lobby-active');
@@ -10799,8 +10801,8 @@
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1795390007"></script>
     <script src="/js/forum.js?v=1795390001"></script>
-    <script src="/js/app.js?v=1795390031"></script>
-    <script src="/js/lobby.js?v=1795390026"></script>
+    <script src="/js/app.js?v=1795390032"></script>
+    <script src="/js/lobby.js?v=1795390032"></script>
     <script src="/js/play.js?v=1795390031"></script>
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>

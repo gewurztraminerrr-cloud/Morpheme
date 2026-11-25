@@ -841,6 +841,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 4. Allow 120ms for the physical 3D flattening animation to complete visually before switching views
         setTimeout(() => {
+            window._lobbySnapCancelled = false;
+            window._lobbySnapToMainDone = false;
             if (typeof adjustLobbyLayoutForDevice === 'function') {
                 adjustLobbyLayoutForDevice();
             }
@@ -2528,30 +2530,40 @@ window.showPage = showPage;
         window._lobbySnapTimers = window._lobbySnapTimers || [];
 
         const snapLobbyToMain = () => {
+            if (window._lobbySnapCancelled) return;
             if (window._userIsTouchingLobbyGrid) return;
             if (window._currentLobbyPanel && window._currentLobbyPanel !== 'main') return;
             if (window.currentPageId && window.currentPageId !== 'page-lobby') return;
-            if (typeof window.scrollLobbyToMainPanel === 'function') {
-                window.scrollLobbyToMainPanel();
-            } else {
-                const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-                if (isMobile) {
-                    const mainPanel = document.getElementById('mobile-panel-main');
-                    const lobbyGrid = document.querySelector('.lobby-grid');
-                    if (mainPanel && lobbyGrid) {
-                        const soloPanel = document.getElementById('mobile-panel-solo') || lobbyGrid.firstElementChild;
-                        const targetLeft = (mainPanel.offsetLeft > 0) ? mainPanel.offsetLeft : (soloPanel ? (soloPanel.offsetWidth || lobbyGrid.clientWidth) : lobbyGrid.clientWidth);
-                        if (targetLeft > 0) lobbyGrid.scrollLeft = targetLeft;
-                    }
+            const isMobile = (window.innerWidth <= 900) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+            if (!isMobile) return;
+            const mainPanel = document.getElementById('mobile-panel-main');
+            const lobbyGrid = document.querySelector('.lobby-grid');
+            if (!mainPanel || !lobbyGrid) return;
+            const soloPanel = document.getElementById('mobile-panel-solo') || lobbyGrid.firstElementChild;
+            const targetLeft = (mainPanel.offsetLeft > 0) ? mainPanel.offsetLeft : (soloPanel ? (soloPanel.offsetWidth || lobbyGrid.clientWidth) : lobbyGrid.clientWidth);
+
+            // If already at or near main panel, done
+            if (Math.abs(lobbyGrid.scrollLeft - targetLeft) <= 2) {
+                window._lobbySnapToMainDone = true;
+                return;
+            }
+
+            // If we already snapped to main once and user has moved away, do NOT fight user!
+            if (window._lobbySnapToMainDone) {
+                if (typeof window._clearLobbySnapTimers === 'function') {
+                    window._clearLobbySnapTimers();
                 }
+                return;
+            }
+
+            if (targetLeft > 0) {
+                lobbyGrid.scrollLeft = targetLeft;
+                window._lobbySnapToMainDone = true;
             }
         };
 
         snapLobbyToMain();
         requestAnimationFrame(snapLobbyToMain);
-        window._lobbySnapTimers.push(setTimeout(snapLobbyToMain, 50));
-        window._lobbySnapTimers.push(setTimeout(snapLobbyToMain, 150));
-        window._lobbySnapTimers.push(setTimeout(snapLobbyToMain, 300));
         if (typeof window.resetLobbyButtons === 'function') {
             window.resetLobbyButtons();
         }

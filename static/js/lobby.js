@@ -944,10 +944,10 @@ function setupLobbyEvents() {
                 // Start accumulative auto-poll interval if not already running
                 if (!lobbyStatsInterval) startStatsPolling();
 
-                // Mobile: snap to active lobby panel (default main)
-                if (!window._currentLobbyPanel || window._currentLobbyPanel === 'main') {
+                // Mobile: snap to active lobby panel (default main) on initial entry only
+                if (!window._lobbySnapToMainDone && !window._lobbySnapCancelled && (!window._currentLobbyPanel || window._currentLobbyPanel === 'main')) {
                     window.scrollLobbyToMainPanel();
-                } else if (typeof window._restoreLobbyPanel === 'function') {
+                } else if (typeof window._restoreLobbyPanel === 'function' && !window._lobbySnapCancelled) {
                     window._restoreLobbyPanel();
                 }
             } else {
@@ -963,9 +963,9 @@ function setupLobbyEvents() {
         startStatsPolling();
 
         // Mobile layout: Snap to active lobby panel on load
-        if (!window._currentLobbyPanel || window._currentLobbyPanel === 'main') {
+        if (!window._lobbySnapToMainDone && !window._lobbySnapCancelled && (!window._currentLobbyPanel || window._currentLobbyPanel === 'main')) {
             window.scrollLobbyToMainPanel();
-        } else if (typeof window._restoreLobbyPanel === 'function') {
+        } else if (typeof window._restoreLobbyPanel === 'function' && !window._lobbySnapCancelled) {
             window._restoreLobbyPanel();
         }
     } // end if (isOnLobby())
@@ -1024,11 +1024,14 @@ window.switchLobbyPanel = function(panelId, smooth = false) {
 };
 
 window.scrollLobbyToMainPanel = function(behavior = 'auto') {
+    if (window._lobbySnapCancelled) return;
     if (window._userIsTouchingLobbyGrid) return;
+    if (window._currentLobbyPanel && window._currentLobbyPanel !== 'main') return;
     window.switchLobbyPanel('main', behavior === 'smooth');
 };
 
 window._restoreLobbyPanel = function() {
+    if (window._lobbySnapCancelled) return;
     if (window._userIsTouchingLobbyGrid) return;
     let target = window._currentLobbyPanel || 'main';
     window.switchLobbyPanel(target, false);
@@ -1036,44 +1039,53 @@ window._restoreLobbyPanel = function() {
 
 // Track which panel the user swiped to so window._currentLobbyPanel stays in sync.
 (function _setupLobbyGridScrollTracker() {
-    let scrollDebounceTimer = null;
     function updateActiveLobbyPanelTrack() {
-        if (scrollDebounceTimer) clearTimeout(scrollDebounceTimer);
-        scrollDebounceTimer = setTimeout(() => {
-            const lobbyPage = document.getElementById('page-lobby');
-            if (!lobbyPage || !lobbyPage.classList.contains('active')) return;
+        const lobbyPage = document.getElementById('page-lobby');
+        if (!lobbyPage || !lobbyPage.classList.contains('active')) return;
 
-            const activeEl = document.activeElement;
-            if (activeEl && (activeEl.id === 'rating-filter' || (typeof activeEl.closest === 'function' && activeEl.closest('#mobile-panel-rooms')))) {
-                window._currentLobbyPanel = 'rooms';
-                return;
+        const activeEl = document.activeElement;
+        if (activeEl && (activeEl.id === 'rating-filter' || (typeof activeEl.closest === 'function' && activeEl.closest('#mobile-panel-rooms')))) {
+            window._currentLobbyPanel = 'rooms';
+            return;
+        }
+
+        const lobbyGrid = document.querySelector('.lobby-grid');
+        if (!lobbyGrid) return;
+        const solo = document.getElementById('mobile-panel-solo');
+        const main = document.getElementById('mobile-panel-main');
+        const rooms = document.getElementById('mobile-panel-rooms');
+        if (!main || !lobbyGrid) return;
+
+        const panels = [
+            { id: 'solo', el: solo },
+            { id: 'main', el: main },
+            { id: 'rooms', el: rooms }
+        ].filter(p => p.el);
+
+        const currentScroll = lobbyGrid.scrollLeft;
+        let closestPanel = 'main';
+        let minDiff = Infinity;
+        for (const p of panels) {
+            const diff = Math.abs(currentScroll - p.el.offsetLeft);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestPanel = p.id;
             }
-
-            const lobbyGrid = document.querySelector('.lobby-grid');
-            if (!lobbyGrid) return;
-            const solo = document.getElementById('mobile-panel-solo');
-            const main = document.getElementById('mobile-panel-main');
-            const rooms = document.getElementById('mobile-panel-rooms');
-            if (!main || !lobbyGrid) return;
-
-            const panels = [
-                { id: 'solo', el: solo },
-                { id: 'main', el: main },
-                { id: 'rooms', el: rooms }
-            ].filter(p => p.el);
-
-            const currentScroll = lobbyGrid.scrollLeft;
-            let closestPanel = 'main';
-            let minDiff = Infinity;
-            for (const p of panels) {
-                const diff = Math.abs(currentScroll - p.el.offsetLeft);
-                if (diff < minDiff) {
-                    minDiff = diff;
-                    closestPanel = p.id;
-                }
+        }
+        window._currentLobbyPanel = closestPanel;
+        if (closestPanel !== 'main') {
+            window._lobbySnapCancelled = true;
+            if (typeof window._clearLobbySnapTimers === 'function') {
+                window._clearLobbySnapTimers();
             }
-            window._currentLobbyPanel = closestPanel;
-        }, 50);
+        }
+    }
+
+    function cancelSnapOnInteraction() {
+        window._lobbySnapCancelled = true;
+        if (typeof window._clearLobbySnapTimers === 'function') {
+            window._clearLobbySnapTimers();
+        }
     }
 
     function _attachTracker() {
@@ -1081,18 +1093,25 @@ window._restoreLobbyPanel = function() {
         if (!lobbyGrid) return;
         lobbyGrid.addEventListener('touchstart', () => {
             window._userIsTouchingLobbyGrid = true;
-            if (typeof window._clearLobbySnapTimers === 'function') {
-                window._clearLobbySnapTimers();
-            }
+            cancelSnapOnInteraction();
+        }, { passive: true });
+        lobbyGrid.addEventListener('touchmove', () => {
+            window._userIsTouchingLobbyGrid = true;
+            cancelSnapOnInteraction();
         }, { passive: true });
         lobbyGrid.addEventListener('touchend', () => {
             window._userIsTouchingLobbyGrid = false;
+            cancelSnapOnInteraction();
             updateActiveLobbyPanelTrack();
         }, { passive: true });
         lobbyGrid.addEventListener('touchcancel', () => {
             window._userIsTouchingLobbyGrid = false;
+            cancelSnapOnInteraction();
         }, { passive: true });
-        lobbyGrid.addEventListener('scroll', updateActiveLobbyPanelTrack, { passive: true });
+        lobbyGrid.addEventListener('scroll', () => {
+            cancelSnapOnInteraction();
+            updateActiveLobbyPanelTrack();
+        }, { passive: true });
         if ('onscrollend' in window) {
             lobbyGrid.addEventListener('scrollend', () => {
                 window._userIsTouchingLobbyGrid = false;
