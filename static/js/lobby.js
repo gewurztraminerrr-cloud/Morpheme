@@ -109,9 +109,9 @@ async function enterLobbyRoom(rawBtn) {
         localStorage.removeItem('tournament_play_active');
         localStorage.removeItem('private_match_active');
 
-        // 2. Perform room creation and loading inside the game room in the background with 45s timeout
+        // 2. Perform room creation and loading inside the game room in the background with 120s timeout
         const createCtrl = new AbortController();
-        const createTimer = setTimeout(() => createCtrl.abort(), 45000);
+        const createTimer = setTimeout(() => createCtrl.abort(), 120000);
         let createResp;
         try {
             createResp = await fetch('/api/room/create', {
@@ -540,7 +540,7 @@ function setupLobbyEvents() {
             localStorage.removeItem('private_match_active');
 
             const joinCtrl = new AbortController();
-            const joinTimer = setTimeout(() => joinCtrl.abort(), 25000);
+            const joinTimer = setTimeout(() => joinCtrl.abort(), 120000);
             try {
                 let response;
                 try {

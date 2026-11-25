@@ -368,177 +368,198 @@ def pop_any_cached_board(dimensions, min_word_length=3, target_format=None, excl
         cursor = conn.cursor()
         
         seen_ids = []
-        attempts = 0
-        while attempts < 12:
-            attempts += 1
-            where_clauses = ["param_key LIKE ?"]
-            query_params = [f'%"dimensions": "{dimensions}"%']
+        # Multi-stage relaxation:
+        # Tier 0: exact match (format, min_len, dict, aw, word_count_range, difficulty)
+        # Tier 1: relax word_count_range and difficulty
+        # Tier 2: relax target_format (allow any format)
+        # Tier 3: relax min_word_length (allow any min_len for this dimension)
+        # Tier 4: relax dictionary & aw (allow ANY valid board for this dimension)
+        for tier in range(5):
+            attempts = 0
+            while attempts < 8:
+                attempts += 1
+                where_clauses = ["param_key LIKE ?"]
+                query_params = [f'%"dimensions": "{dimensions}"%']
 
-            # The spun minimum word length must match the board's own parameters exactly
-            where_clauses.append("param_key LIKE ?")
-            query_params.append(f'%"min_word_length": {int(min_word_length)},%')
+                # Minimum word length filter (Tiers 0-2 strictly enforce; Tiers 3-4 allow any)
+                if tier < 3 and min_word_length is not None:
+                    where_clauses.append("param_key LIKE ?")
+                    query_params.append(f'%"min_word_length": {int(min_word_length)},%')
 
-            if seen_ids:
-                where_clauses.append(f"id NOT IN ({','.join('?' * len(seen_ids))})")
-                query_params.extend(seen_ids)
+                if seen_ids:
+                    where_clauses.append(f"id NOT IN ({','.join('?' * len(seen_ids))})")
+                    query_params.extend(seen_ids)
 
-            if norm_dict:
-                where_clauses.append("param_key LIKE ?")
-                query_params.append(f'%"dictionary": "{norm_dict}"%')
+                if tier < 4 and norm_dict:
+                    where_clauses.append("param_key LIKE ?")
+                    query_params.append(f'%"dictionary": "{norm_dict}"%')
 
-            if is_aw is True:
-                where_clauses.append("param_key LIKE ?")
-                query_params.append('%"use_added_words": true%')
-            elif is_aw is False:
-                where_clauses.append("param_key LIKE ?")
-                query_params.append('%"use_added_words": false%')
+                if tier < 4:
+                    if is_aw is True:
+                        where_clauses.append("param_key LIKE ?")
+                        query_params.append('%"use_added_words": true%')
+                    elif is_aw is False:
+                        where_clauses.append("param_key LIKE ?")
+                        query_params.append('%"use_added_words": false%')
 
-            fmt_idx = None
-            if target_format:
-                where_clauses.append("param_key LIKE ?")
-                fmt_idx = len(query_params)
-                query_params.append(f'%"board_format": "{target_format}"%')
-            elif exclude_format:
-                where_clauses.append("param_key NOT LIKE ?")
-                query_params.append(f'%"board_format": "%{exclude_format}%"%')
+                fmt_idx = None
+                if tier < 2 and target_format:
+                    where_clauses.append("param_key LIKE ?")
+                    fmt_idx = len(query_params)
+                    query_params.append(f'%"board_format": "{target_format}"%')
+                elif exclude_format:
+                    where_clauses.append("param_key NOT LIKE ?")
+                    query_params.append(f'%"board_format": "%{exclude_format}%"%')
 
-            where_sql = " AND ".join(where_clauses)
-            cursor.execute(f"SELECT id, param_key, board_json FROM pregenerated_boards WHERE {where_sql} ORDER BY RANDOM() LIMIT 1;", tuple(query_params))
-            row = cursor.fetchone()
-
-            if not row and target_format:
-                # Try wildcard format match
-                query_params[fmt_idx] = f'%"board_format": "%{target_format}%"%'
+                where_sql = " AND ".join(where_clauses)
                 cursor.execute(f"SELECT id, param_key, board_json FROM pregenerated_boards WHERE {where_sql} ORDER BY RANDOM() LIMIT 1;", tuple(query_params))
                 row = cursor.fetchone()
 
-            if not row:
-                break
+                if not row and tier < 2 and target_format and fmt_idx is not None:
+                    # Try wildcard format match
+                    query_params[fmt_idx] = f'%"board_format": "%{target_format}%"%'
+                    cursor.execute(f"SELECT id, param_key, board_json FROM pregenerated_boards WHERE {where_sql} ORDER BY RANDOM() LIMIT 1;", tuple(query_params))
+                    row = cursor.fetchone()
 
-            seen_ids.append(row['id'])
+                if not row:
+                    break  # advance to next relaxation tier
 
-            param_key_str = row['param_key']
-            try:
-                params = json.loads(param_key_str)
-            except Exception as e:
-                print(f"[BoardGen] Error parsing param_key JSON: {e}")
-                params = {}
-            if params.get('v') != BOARD_CACHE_VERSION:
-                cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
-                conn.commit()
-                continue
+                seen_ids.append(row['id'])
 
-            # Strict validation against requested dictionary and use_added_words
-            if norm_dict:
-                cached_d = str(params.get('dictionary', 'NWL')).upper().replace('+ AW', '').replace('+AW', '').strip()
-                if cached_d not in ['NWL', 'CSW']: cached_d = 'NWL'
-                if cached_d != norm_dict:
-                    continue
-            if is_aw is not None:
-                cached_aw = bool(params.get('use_added_words', False))
-                if cached_aw != is_aw:
-                    continue
-
-            board_json = row['board_json']
-            data = json.loads(board_json)
-            board = data["board"]
-            all_words = data["all_words"]
-            
-            min_l_int = int(min_word_length)
-            playable_words = [w for w in all_words if len(w) >= min_l_int]
-            if norm_dict != 'CSW':
+                param_key_str = row['param_key']
                 try:
-                    import word_validator
-                    if hasattr(word_validator, 'word_validator'):
-                        word_validator.word_validator.ensure_csw_loaded()
-                        playable_words = [w for w in playable_words if not word_validator.word_validator.is_csw_only(w)]
-                except Exception:
-                    pass
-            else:
-                try:
-                    import word_validator
-                    if hasattr(word_validator, 'word_validator'):
-                        word_validator.word_validator.ensure_csw_loaded()
-                        csw_only_cnt = sum(1 for w in playable_words if word_validator.word_validator.is_csw_only(w))
-                        if csw_only_cnt == 0:
-                            print(f"[BoardGen] Discarding any_cached board for {dimensions}: 0 CSW-only words on board for CSW dictionary")
-                            continue
-                except Exception:
-                    pass
-
-            if is_aw is True:
-                try:
-                    import word_validator
-                    if hasattr(word_validator, 'word_validator'):
-                        aw_cnt = sum(1 for w in playable_words if word_validator.word_validator.is_added_word(w))
-                        if aw_cnt == 0:
-                            print(f"[BoardGen] Discarding any_cached board for {dimensions}: 0 Added Words on board for +AW dictionary")
-                            continue
-                except Exception:
-                    pass
-
-            actual_count = len(playable_words)
-
-            # For + AW, word count must strictly be >= 300
-            if is_aw is True and actual_count < 300:
-                print(f"[BoardGen] Discarding any_cached board for {dimensions}: +AW requires >= 300 words, got {actual_count}")
-                continue
-
-            if word_count_range and not is_board_count_valid(actual_count, word_count_range):
-                print(f"[BoardGen] Discarding any_cached board for {dimensions}: actual count {actual_count} outside requested range {word_count_range}")
-                continue
-
-            matching_min_words = sum(1 for w in playable_words if len(w) == min_l_int)
-            if matching_min_words < 3:
-                print(f"[BoardGen] Discarding any_cached board for {dimensions}: only {matching_min_words} words of length {min_l_int} (needed >= 3)")
-                continue
-
-            board_hash = get_board_hash(board)
-            if not mark_board_hash_used(board_hash, conn=conn):
-                print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
-                cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
-                conn.commit()
-                continue
-                
-            bonus_cell = tuple(data["bonus_cell"]) if data.get("bonus_cell") else None
-            board_format_ret = data.get("board_format_ret", target_format or "Normal")
-            bonus_cell = _sanitize_special_tiles_for_format(board, board_format_ret, bonus_cell)
-            
-            all_words_dict = {}
-            for w, path in data["all_words_dict"].items():
-                all_words_dict[w] = [tuple(coord) for coord in path]
-                
-            ratio = data.get("ratio", data.get("uniqueness_ratio", 0.0))
-            if difficulty:
-                try:
-                    dims_p = str(dimensions).lower().split('x')
-                    d_cnt = int(dims_p[0]) if len(dims_p) == 3 else 1
-                    r_cnt = int(dims_p[1] if len(dims_p) == 3 else dims_p[0]) if len(dims_p) >= 2 else 4
-                    c_cnt = int(dims_p[2] if len(dims_p) == 3 else dims_p[1]) if len(dims_p) >= 2 else 4
-                    achieved_cached_diff = BoardGenerator().get_difficulty_label(ratio, r_cnt, c_cnt, norm_dict or 'NWL', depth=d_cnt, min_word_length=min_l_int)
-                    if _normalize_difficulty_base(achieved_cached_diff) != _normalize_difficulty_base(difficulty):
-                        print(f"[BoardGen] Discarding any_cached board for {dimensions}: ratio {ratio:.3f} is '{achieved_cached_diff}', expected '{_normalize_difficulty_base(difficulty)}'")
-                        continue
-                except Exception as _diff_chk_err:
-                    print(f"[BoardGen] Warning checking cached difficulty in any_cached: {_diff_chk_err}")
-
-            dims_p = str(dimensions).lower().split('x')
-            d_cnt = int(dims_p[0]) if len(dims_p) == 3 else 1
-            if difficulty and _normalize_difficulty_base(difficulty) in ["Medium", "Hard"]:
-                if BoardGenerator()._has_ing_sequence(board, d_cnt):
-                    print(f"[BoardGen] Discarding any_cached board for {dimensions}: has forbidden 'ING' sequence on {difficulty}")
+                    params = json.loads(param_key_str)
+                except Exception as e:
+                    print(f"[BoardGen] Error parsing param_key JSON: {e}")
+                    params = {}
+                if params.get('v') != BOARD_CACHE_VERSION:
                     cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
                     conn.commit()
                     continue
 
-            final_bonus_word = data.get("final_bonus_word", data.get("bonus_word", ""))
-            
-            # Consume ONLY the board we are actually serving (mismatched boards stay in the pool)
-            cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
-            conn.commit()
-            if cursor.rowcount == 0:
-                continue  # another thread already took this board
-            return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, params)
+                # In tier 4, adapt dictionary & aw to the board's own attributes
+                board_norm_dict = norm_dict
+                board_is_aw = is_aw
+                if tier >= 4:
+                    board_norm_dict = str(params.get('dictionary', 'NWL')).upper().replace('+ AW', '').replace('+AW', '').strip()
+                    if board_norm_dict not in ['NWL', 'CSW']: board_norm_dict = 'NWL'
+                    board_is_aw = bool(params.get('use_added_words', False))
+
+                # Strict validation against requested dictionary and use_added_words in earlier tiers
+                if tier < 4 and norm_dict:
+                    cached_d = str(params.get('dictionary', 'NWL')).upper().replace('+ AW', '').replace('+AW', '').strip()
+                    if cached_d not in ['NWL', 'CSW']: cached_d = 'NWL'
+                    if cached_d != norm_dict:
+                        continue
+                if tier < 4 and is_aw is not None:
+                    cached_aw = bool(params.get('use_added_words', False))
+                    if cached_aw != is_aw:
+                        continue
+
+                board_json = row['board_json']
+                data = json.loads(board_json)
+                board = data["board"]
+                all_words = data["all_words"]
+                
+                if tier >= 3:
+                    min_l_int = int(params.get('min_word_length', min_word_length or 3))
+                else:
+                    min_l_int = int(min_word_length or 3)
+                playable_words = [w for w in all_words if len(w) >= min_l_int]
+                if board_norm_dict != 'CSW':
+                    try:
+                        import word_validator
+                        if hasattr(word_validator, 'word_validator'):
+                            word_validator.word_validator.ensure_csw_loaded()
+                            playable_words = [w for w in playable_words if not word_validator.word_validator.is_csw_only(w)]
+                    except Exception:
+                        pass
+                else:
+                    try:
+                        import word_validator
+                        if hasattr(word_validator, 'word_validator'):
+                            word_validator.word_validator.ensure_csw_loaded()
+                            csw_only_cnt = sum(1 for w in playable_words if word_validator.word_validator.is_csw_only(w))
+                            if csw_only_cnt == 0:
+                                print(f"[BoardGen] Discarding any_cached board for {dimensions}: 0 CSW-only words on board for CSW dictionary")
+                                continue
+                    except Exception:
+                        pass
+
+                if board_is_aw is True:
+                    try:
+                        import word_validator
+                        if hasattr(word_validator, 'word_validator'):
+                            aw_cnt = sum(1 for w in playable_words if word_validator.word_validator.is_added_word(w))
+                            if aw_cnt == 0:
+                                print(f"[BoardGen] Discarding any_cached board for {dimensions}: 0 Added Words on board for +AW dictionary")
+                                continue
+                    except Exception:
+                        pass
+
+                actual_count = len(playable_words)
+
+                # For + AW, word count must strictly be >= 300
+                if board_is_aw is True and actual_count < 300:
+                    print(f"[BoardGen] Discarding any_cached board for {dimensions}: +AW requires >= 300 words, got {actual_count}")
+                    continue
+
+                if tier == 0 and word_count_range and not is_board_count_valid(actual_count, word_count_range):
+                    print(f"[BoardGen] Discarding any_cached board for {dimensions}: actual count {actual_count} outside requested range {word_count_range}")
+                    continue
+
+                matching_min_words = sum(1 for w in playable_words if len(w) == min_l_int)
+                min_req_count = 3 if tier < 3 else 1
+                if matching_min_words < min_req_count:
+                    print(f"[BoardGen] Discarding any_cached board for {dimensions}: only {matching_min_words} words of length {min_l_int} (needed >= {min_req_count})")
+                    continue
+
+                board_hash = get_board_hash(board)
+                if not mark_board_hash_used(board_hash, conn=conn):
+                    print(f"[BoardGen] Discarding cached board (layout already used globally: {board_hash})")
+                    cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
+                    conn.commit()
+                    continue
+                    
+                bonus_cell = tuple(data["bonus_cell"]) if data.get("bonus_cell") else None
+                board_format_ret = data.get("board_format_ret", target_format or "Normal")
+                bonus_cell = _sanitize_special_tiles_for_format(board, board_format_ret, bonus_cell)
+                
+                all_words_dict = {}
+                for w, path in data["all_words_dict"].items():
+                    all_words_dict[w] = [tuple(coord) for coord in path]
+                    
+                ratio = data.get("ratio", data.get("uniqueness_ratio", 0.0))
+                if tier == 0 and difficulty:
+                    try:
+                        dims_p = str(dimensions).lower().split('x')
+                        d_cnt = int(dims_p[0]) if len(dims_p) == 3 else 1
+                        r_cnt = int(dims_p[1] if len(dims_p) == 3 else dims_p[0]) if len(dims_p) >= 2 else 4
+                        c_cnt = int(dims_p[2] if len(dims_p) == 3 else dims_p[1]) if len(dims_p) >= 2 else 4
+                        achieved_cached_diff = BoardGenerator().get_difficulty_label(ratio, r_cnt, c_cnt, board_norm_dict or 'NWL', depth=d_cnt, min_word_length=min_l_int)
+                        if _normalize_difficulty_base(achieved_cached_diff) != _normalize_difficulty_base(difficulty):
+                            print(f"[BoardGen] Discarding any_cached board for {dimensions}: ratio {ratio:.3f} is '{achieved_cached_diff}', expected '{_normalize_difficulty_base(difficulty)}'")
+                            continue
+                    except Exception as _diff_chk_err:
+                        print(f"[BoardGen] Warning checking cached difficulty in any_cached: {_diff_chk_err}")
+
+                dims_p = str(dimensions).lower().split('x')
+                d_cnt = int(dims_p[0]) if len(dims_p) == 3 else 1
+                if difficulty and _normalize_difficulty_base(difficulty) in ["Medium", "Hard"]:
+                    if BoardGenerator()._has_ing_sequence(board, d_cnt):
+                        print(f"[BoardGen] Discarding any_cached board for {dimensions}: has forbidden 'ING' sequence on {difficulty}")
+                        cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
+                        conn.commit()
+                        continue
+
+                final_bonus_word = data.get("final_bonus_word", data.get("bonus_word", ""))
+                
+                # Consume ONLY the board we are actually serving (mismatched boards stay in the pool)
+                cursor.execute("DELETE FROM pregenerated_boards WHERE id = ?;", (row['id'],))
+                conn.commit()
+                if cursor.rowcount == 0:
+                    continue  # another thread already took this board
+                return (board, all_words, bonus_cell, board_format_ret, all_words_dict, ratio, final_bonus_word, params)
     except Exception as e:
         print(f"[BoardGen] Error in pop_any_cached_board: {e}")
     finally:

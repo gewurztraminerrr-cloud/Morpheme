@@ -4049,21 +4049,21 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     if len(words_filtered) < min_accept:
         print(f"[get_emergency_fallback_board] Emergency board had only {len(words_filtered)} words (needed >= {min_accept}). Rescuing to guarantee word count...")
         from board_generator import LETTER_FREQ_SUPER_DENSITY
-        for _dense_try in range(6):
+        for _dense_try in range(1):
             dense_b = bg._create_normal_board(
                 rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=1 if not is_3d else 6,
                 difficulty='Easy', dictionary=dictionary, word_count_range=target_range_resolved, use_added_words=use_added_words
             )
             if is_mania_fmt:
                 bg._apply_mania_to_board(dense_b, m_l, set(), is_checkerboard=False)
-            dense_s = bg._solve_board(dense_b, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
+            dense_s = bg._solve_board(dense_b, dictionary, (0, 99999), min_word_length, max_depth=20, store_paths=True, timeout=2.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
             dense_w = [w for w in dense_s if len(w) >= min_word_length]
-            if len(dense_w) >= min_accept:
+            if len(dense_w) >= min_accept or len(dense_w) > len(words_filtered):
                 board = dense_b
                 emergency_solve = dense_s
                 words_filtered = dense_w
                 paths_filtered = {w: p for w, p in dense_s.items() if len(w) >= min_word_length}
-                print(f"[get_emergency_fallback_board] Super-density emergency board reached {len(words_filtered)} words (>= {min_accept}).")
+                print(f"[get_emergency_fallback_board] Super-density emergency board reached {len(words_filtered)} words.")
                 break
 
     # CRITICAL SAFEGUARD FOR CSW & ADDED WORDS:
@@ -4558,21 +4558,48 @@ class RoomManager:
                                             print(f"[RoomManager] Subanagrams singleton woken up: {existing_room.room_id}")
                                             return existing_room
 
-                                    print(f"[RoomManager] Wakeup empty singleton {existing_room.room_id} to Active Round 1 with fresh board...")
-                                    from board_generator import pop_any_cached_board, pop_compatible_cached_board
-                                    sp_fresh = SpinnerSet.generate_params(existing_room.board_dimensions, is_24h=(existing_room.time_limit >= 7200))
-                                    f_dict = sp_fresh.get('dictionary', 'NWL')
-                                    f_aw = sp_fresh.get('use_added_words', False)
-                                    f_fmt = sp_fresh.get('board_format', 'Normal')
-                                    f_min = sp_fresh.get('min_word_length', 3)
-                                    f_wc = sp_fresh.get('word_count_range')
-                                    pre_pop = pop_compatible_cached_board(existing_room.board_dimensions, f_dict, f_fmt, f_min, f_aw, word_count_range=f_wc)
+                                    pre_pop = None
+                                    # Fast-path 1: If next_round_board is already staged, promote it instantly in <1ms!
+                                    if getattr(existing_room, 'next_round_board', None) and getattr(existing_room, 'next_round_words', None):
+                                        print(f"[RoomManager] Non-subanagram singleton promoting staged next_round_board instantly (<1ms): {existing_room.room_id}")
+                                        pre_pop = (
+                                            existing_room.next_round_board,
+                                            existing_room.next_round_words,
+                                            getattr(existing_room, 'next_round_bonus_cell', None),
+                                            getattr(existing_room, 'next_round_format', 'Normal'),
+                                            getattr(existing_room, 'next_round_word_paths', {}),
+                                            getattr(existing_room, 'next_round_uniqueness', 0.0),
+                                            getattr(existing_room, 'next_round_bonus', ''),
+                                            None,
+                                            getattr(existing_room, 'next_spinner_params', None) or getattr(existing_room, 'next_round_spinner_params', None) or existing_room.spinner_params or {}
+                                        )
+                                        existing_room.next_round_board = None
+                                        existing_room.next_round_words = []
+                                        existing_room.next_round_word_paths = {}
+                                        existing_room.next_round_bonus = None
+                                        existing_room.next_spinner_params = None
+                                        existing_room.next_round_spinner_params = None
+
                                     if not pre_pop:
-                                        pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format=f_fmt, dictionary=f_dict, use_added_words=f_aw, word_count_range=f_wc)
-                                    if not pre_pop:
-                                        pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format=f_fmt, dictionary=f_dict, use_added_words=f_aw)
-                                    if not pre_pop:
-                                        pre_pop = get_emergency_fallback_board(existing_room.board_dimensions, f_fmt, existing_room.time_limit, dictionary=f_dict, use_added_words=f_aw, target_range=f_wc, min_word_length=f_min)
+                                        print(f"[RoomManager] Wakeup empty singleton {existing_room.room_id} to Active Round 1 with fresh board...")
+                                        from board_generator import pop_any_cached_board, pop_compatible_cached_board
+                                        sp_fresh = SpinnerSet.generate_params(existing_room.board_dimensions, is_24h=(existing_room.time_limit >= 7200))
+                                        f_dict = sp_fresh.get('dictionary', 'NWL')
+                                        f_aw = sp_fresh.get('use_added_words', False)
+                                        f_fmt = sp_fresh.get('board_format', 'Normal')
+                                        f_min = sp_fresh.get('min_word_length', 3)
+                                        f_wc = sp_fresh.get('word_count_range')
+                                        pre_pop = pop_compatible_cached_board(existing_room.board_dimensions, f_dict, f_fmt, f_min, f_aw, word_count_range=f_wc)
+                                        if not pre_pop:
+                                            pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format=f_fmt, dictionary=f_dict, use_added_words=f_aw, word_count_range=f_wc)
+                                        if not pre_pop:
+                                            pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min, target_format=f_fmt, dictionary=f_dict, use_added_words=f_aw)
+                                        if not pre_pop:
+                                            pre_pop = pop_any_cached_board(existing_room.board_dimensions, min_word_length=f_min)
+                                        if not pre_pop:
+                                            pre_pop = pop_any_cached_board(existing_room.board_dimensions)
+                                        if not pre_pop:
+                                            pre_pop = get_emergency_fallback_board(existing_room.board_dimensions, f_fmt, existing_room.time_limit, dictionary=f_dict, use_added_words=f_aw, target_range=f_wc, min_word_length=f_min)
                                     if pre_pop:
                                         if len(pre_pop) >= 9:
                                             r_board, r_words, r_bonus_c, r_fmt, r_dict, r_ratio, r_bonus_word, _, r_params = pre_pop
@@ -5004,6 +5031,10 @@ class RoomManager:
                                 pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=k_min, target_format=k_fmt, dictionary=k_dict, use_added_words=k_aw, word_count_range=k_wc)
                             if not pre_pop:
                                 pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=k_min, target_format=k_fmt, dictionary=k_dict, use_added_words=k_aw)
+                            if not pre_pop:
+                                pre_pop = pop_any_cached_board(room.board_dimensions, min_word_length=k_min)
+                            if not pre_pop:
+                                pre_pop = pop_any_cached_board(room.board_dimensions)
                             if not pre_pop:
                                 pre_pop = get_emergency_fallback_board(
                                     room.board_dimensions, k_fmt, room.time_limit,
@@ -8516,6 +8547,10 @@ class RoomManager:
                             room.board_dimensions, min_word_length=m_len, target_format='Normal',
                             dictionary=dict_val, use_added_words=use_aw_val, word_count_range=target_range, difficulty=sp_diff
                         )
+                    if not candidate:
+                        candidate = pop_any_cached_board(room.board_dimensions, min_word_length=m_len)
+                    if not candidate:
+                        candidate = pop_any_cached_board(room.board_dimensions)
                     if not candidate:
                         print(f"[start_next_round] Cache miss for {room_id}. Generating instant emergency fallback board for format '{fmt_val}'.")
                         candidate = get_emergency_fallback_board(
