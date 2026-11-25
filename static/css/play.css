@@ -642,6 +642,15 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
     filter: brightness(1.2);
 }
 
+.player-item .rating-square {
+    cursor: inherit !important;
+}
+
+.player-item .rating-square:hover {
+    transform: none !important;
+    filter: none !important;
+}
+
 .player-username {
     font-weight: 600;
     flex: 0 0 auto;
@@ -651,17 +660,33 @@ body[class*="theme-light-"] .player-rank.rank-bronze {
     text-overflow: ellipsis;
     white-space: nowrap;
     text-align: left !important;
-    cursor: default;
+    cursor: pointer !important;
     transition: color 0.15s ease, text-decoration 0.15s ease;
 }
 
-.player-item.is-intermission .player-username {
-    cursor: pointer;
-}
-
-.player-item.is-intermission .player-username:hover {
+.player-username:hover {
     color: #409cff !important;
     text-decoration: underline;
+}
+
+.player-score-val {
+    font-weight: 700;
+    color: #ffd700;
+    text-align: right;
+    white-space: nowrap;
+    font-size: 1rem;
+    cursor: default;
+    transition: color 0.15s ease, text-decoration 0.15s ease, filter 0.15s ease;
+}
+
+.player-item.is-intermission .player-score-val {
+    cursor: pointer !important;
+}
+
+.player-item.is-intermission .player-score-val:hover {
+    color: #409cff !important;
+    text-decoration: underline;
+    filter: brightness(1.2);
 }
 
 .player-rating-val {

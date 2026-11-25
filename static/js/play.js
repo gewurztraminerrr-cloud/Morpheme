@@ -5158,7 +5158,8 @@ function renderPlayers(players, currentUser = null, state = null) {
             const flagTitleAttr = flagCountryName ? ` title="${flagCountryName.replace(/"/g, '&quot;')}"` : '';
 
             const itemTitle = isIntermission ? 'Click to view notepad' : '';
-            const userTitle = isIntermission 
+            const userTitle = 'View Mini-Profile';
+            const scoreTitle = isIntermission 
                 ? ((p.username === selectedPlayerUsername)
                     ? 'Click to revert to your words'
                     : 'Click to highlight found words in All Words')
@@ -5168,8 +5169,8 @@ function renderPlayers(players, currentUser = null, state = null) {
             <div class="player-item${bonusClass}${userClass}${selectedClass}${finderClass}${intermissionClass}" data-username="${p.username}"${itemTitle ? ` title="${itemTitle}"` : ''}>
                 <div class="player-row-top">
                     <span class="player-rank${rankClass}"${rankStyle ? ` style="${rankStyle}"` : ''}>#${rank}</span>
-                    <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" onclick="if (window.showMiniProfile) { window.getSelection()?.removeAllRanges(); window.showMiniProfile('${p.username}'); } event.stopPropagation();" style="background-color: ${ratingColor}; cursor: pointer;" title="View Mini-Profile"></span>
-                    <span class="player-username" style="text-align: left !important;"${userTitle ? ` title="${userTitle}"` : ''}>${p.username}</span>
+                    <span class="rating-square${shineClass ? ` ${shineClass}` : ''}" style="background-color: ${ratingColor};"></span>
+                    <span class="player-username" style="text-align: left !important;" title="${userTitle}">${p.username}</span>
                     <div style="flex:1;"></div>
                     <span class="player-rating-val">${ratingDisplay}</span>
                 </div>
@@ -5180,7 +5181,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                     ${chatDisabledHtml}
                     <div style="flex:1;"></div>
                     <span class="player-words-count">${p.words_count} words</span>
-                    <span class="player-score-val">${isPlayerDNP(p, curGameState) ? 'DNP' : Math.max(0, p.score) + ' pts'}</span>
+                    <span class="player-score-val"${scoreTitle ? ` title="${scoreTitle}"` : ''}>${isPlayerDNP(p, curGameState) ? 'DNP' : Math.max(0, p.score) + ' pts'}</span>
                 </div>
             </div>
             `;
@@ -5207,7 +5208,11 @@ function renderPlayers(players, currentUser = null, state = null) {
                     item.title = 'Click to view notepad';
                     const uEl = item.querySelector('.player-username');
                     if (uEl) {
-                        uEl.title = (uname === selectedPlayerUsername)
+                        uEl.title = 'View Mini-Profile';
+                    }
+                    const sEl = item.querySelector('.player-score-val');
+                    if (sEl) {
+                        sEl.title = (uname === selectedPlayerUsername)
                             ? 'Click to revert to your words'
                             : 'Click to highlight found words in All Words';
                     }
@@ -5227,40 +5232,38 @@ function renderPlayers(players, currentUser = null, state = null) {
         listEl.scrollTop = oldScrollTop;
 
         // Unified click event delegation on listEl:
-        // 1. Colored square (rating) -> Open Mini-Profile at ANY time
-        // 2. Username text -> Highlight user found words under All Words ONLY during intermission
-        // 3. Anywhere else on cell -> Notepad appears ONLY during intermission
+        // 1. Username text -> Open Mini-Profile at ANY time
+        // 2. Point value (e.g. 45 pts) -> Highlight user found words under All Words ONLY during intermission
+        // 3. Anywhere else on cell (including colored square) -> Notepad appears ONLY during intermission
         if (!listEl.hasPlayerRosterClickListener) {
             listEl.addEventListener('click', (e) => {
                 const curState = window.lastGameState;
                 const inIntermission = Boolean(curState && (curState.state === 'intermission' || curState.intermission === true));
 
-                // 1. Colored square indicating rating -> Show Mini-Profile at ANY time
-                const ratingSquare = e.target.closest('.rating-square');
-                if (ratingSquare) {
-                    const pItem = ratingSquare.closest('.player-item');
-                    const uName = pItem ? pItem.dataset.username : null;
-                    if (uName && typeof window.showMiniProfile === 'function') {
-                        if (window.getSelection) {
-                            try { window.getSelection().removeAllRanges(); } catch (err) {}
-                        }
-                        if (typeof window.closeNotepadPopup === 'function') {
-                            window.closeNotepadPopup();
-                        }
+                const item = e.target.closest('.player-item');
+                if (!item || !item.dataset.username) return;
+                const uName = item.dataset.username;
+
+                // 1. Username clicked -> Open Mini-Profile at ANY time
+                const usernameEl = e.target.closest('.player-username');
+                if (usernameEl) {
+                    if (window.getSelection) {
+                        try { window.getSelection().removeAllRanges(); } catch (err) {}
+                    }
+                    if (typeof window.closeNotepadPopup === 'function') {
+                        window.closeNotepadPopup();
+                    }
+                    if (typeof window.showMiniProfile === 'function') {
                         window.showMiniProfile(uName);
                     }
                     return;
                 }
 
-                const item = e.target.closest('.player-item');
-                if (!item || !item.dataset.username) return;
-                const uName = item.dataset.username;
-
-                // 2. Username clicked -> Highlight what user found under All Words ONLY during intermission
-                const usernameEl = e.target.closest('.player-username');
-                if (usernameEl) {
+                // 2. Point value clicked (e.g. 45 pts) -> Highlight what user found under All Words ONLY during intermission
+                const scoreEl = e.target.closest('.player-score-val');
+                if (scoreEl) {
                     if (!inIntermission) {
-                        return; // Do NOT highlight a user during a round!
+                        return; // Do NOT highlight a user during an active round!
                     }
 
                     // Close notepad if open
@@ -5298,7 +5301,7 @@ function renderPlayers(players, currentUser = null, state = null) {
                     return;
                 }
 
-                // 3. Anywhere else on the cell -> Notepad appears ONLY during intermission
+                // 3. Anywhere else on cell (including colored square, rank, flag, etc.) -> Notepad appears ONLY during intermission
                 if (inIntermission) {
                     if (typeof window.showNotepadPopup === 'function') {
                         window.showNotepadPopup(uName);
