@@ -1369,6 +1369,26 @@ class BoardGenerator:
             count_unique = sum(1 for w in base_words if w.upper() in unique_set)
             return count_unique / count_relevant
 
+    def _calculate_uniqueness_ratio(self, board, dictionary="NWL", depth=1, bonus_cell=None, min_word_length=3, use_added_words=False):
+        """Helper to calculate uniqueness ratio directly from board and params."""
+        if not board:
+            return 0.0
+        is_3d = (depth > 1) or (len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list))
+        if is_3d:
+            rows, cols = 3, 3
+            depth = 6
+        else:
+            rows = len(board)
+            cols = len(board[0]) if rows > 0 and isinstance(board[0], (list, str)) else 4
+        solve_depth = 25 if rows * cols <= 16 else 14
+        core_type = str(dictionary).upper().replace('+ AW', '').replace('+AW', '').strip()
+        if core_type in ["AW", "ADDED_WORDS", "ALL", ""]:
+            core_type = "NWL"
+        solved = self._solve_board(
+            board, core_type, (0, 99999), min_word_length=min_word_length, max_depth=solve_depth, store_paths=False, timeout=3.0, bonus_cell=bonus_cell, use_added_words=use_added_words
+        )
+        return self.get_uniqueness_ratio(board, list(solved.keys()), rows=rows, cols=cols, dictionary=core_type, depth=depth)
+
     def get_difficulty_label(self, ratio, rows=4, cols=4, dictionary="NWL", depth=1, board=None, target_difficulty=None, min_word_length=3):
         """Derive difficulty label strictly from the uniqueness ratio achieved to ensure absolute parity."""
         try:
@@ -4239,8 +4259,24 @@ class BoardGenerator:
         else:
             return LETTER_FREQ_USER
 
-    def _sanitize_uniqueness(self, board, depth, dictionary, min_word_length, max_ratio, rows, cols):
+    def _sanitize_uniqueness(self, board, *args, **kwargs):
         """Actively sanitize the board to lower its uniqueness ratio below max_ratio by replacing letters that form unique words."""
+        if len(args) >= 6:
+            depth, dictionary, min_word_length, max_ratio, rows, cols = args[:6]
+        elif len(args) == 1 and not isinstance(args[0], int):
+            dictionary = args[0]
+            max_ratio = kwargs.get('max_ratio', 0.15)
+            depth = kwargs.get('depth', 1)
+            min_word_length = kwargs.get('min_word_length', 3)
+            rows = kwargs.get('rows', len(board) if board else 4)
+            cols = kwargs.get('cols', len(board[0]) if board and isinstance(board[0], (list, str)) else 4)
+        else:
+            depth = kwargs.get('depth', args[0] if len(args) > 0 else 1)
+            dictionary = kwargs.get('dictionary', args[1] if len(args) > 1 else 'NWL')
+            min_word_length = kwargs.get('min_word_length', args[2] if len(args) > 2 else 3)
+            max_ratio = kwargs.get('max_ratio', args[3] if len(args) > 3 else 0.15)
+            rows = kwargs.get('rows', args[4] if len(args) > 4 else (len(board) if board else 4))
+            cols = kwargs.get('cols', args[5] if len(args) > 5 else (len(board[0]) if board and isinstance(board[0], (list, str)) else 4))
         all_words_dict = self._solve_board(
             board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=5.0
         )
@@ -4332,8 +4368,24 @@ class BoardGenerator:
                     
         return board, all_words_dict, ratio
 
-    def _boost_uniqueness(self, board, depth, dictionary, min_word_length, min_ratio, rows, cols):
+    def _boost_uniqueness(self, board, *args, **kwargs):
         """Actively boost the board's uniqueness ratio above min_ratio by replacing common letters with rare ones."""
+        if len(args) >= 6:
+            depth, dictionary, min_word_length, min_ratio, rows, cols = args[:6]
+        elif len(args) == 1 and not isinstance(args[0], int):
+            dictionary = args[0]
+            min_ratio = kwargs.get('min_ratio', 0.28)
+            depth = kwargs.get('depth', 1)
+            min_word_length = kwargs.get('min_word_length', 3)
+            rows = kwargs.get('rows', len(board) if board else 4)
+            cols = kwargs.get('cols', len(board[0]) if board and isinstance(board[0], (list, str)) else 4)
+        else:
+            depth = kwargs.get('depth', args[0] if len(args) > 0 else 1)
+            dictionary = kwargs.get('dictionary', args[1] if len(args) > 1 else 'NWL')
+            min_word_length = kwargs.get('min_word_length', args[2] if len(args) > 2 else 3)
+            min_ratio = kwargs.get('min_ratio', args[3] if len(args) > 3 else 0.28)
+            rows = kwargs.get('rows', args[4] if len(args) > 4 else (len(board) if board else 4))
+            cols = kwargs.get('cols', args[5] if len(args) > 5 else (len(board[0]) if board and isinstance(board[0], (list, str)) else 4))
         all_words_dict = self._solve_board(
             board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=5.0
         )

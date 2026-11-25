@@ -17757,6 +17757,18 @@ def create_solo_match():
     game_type = 'solo_accumulative' # Isolated mode for solo play
     time_limit = _safe_int_param(parameters.get('time_limit'), 60)
     board_dimensions = parameters.get('board_dimensions', '4x4')
+    is_24h_room = (time_limit >= 7200)
+    if is_24h_room:
+        floor_len = 3
+        if '4x6' in str(board_dimensions): floor_len = 4
+        elif '5x7' in str(board_dimensions): floor_len = 5
+        elif '6x8' in str(board_dimensions) or '3x3x3' in str(board_dimensions): floor_len = 6
+        parameters['min_word_length'] = floor_len
+        parameters['word_count_range'] = '300-400'
+        parameters['board_format'] = 'Valued Letters'
+        parameters['use_added_words'] = False
+        clean_d = str(parameters.get('dictionary', 'NWL')).replace('+ AW', '').replace('+AW', '').strip()
+        parameters['dictionary'] = 'CSW' if 'CSW' in clean_d.upper() else 'NWL'
     
     room = room_manager.create_room(
         room_id, game_type, time_limit, board_dimensions, is_private=True,
