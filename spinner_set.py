@@ -59,13 +59,13 @@ class SpinnerSet:
                 return f"{base} ({pct}%)"
             except Exception:
                 pass
-        # Default representative percentage within the difficulty's uniqueness band
+        # Default representative percentage within the difficulty's uniqueness band (aligned with 4x4 thresholds)
         if base == 'Easy':
-            pct = _rng.randint(22, 36)
+            pct = _rng.randint(11, 14)
         elif base == 'Hard':
-            pct = _rng.randint(54, 68)
+            pct = _rng.randint(34, 44)
         else:
-            pct = _rng.randint(39, 51)
+            pct = _rng.randint(20, 26)
         return f"{base} ({pct}%)"
 
     @staticmethod

@@ -2148,10 +2148,6 @@ class GameRoom:
             c_cnt = int(dims_parts[2] if len(dims_parts) == 3 else dims_parts[1]) if len(dims_parts) >= 2 else 4
             d_cnt = int(dims_parts[0]) if len(dims_parts) == 3 else 1
             raw_diff_label = _bg.get_difficulty_label(fr, rows=r_cnt, cols=c_cnt, dictionary=clean_dict, depth=d_cnt, board=fb, target_difficulty=target_params.get('difficulty') or fparams.get('difficulty'), min_word_length=f_min_l)
-            if getattr(self, 'is_solo', False) and getattr(self, 'initial_solo_params', None):
-                _solo_d = self.initial_solo_params.get('difficulty', 'random')
-                if _solo_d and str(_solo_d).lower() != 'random':
-                    raw_diff_label = SpinnerSet.strip_difficulty_pct(_solo_d)
             formatted_diff = SpinnerSet.format_difficulty_with_pct(raw_diff_label, fr)
 
             new_sp = {
@@ -2276,7 +2272,12 @@ class GameRoom:
         else:
             e_wc_final = SpinnerSet.get_factchecked_wc_range(actual_e_wc, use_added_words=e_aw_val, dictionary=e_dict_display)
 
-        e_diff_raw = e_params.get('difficulty') or source_sp.get('difficulty') or 'Medium'
+        dims_p_e = str(self.board_dimensions).lower().split('x')
+        d_cnt_e = int(dims_p_e[0]) if len(dims_p_e) == 3 else 1
+        r_cnt_e = int(dims_p_e[1] if len(dims_p_e) == 3 else dims_p_e[0]) if len(dims_p_e) >= 2 else 4
+        c_cnt_e = int(dims_p_e[2] if len(dims_p_e) == 3 else dims_p_e[1]) if len(dims_p_e) >= 2 else 4
+        _bg_inst = _room_manager_instance.board_generator if (_room_manager_instance and hasattr(_room_manager_instance, 'board_generator')) else BoardGenerator()
+        e_diff_raw = _bg_inst.get_difficulty_label(e_ratio, rows=r_cnt_e, cols=c_cnt_e, dictionary=clean_e_dict, depth=d_cnt_e, board=e_board, min_word_length=final_e_min)
         e_diff_formatted = SpinnerSet.format_difficulty_with_pct(e_diff_raw, e_ratio)
 
         esp = {
@@ -6543,10 +6544,6 @@ class RoomManager:
             r_num = int(dims[1] if len(dims) == 3 else dims[0])
             c_num = int(dims[2] if len(dims) == 3 else dims[1])
             achieved_diff = self.board_generator.get_difficulty_label(u_ratio, r_num, c_num, room.spinner_params.get('dictionary', 'NWL'), depth=d_num, board=room.board, target_difficulty=room.spinner_params.get('difficulty'), min_word_length=room.spinner_params.get('min_word_length', 3))
-            if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
-                _solo_d = room.initial_solo_params.get('difficulty', 'random')
-                if _solo_d and str(_solo_d).lower() != 'random':
-                    achieved_diff = SpinnerSet.strip_difficulty_pct(_solo_d)
             room.current_difficulty = f"{achieved_diff} ({int(u_ratio * 100)}%)"
             if not getattr(room, '_spinner_params_locked', False):
                 room.spinner_params['difficulty'] = room.current_difficulty
@@ -7034,10 +7031,6 @@ class RoomManager:
                 is_already_staged_for_round = getattr(room, 'spinner_params_generated', False) and bool(getattr(room, 'next_spinner_params', None))
                 if is_already_staged_for_round:
                     new_params = dict(room.next_spinner_params)
-                    if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
-                        _solo_d = room.initial_solo_params.get('difficulty', 'random')
-                        if _solo_d and str(_solo_d).lower() != 'random':
-                            new_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(_solo_d, new_params.get('uniqueness') or getattr(room, 'next_round_uniqueness', None))
                     print(f"[RoomManager] Using EXISTING staged params for room {room_id} (Lock-protected)")
                 else:
                     # Generate new parameters
@@ -7191,10 +7184,6 @@ class RoomManager:
                         r_cnt = int(dims_parts[0]) if len(dims_parts) >= 2 else 4
                         c_cnt = int(dims_parts[1]) if len(dims_parts) >= 2 else 4
                         final_diff_label = self.board_generator.get_difficulty_label(ratio, rows=r_cnt, cols=c_cnt, dictionary=new_params.get('dictionary', 'NWL'), min_word_length=new_params.get('min_word_length', 3))
-                        if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
-                            _solo_d = room.initial_solo_params.get('difficulty', 'random')
-                            if _solo_d and str(_solo_d).lower() != 'random':
-                                final_diff_label = SpinnerSet.strip_difficulty_pct(_solo_d)
                         new_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(final_diff_label, ratio)
                         target_bw_l = int(new_params.get('bonus_word_length', 8) or 8)
                         if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
@@ -8005,7 +7994,8 @@ class RoomManager:
                             search_min,
                             use_aw_flag,
                             bonus_word_len=len(bonus_word) if bonus_word else None,
-                            word_count_range='300-400' if room.time_limit >= 7200 else search_wc
+                            word_count_range='300-400' if room.time_limit >= 7200 else search_wc,
+                            difficulty=search_diff
                         )
                         if not candidate:
                             break
@@ -8013,10 +8003,14 @@ class RoomManager:
                         _fw_filtered = [w for w in _fw if len(w) >= search_min]
                         search_diff_base = SpinnerSet.strip_difficulty_pct(search_diff)
                         is_diff_match = True
-                        if search_diff_base == 'Hard' and _fr < 0.35:
-                            is_diff_match = False
-                        elif search_diff_base == 'Easy' and _fr > 0.25:
-                            is_diff_match = False
+                        if search_diff_base and str(search_diff_base).lower() != 'random':
+                            b_dims_c = room.board_dimensions.split('x')
+                            d_val_c = int(b_dims_c[0]) if len(b_dims_c) == 3 else 1
+                            rows_c = int(b_dims_c[1] if len(b_dims_c) == 3 else b_dims_c[0])
+                            cols_c = int(b_dims_c[2] if len(b_dims_c) == 3 else b_dims_c[1])
+                            _cand_diff = self.board_generator.get_difficulty_label(_fr, rows_c, cols_c, search_dict, depth=d_val_c, min_word_length=search_min)
+                            if _cand_diff != search_diff_base:
+                                is_diff_match = False
 
                         matching_min_cnt = sum(1 for w in _fw_filtered if len(w) == search_min)
                         is_24h_ok = (not (room.time_limit >= 7200)) or (300 <= len(_fw_filtered) <= 399)
@@ -8048,7 +8042,12 @@ class RoomManager:
                             wc_label = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw, dictionary=params.get('dictionary'))
                         params['word_count_range'] = wc_label
                         params['uniqueness'] = _ratio
-                        params['difficulty'] = SpinnerSet.format_difficulty_with_pct(params.get('difficulty', 'Medium'), _ratio)
+                        b_dims_p = room.board_dimensions.split('x')
+                        d_val_p = int(b_dims_p[0]) if len(b_dims_p) == 3 else 1
+                        rows_p = int(b_dims_p[1] if len(b_dims_p) == 3 else b_dims_p[0])
+                        cols_p = int(b_dims_p[2] if len(b_dims_p) == 3 else b_dims_p[1])
+                        achieved_hit_diff = self.board_generator.get_difficulty_label(_ratio, rows_p, cols_p, search_dict, depth=d_val_p, min_word_length=search_min)
+                        params['difficulty'] = SpinnerSet.format_difficulty_with_pct(achieved_hit_diff, _ratio)
                         
                         if _words:
                             _actual_min_board = min(len(w) for w in _words)
@@ -8231,6 +8230,19 @@ class RoomManager:
                             except Exception as aw_resc_err:
                                 print(f"[RoomManager] Error during AW rescue sweep: {aw_resc_err}")
 
+                        # USER MANDATE: Ensure generated board difficulty strictly matches requested difficulty
+                        search_diff_base = SpinnerSet.strip_difficulty_pct(search_diff)
+                        if search_diff_base and str(search_diff_base).lower() != 'random':
+                            b_dims = room.board_dimensions.split('x')
+                            d_val = int(b_dims[0]) if len(b_dims) == 3 else 1
+                            rows = int(b_dims[1] if len(b_dims) == 3 else b_dims[0])
+                            cols = int(b_dims[2] if len(b_dims) == 3 else b_dims[1])
+                            gen_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val, board=board, min_word_length=search_min)
+                            if gen_diff != search_diff_base and board_attempts < 4:
+                                print(f"[RoomManager] Generated board difficulty '{gen_diff}' (ratio {u_ratio:.3f}) != requested '{search_diff_base}'. Retrying generation attempt {board_attempts + 1}...")
+                                board_attempts += 1
+                                continue
+
                         if not is_duplicate:
                             break
                         
@@ -8391,10 +8403,6 @@ class RoomManager:
                     rows = int(b_dims[1] if len(b_dims) == 3 else b_dims[0])
                     cols = int(b_dims[2] if len(b_dims) == 3 else b_dims[1])
                     achieved_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val, board=board, target_difficulty=target_room.next_spinner_params.get('difficulty') if getattr(target_room, 'next_spinner_params', None) else None, min_word_length=_sb_min_len)
-                    if getattr(target_room, 'is_solo', False) and getattr(target_room, 'initial_solo_params', None):
-                        _solo_d = target_room.initial_solo_params.get('difficulty', 'random')
-                        if _solo_d and str(_solo_d).lower() != 'random':
-                            achieved_diff = SpinnerSet.strip_difficulty_pct(_solo_d)
                     achieved_diff = SpinnerSet.format_difficulty_with_pct(achieved_diff, u_ratio)
 
                     # CSW and AW word tagging
@@ -8992,10 +9000,6 @@ class RoomManager:
                 # It will be computed from the actual board word count at the accuracy enforcement
                 # step below (real_wc). Setting it prematurely here to the target value causes a
                 # brief flash of the wrong label if a heartbeat fires before real_wc is ready.
-                if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
-                    _solo_d = room.initial_solo_params.get('difficulty', 'random')
-                    if _solo_d and str(_solo_d).lower() != 'random':
-                        active_params['difficulty'] = SpinnerSet.format_difficulty_with_pct(_solo_d, active_params.get('uniqueness') or getattr(room, 'next_round_uniqueness', None))
                 room.current_difficulty = active_params.get('difficulty', 'Medium')
                 room.current_dictionary = active_params.get('dictionary', 'NWL')
                 room.use_added_words = bool(active_params.get('use_added_words', False)) or ('+ AW' in str(room.current_dictionary).upper()) or ('+AW' in str(room.current_dictionary).upper()) or (str(room.current_dictionary).upper() in ['AW', 'ADDED_WORDS'])
@@ -9016,14 +9020,17 @@ class RoomManager:
                     if isinstance(room.spinner_params, dict):
                         room.spinner_params['uniqueness'] = room.current_uniqueness
                     dims_parts = str(room.board_dimensions).lower().split('x')
-                    r_cnt = int(dims_parts[0]) if len(dims_parts) >= 2 else 4
-                    c_cnt = int(dims_parts[1]) if len(dims_parts) >= 2 else 4
-                    # PREFACE: the difficulty declared at 0:45 is final; only add the (XX%) suffix.
+                    d_cnt = int(dims_parts[0]) if len(dims_parts) == 3 else 1
+                    r_cnt = int(dims_parts[1] if len(dims_parts) == 3 else dims_parts[0]) if len(dims_parts) >= 2 else 4
+                    c_cnt = int(dims_parts[2] if len(dims_parts) == 3 else dims_parts[1]) if len(dims_parts) >= 2 else 4
+                    _actual_diff = self.board_generator.get_difficulty_label(room.current_uniqueness, rows=r_cnt, cols=c_cnt, dictionary=room.current_dictionary, depth=d_cnt, min_word_length=getattr(room, 'current_min_length', 3))
                     room.current_difficulty = SpinnerSet.format_difficulty_with_pct(
-                        active_params.get('difficulty', 'Medium'), room.current_uniqueness
+                        _actual_diff, room.current_uniqueness
                     )
                     if isinstance(room.spinner_params, dict):
                         room.spinner_params['difficulty'] = room.current_difficulty
+                    if isinstance(active_params, dict):
+                        active_params['difficulty'] = room.current_difficulty
                 try:
                     room.current_min_length = int(raw_min)
                 except:
