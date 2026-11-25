@@ -1156,9 +1156,28 @@ class GameRoom:
         is_eo = 'either' in fmt_lower
         is_bonus_mode = ('bonus' in fmt_lower or is_eo)
 
-        # In Either/Or format, mousing a path blindly sends the first letter of the L/T tile.
-        # We must reconstruct the possible words from the provided path and find the one that is valid.
-        if path and is_eo:
+        # In Either/Or format or with Q/QU tiles, mousing a path blindly sends the default tile letters.
+        # We reconstruct the possible words from the provided path and find the one that is valid.
+        has_special_tile = False
+        if path:
+            is_3d_check = isinstance(self.board[0][0], list)
+            for node in path:
+                f, r, c = -1, -1, -1
+                if isinstance(node, dict):
+                    f, r, c = int(node.get('f', -1)), int(node.get('r', -1)), int(node.get('c', -1))
+                elif isinstance(node, (list, tuple)):
+                    if len(node) == 3: f, r, c = int(node[0]), int(node[1]), int(node[2])
+                    elif len(node) == 2: r, c = int(node[0]), int(node[1])
+                cv = ''
+                if is_3d_check and 0 <= f < len(self.board) and 0 <= r < len(self.board[f]) and 0 <= c < len(self.board[f][r]):
+                    cv = str(self.board[f][r][c]).upper()
+                elif 0 <= r < len(self.board) and 0 <= c < len(self.board[0]):
+                    cv = str(self.board[r][c]).upper()
+                if '/' in cv or cv in ('Q', 'QU'):
+                    has_special_tile = True
+                    break
+
+        if path and (is_eo or has_special_tile):
             possible_words = ['']
             valid_path = True
             is_3d_board = isinstance(self.board[0][0], list)
@@ -1188,21 +1207,17 @@ class GameRoom:
                     for prefix in possible_words:
                         for opt in options:
                             opt_u = opt.upper()
-                            if opt_u == 'Q':
+                            if opt_u == 'Q' or opt_u == 'QU':
                                 new_words.append(prefix + 'QU')
                                 new_words.append(prefix + 'Q')
-                            elif opt_u == 'QU':
-                                new_words.append(prefix + 'QU')
                             else:
                                 new_words.append(prefix + opt)
                     possible_words = new_words
                 else:
                     cell_u = cell_val.upper()
                     additions = [cell_val]
-                    if cell_u == 'Q':
+                    if cell_u == 'Q' or cell_u == 'QU':
                         additions = ['QU', 'Q']
-                    elif cell_u == 'QU':
-                        additions = ['QU']
                     new_words = []
                     for prefix in possible_words:
                         for add in additions:
@@ -1251,12 +1266,16 @@ class GameRoom:
             matched_word = word
         elif 'Q' in word and word.replace('Q', 'QU') in self.all_words:
             matched_word = word.replace('Q', 'QU')
+        elif 'QU' in word and word.replace('QU', 'Q') in self.all_words:
+            matched_word = word.replace('QU', 'Q')
         else:
             # Self-healing fallback for truncated/missing valid words on the board
-            # Test both original word and QU variant
+            # Test both original word and QU / Q variants
             candidates = [word]
             if 'Q' in word:
                 candidates.append(word.replace('Q', 'QU'))
+            if 'QU' in word:
+                candidates.append(word.replace('QU', 'Q'))
                 
             for cand in candidates:
                 is_valid_dict = word_validator.word_validator.is_valid_word(cand, getattr(self, 'current_dictionary', 'NWL'), use_added_words=getattr(self, 'use_added_words', False))

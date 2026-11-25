@@ -11819,10 +11819,33 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
         }
     }
     
-    // --- EITHER/OR PATH RESOLUTION ---
+    // --- PATH CANDIDATE RESOLUTION (Either/Or tiles and Q/QU tiles) ---
     const boardFormat = (window.lastGameState && window.lastGameState.current_board_format) ? window.lastGameState.current_board_format : 'Normal';
     const isEO = boardFormat.toLowerCase().includes('either');
-    if (finalPath && isEO && board) {
+    let hasSpecialTileInPath = false;
+    if (finalPath && board) {
+        for (const node of finalPath) {
+            let cellVal = '';
+            if (node.length === 3) {
+                const [f, r, c] = node;
+                if (f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
+                    cellVal = String(board[f][r][c]);
+                }
+            } else if (node.length === 2) {
+                const [r, c] = node;
+                if (r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                    cellVal = String(board[r][c]);
+                }
+            }
+            const cU = cellVal.toUpperCase();
+            if (cellVal.includes('/') || cU === 'Q' || cU === 'QU') {
+                hasSpecialTileInPath = true;
+                break;
+            }
+        }
+    }
+
+    if (finalPath && (isEO || hasSpecialTileInPath) && board) {
         let possibleWords = [''];
         let validPath = true;
 
@@ -11853,11 +11876,9 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                 for (const prefix of possibleWords) {
                     for (const opt of options) {
                         const optUpper = opt.toUpperCase();
-                        if (optUpper === 'Q') {
+                        if (optUpper === 'Q' || optUpper === 'QU') {
                             newWords.push(prefix + 'QU');
                             newWords.push(prefix + 'Q');
-                        } else if (optUpper === 'QU') {
-                            newWords.push(prefix + 'QU');
                         } else {
                             newWords.push(prefix + opt);
                         }
@@ -11867,10 +11888,8 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
             } else {
                 const cellUpper = cellVal.toUpperCase();
                 let additions = [cellVal];
-                if (cellUpper === 'Q') {
+                if (cellUpper === 'Q' || cellUpper === 'QU') {
                     additions = ['QU', 'Q'];
-                } else if (cellUpper === 'QU') {
-                    additions = ['QU'];
                 }
                 let newWords = [];
                 for (const prefix of possibleWords) {
@@ -12005,7 +12024,31 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                     preState._allWordsSet = new Set(wordList.map(w => (typeof w === 'string' ? w : (w.word || '')).trim().toUpperCase()));
                     preState._allWordsSetSource = preState.all_words;
                 }
-                const isInWordList = preState._allWordsSet.has(word);
+                let isInWordList = preState._allWordsSet.has(word);
+
+                // Q/QU Auto-Resolution: If word has QU but only Q variant is in word list (e.g. QUINDAR -> QINDAR),
+                // or word has Q and only QU variant is in word list (e.g. QICK -> QUICK):
+                if (!isInWordList && /QU/i.test(word) && preState._allWordsSet.has(word.replace(/QU/g, 'Q'))) {
+                    const altWord = word.replace(/QU/g, 'Q');
+                    word = altWord;
+                    isInWordList = true;
+                    if (board) {
+                        const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
+                        finalPath = (is3D && typeof findWordPathOnCube === 'function') 
+                            ? findWordPathOnCube(word, board) 
+                            : (typeof findWordPathOnBoard === 'function' ? findWordPathOnBoard(word, board) : finalPath);
+                    }
+                } else if (!isInWordList && /Q(?!U)/i.test(word) && preState._allWordsSet.has(word.replace(/Q(?!U)/g, 'QU'))) {
+                    const altWord = word.replace(/Q(?!U)/g, 'QU');
+                    word = altWord;
+                    isInWordList = true;
+                    if (board) {
+                        const is3D = board.length === 6 && Array.isArray(board[0]) && Array.isArray(board[0][0]);
+                        finalPath = (is3D && typeof findWordPathOnCube === 'function') 
+                            ? findWordPathOnCube(word, board) 
+                            : (typeof findWordPathOnBoard === 'function' ? findWordPathOnBoard(word, board) : finalPath);
+                    }
+                }
 
                 if (isInWordList) {
                     // Confirmed valid — check if it's Bonus Word OR uses Bonus Letter tile
@@ -14161,7 +14204,7 @@ function getLetterFromPathIndex(path, i, isForDisplay = false) {
         const prevL = prevP && prevP.letter ? (prevP.letter.includes('/') ? prevP.letter.split('/')[0] : prevP.letter) : null;
         const nextL = nextP && nextP.letter ? (nextP.letter.includes('/') ? nextP.letter.split('/')[0] : nextP.letter) : null;
         
-        if (cleanL === 'Q' && (prevL === 'U' || nextL === 'U')) {
+        if ((cleanL === 'Q' || cleanL === 'QU') && (prevL === 'U' || nextL === 'U')) {
             return 'Q';
         }
         return 'QU';
@@ -15003,7 +15046,31 @@ async function handleTournamentWord(word, path = null) {
     let resolvedWord = word.toUpperCase();
     let resolvedPath = path;
 
-    if (resolvedPath && isEO) {
+    let hasSpecialTileInPath = false;
+    if (resolvedPath && board) {
+        for (const node of resolvedPath) {
+            let cellVal = '';
+            let f = undefined, r = undefined, c = undefined;
+            if (Array.isArray(node)) {
+                if (node.length === 3) [f, r, c] = node;
+                else if (node.length === 2) [r, c] = node;
+            } else if (node && typeof node === 'object') {
+                r = node.r; c = node.c; f = node.f;
+            }
+            if (f !== undefined && f !== null && f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
+                cellVal = String(board[f][r][c]);
+            } else if (r !== undefined && c !== undefined && r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                cellVal = String(board[r][c]);
+            }
+            const cU = cellVal.toUpperCase();
+            if (cellVal.includes('/') || cU === 'Q' || cU === 'QU') {
+                hasSpecialTileInPath = true;
+                break;
+            }
+        }
+    }
+
+    if (resolvedPath && (isEO || hasSpecialTileInPath)) {
         // Reconstruct all possible words from the path
         let possibleWords = [''];
         let validPath = true;
@@ -15048,11 +15115,9 @@ async function handleTournamentWord(word, path = null) {
                 for (const prefix of possibleWords) {
                     for (const opt of options) {
                         const optUpper = opt.toUpperCase();
-                        if (optUpper === 'Q') {
+                        if (optUpper === 'Q' || optUpper === 'QU') {
                             newWords.push(prefix + 'QU');
                             newWords.push(prefix + 'Q');
-                        } else if (optUpper === 'QU') {
-                            newWords.push(prefix + 'QU');
                         } else {
                             newWords.push(prefix + opt);
                         }
@@ -15062,10 +15127,8 @@ async function handleTournamentWord(word, path = null) {
             } else {
                 const cellUpper = cellVal.toUpperCase();
                 let additions = [cellVal];
-                if (cellUpper === 'Q') {
+                if (cellUpper === 'Q' || cellUpper === 'QU') {
                     additions = ['QU', 'Q'];
-                } else if (cellUpper === 'QU') {
-                    additions = ['QU'];
                 }
                 let newWords = [];
                 for (const prefix of possibleWords) {
@@ -15505,7 +15568,31 @@ async function handlePrivateMatchWord(word, path = null) {
     let resolvedPath = path;
 
     let usesEitherOrTile = false;
-    if (resolvedPath && isEO) {
+    let hasSpecialTileInPath = false;
+    if (resolvedPath && board) {
+        for (const node of resolvedPath) {
+            let cellVal = '';
+            let f = undefined, r = undefined, c = undefined;
+            if (Array.isArray(node)) {
+                if (node.length === 3) [f, r, c] = node;
+                else if (node.length === 2) [r, c] = node;
+            } else if (node && typeof node === 'object') {
+                r = node.r; c = node.c; f = node.f;
+            }
+            if (f !== undefined && f !== null && f >= 0 && f < board.length && r >= 0 && r < board[f].length && c >= 0 && c < board[f][r].length) {
+                cellVal = String(board[f][r][c]);
+            } else if (r !== undefined && c !== undefined && r >= 0 && r < board.length && c >= 0 && c < board[0].length) {
+                cellVal = String(board[r][c]);
+            }
+            const cU = cellVal.toUpperCase();
+            if (cellVal.includes('/') || cU === 'Q' || cU === 'QU') {
+                hasSpecialTileInPath = true;
+                break;
+            }
+        }
+    }
+
+    if (resolvedPath && (isEO || hasSpecialTileInPath)) {
         // Reconstruct all possible words from the path
         let possibleWords = [''];
         let validPath = true;
@@ -15551,11 +15638,9 @@ async function handlePrivateMatchWord(word, path = null) {
                 for (const prefix of possibleWords) {
                     for (const opt of options) {
                         const optUpper = opt.toUpperCase();
-                        if (optUpper === 'Q') {
+                        if (optUpper === 'Q' || optUpper === 'QU') {
                             newWords.push(prefix + 'QU');
                             newWords.push(prefix + 'Q');
-                        } else if (optUpper === 'QU') {
-                            newWords.push(prefix + 'QU');
                         } else {
                             newWords.push(prefix + opt);
                         }
@@ -15565,10 +15650,8 @@ async function handlePrivateMatchWord(word, path = null) {
             } else {
                 const cellUpper = cellVal.toUpperCase();
                 let additions = [cellVal];
-                if (cellUpper === 'Q') {
+                if (cellUpper === 'Q' || cellUpper === 'QU') {
                     additions = ['QU', 'Q'];
-                } else if (cellUpper === 'QU') {
-                    additions = ['QU'];
                 }
                 let newWords = [];
                 for (const prefix of possibleWords) {

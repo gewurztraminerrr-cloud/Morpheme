@@ -5901,11 +5901,11 @@ class BoardGenerator:
         if depth_val == 1:
             visited = [[False for _ in range(cols)] for _ in range(rows)]
             is_bonus_cell = [[(( -1, ri, ci) in bonus_coords) for ci in range(cols)] for ri in range(rows)]
-            pre_split_board = [[ (board[ri][ci].split("/") if "/" in board[ri][ci] else [board[ri][ci]]) for ci in range(cols)] for ri in range(rows)]
+            pre_split_board = [[ (['Q' if opt.upper() == 'QU' else opt for opt in (board[ri][ci].split("/") if "/" in board[ri][ci] else [board[ri][ci]])]) for ci in range(cols)] for ri in range(rows)]
         else:
             visited = [[[False for _ in range(depth_val)] for _ in range(cols)] for _ in range(rows)]
             is_bonus_cell = [[[((fi, ri, ci) in bonus_coords) for ci in range(cols)] for ri in range(rows)] for fi in range(depth_val)]
-            pre_split_board = [[[ (board[fi][ri][ci].split("/") if "/" in board[fi][ri][ci] else [board[fi][ri][ci]]) for ci in range(cols)] for ri in range(rows)] for fi in range(depth_val)]
+            pre_split_board = [[[ (['Q' if opt.upper() == 'QU' else opt for opt in (board[fi][ri][ci].split("/") if "/" in board[fi][ri][ci] else [board[fi][ri][ci]])]) for ci in range(cols)] for ri in range(rows)] for fi in range(depth_val)]
 
         import time
 

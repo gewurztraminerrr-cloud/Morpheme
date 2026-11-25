@@ -509,14 +509,14 @@ class WordValidator:
                 for r in range(len(board[f])):
                     for c in range(len(board[f][r])):
                         val = str(board[f][r][c]).upper()
-                        if first_char in val or (first_char == 'Q' and 'QU' in val) or ('/' in val and any(first_char == opt.strip()[0] for opt in val.split('/'))):
+                        if first_char in val or (first_char == 'Q' and ('QU' in val or 'Q' in val)) or ('/' in val and any(first_char == opt.strip()[0] or (first_char == 'Q' and opt.strip().upper() in ('Q', 'QU')) for opt in val.split('/'))):
                             starting_cells.append((f, r, c))
         else:
             rows, cols = len(board), len(board[0])
             for r in range(rows):
                 for c in range(cols):
                     val = str(board[r][c]).upper()
-                    if first_char in val or (first_char == 'Q' and 'QU' in val) or ('/' in val and any(first_char == opt.strip()[0] for opt in val.split('/'))):
+                    if first_char in val or (first_char == 'Q' and ('QU' in val or 'Q' in val)) or ('/' in val and any(first_char == opt.strip()[0] or (first_char == 'Q' and opt.strip().upper() in ('Q', 'QU')) for opt in val.split('/'))):
                         starting_cells.append((r, c))
 
         if not starting_cells:
@@ -539,7 +539,7 @@ class WordValidator:
                 letters = cell_val.split('/') if '/' in cell_val else [cell_val]
                 for char in letters:
                     match_lens = []
-                    if char == 'Q':
+                    if char == 'Q' or char == 'QU':
                         if word[index:index+2] == 'QU':
                             match_lens = [2, 1]
                         elif word[index] == 'Q':
@@ -609,7 +609,7 @@ class WordValidator:
                 letters = cell_val.split('/') if '/' in cell_val else [cell_val]
                 for char in letters:
                     match_lens = []
-                    if char == 'Q':
+                    if char == 'Q' or char == 'QU':
                         if word[index:index+2] == 'QU':
                             match_lens = [2, 1]
                         elif word[index] == 'Q':
