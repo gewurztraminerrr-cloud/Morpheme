@@ -1799,21 +1799,27 @@ class GameRoom:
 
         
         # USER MANDATE: 0:50 Intermission Fallback Watchdog (50s remaining on clock = 10s elapsed in 60s intermission, BEFORE 0:45 reveal)
-        # If no board has been secured by 0:50 time during intermission, pull a pregenerated board immediately,
-        # test its Spinner Set parameters, stage it, and update next_spinner_params so 0:45 reveal locks the exact board parameters!
+        # If no board has been secured or if staged board violates word count by 0:50 time during intermission,
+        # pull a pregenerated board immediately, adapt the Spinner Set to its suitable parameters, stage it,
+        # and update next_spinner_params so 0:45 reveal locks the exact board parameters!
         if self.state == 'intermission' and self.time_limit < 7200:
             elapsed_intermission = now - self.intermission_start_time
             fallback_050_threshold = 10.0 if intermission_limit >= 20 else 0.2
-            if elapsed_intermission >= fallback_050_threshold and not getattr(self, 'next_round_board', None) and not getattr(self, '_fallback_at_50s_done', False):
-                print(f"[Watchdog] 0:50 mark in intermission ({elapsed_intermission:.1f}s elapsed) for {self.room_id} — no board ready. Pulling validated pregenerated board.")
-                self._fallback_at_50s_done = True
-                def _bg_ensure():
+            if elapsed_intermission >= fallback_050_threshold and not getattr(self, '_fallback_at_50s_done', False):
+                has_valid_staged = False
+                if getattr(self, 'next_round_board', None) and getattr(self, 'next_round_words', None):
+                    staged_cnt = len(self.next_round_words)
+                    staged_wc_range = (self.next_spinner_params or {}).get('word_count_range')
+                    if is_board_count_valid(staged_cnt, staged_wc_range):
+                        has_valid_staged = True
+                
+                if not has_valid_staged:
+                    print(f"[Watchdog] 0:50 mark in intermission ({elapsed_intermission:.1f}s elapsed) for {self.room_id} — no compliant board ready. Pulling validated pregenerated board and adopting its suitable parameters.")
+                    self._fallback_at_50s_done = True
                     try:
-                        self.ensure_next_board_ready()
+                        self.trigger_early_fallback_rescue()
                     except Exception as wd_err:
-                        print(f"[Watchdog] Error in 0:50 ensure_next_board_ready for {self.room_id}: {wd_err}")
-                import threading
-                threading.Thread(target=_bg_ensure, daemon=True).start()
+                        print(f"[Watchdog] Error in 0:50 trigger_early_fallback_rescue for {self.room_id}: {wd_err}")
 
         if getattr(self, 'starting_round', False):
             curr_init = getattr(self, '_round_start_init_time', 0)
@@ -2974,26 +2980,33 @@ class GameRoom:
             fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
             print(f"[Fallback-Rescue] Early rescue: Popped board from cache with {len(fw)} words!")
         else:
-            print(f"[Fallback-Rescue] Early rescue: Cache empty. Using emergency fallback board.")
-            # Get emergency fallback board matching current spinner params
-            e_format = fmt_val
-            e_dict = dict_val
-            e_use_aw = use_aw_val
-            e_wc = sp_wc_range
-            if not e_wc:
-                e_wc = '100-200'
-            e_min_len = min_l_val
-            e_diff = sp_diff or 'Medium'
-            
-            fallback = get_emergency_fallback_board(
-                self.board_dimensions, e_format, self.time_limit,
-                dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len, difficulty=e_diff
-            )
-            if len(fallback) >= 9:
-                fb, fw, fc, ff, fp, fr, fbw, _, fparams = fallback
+            # Fall back to ANY verified pregenerated board of this dimension, and adopt its suitable parameters!
+            from board_generator import pop_any_cached_board
+            fallback = pop_any_cached_board(self.board_dimensions, allow_format_relaxation=True)
+            if fallback:
+                fb, fw, fc, ff, fp, fr, fbw, fparams = fallback
+                print(f"[Fallback-Rescue] Early rescue: Popped suitable cached board of dimension {self.board_dimensions} with {len(fw)} words! Adopting its parameters.")
             else:
-                fb, fw, fc, ff, fp, fr, fbw, _ = fallback
-                fparams = {}
+                print(f"[Fallback-Rescue] Early rescue: Cache completely empty. Using emergency fallback board.")
+                # Get emergency fallback board matching current spinner params
+                e_format = fmt_val
+                e_dict = dict_val
+                e_use_aw = use_aw_val
+                e_wc = sp_wc_range
+                if not e_wc:
+                    e_wc = '100-200'
+                e_min_len = min_l_val
+                e_diff = sp_diff or 'Medium'
+                
+                fallback = get_emergency_fallback_board(
+                    self.board_dimensions, e_format, self.time_limit,
+                    dictionary=e_dict, use_added_words=e_use_aw, target_range=e_wc, min_word_length=e_min_len, difficulty=e_diff
+                )
+                if len(fallback) >= 9:
+                    fb, fw, fc, ff, fp, fr, fbw, _, fparams = fallback
+                else:
+                    fb, fw, fc, ff, fp, fr, fbw, _ = fallback
+                    fparams = {}
 
         # Enforce Easy sanitization if requested for Solo
         if getattr(self, 'is_solo', False) and getattr(self, 'initial_solo_params', None):
@@ -10000,15 +10013,7 @@ class RoomManager:
                             _target_m_cnt = max(2, round(_tot_cells * _target_ratio))
                             
                             if _m_cnt < _target_m_cnt:
-                                print(f"[RoomManager] Mania Guard: Room {room_id} has format {_fmt_cur} but board only has {_m_cnt} '{_m_letter}' (needed {_target_m_cnt}). Applying mania letters...")
-                                self.board_generator._apply_mania_to_board(room.board, _m_letter, set(), is_checkerboard=False)
-                                _is_m_aw = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper()) or ('+AW' in str(getattr(room, 'current_dictionary', '')).upper())
-                                _re_solved = self.board_generator._solve_board(room.board, getattr(room, 'current_dictionary', 'NWL'), (0, 99999), display_min, max_depth=25, store_paths=True, timeout=5.0, bonus_cell=room.bonus_cell, use_added_words=_is_m_aw)
-                                if _re_solved:
-                                    room.all_words = set(_re_solved.keys())
-                                    room.all_words_paths = _re_solved
-                                    room.total_words_count = len(room.all_words)
-                                    room.initial_total_words = room.total_words_count
+                                print(f"[RoomManager] Mania Guard: Room {room_id} has format {_fmt_cur} with {_m_cnt} '{_m_letter}' (target {_target_m_cnt}). Preserving board without overwriting live cells to protect word count integrity.")
                 except Exception as _mania_guard_err:
                     print(f"[RoomManager] Mania guard error: {_mania_guard_err}")
 

@@ -7501,7 +7501,7 @@ function updateParameters(state) {
     }
 
     if (useAW && !isSubanagrams) {
-        if (rawWordRange !== '300-400' && rawWordRange !== '400-500' && rawWordRange !== '500+') {
+        if (!rawWordRange || rawWordRange === 'Random' || rawWordRange === 'random') {
             rawWordRange = '300-400';
         }
     }
@@ -7530,26 +7530,12 @@ function updateParameters(state) {
                 }
             }
             if (isContradictory) {
-                if (useAW && !isSubanagrams) {
-                    // NWL + AW and CSW + AW word lists should NEVER have a word count below 300.
-                    // The only options for them are 300-400, 400-500, and 500+. Nothing else.
-                    if (boardWordCount >= 500) rawWordRange = '500+';
-                    else if (boardWordCount >= 400) rawWordRange = '400-500';
-                    else rawWordRange = '300-400';
-                } else if (isSubanagrams) {
-                    if (boardWordCount >= 500) rawWordRange = '500+';
-                    else if (boardWordCount >= 300) rawWordRange = '300-400';
-                    else if (boardWordCount >= 200) rawWordRange = '200-300';
-                    else if (boardWordCount >= 100) rawWordRange = '100-200';
-                    else rawWordRange = '50-100';
-                } else {
-                    if (boardWordCount >= 500) rawWordRange = '500+';
-                    else if (boardWordCount >= 400) rawWordRange = '400-500';
-                    else if (boardWordCount >= 300) rawWordRange = '300-400';
-                    else if (boardWordCount >= 200) rawWordRange = '200-300';
-                    else if (boardWordCount >= 100) rawWordRange = '100-200';
-                    else rawWordRange = '50-100';
-                }
+                if (boardWordCount >= 500) rawWordRange = '500+';
+                else if (boardWordCount >= 400) rawWordRange = '400-500';
+                else if (boardWordCount >= 300) rawWordRange = '300-400';
+                else if (boardWordCount >= 200) rawWordRange = '200-300';
+                else if (boardWordCount >= 100) rawWordRange = '100-200';
+                else rawWordRange = '50-100';
             }
         }
     }
