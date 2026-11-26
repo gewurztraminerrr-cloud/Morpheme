@@ -740,6 +740,12 @@
             if (typeof window.hideLoadingOverlay === 'function') {
                 window.hideLoadingOverlay(true);
             }
+            const failMsg = 'Could not create the Solo match (server did not respond properly). Please press Start Solo Match again in a moment.';
+            if (window.showAlertModal) {
+                window.showAlertModal('Solo Match Error', failMsg);
+            } else {
+                alert(failMsg);
+            }
         } finally {
             window._isSoloCreating = false;
             if (startSoloBtn) {

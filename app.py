@@ -17813,7 +17813,8 @@ def create_solo_match():
     if not is_24h_room:
         board_format = SpinnerSet.resolve_specific_format(board_format, None)
 
-    # First-round difficulty randomization    target_difficulty = parameters.get('difficulty', 'random')
+    # First-round difficulty randomization
+    target_difficulty = parameters.get('difficulty', 'random')
     if target_difficulty == 'random' or not target_difficulty:
         target_difficulty = SpinnerSet._spin_difficulty(board_dimensions)
 
