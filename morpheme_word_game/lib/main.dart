@@ -11,8 +11,8 @@ import 'package:audio_session/audio_session.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  // Start with edge-to-edge system bars visible
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  // Start directly with immersiveSticky mode for true edge-to-edge fullscreen
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
@@ -21,12 +21,6 @@ void main() {
     systemNavigationBarDividerColor: Colors.transparent,
     systemNavigationBarIconBrightness: Brightness.light,
   ));
-
-  // After 3 seconds, transition to immersiveSticky mode: navigation buttons disappear
-  // and swipe-up from bottom temporarily reveals them for a few seconds
-  Future.delayed(const Duration(seconds: 3), () {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-  });
 
   runApp(const MorphemeApp());
 }
@@ -99,7 +93,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       Future.delayed(const Duration(milliseconds: 50), () {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       });
-      Future.delayed(const Duration(milliseconds: 250), () {
+      Future.delayed(const Duration(milliseconds: 150), () {
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      });
+      Future.delayed(const Duration(milliseconds: 300), () {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
       });
     }
@@ -332,7 +329,17 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: WebViewWidget(controller: controller),
+      resizeToAvoidBottomInset: false,
+      extendBody: true,
+      extendBodyBehindAppBar: true,
+      body: MediaQuery.removePadding(
+        context: context,
+        removeTop: true,
+        removeBottom: true,
+        removeLeft: true,
+        removeRight: true,
+        child: WebViewWidget(controller: controller),
+      ),
     );
   }
 }

@@ -4180,6 +4180,12 @@ function _restoreAllMobilePanels() {
     if (playGrid && typeof window._restorePlayPanel === 'function') {
         window._restorePlayPanel();
     }
+    const playPage = document.getElementById('page-play');
+    if (playPage && playPage.classList.contains('active')) {
+        if (typeof window.hideGameRoomTopMenu === 'function') {
+            window.hideGameRoomTopMenu(true);
+        }
+    }
 
     // 2. Tools / Settings / Mods (.tools-split-layout)
     const activePage = document.querySelector('.page.active');
@@ -4316,6 +4322,8 @@ document.addEventListener('visibilitychange', () => {
         }
         if (typeof scheduleMobileViewportRecovery === 'function') {
             scheduleMobileViewportRecovery();
+            setTimeout(scheduleMobileViewportRecovery, 100);
+            setTimeout(scheduleMobileViewportRecovery, 300);
         }
     }
 
