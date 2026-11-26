@@ -4710,9 +4710,10 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
 
     const userWordsMap = new Map();
     (sortedWords || []).forEach(w => {
-        const key = String(w.word || '').trim().toUpperCase();
+        const rawStr = typeof w === 'string' ? w : (w.word || w.text || '');
+        const key = String(rawStr || '').trim().toUpperCase();
         if (key && !userWordsMap.has(key)) {
-            userWordsMap.set(key, w);
+            userWordsMap.set(key, (typeof w === 'string') ? { word: rawStr, points: calcWordScore(rawStr) } : w);
         }
     });
 
@@ -4839,13 +4840,18 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
             }
         }
 
-        // If still empty, fall back to user's words
-        if (!allWords || allWords.length === 0) {
-            allWords = Array.from(userWordsMap.keys());
-        }
+        // Union allWords and user's found words so all words found by the player are guaranteed to show and highlight
+        const mergedWordsSet = new Set();
+        (allWords || []).forEach(w => {
+            const str = (typeof w === 'object' ? (w.word || w.text || '') : String(w || '')).trim().toUpperCase();
+            if (str) mergedWordsSet.add(str);
+        });
+        userWordsMap.forEach((val, key) => {
+            if (key) mergedWordsSet.add(key);
+        });
 
         // Sort all words by length descending, then alphabetically
-        const sortedAll = [...allWords].sort((a, b) => {
+        const sortedAll = Array.from(mergedWordsSet).sort((a, b) => {
             const diff = b.length - a.length;
             if (diff !== 0) return diff;
             return a.localeCompare(b);

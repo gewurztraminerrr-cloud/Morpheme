@@ -15201,12 +15201,40 @@ def get_round_replay():
                     all_words = json.loads(alt['all_solutions_json'])
             except Exception:
                 pass
-        if not all_words and board:
+
+        # Validate that all_words actually matches board letters; if not, re-solve
+        board_mismatch = False
+        if board and all_words:
+            try:
+                if isinstance(board[0], list):
+                    if isinstance(board[0][0], list):
+                        b_letters = set(''.join(cell for face in board for row_c in face for cell in row_c).upper())
+                    else:
+                        b_letters = set(''.join(cell for row_c in board for cell in row_c).upper())
+                else:
+                    b_letters = set(''.join(board).upper())
+                sample = all_words[:15]
+                mismatches = sum(1 for sw in sample if any(ch not in b_letters for ch in sw.upper()))
+                if mismatches >= 3:
+                    board_mismatch = True
+            except Exception:
+                pass
+
+        if (not all_words or board_mismatch) and board:
             try:
                 from board_generator import solve_board
-                all_words = solve_board(board)
+                all_words = solve_board(board, min_word_length=3)
             except Exception as e:
                 print("[round-replay] solve_board fallback failed:", e)
+
+        # Always ensure all valid player submitted words are included in all_words
+        all_words_set = set(all_words)
+        if words:
+            for w in words:
+                w_str = (w.get('word') if isinstance(w, dict) else str(w) or '').strip().upper()
+                if w_str and (not isinstance(w, dict) or not w.get('is_penalty')):
+                    all_words_set.add(w_str)
+        all_words = sorted(list(all_words_set))
         
         dims = row['board_dimensions']
         if not dims:
