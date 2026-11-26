@@ -895,6 +895,9 @@ def pop_cached_board(param_key_str):
 
             bonus_cell = tuple(data["bonus_cell"]) if data.get("bonus_cell") else None
             board_format_ret = data.get("board_format_ret", "Normal")
+            if not cached_mania_board_is_valid(board, board_format_ret):
+                print(f"[BoardGen] Discarding cached board (lacks required mania abundance: {board_format_ret})")
+                continue
             bonus_cell = _sanitize_special_tiles_for_format(board, board_format_ret, bonus_cell)
             
             all_words_dict = {}
@@ -1025,7 +1028,12 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                 
                 if normalized_diff in ["Medium", "Hard"] or achieved_diff in ["Medium", "Hard"]:
                     if generator_instance._has_ing_sequence(board, depth):
-                        generator_instance._guarantee_no_ing(board, depth, protected_positions=None)
+                        m_letter_refill = None
+                        if "MANIA" in str(board_format_ret).upper():
+                            parts_m = str(board_format_ret).strip().upper().split()
+                            if len(parts_m) >= 2 and len(parts_m[0]) == 1 and parts_m[0].isalpha():
+                                m_letter_refill = parts_m[0]
+                        generator_instance._guarantee_no_ing(board, depth, protected_positions=None, mania_letter=m_letter_refill)
                         display_min = min_word_length
                         final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
                         all_words_dict = generator_instance._solve_board(
@@ -1084,6 +1092,11 @@ def refill_board_cache_bg(generator_instance, param_key_str, target_count=3):
                     "word_count_range": factual_wc_range
                 }
                 
+                if not cached_mania_board_is_valid(board, board_format_ret):
+                    print(f"[BoardGen] [Refill] Skipping board: lacks required mania abundance ({board_format_ret}).")
+                    time.sleep(1.0)
+                    continue
+
                 # DEDUP GUARD: Never cache a board that has already been played.
                 # Compute its hash and check used_boards before inserting.
                 board_hash = get_board_hash(board)
@@ -1785,18 +1798,32 @@ class BoardGenerator:
         if attempt_idx == max_attempts - 1:
             print(f"[BoardGen] ⚠️ Sequence Sanitizer reached max attempts ({max_attempts}). Some ING sequences may remain.")
 
-    def _guarantee_no_ing(self, board, depth=1, protected_positions=None):
+    def _guarantee_no_ing(self, board, depth=1, protected_positions=None, mania_letter=None):
         """Absolutely, ironclad guarantee that no 'ING' sequence remains on the board."""
         is_3d = (depth > 1) or (len(board) == 6 and isinstance(board[0], list) and isinstance(board[0][0], list))
         depth_val = 6 if (len(board) == 6 and is_3d) else depth
         R = len(board[0]) if is_3d else len(board)
         C = len(board[0][0]) if is_3d else len(board[0])
         
+        m_char = (mania_letter or getattr(self, 'active_mania_letter', None))
+        if m_char:
+            m_char = str(m_char).strip().upper()
+
         protected = set()
         if protected_positions and isinstance(protected_positions, (list, tuple, set)):
             for cell in protected_positions:
                 if isinstance(cell, (list, tuple)):
                     protected.add(tuple(cell))
+
+        # Always protect cells containing the mania letter so sequence sanitizer never reduces abundance
+        if m_char:
+            for f in range(depth_val):
+                for r in range(R):
+                    for c in range(C):
+                        val = board[f][r][c] if is_3d else board[r][c]
+                        if str(val).upper() == m_char:
+                            pos = (f, r, c) if is_3d else (r, c)
+                            protected.add(pos)
 
         # If it has "ING" sequence, break it up by replacing one of the tiles (preferably unprotected, but force-replace if needed)
         for _ in range(50):
@@ -1845,17 +1872,27 @@ class BoardGenerator:
                 
             if found_path:
                 # We have the path, let's break it!
-                # Try unprotected cells first, then fallback to any cell in the path
+                # Try unprotected cells first, then fallback to any cell in the path (excluding mania letter)
                 break_cell = None
                 for p in found_path:
                     if p not in protected:
                         break_cell = p
                         break
                 if not break_cell:
-                    break_cell = found_path[-1] # Force replace the G tile as absolute fallback!
+                    # Fallback: pick any cell in found_path that does not contain m_char
+                    non_mania_cells = []
+                    for p in found_path:
+                        val = board[p[0]][p[1]][p[2]] if is_3d else board[p[0]][p[1]]
+                        if not m_char or str(val).upper() != m_char:
+                            non_mania_cells.append(p)
+                    if non_mania_cells:
+                        break_cell = non_mania_cells[-1] # Pick the G or I tile
+                    else:
+                        break_cell = found_path[-1] # Absolute fallback if all cells were somehow m_char
                 
-                # Replace with a safe, non-ING letter. Standard replacements: 'P', 'R', 'L', 'S'
-                new_char = random.choice(['P', 'R', 'L', 'S', 'T', 'C', 'M'])
+                # Replace with a safe, non-ING letter. Standard replacements: 'P', 'R', 'L', 'S', 'T', 'C', 'M'
+                safe_replacements = [ch for ch in ['P', 'R', 'L', 'S', 'T', 'C', 'M'] if not (m_char and ch == m_char)]
+                new_char = random.choice(safe_replacements or ['P', 'R', 'L'])
                 # If Either/Or is used, keep it as a safe single character to avoid further complexity
                 if is_3d:
                     board[break_cell[0]][break_cell[1]][break_cell[2]] = new_char
@@ -2362,10 +2399,14 @@ class BoardGenerator:
         cached_res = pop_cached_board(param_key_str)
         if cached_res:
             c_b = cached_res[0]
+            c_fmt = cached_res[3]
             is_3d_c = isinstance(c_b, list) and len(c_b) > 0 and isinstance(c_b[0], list) and len(c_b[0]) > 0 and isinstance(c_b[0][0], list)
             depth_c = 6 if is_3d_c else 1
             norm_d_c = _normalize_difficulty_base(difficulty)
-            if norm_d_c in ["Medium", "Hard"] and self._has_ing_sequence(c_b, depth_c):
+            if not cached_mania_board_is_valid(c_b, c_fmt):
+                print(f"[BoardGen] Discarding popped cached board for {param_key_str[:60]}: lacks required mania abundance ({c_fmt}).")
+                cached_res = None
+            elif norm_d_c in ["Medium", "Hard"] and self._has_ing_sequence(c_b, depth_c):
                 print(f"[BoardGen] Discarding popped cached board for {param_key_str[:60]}: has forbidden 'ING' sequence on {norm_d_c} board.")
                 cached_res = None
             else:
@@ -2579,7 +2620,12 @@ class BoardGenerator:
             if cur_target_diff in ["Medium", "Hard"] or cur_achieved_diff in ["Medium", "Hard"]:
                 if self._has_ing_sequence(board, depth):
                     print(f"[BoardGen] 🛡️ FINAL GATEKEEPER: Breaking unexpected 'ING' sequence on {cur_achieved_diff} (target {cur_target_diff}) board before return.")
-                    self._guarantee_no_ing(board, depth, protected_positions=None)
+                    m_letter_gate = None
+                    if "MANIA" in str(board_format).upper():
+                        parts_m = str(board_format).strip().upper().split()
+                        if len(parts_m) >= 2 and len(parts_m[0]) == 1 and parts_m[0].isalpha():
+                            m_letter_gate = parts_m[0]
+                    self._guarantee_no_ing(board, depth, protected_positions=None, mania_letter=m_letter_gate)
                     display_min = min_word_length
                     final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
                     all_words_dict = self._solve_board(
@@ -2589,6 +2635,31 @@ class BoardGenerator:
                     ratio = self.get_uniqueness_ratio(board, all_words, r_cnt_f, c_cnt_f, dictionary, depth)
         except Exception as _gatekeeper_err:
             print(f"[BoardGen] Warning in final ING gatekeeper: {_gatekeeper_err}")
+
+        # ABSOLUTE FINAL MANIA AUDIT: Guarantee required mania abundance before return
+        try:
+            if "MANIA" in str(board_format).upper():
+                parts_m = str(board_format).strip().upper().split()
+                if len(parts_m) >= 2 and len(parts_m[0]) == 1 and parts_m[0].isalpha():
+                    m_letter = parts_m[0]
+                    is_3d_m = isinstance(board, list) and len(board) > 0 and isinstance(board[0], list) and isinstance(board[0][0], list)
+                    total_cells_m = (len(board)*len(board[0])*len(board[0][0])) if is_3d_m else (len(board)*len(board[0]))
+                    if is_3d_m:
+                        m_cnt = sum(1 for f in range(len(board)) for r in range(len(board[f])) for c in range(len(board[f][r])) if board[f][r][c] == m_letter)
+                    else:
+                        m_cnt = sum(1 for r in range(len(board)) for c in range(len(board[r])) if board[r][c] == m_letter)
+                    UNCOMMON_MANIA_LETTERS = {'Q', 'Z', 'J', 'X', 'K'}
+                    target_ratio_m = 0.20 if m_letter in UNCOMMON_MANIA_LETTERS else 0.33
+                    target_m_cnt = max(2, round(total_cells_m * target_ratio_m))
+                    if m_cnt < target_m_cnt:
+                        print(f"[BoardGen] Absolute Final Mania audit: board had only {m_cnt} '{m_letter}' (needed {target_m_cnt}). Re-applying abundance...")
+                        self._apply_mania_to_board(board, m_letter, set(), is_checkerboard=False, difficulty=difficulty, depth=depth)
+                        all_words_dict = self._solve_board(
+                            board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+                        )
+                        all_words = sorted(list(all_words_dict.keys()))
+        except Exception as _m_audit_err:
+            print(f"[BoardGen] Warning in absolute final Mania audit: {_m_audit_err}")
 
         # Trigger background refill to populate the cache up to 3
         refill_board_cache_bg(self, param_key_str, target_count=10)
@@ -5813,6 +5884,8 @@ class BoardGenerator:
                             continue
                         if "/" in str(board[f][r][c]):
                             continue
+                        if board[f][r][c] == mania_letter:
+                            continue
                         if is_checkerboard:
                             is_cell_vowel_expected = (f + r + c) % 2 != 0
                             if is_mania_vowel != is_cell_vowel_expected:
@@ -5825,31 +5898,34 @@ class BoardGenerator:
                         continue
                     if "/" in str(board[r][c]):
                         continue
+                    if board[r][c] == mania_letter:
+                        continue
                     if is_checkerboard:
                         is_cell_vowel_expected = (r + c) % 2 != 0
                         if is_mania_vowel != is_cell_vowel_expected:
                             continue
                     all_positions.append((r, c))
 
-        # If strict exclusions left fewer positions than needed, expand to any non-slash positions
+        # If strict exclusions left fewer positions than needed, expand to any non-slash, non-mania positions
         if len(all_positions) < needed:
             if is_3d:
                 for f in range(depth_val):
                     for r in range(rows):
                         for c in range(cols):
                             pos = (f, r, c)
-                            if pos not in all_positions and "/" not in str(board[f][r][c]):
+                            if pos not in all_positions and "/" not in str(board[f][r][c]) and board[f][r][c] != mania_letter:
                                 all_positions.append(pos)
             else:
                 for r in range(rows):
                     for c in range(cols):
                         pos = (r, c)
-                        if pos not in all_positions and "/" not in str(board[r][c]):
+                        if pos not in all_positions and "/" not in str(board[r][c]) and board[r][c] != mania_letter:
                             all_positions.append(pos)
 
         random.shuffle(all_positions)
 
         filled = 0
+        skipped_positions = []
         for pos in all_positions:
             if filled >= needed:
                 break
@@ -5859,6 +5935,7 @@ class BoardGenerator:
                 f_p, r_p, c_p = 0, pos[0], pos[1]
 
             if norm_diff in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, mania_letter, r_p, c_p, f_p, depth=depth_val):
+                skipped_positions.append(pos)
                 continue
 
             if is_3d:
@@ -5867,8 +5944,44 @@ class BoardGenerator:
                 board[r_p][c_p] = mania_letter
             filled += 1
 
+        # Fallback: if filled < needed because forbidden sequence checks skipped cells, place in skipped_positions anyway
+        # so target count is reached, and let _guarantee_no_ing break any ING safely without touching mania letter
+        if filled < needed and skipped_positions:
+            for pos in skipped_positions:
+                if filled >= needed:
+                    break
+                if is_3d:
+                    board[pos[0]][pos[1]][pos[2]] = mania_letter
+                else:
+                    board[pos[0]][pos[1]] = mania_letter
+                filled += 1
+
         if norm_diff in ["Medium", "Hard"] and self._has_ing_sequence(board, depth_val):
-            self._guarantee_no_ing(board, depth_val, protected_positions=None)
+            self._guarantee_no_ing(board, depth_val, protected_positions=None, mania_letter=mania_letter)
+
+        # Final abundance safeguard
+        if is_3d:
+            final_cnt = sum(1 for f in range(depth_val) for r in range(rows) for c in range(cols) if board[f][r][c] == mania_letter)
+        else:
+            final_cnt = sum(1 for r in range(rows) for c in range(cols) if board[r][c] == mania_letter)
+        if final_cnt < target_count:
+            for r in range(rows):
+                for c in range(cols):
+                    if final_cnt >= target_count:
+                        break
+                    if is_3d:
+                        for f in range(depth_val):
+                            if final_cnt >= target_count:
+                                break
+                            if board[f][r][c] != mania_letter and "/" not in str(board[f][r][c]):
+                                board[f][r][c] = mania_letter
+                                final_cnt += 1
+                    else:
+                        if board[r][c] != mania_letter and "/" not in str(board[r][c]):
+                            board[r][c] = mania_letter
+                            final_cnt += 1
+            if norm_diff in ["Medium", "Hard"] and self._has_ing_sequence(board, depth_val):
+                self._guarantee_no_ing(board, depth_val, protected_positions=None, mania_letter=mania_letter)
 
     def _embed_bonus_word(self, board, bonus_word, is_checkerboard=False):
         """Embed bonus word using backtracking to find a valid path.

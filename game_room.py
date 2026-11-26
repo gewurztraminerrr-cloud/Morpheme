@@ -4275,7 +4275,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     if norm_diff_em in ["Medium", "Hard"]:
         d_em = 6 if is_3d else 1
         if bg._has_ing_sequence(board, d_em):
-            bg._guarantee_no_ing(board, d_em, protected_positions=None)
+            bg._guarantee_no_ing(board, d_em, protected_positions=None, mania_letter=m_l if is_mania_fmt else None)
             emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
             words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
             paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
