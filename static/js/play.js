@@ -3559,27 +3559,36 @@ async function _doUpdateGameState(incomingState = null) {
             activeWordsTab = 'found';
         }
 
-        // Apply Tab Visibility logic
-        const tabContents = document.querySelectorAll('.tab-content');
-        tabContents.forEach(content => {
-            const tabId = content.id.replace('tab-content-', '');
-            content.classList.toggle('active', activeWordsTab === tabId);
-            content.style.removeProperty('display');
-        });
+        // Apply Tab Visibility logic (Only update DOM when active tab actually changes to prevent layout jitter in Safari)
+        if (window._lastActiveWordsTabApplied !== activeWordsTab) {
+            window._lastActiveWordsTabApplied = activeWordsTab;
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                const tabId = content.id.replace('tab-content-', '');
+                content.classList.toggle('active', activeWordsTab === tabId);
+                content.style.removeProperty('display');
+            });
 
-        tabBtns.forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === activeWordsTab);
-        });
+            tabBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === activeWordsTab);
+            });
+        }
 
         // Toggle Stats Visibility (Only in Found/Words tab)
         if (wordsStats) {
-            wordsStats.style.display = activeWordsTab === 'found' ? 'block' : 'none';
+            const expectedDisplay = activeWordsTab === 'found' ? 'block' : 'none';
+            if (wordsStats.style.display !== expectedDisplay) {
+                wordsStats.style.display = expectedDisplay;
+            }
         }
 
         // Toggle Definitions Panel Visibility (Found/Words and Previous Day tabs on all devices)
         const defPanelEl = document.querySelector('.definitions-panel');
         if (defPanelEl) {
-            defPanelEl.style.display = (activeWordsTab === 'found' || activeWordsTab === 'previous') ? '' : 'none';
+            const expectedDisplay = (activeWordsTab === 'found' || activeWordsTab === 'previous') ? '' : 'none';
+            if (defPanelEl.style.display !== expectedDisplay) {
+                defPanelEl.style.display = expectedDisplay;
+            }
         }
 
         // 2. Render Tab Contents
@@ -3798,18 +3807,26 @@ async function _doUpdateGameState(incomingState = null) {
 
                 const safeWordsStats = document.getElementById('words-stats') || wordsStats;
                 if (safeWordsStats) {
-                    safeWordsStats.textContent = `${uniqueFound}/${totalWords} - ${percentage}% (${totalPoints} total pts)`;
-                    safeWordsStats.style.display = 'block';
+                    const statsText = `${uniqueFound}/${totalWords} - ${percentage}% (${totalPoints} total pts)`;
+                    if (safeWordsStats.textContent !== statsText) {
+                        safeWordsStats.textContent = statsText;
+                    }
+                    if (safeWordsStats.style.display !== 'block') {
+                        safeWordsStats.style.display = 'block';
+                    }
                 }
 
                 // 24H Room Fireworks: Check if all words on the board have been found (Active rounds only)
                 if (is24H && totalWords > 0 && uniqueFound >= totalWords && state.state === 'active') {
-                    startDefinitionFireworks();
+                    if (!defFireworksActive) startDefinitionFireworks();
                 } else if (is24H && (state.state !== 'active' || (totalWords > 0 && uniqueFound < totalWords)) && defFireworksActive) {
                     stopDefinitionFireworks();
                 }
 
-                const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
+                const sortedWords = [...myWords].sort((a, b) => 
+                    (b.time || 0) - (a.time || 0) || 
+                    (typeof a === 'string' ? a : (a && a.word) || '').localeCompare(typeof b === 'string' ? b : (b && b.word) || '')
+                );
                 if (sortedWords.length === 0) {
                     const emptyHtml = '<p class="placeholder">Find words on the board!</p>';
                     if (lastSubmittedWordsHtml !== emptyHtml) {
