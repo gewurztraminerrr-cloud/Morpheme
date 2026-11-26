@@ -246,6 +246,9 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
+    overflow-anchor: auto;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 
 /* Players Panel and Definitions Container */
@@ -3024,6 +3027,9 @@ body:not(.is-subanagrams) #shuffle-board-btn {
     overflow-y: auto;
     padding-right: 5px;
     min-height: 0;
+    overflow-anchor: auto;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
     /* Important for flex child scrolling */
 }
 
@@ -3112,6 +3118,9 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y;
+    overflow-anchor: auto;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
     /* Scrollable list */
     padding-left: 8px;
     padding-right: 8px;
@@ -3136,6 +3145,9 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y;
+    overflow-anchor: auto;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
     /* Scrollable list */
     padding-left: 8px;
     padding-right: 8px;
@@ -16618,6 +16630,9 @@ body.theme-white .find-count-division-badge,
     padding-right: 4px;
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--text-primary-rgb), 0.3) transparent;
+    overflow-anchor: auto;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
 }
 #score-sum-list::-webkit-scrollbar {
     width: 6px;

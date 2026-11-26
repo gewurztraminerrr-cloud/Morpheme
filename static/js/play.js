@@ -485,6 +485,12 @@ let selectedPlayerUsername = null; // Track selected player for filtering/highli
 let cachedTimerValueEl = null;    // Cache for high-frequency updates
 let cachedBoardPanelEl = null;
 let lastPlayersHtml = null;       // Cache for renderPlayers
+let lastSubmittedWordsHtml = null; // Cache for active submitted words list
+let lastFcfsWordsHtml = null;      // Cache for FCFS live feed
+let lastRemainingWordsHtml = null; // Cache for remaining words list
+let lastCluesWordsHtml = null;     // Cache for clues words list
+let lastPreviousWordsHtml = null;  // Cache for previous words list
+let lastScoreSumHtml = null;       // Cache for score sum list
 const playerRatingCache = new Map(); // Cache for Chat Colors
 window._lastRoundPlacements = new Map(); // Cache for Chat Placement Numbers
 /* --- Distributed Board Generation (DBG) --- */
@@ -1585,6 +1591,19 @@ function clearGameUIAndCache() {
     window.lastRenderedStateJSON = null;
     window.lastRenderedBoardJSON = null;
     window.lastPlayersHtml = null;
+    lastPlayersHtml = null;
+    window.lastSubmittedWordsHtml = null;
+    lastSubmittedWordsHtml = null;
+    window.lastFcfsWordsHtml = null;
+    lastFcfsWordsHtml = null;
+    window.lastRemainingWordsHtml = null;
+    lastRemainingWordsHtml = null;
+    window.lastCluesWordsHtml = null;
+    lastCluesWordsHtml = null;
+    window.lastPreviousWordsHtml = null;
+    lastPreviousWordsHtml = null;
+    window.lastScoreSumHtml = null;
+    lastScoreSumHtml = null;
     window._wasEverInRoster = false;
     window.selectedAllWordsDict = 'all';
     window.selectedAllWordsLength = 'all';
@@ -3349,6 +3368,12 @@ async function _doUpdateGameState(incomingState = null) {
                 if (wordsList) {
                     wordsList.innerHTML = '<p class="placeholder">Game active - Waiting for words...</p>';
                 }
+                lastSubmittedWordsHtml = null;
+                lastFcfsWordsHtml = null;
+                lastRemainingWordsHtml = null;
+                lastCluesWordsHtml = null;
+                lastPreviousWordsHtml = null;
+                lastScoreSumHtml = null;
 
                 // Reset/clear player submission caches during transition to avoid frame leaks
                 if (state.players && Array.isArray(state.players)) {
@@ -3786,9 +3811,13 @@ async function _doUpdateGameState(incomingState = null) {
 
                 const sortedWords = [...myWords].sort((a, b) => (b.time || 0) - (a.time || 0));
                 if (sortedWords.length === 0) {
-                    listEl.innerHTML = '<p class="placeholder">Find words on the board!</p>';
+                    const emptyHtml = '<p class="placeholder">Find words on the board!</p>';
+                    if (lastSubmittedWordsHtml !== emptyHtml) {
+                        lastSubmittedWordsHtml = emptyHtml;
+                        listEl.innerHTML = emptyHtml;
+                    }
                 } else {
-                    listEl.innerHTML = sortedWords.map(w => {
+                    const newHtml = sortedWords.map(w => {
                         const word = typeof w === 'string' ? w : w.word;
                         const wordUpper = word.toUpperCase();
                         const pointsObj = (typeof w === 'object' && w !== null && w.score_details)
@@ -3850,16 +3879,32 @@ async function _doUpdateGameState(incomingState = null) {
                         </div>`;
                     }).join('');
 
-                    // Add click listeners
-                    listEl.querySelectorAll('.word-item').forEach(item => {
-                        item.onclick = (e) => {
-                            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-                            const word = item.dataset.word;
-                            if (word && typeof window.toggleWordSelection === 'function') {
-                                window.toggleWordSelection(word, item);
-                            }
-                        };
-                    });
+                    if (newHtml !== lastSubmittedWordsHtml) {
+                        const prevScrollTop = listEl.scrollTop;
+                        lastSubmittedWordsHtml = newHtml;
+                        listEl.innerHTML = newHtml;
+
+                        // Preserve scroll position (Prevents Safari WebKit twitch/jump back to top on 1s timer/poll updates)
+                        if (prevScrollTop > 0) {
+                            listEl.scrollTop = prevScrollTop;
+                            requestAnimationFrame(() => {
+                                if (listEl && Math.abs(listEl.scrollTop - prevScrollTop) > 2) {
+                                    listEl.scrollTop = prevScrollTop;
+                                }
+                            });
+                        }
+
+                        // Add click listeners
+                        listEl.querySelectorAll('.word-item').forEach(item => {
+                            item.onclick = (e) => {
+                                if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                                const word = item.dataset.word;
+                                if (word && typeof window.toggleWordSelection === 'function') {
+                                    window.toggleWordSelection(word, item);
+                                }
+                            };
+                        });
+                    }
                 }
             } else {
                 // FCFS: Shared Live Feed
@@ -3942,8 +3987,20 @@ async function _doUpdateGameState(incomingState = null) {
                         </div>`;
                     }).join('');
 
-                    if (listEl.innerHTML !== html) {
+                    if (html !== lastFcfsWordsHtml) {
+                        const prevScrollTop = listEl.scrollTop;
+                        lastFcfsWordsHtml = html;
                         listEl.innerHTML = html;
+
+                        if (prevScrollTop > 0 && !wasEmpty) {
+                            listEl.scrollTop = prevScrollTop;
+                            requestAnimationFrame(() => {
+                                if (listEl && Math.abs(listEl.scrollTop - prevScrollTop) > 2) {
+                                    listEl.scrollTop = prevScrollTop;
+                                }
+                            });
+                        }
+
                         // Add click listeners
                         listEl.querySelectorAll('.word-item').forEach(item => {
                             item.onclick = (e) => {
@@ -4163,8 +4220,18 @@ async function _doUpdateGameState(incomingState = null) {
             html += '</table>';
             
             const targetEl = showRemainingInClues ? cluesListEl : remainingListEl;
-            if (targetEl) {
+            if (targetEl && html !== lastRemainingWordsHtml) {
+                const prevScrollTop = targetEl.scrollTop;
+                lastRemainingWordsHtml = html;
                 targetEl.innerHTML = html;
+                if (prevScrollTop > 0) {
+                    targetEl.scrollTop = prevScrollTop;
+                    requestAnimationFrame(() => {
+                        if (targetEl && Math.abs(targetEl.scrollTop - prevScrollTop) > 2) {
+                            targetEl.scrollTop = prevScrollTop;
+                        }
+                    });
+                }
                 if (showRemainingInClues) {
                     targetEl.style.display = 'block';
                     targetEl.style.width = '100%';
@@ -4273,10 +4340,19 @@ async function _doUpdateGameState(incomingState = null) {
                         `;
                     }).join('');
                     
-                    cluesListEl.innerHTML = clueListHtml;
+                    if (clueListHtml !== lastCluesWordsHtml) {
+                        lastCluesWordsHtml = clueListHtml;
+                        cluesListEl.innerHTML = clueListHtml;
+                        if (oldScrollTop > 0) {
+                            cluesListEl.scrollTop = oldScrollTop;
+                            requestAnimationFrame(() => {
+                                if (cluesListEl && Math.abs(cluesListEl.scrollTop - oldScrollTop) > 2) {
+                                    cluesListEl.scrollTop = oldScrollTop;
+                                }
+                            });
+                        }
+                    }
                 }
-                
-                cluesListEl.scrollTop = oldScrollTop;
             }
         }
 
@@ -4415,27 +4491,36 @@ async function _doUpdateGameState(incomingState = null) {
                     html += `<div style="padding:15px; text-align:center; font-style:italic; opacity:0.6;">None</div>`;
                 }
 
-                prevListEl.innerHTML = html;
+                if (html !== lastPreviousWordsHtml) {
+                    lastPreviousWordsHtml = html;
+                    prevListEl.innerHTML = html;
+                    if (oldScrollTop > 0) {
+                        prevListEl.scrollTop = oldScrollTop;
+                        requestAnimationFrame(() => {
+                            if (prevListEl && Math.abs(prevListEl.scrollTop - oldScrollTop) > 2) {
+                                prevListEl.scrollTop = oldScrollTop;
+                            }
+                        });
+                    }
 
-                // Render the board after HTML is injected
-                if (state.previous_board) {
-                    const boardCont = document.getElementById('prev-board-container');
-                    renderPreviousBoard(state.previous_board, boardCont);
-                }
+                    // Render the board after HTML is injected
+                    if (state.previous_board) {
+                        const boardCont = document.getElementById('prev-board-container');
+                        renderPreviousBoard(state.previous_board, boardCont);
+                    }
 
-                // Add click listeners for definitions
-                prevListEl.querySelectorAll('.word-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-                        const word = item.dataset.word;
-                        if (word && typeof window.toggleWordSelection === 'function') {
-                            window.toggleWordSelection(word, item);
-                        }
+                    // Add click listeners for definitions
+                    prevListEl.querySelectorAll('.word-item').forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+                            const word = item.dataset.word;
+                            if (word && typeof window.toggleWordSelection === 'function') {
+                                window.toggleWordSelection(word, item);
+                            }
+                        });
                     });
-                });
+                }
             }
-            
-            prevListEl.scrollTop = oldScrollTop;
         }
 
         // --- ROOM HISTORY TAB ---
@@ -4829,7 +4914,19 @@ function renderDailyScoreSums() {
     });
     html += '</div>';
     
-    listEl.innerHTML = html;
+    if (html !== lastScoreSumHtml) {
+        const oldScrollTop = listEl.scrollTop;
+        lastScoreSumHtml = html;
+        listEl.innerHTML = html;
+        if (oldScrollTop > 0) {
+            listEl.scrollTop = oldScrollTop;
+            requestAnimationFrame(() => {
+                if (listEl && Math.abs(listEl.scrollTop - oldScrollTop) > 2) {
+                    listEl.scrollTop = oldScrollTop;
+                }
+            });
+        }
+    }
 }
 
 function isPlayerDNP(p, st) {
@@ -7273,8 +7370,16 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         </div>`;
     }).join('');
 
-    if (listEl) {
-        listEl.scrollTop = prevScrollTop;
+    if (listEl && listEl.innerHTML !== allWordsHtml) {
+        listEl.innerHTML = allWordsHtml;
+        if (prevScrollTop > 0) {
+            listEl.scrollTop = prevScrollTop;
+            requestAnimationFrame(() => {
+                if (listEl && Math.abs(listEl.scrollTop - prevScrollTop) > 2) {
+                    listEl.scrollTop = prevScrollTop;
+                }
+            });
+        }
     }
 
     // Synchronize render cache key to prevent redundant heartbeat re-renders
