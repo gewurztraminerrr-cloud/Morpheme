@@ -19708,22 +19708,76 @@ body.is-desktop .history-walkthrough-section .replay-controls {
     flex-shrink: 0 !important;
 }
 
-body.is-desktop .history-walkthrough-section .replay-tab-group {
+@media (min-width: 769px) {
+    .replay-tab-group,
+    .history-walkthrough-section .replay-tab-group,
+    .history-review-modal .replay-tab-group,
+    .integrated-replay-layout .replay-tab-group,
+    .replay-controls-row .replay-tab-group,
+    .replay-subheader .replay-tab-group {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+    }
+
+    .replay-tab-btn,
+    .history-walkthrough-section .replay-tab-btn,
+    .history-review-modal .replay-tab-btn,
+    .integrated-replay-layout .replay-tab-btn,
+    .replay-controls-row .replay-tab-btn,
+    .replay-subheader .replay-tab-btn {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 7px 24px !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        min-width: 230px !important;
+        width: 100% !important;
+        height: auto !important;
+        border-radius: 8px !important;
+        letter-spacing: 0.3px !important;
+        box-sizing: border-box !important;
+    }
+}
+
+body.is-desktop .replay-tab-group,
+body.is-desktop .history-walkthrough-section .replay-tab-group,
+body.is-desktop .history-review-modal .replay-tab-group,
+body.is-desktop .integrated-replay-layout .replay-tab-group,
+body.is-desktop .replay-controls-row .replay-tab-group,
+body.is-desktop .replay-subheader .replay-tab-group {
     display: flex !important;
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: center !important;
-    gap: 8px !important;
+    gap: 6px !important;
     margin-left: auto !important;
     flex-shrink: 0 !important;
 }
 
-body.is-desktop .history-walkthrough-section .replay-tab-btn {
-    padding: 8px 22px !important;
-    font-size: 0.8rem !important;
-    height: auto !important;
-    min-width: 150px !important;
+body.is-desktop .replay-tab-btn,
+body.is-desktop .history-walkthrough-section .replay-tab-btn,
+body.is-desktop .history-review-modal .replay-tab-btn,
+body.is-desktop .integrated-replay-layout .replay-tab-btn,
+body.is-desktop .replay-controls-row .replay-tab-btn,
+body.is-desktop .replay-subheader .replay-tab-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 7px 24px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    min-width: 230px !important;
     width: 100% !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    letter-spacing: 0.3px !important;
+    box-sizing: border-box !important;
 }
 
 body.is-desktop .history-walkthrough-section .section-hint {

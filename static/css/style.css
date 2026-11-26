@@ -5218,6 +5218,73 @@ body.is-mobile #mini-profile-ban-btn {
     margin-left: auto;
 }
 
+@media (min-width: 769px) {
+    .replay-tab-group,
+    .history-walkthrough-section .replay-tab-group,
+    .history-review-modal .replay-tab-group,
+    .integrated-replay-layout .replay-tab-group,
+    .replay-controls-row .replay-tab-group,
+    .replay-subheader .replay-tab-group {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+    }
+
+    .replay-tab-btn,
+    .history-walkthrough-section .replay-tab-btn,
+    .history-review-modal .replay-tab-btn,
+    .integrated-replay-layout .replay-tab-btn,
+    .replay-controls-row .replay-tab-btn,
+    .replay-subheader .replay-tab-btn {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 7px 24px !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        min-width: 230px !important;
+        width: 100% !important;
+        height: auto !important;
+        border-radius: 8px !important;
+        letter-spacing: 0.3px !important;
+        box-sizing: border-box !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .replay-tab-group,
+    .history-walkthrough-section .replay-tab-group,
+    .history-review-modal .replay-tab-group,
+    .integrated-replay-layout .replay-tab-group,
+    .replay-controls-row .replay-tab-group,
+    .replay-subheader .replay-tab-group {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 4px !important;
+        margin-left: auto !important;
+        flex-shrink: 0 !important;
+        justify-content: center !important;
+    }
+
+    .replay-tab-btn,
+    .history-walkthrough-section .replay-tab-btn,
+    .history-review-modal .replay-tab-btn,
+    .integrated-replay-layout .replay-tab-btn,
+    .replay-controls-row .replay-tab-btn,
+    .replay-subheader .replay-tab-btn {
+        padding: 3px 10px !important;
+        font-size: 0.72rem !important;
+        height: 22px !important;
+        line-height: 1 !important;
+        border-radius: 6px !important;
+        min-width: 76px !important;
+    }
+}
+
 .replay-tab-btn {
     appearance: none;
     -webkit-appearance: none;
