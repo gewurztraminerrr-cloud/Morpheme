@@ -681,7 +681,35 @@ window.toolsGoBack = function() {
             if (navBtn && typeof window.updateActiveNav === 'function') {
                 window.updateActiveNav(navBtn);
             }
-            if (navEntry.originPage === 'page-mods') {
+            if (navEntry.originPage === 'page-play') {
+                const isDesktop = (window.innerWidth > 900) && !(/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+                if (isDesktop) {
+                    const scrollPlayToBottomDesktop = () => {
+                        if (typeof window.scrollGameRoomToBottomDesktop === 'function') {
+                            window.scrollGameRoomToBottomDesktop(true);
+                        } else {
+                            const playPage = document.getElementById('page-play');
+                            const topBar = document.getElementById('top-menu-bar') || document.querySelector('.header');
+                            const headerH = topBar ? topBar.offsetHeight : (playPage ? playPage.offsetTop : 60);
+                            const target = Math.max(
+                                headerH,
+                                (document.documentElement ? document.documentElement.scrollHeight : 0) - window.innerHeight,
+                                (document.body ? document.body.scrollHeight : 0) - window.innerHeight,
+                                headerH
+                            );
+                            window.scrollTo(0, target);
+                            if (document.documentElement) document.documentElement.scrollTop = target;
+                            if (document.body) document.body.scrollTop = target;
+                        }
+                    };
+                    scrollPlayToBottomDesktop();
+                    requestAnimationFrame(scrollPlayToBottomDesktop);
+                    setTimeout(scrollPlayToBottomDesktop, 50);
+                    setTimeout(scrollPlayToBottomDesktop, 120);
+                    setTimeout(scrollPlayToBottomDesktop, 250);
+                    setTimeout(scrollPlayToBottomDesktop, 450);
+                }
+            } else if (navEntry.originPage === 'page-mods') {
                 const targetModTab = navEntry.originSubtab || 'tally-divisions';
                 const restoreMod = () => {
                     if (typeof window.showModTab === 'function') {
@@ -716,7 +744,7 @@ window.toolsGoBack = function() {
             }
             setTimeout(() => {
                 window._navigatingViaDefPopup = false;
-            }, 400);
+            }, 500);
             return;
         }
 
@@ -11991,7 +12019,7 @@ window.searchWordInComboChecker = function (word, dictionary = null, originPage 
     }
 
     const activePage = document.querySelector('.page.active');
-    const originPageId = originPage || ((activePage && activePage.id) ? activePage.id : 'page-tools');
+    const originPageId = originPage || ((activePage && activePage.id) ? activePage.id : (document.getElementById('page-play') && document.getElementById('page-play').classList.contains('active') ? 'page-play' : 'page-tools'));
     const activePane = document.querySelector('#page-tools .tool-pane.active');
     const curId = (originPageId === 'page-tools' && activePane) ? activePane.id.replace('tool-', '') : (originPageId === 'page-tools' ? 'lists' : null);
 
@@ -12159,7 +12187,7 @@ window.navigateToFindCount = function (word, originPage = null) {
     }
 
     const activePage = document.querySelector('.page.active');
-    const originPageId = originPage || ((activePage && activePage.id) ? activePage.id : 'page-tools');
+    const originPageId = originPage || ((activePage && activePage.id) ? activePage.id : (document.getElementById('page-play') && document.getElementById('page-play').classList.contains('active') ? 'page-play' : 'page-tools'));
     const activePane = document.querySelector('#page-tools .tool-pane.active');
     const curId = (originPageId === 'page-tools' && activePane) ? activePane.id.replace('tool-', '') : (originPageId === 'page-tools' ? 'lists' : null);
 
@@ -12456,8 +12484,9 @@ window.showWordDefinitionPopup = async function (word, event) {
     if (ccBtn) {
         ccBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
+            const playActive = document.getElementById('page-play') && document.getElementById('page-play').classList.contains('active');
             if (typeof window.searchWordInComboChecker === 'function') {
-                window.searchWordInComboChecker(cleanWord);
+                window.searchWordInComboChecker(cleanWord, null, playActive ? 'page-play' : null);
             }
         };
     }
@@ -12469,7 +12498,8 @@ window.showWordDefinitionPopup = async function (word, event) {
         fcBtn.title = 'Search word in Find Count (Tools)';
         fcBtn.onclick = (e) => {
             if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
-            window.navigateToFindCount(cleanWord);
+            const playActive = document.getElementById('page-play') && document.getElementById('page-play').classList.contains('active');
+            window.navigateToFindCount(cleanWord, playActive ? 'page-play' : null);
         };
 
         if (!window._wordTallyCache) window._wordTallyCache = {};

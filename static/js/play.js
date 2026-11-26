@@ -343,6 +343,30 @@ function getTopHeaderHeight() {
     return (header ? header.offsetHeight : 0) + (sep ? sep.offsetHeight : 0);
 }
 
+window.scrollGameRoomToBottomDesktop = function(immediate = true) {
+    const playPage = document.getElementById('page-play');
+    if (!playPage || !playPage.classList.contains('active')) return;
+    const topBar = document.getElementById('top-menu-bar') || document.querySelector('.header');
+    const headerH = topBar ? topBar.offsetHeight : (playPage.offsetTop || 0);
+    const docScrollH = Math.max(
+        document.documentElement ? document.documentElement.scrollHeight : 0,
+        document.body ? document.body.scrollHeight : 0
+    );
+    const targetScroll = Math.max(
+        headerH,
+        docScrollH - window.innerHeight,
+        headerH
+    );
+    const scrollLeft = window.pageXOffset || (document.documentElement ? document.documentElement.scrollLeft : 0) || 0;
+    if (immediate) {
+        window.scrollTo(scrollLeft, targetScroll);
+        if (document.documentElement) document.documentElement.scrollTop = targetScroll;
+        if (document.body) document.body.scrollTop = targetScroll;
+    } else {
+        window.scrollTo({ top: targetScroll, left: scrollLeft, behavior: 'smooth' });
+    }
+};
+
 window.hideGameRoomTopMenu = function(immediate = true) {
     if (window.innerWidth > 992) return;
     const playPage = document.getElementById('page-play');

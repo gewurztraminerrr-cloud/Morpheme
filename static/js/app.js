@@ -2388,7 +2388,9 @@ window.showPage = showPage;
         targetPage.style.opacity = '1';
         targetPage.style.visibility = 'visible';
         targetPage.scrollTop = 0;
-        window.scrollTo(0, 0);
+        if (!(pageId === 'page-play' && window._navigatingViaDefPopup)) {
+            window.scrollTo(0, 0);
+        }
         if (typeof updateTopMenuHeight === 'function') {
             updateTopMenuHeight();
         }
@@ -2435,21 +2437,53 @@ window.showPage = showPage;
     document.body.classList.toggle('forums-active', pageId === 'page-forums');
     document.body.classList.toggle('login-active', pageId === 'page-login');
     const isMobileDevice = (window.innerWidth <= 992) || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (pageId === 'page-play' && isMobileDevice) {
-        const hideHeaderOnMobile = () => {
-            if (typeof window.hideGameRoomTopMenu === 'function') {
-                window.hideGameRoomTopMenu(true);
-            } else {
-                const playPage = document.getElementById('page-play');
-                const headerH = playPage ? playPage.offsetTop : 0;
-                if (headerH > 0) window.scrollTo(0, headerH);
-            }
-        };
-        hideHeaderOnMobile();
-        requestAnimationFrame(hideHeaderOnMobile);
-        setTimeout(hideHeaderOnMobile, 50);
-        setTimeout(hideHeaderOnMobile, 150);
-        setTimeout(hideHeaderOnMobile, 300);
+    if (pageId === 'page-play') {
+        if (isMobileDevice) {
+            const hideHeaderOnMobile = () => {
+                if (typeof window.hideGameRoomTopMenu === 'function') {
+                    window.hideGameRoomTopMenu(true);
+                } else {
+                    const playPage = document.getElementById('page-play');
+                    const headerH = playPage ? playPage.offsetTop : 0;
+                    if (headerH > 0) window.scrollTo(0, headerH);
+                }
+            };
+            hideHeaderOnMobile();
+            requestAnimationFrame(hideHeaderOnMobile);
+            setTimeout(hideHeaderOnMobile, 50);
+            setTimeout(hideHeaderOnMobile, 150);
+            setTimeout(hideHeaderOnMobile, 300);
+        } else if (window._navigatingViaDefPopup) {
+            // Returning to game room from FC/CC via Back button on desktop/laptop:
+            // Make top menu out of sight and scroll down to the bottom automatically.
+            const scrollBottomDesktop = () => {
+                if (typeof window.scrollGameRoomToBottomDesktop === 'function') {
+                    window.scrollGameRoomToBottomDesktop(true);
+                } else {
+                    const playPage = document.getElementById('page-play');
+                    const topBar = document.getElementById('top-menu-bar') || document.querySelector('.header');
+                    const headerH = topBar ? topBar.offsetHeight : (playPage ? playPage.offsetTop : 60);
+                    const targetScroll = Math.max(
+                        headerH,
+                        (document.documentElement ? document.documentElement.scrollHeight : 0) - window.innerHeight,
+                        (document.body ? document.body.scrollHeight : 0) - window.innerHeight,
+                        headerH
+                    );
+                    window.scrollTo(0, targetScroll);
+                    if (document.documentElement) document.documentElement.scrollTop = targetScroll;
+                    if (document.body) document.body.scrollTop = targetScroll;
+                }
+            };
+            scrollBottomDesktop();
+            requestAnimationFrame(scrollBottomDesktop);
+            setTimeout(scrollBottomDesktop, 50);
+            setTimeout(scrollBottomDesktop, 150);
+            setTimeout(scrollBottomDesktop, 300);
+        } else {
+            window.scrollTo(0, 0);
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        }
     } else {
         window.scrollTo(0, 0);
         document.documentElement.scrollTop = 0;
