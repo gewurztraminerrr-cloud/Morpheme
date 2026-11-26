@@ -4317,6 +4317,12 @@ document.addEventListener('visibilitychange', () => {
         const pLoad = document.getElementById('page-loading');
         if (pLoad && pLoad.classList.contains('active') && !window._gatewayPassed) return;
         
+        if (window.MorphemeAudioBridge && window.MorphemeAudioBridge.postMessage) {
+            try {
+                window.MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'hideSystemBars' }));
+            } catch(e) {}
+        }
+
         if (typeof window.syncThemeColorMeta === 'function') {
             window.syncThemeColorMeta();
         }
@@ -4324,8 +4330,19 @@ document.addEventListener('visibilitychange', () => {
             scheduleMobileViewportRecovery();
             setTimeout(scheduleMobileViewportRecovery, 100);
             setTimeout(scheduleMobileViewportRecovery, 300);
+            setTimeout(scheduleMobileViewportRecovery, 600);
         }
     }
+
+    ['pointerdown', 'touchstart'].forEach(evt => {
+        document.addEventListener(evt, () => {
+            if (window.MorphemeAudioBridge && window.MorphemeAudioBridge.postMessage) {
+                try {
+                    window.MorphemeAudioBridge.postMessage(JSON.stringify({ action: 'hideSystemBars' }));
+                } catch(e) {}
+            }
+        }, { passive: true, capture: true });
+    });
 
     document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {

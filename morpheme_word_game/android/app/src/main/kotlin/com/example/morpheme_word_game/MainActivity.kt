@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowInsetsController
@@ -23,6 +24,10 @@ class MainActivity: FlutterActivity() {
             if (call.method == "vibrate") {
                 val duration = (call.argument<Int>("duration") ?: 500).toLong()
                 vibrateDevice(duration)
+                result.success(null)
+            } else if (call.method == "hideSystemBars") {
+                hideSystemBars()
+                scheduleHideSystemBars()
                 result.success(null)
             } else {
                 result.notImplemented()
@@ -55,22 +60,38 @@ class MainActivity: FlutterActivity() {
         super.onCreate(savedInstanceState)
         configureEdgeToEdge()
         hideSystemBars()
+        scheduleHideSystemBars()
     }
 
     override fun onResume() {
         super.onResume()
         hideSystemBars()
+        scheduleHideSystemBars()
     }
 
     override fun onPostResume() {
         super.onPostResume()
         hideSystemBars()
+        scheduleHideSystemBars()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (hasFocus) {
             hideSystemBars()
+            scheduleHideSystemBars()
+        }
+    }
+
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+        hideSystemBars()
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private fun scheduleHideSystemBars() {
+        val delays = longArrayOf(50, 150, 300, 500, 800, 1200)
+        for (d in delays) {
+            window.decorView.postDelayed({ hideSystemBars() }, d)
         }
     }
 

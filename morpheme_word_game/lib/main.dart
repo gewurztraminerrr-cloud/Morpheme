@@ -263,6 +263,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 _vibrateChannel.invokeMethod('vibrate', {'duration': 500});
               } catch (_) {}
               HapticFeedback.vibrate();
+            } else if (action == 'hideSystemBars') {
+              SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+              try {
+                _vibrateChannel.invokeMethod('hideSystemBars');
+              } catch (_) {}
             } else if (sound == 'tile') {
               int pathLen = data['pathLen'] ?? 1;
               if (pathLen < 1) pathLen = 1;
