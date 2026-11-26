@@ -19709,17 +19709,21 @@ body.is-desktop .history-walkthrough-section .replay-controls {
 }
 
 body.is-desktop .history-walkthrough-section .replay-tab-group {
-    display: inline-flex !important;
-    flex-direction: row !important;
-    align-items: center !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
     gap: 8px !important;
     margin-left: auto !important;
+    flex-shrink: 0 !important;
 }
 
 body.is-desktop .history-walkthrough-section .replay-tab-btn {
-    padding: 8px 14px !important;
+    padding: 8px 22px !important;
     font-size: 0.8rem !important;
     height: auto !important;
+    min-width: 108px !important;
+    width: 100% !important;
 }
 
 body.is-desktop .history-walkthrough-section .section-hint {
