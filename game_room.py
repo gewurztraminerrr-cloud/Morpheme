@@ -1798,28 +1798,7 @@ class GameRoom:
         is_at_or_past_zero = (self.state == 'intermission' and (now - self.intermission_start_time >= intermission_limit))
 
         
-        # USER MANDATE: 0:50 Intermission Fallback Watchdog (50s remaining on clock = 10s elapsed in 60s intermission, BEFORE 0:45 reveal)
-        # If no board has been secured or if staged board violates word count by 0:50 time during intermission,
-        # pull a pregenerated board immediately, adapt the Spinner Set to its suitable parameters, stage it,
-        # and update next_spinner_params so 0:45 reveal locks the exact board parameters!
-        if self.state == 'intermission' and self.time_limit < 7200:
-            elapsed_intermission = now - self.intermission_start_time
-            fallback_050_threshold = 10.0 if intermission_limit >= 20 else 0.2
-            if elapsed_intermission >= fallback_050_threshold and not getattr(self, '_fallback_at_50s_done', False):
-                has_valid_staged = False
-                if getattr(self, 'next_round_board', None) and getattr(self, 'next_round_words', None):
-                    staged_cnt = len(self.next_round_words)
-                    staged_wc_range = (self.next_spinner_params or {}).get('word_count_range')
-                    if is_board_count_valid(staged_cnt, staged_wc_range):
-                        has_valid_staged = True
-                
-                if not has_valid_staged:
-                    print(f"[Watchdog] 0:50 mark in intermission ({elapsed_intermission:.1f}s elapsed) for {self.room_id} — no compliant board ready. Pulling validated pregenerated board and adopting its suitable parameters.")
-                    self._fallback_at_50s_done = True
-                    try:
-                        self.trigger_early_fallback_rescue()
-                    except Exception as wd_err:
-                        print(f"[Watchdog] Error in 0:50 trigger_early_fallback_rescue for {self.room_id}: {wd_err}")
+
 
         if getattr(self, 'starting_round', False):
             curr_init = getattr(self, '_round_start_init_time', 0)
@@ -7227,11 +7206,6 @@ class RoomManager:
                     print(f"[RoomManager] SUCCESS: Revealed pre-generated params for subanagrams room {room_id}: {new_params.get('sequence_length')}L | {new_params.get('dictionary')} | {new_params.get('word_count_range')}")
                     return True
 
-                # Ensure board has been found before revealing parameters at 0:45
-                if not getattr(room, 'next_round_board', None):
-                    print(f"[RoomManager] At 0:45 reveal: board not yet found for {room_id}. Ensuring board is ready immediately...")
-                    room.ensure_next_board_ready()
-
                 new_params = getattr(room, 'next_spinner_params', None)
                 if not new_params and getattr(room, 'next_round_spinner_params', None):
                     new_params = getattr(room, 'next_round_spinner_params', None)
@@ -7242,6 +7216,8 @@ class RoomManager:
 
                 # Ensure parameters match the found board and finalize bonus word BEFORE locking at 0:45
                 if getattr(room, 'next_round_words', None):
+                    target_min_len = int(new_params.get('min_word_length', 3))
+                    room.next_round_words = [w for w in room.next_round_words if len(w) >= target_min_len]
                     actual_wc = len(room.next_round_words)
                     use_aw_val = (new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper() or '+AW' in str(new_params.get('dictionary', '')).upper())
                     cur_wc_range = new_params.get('word_count_range')
@@ -7249,7 +7225,7 @@ class RoomManager:
                         new_params['word_count_range'] = cur_wc_range
                     else:
                         new_params['word_count_range'] = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val, dictionary=new_params.get('dictionary'))
-                    new_params['min_word_length'] = min(len(w) for w in room.next_round_words)
+                    new_params['min_word_length'] = target_min_len
                     if room.game_type != 'subanagrams':
                         target_bw_rev = int(new_params.get('bonus_word_length', 8) or 8)
                         if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
@@ -7644,10 +7620,6 @@ class RoomManager:
 
                 if reveal:
                     # 2. PERFORM THE REVEAL (Making them visible to players at 0:45)
-                    if not getattr(room, 'next_round_board', None):
-                        print(f"[RoomManager] At 0:45 reveal (slow-path): board not yet found for {room_id}. Ensuring board is ready immediately...")
-                        room.ensure_next_board_ready()
-
                     if getattr(room, 'next_round_spinner_params', None):
                         new_params = dict(room.next_round_spinner_params)
                     elif getattr(room, 'next_spinner_params', None):
@@ -7656,6 +7628,8 @@ class RoomManager:
                         new_params = dict(new_params)
 
                     if getattr(room, 'next_round_words', None):
+                        target_min_len = int(new_params.get('min_word_length', 3))
+                        room.next_round_words = [w for w in room.next_round_words if len(w) >= target_min_len]
                         actual_wc = len(room.next_round_words)
                         use_aw_val = (new_params.get('use_added_words', False) or '+ AW' in str(new_params.get('dictionary', '')).upper() or '+AW' in str(new_params.get('dictionary', '')).upper())
                         cur_wc_range = new_params.get('word_count_range')
@@ -7663,7 +7637,7 @@ class RoomManager:
                             new_params['word_count_range'] = cur_wc_range
                         else:
                             new_params['word_count_range'] = self._get_factchecked_wc_range(actual_wc, use_added_words=use_aw_val, dictionary=new_params.get('dictionary'))
-                        new_params['min_word_length'] = min(len(w) for w in room.next_round_words)
+                        new_params['min_word_length'] = target_min_len
                         if room.game_type != 'subanagrams':
                             target_bw_rev = int(new_params.get('bonus_word_length', 8) or 8)
                             if getattr(room, 'is_solo', False) and getattr(room, 'initial_solo_params', None):
@@ -8407,7 +8381,6 @@ class RoomManager:
                         if (
                             getattr(room, '_spinner_params_locked', False)
                             or getattr(room, 'spinner_params_revealed', False)
-                            or getattr(room, '_fallback_at_50s_done', False)
                         ) and getattr(room, 'next_round_board', None):
                             return
                         _board, _words, _bonus_c, _fmt, _paths, _ratio, _bonus_word, _params = _pre
@@ -8660,7 +8633,6 @@ class RoomManager:
                     if (
                         getattr(target_room, '_spinner_params_locked', False)
                         or getattr(target_room, 'spinner_params_revealed', False)
-                        or getattr(target_room, '_fallback_at_50s_done', False)
                     ) and getattr(target_room, 'next_round_board', None):
                         print(f"[RoomManager] Background board search finished after 0:50 fallback / 0:45 reveal lock for {room_id}. Preserving locked staged board & params.")
                         return
@@ -8849,7 +8821,6 @@ class RoomManager:
                         if (
                             getattr(target_room, '_spinner_params_locked', False)
                             or getattr(target_room, 'spinner_params_revealed', False)
-                            or getattr(target_room, '_fallback_at_50s_done', False)
                         ) and getattr(target_room, 'next_round_board', None):
                             print(f"[RoomManager] Late board search discarded inside lock for {room_id}: 0:50 fallback or 0:45 reveal already locked board & params.")
                             return
