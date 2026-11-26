@@ -12283,19 +12283,14 @@ async function submitWord(wordParam = null, pathParam = null, _quFallback = fals
                             }
                         }
                     }
-                } else if (!isPenaltyMode && !is24H) {
-                    // PREFACE: in standard timed rooms (e.g. ACC 4x4 45s), the board word list is complete (never truncated), so an unlisted word is
-                    // invalid. Flash red at the exact same instant (0ms) and duration as the blue flash.
-                    // NOTE: In 24h rooms, the server dynamically validates & accepts valid dictionary words on the board, so do not optimistically flash red!
-                    const couldQFallback = !_quFallback && pathParam !== null && /QU/.test(word);
-                    if (!couldQFallback) {
-                        const invMsg = isPenaltyMode
-                            ? `${word.toUpperCase()} INVALID (-3 PTS)`
-                            : `${word.toUpperCase()} INVALID`;
-                        showValidationFeedback(invMsg, false, false, finalPath, true);
-                        optimisticColor = 'red';
-                        optimisticIsDefinitive = false;
-                    }
+                } else {
+                    // Confirmed invalid locally — flash red at the exact same instant (0ms) and duration as the blue flash across all rooms (including 24h & penalty)
+                    const invMsg = isPenaltyMode
+                        ? `${word.toUpperCase()} INVALID (-3 PTS)`
+                        : `${word.toUpperCase()} INVALID`;
+                    showValidationFeedback(invMsg, false, false, finalPath, true);
+                    optimisticColor = 'red';
+                    optimisticIsDefinitive = false;
                 }
             }
         }
@@ -12937,8 +12932,14 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
     if ((!targetPath || targetPath.length === 0) && matchedWord) {
         if (isSub && window.lastGameState && window.lastGameState.board) {
             targetPath = typeof findWordPathOnBoard === 'function' ? findWordPathOnBoard(matchedWord, window.lastGameState.board) : null;
-        } else if (window.lastGameState && window.lastGameState.all_words_paths) {
+        } else if (window.lastGameState && window.lastGameState.all_words_paths && window.lastGameState.all_words_paths[matchedWord]) {
             targetPath = window.lastGameState.all_words_paths[matchedWord];
+        } else if (window.lastGameState && window.lastGameState.board) {
+            const b = window.lastGameState.board;
+            const is3D = b.length === 6 && Array.isArray(b[0]) && Array.isArray(b[0][0]);
+            targetPath = (is3D && typeof findWordPathOnCube === 'function')
+                ? findWordPathOnCube(matchedWord, b)
+                : (typeof findWordPathOnBoard === 'function' ? findWordPathOnBoard(matchedWord, b) : null);
         }
     }
     if (isSub && (!targetPath || targetPath.length === 0) && !isActuallyValid && window.lastGameState && window.lastGameState.board && window.lastGameState.board[0]) {
@@ -12984,9 +12985,13 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
                     applyDensityToCell(cell);
                     // Rapid, snappy flash effect: 150ms
                     const flashMs = 150;
-                    setTimeout(() => {
+                    if (cell._tileFlashTimeout) {
+                        clearTimeout(cell._tileFlashTimeout);
+                    }
+                    cell._tileFlashTimeout = setTimeout(() => {
                         cell.classList.remove(tileFlashClass);
                         applyDensityToCell(cell);
+                        cell._tileFlashTimeout = null;
                     }, flashMs);
                 }
             }
@@ -12996,6 +13001,9 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
     // Flash word input background (150ms fast response)
     const input = document.getElementById('word-input');
     if (input) {
+        if (input._inputFlashTimeout) {
+            clearTimeout(input._inputFlashTimeout);
+        }
         let bgColor = 'rgba(239, 68, 68, 0.35)'; // default invalid red
         if (isAlreadyFound) {
             bgColor = 'rgba(168, 85, 247, 0.35)'; // purple
@@ -13004,10 +13012,11 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
         }
         input.style.backgroundColor = bgColor;
         input.style.transition = 'background-color 0.08s ease-in-out';
-        setTimeout(() => {
+        input._inputFlashTimeout = setTimeout(() => {
             if (input) {
                 input.style.backgroundColor = '';
             }
+            input._inputFlashTimeout = null;
         }, 150);
     }
 
@@ -13015,6 +13024,7 @@ function showValidationFeedback(message, isValid, isBonus = false, path = null, 
     validationTimeout = setTimeout(() => {
         statusEl.textContent = '';
         statusEl.className = 'validation-status';
+        statusEl.style.color = '';
         validationTimeout = null;
     }, 3000);
 }
@@ -15999,14 +16009,14 @@ async function handlePrivateMatchWord(word, path = null) {
             if (wordPath) {
                 pts = -3;
                 isPenalty = true;
-                showValidationFeedback('INVALID (PENALTY -3)', false, false, wordPath);
+                showValidationFeedback(`${word.toUpperCase()} INVALID (-3 PTS)`, false, false, wordPath);
             } else {
-                showValidationFeedback('Not in dictionary!', false, false, resolvedPath);
+                showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, resolvedPath);
                 recordGuessResult(false, resolvedPath && resolvedPath.length > 0);
                 return;
             }
         } else {
-            showValidationFeedback('Not in dictionary!', false, false, resolvedPath);
+            showValidationFeedback(`${word.toUpperCase()} INVALID`, false, false, resolvedPath);
             recordGuessResult(false, resolvedPath && resolvedPath.length > 0);
             return;
         }
