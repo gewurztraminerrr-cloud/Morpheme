@@ -270,12 +270,24 @@ class SpinnerSet:
             if is_aw_effective and wc_range not in ['300-400', '400-500', '500+']:
                 wc_range = '300-400'
         elif is_aw_effective:
-            # + AW dictionaries target high counts when spinning random params (NEVER below 300)
+            # + AW dictionaries target high counts when spinning random params
             if '4x4' in dims:
-                wc_range = '300-400'
+                if min_word_length >= 5:
+                    wc_range = '100-200'
+                elif min_word_length == 4:
+                    if wc_range not in ['200-300', '300-400']:
+                        wc_range = _rng.choices(['200-300', '300-400'], weights=[50, 50])[0]
+                else:
+                    wc_range = '300-400'
             elif '4x6' in dims:
-                if wc_range not in ['300-400', '400-500']:
-                    wc_range = _rng.choices(['300-400', '400-500'], weights=[50, 50])[0]
+                if min_word_length >= 6:
+                    wc_range = '100-200'
+                elif min_word_length == 5:
+                    if wc_range not in ['200-300', '300-400']:
+                        wc_range = _rng.choices(['200-300', '300-400'], weights=[50, 50])[0]
+                else:
+                    if wc_range not in ['300-400', '400-500']:
+                        wc_range = _rng.choices(['300-400', '400-500'], weights=[50, 50])[0]
             else:
                 if wc_range not in ['300-400', '400-500', '500+']:
                     wc_range = _rng.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
@@ -283,15 +295,26 @@ class SpinnerSet:
             # Standard NWL and CSW dictionaries:
             # Maximum normal range is 300-400 (NEVER 400-500). 500+ is only available on large boards (5x7, 6x8, Cube).
             # 50-100 is allowed for the two highest min word lengths of the board dimension (e.g. 4L & 5L on 4x4, 5L & 6L on 4x6, 6L & 7L on 5x7, 7L & 8L on 6x8/Cube).
-            if '4x4' in dims or '4x6' in dims:
-                # 4x4 and 4x6 grids can never physically achieve 500+ in standard dictionaries
-                if wc_range in ['400-500', '500+'] or not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400']:
-                    if min_word_length in low_wc_allowed_mins:
-                        wc_range = _rng.choices(['50-100', '100-200', '200-300', '300-400'], weights=[10, 30, 30, 30])[0]
-                    else:
+            if '4x4' in dims:
+                if min_word_length >= 5:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = _rng.choices(['50-100', '100-200'], weights=[40, 60])[0]
+                elif min_word_length == 4:
+                    if wc_range not in ['50-100', '100-200', '200-300']:
+                        wc_range = _rng.choices(['50-100', '100-200', '200-300'], weights=[20, 40, 40])[0]
+                else:
+                    if wc_range not in ['100-200', '200-300', '300-400']:
                         wc_range = _rng.choices(['100-200', '200-300', '300-400'], weights=[34, 33, 33])[0]
-                if wc_range == '50-100' and min_word_length not in low_wc_allowed_mins:
-                    wc_range = _rng.choices(['100-200', '200-300', '300-400'], weights=[34, 33, 33])[0]
+            elif '4x6' in dims:
+                if min_word_length >= 6:
+                    if wc_range not in ['50-100', '100-200']:
+                        wc_range = _rng.choices(['50-100', '100-200'], weights=[40, 60])[0]
+                elif min_word_length == 5:
+                    if wc_range not in ['50-100', '100-200', '200-300']:
+                        wc_range = _rng.choices(['50-100', '100-200', '200-300'], weights=[20, 40, 40])[0]
+                else:
+                    if wc_range not in ['100-200', '200-300', '300-400']:
+                        wc_range = _rng.choices(['100-200', '200-300', '300-400'], weights=[34, 33, 33])[0]
             else:
                 if wc_range == '400-500' or not wc_range or wc_range not in ['50-100', '100-200', '200-300', '300-400', '500+']:
                     if min_word_length in low_wc_allowed_mins:
@@ -302,10 +325,20 @@ class SpinnerSet:
                     wc_range = _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
 
         # Enforce physical ceilings for small grids regardless of origin
-        if '4x4' in dims and wc_range in ['400-500', '500+']:
-            wc_range = '300-400' if is_aw_effective else '200-300'
-        elif '4x6' in dims and wc_range == '500+':
-            wc_range = '400-500' if is_aw_effective else '300-400'
+        if '4x4' in dims:
+            if min_word_length >= 5 and wc_range not in ['50-100', '100-200']:
+                wc_range = '100-200'
+            elif min_word_length == 4 and wc_range in ['400-500', '500+']:
+                wc_range = '300-400' if is_aw_effective else '200-300'
+            elif wc_range in ['400-500', '500+']:
+                wc_range = '300-400'
+        elif '4x6' in dims:
+            if min_word_length >= 6 and wc_range not in ['50-100', '100-200']:
+                wc_range = '100-200'
+            elif min_word_length == 5 and wc_range in ['400-500', '500+']:
+                wc_range = '300-400' if is_aw_effective else '200-300'
+            elif wc_range == '500+':
+                wc_range = '400-500' if is_aw_effective else '300-400'
 
         p['min_word_length'] = min_word_length
         p['word_count_range'] = wc_range
@@ -355,10 +388,8 @@ class SpinnerSet:
             # 4. Word Count Range (ALWAYS 300-400 for 24h rooms)
             if is_24h:
                 wc_range = '300-400'
-            elif is_aw_effective:
-                wc_range = _rng.choices(['300-400', '400-500', '500+'], weights=[33, 33, 34])[0]
             else:
-                wc_range = SpinnerSet._spin_word_count(dictionary, min_word_length, SpinnerSet.strip_difficulty_pct(difficulty), dims, use_added_words=False)
+                wc_range = SpinnerSet._spin_word_count(dictionary, min_word_length, SpinnerSet.strip_difficulty_pct(difficulty), dims, use_added_words=is_aw_effective)
                 if wc_range == '500+' and ('4x4' in dims or '4x6' in dims) and min_word_length > allowed_mins[0]:
                     min_word_length = allowed_mins[0]
 
@@ -418,25 +449,56 @@ class SpinnerSet:
     def _spin_word_count(dictionary, min_word_length, difficulty, board_dimensions, use_added_words=False):
         d_upper = str(dictionary).upper()
         is_aw = use_added_words or "+ AW" in d_upper or "+AW" in d_upper or "ADDED" in d_upper
+        dims = str(board_dimensions).lower().replace(" ", "")
         try:
             mwl = int(min_word_length)
         except Exception:
             mwl = 3
+
         if is_aw:
-            choices = ['300-400', '400-500', '500+']
-            weights = [33, 33, 34]
-            return _rng.choices(choices, weights=weights)[0]
-        else:
-            allowed_mins = SpinnerSet.get_allowed_min_lengths(board_dimensions)
-            low_wc_allowed_mins = allowed_mins[1:]
-            if mwl in low_wc_allowed_mins:
-                # 50-100 is allowed for the two highest min-lengths: 9%
-                choices = ['50-100', '100-200', '200-300', '300-400', '500+']
-                weights = [9, 30, 30, 30, 1]
+            if '4x4' in dims:
+                if mwl >= 5:
+                    return '100-200'
+                elif mwl == 4:
+                    return _rng.choices(['200-300', '300-400'], weights=[50, 50])[0]
+                else:
+                    return '300-400'
+            elif '4x6' in dims:
+                if mwl >= 6:
+                    return '100-200'
+                elif mwl == 5:
+                    return _rng.choices(['200-300', '300-400'], weights=[50, 50])[0]
+                else:
+                    return _rng.choices(['300-400', '400-500'], weights=[50, 50])[0]
             else:
-                choices = ['100-200', '200-300', '300-400', '500+']
-                weights = [33, 33, 33, 1]
-            return _rng.choices(choices, weights=weights)[0]
+                choices = ['300-400', '400-500', '500+']
+                weights = [33, 33, 34]
+                return _rng.choices(choices, weights=weights)[0]
+        else:
+            if '4x4' in dims:
+                if mwl >= 5:
+                    return _rng.choices(['50-100', '100-200'], weights=[40, 60])[0]
+                elif mwl == 4:
+                    return _rng.choices(['50-100', '100-200', '200-300'], weights=[20, 40, 40])[0]
+                else:
+                    return _rng.choices(['100-200', '200-300', '300-400'], weights=[34, 33, 33])[0]
+            elif '4x6' in dims:
+                if mwl >= 6:
+                    return _rng.choices(['50-100', '100-200'], weights=[40, 60])[0]
+                elif mwl == 5:
+                    return _rng.choices(['50-100', '100-200', '200-300'], weights=[20, 40, 40])[0]
+                else:
+                    return _rng.choices(['100-200', '200-300', '300-400'], weights=[34, 33, 33])[0]
+            else:
+                allowed_mins = SpinnerSet.get_allowed_min_lengths(board_dimensions)
+                low_wc_allowed_mins = allowed_mins[1:]
+                if mwl in low_wc_allowed_mins:
+                    choices = ['50-100', '100-200', '200-300', '300-400', '500+']
+                    weights = [9, 30, 30, 30, 1]
+                else:
+                    choices = ['100-200', '200-300', '300-400', '500+']
+                    weights = [33, 33, 33, 1]
+                return _rng.choices(choices, weights=weights)[0]
 
     @staticmethod
     def _spin_dictionary():

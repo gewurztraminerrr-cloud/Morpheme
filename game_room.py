@@ -2191,7 +2191,7 @@ class GameRoom:
                             if len(self.next_round_words) < _min_req_en:
                                 fb = _bg._perform_rescue_sweep(
                                     fb, r_cnt, c_cnt, d_cnt, clean_dict, f_min_l, _min_req_en, _max_req_en, set(),
-                                    difficulty='Easy', rescue_depth=25,
+                                    difficulty='Easy', rescue_depth=12,
                                     is_checkerboard=('checkerboard' in str(self.next_round_format).lower()),
                                     board_format=self.next_round_format, use_added_words=use_aw_from_p
                                 )
@@ -6890,7 +6890,7 @@ class RoomManager:
                                     room.board, r_num, c_num, d_num, room.spinner_params.get('dictionary', 'NWL'),
                                     display_min_start, _min_w_req, _max_w_req, set(),
                                     difficulty=room.spinner_params.get('difficulty', 'Medium'),
-                                    rescue_depth=25, is_checkerboard=('checkerboard' in str(room.current_board_format).lower()),
+                                    rescue_depth=12, is_checkerboard=('checkerboard' in str(room.current_board_format).lower()),
                                     board_format=room.current_board_format, use_added_words=room.use_added_words
                                 )
                                 _re_s2 = self.board_generator._solve_board(
@@ -8562,7 +8562,7 @@ class RoomManager:
                                 d_cnt = int(b_dims[0]) if len(b_dims) == 3 else 1
                                 r_board = self.board_generator._perform_rescue_sweep(
                                     board, r_cnt, c_cnt, d_cnt, search_dict, search_min, 300, 400,
-                                    set(), search_diff, rescue_depth=25, is_checkerboard=('checkerboard' in str(search_fmt).lower()),
+                                    set(), search_diff, rescue_depth=12, is_checkerboard=('checkerboard' in str(search_fmt).lower()),
                                     board_format=search_fmt, use_added_words=True
                                 )
                                 r_solve = self.board_generator._solve_board(
@@ -8804,7 +8804,7 @@ class RoomManager:
                                     if len(all_words) < _min_req_sb:
                                         board = self.board_generator._perform_rescue_sweep(
                                             board, rows, cols, d_val, search_dict, _sb_min_len, _min_req_sb, _max_req_sb, set(),
-                                            difficulty='Easy', rescue_depth=25,
+                                            difficulty='Easy', rescue_depth=12,
                                             is_checkerboard=('checkerboard' in str(updated_format).lower()),
                                             board_format=updated_format, use_added_words=use_aw_flag
                                         )
@@ -9493,7 +9493,7 @@ class RoomManager:
                                         room.board = self.board_generator._perform_rescue_sweep(
                                             room.board, r_cnt, c_cnt, d_cnt, room.current_dictionary,
                                             _curr_m_len, _min_req, _max_req, set(),
-                                            difficulty='Easy', rescue_depth=25,
+                                            difficulty='Easy', rescue_depth=12,
                                             is_checkerboard=('checkerboard' in str(room.current_board_format).lower()),
                                             board_format=room.current_board_format, use_added_words=room.use_added_words
                                         )

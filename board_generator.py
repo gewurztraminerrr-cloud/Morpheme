@@ -2540,7 +2540,7 @@ class BoardGenerator:
 
                 board = self._perform_rescue_sweep(
                     board, b_rows, b_cols, depth, dictionary, min_word_length, min_w_req, max_w_req,
-                    protected_rescue, difficulty, rescue_depth=25, is_checkerboard=("checkerboard" in str(board_format).lower()),
+                    protected_rescue, difficulty, rescue_depth=12, is_checkerboard=("checkerboard" in str(board_format).lower()),
                     board_format=board_format, use_added_words=val_ctx
                 )
                 all_words_dict = self._solve_board(
@@ -2675,11 +2675,11 @@ class BoardGenerator:
                     protected_rescue = set()
                     board = self._perform_rescue_sweep(
                         board, b_rows, b_cols, depth, dictionary, min_word_length, min_w_req, max_w_req,
-                        protected_rescue, difficulty, rescue_depth=25, is_checkerboard=("checkerboard" in str(board_format).lower()),
+                        protected_rescue, difficulty, rescue_depth=12, is_checkerboard=("checkerboard" in str(board_format).lower()),
                         board_format=board_format, use_added_words=val_ctx
                     )
                     all_words_dict = self._solve_board(
-                        board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=15.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+                        board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=5.0, bonus_cell=bonus_cell, use_added_words=val_ctx
                     )
                     all_words = sorted(list(all_words_dict.keys()))
         except Exception as _final_wc_err:
@@ -5549,7 +5549,7 @@ class BoardGenerator:
 
         return board
 
-    def _perform_decimation_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None, is_checkerboard=False, board_format="Normal", use_added_words=False):
+    def _perform_decimation_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=12, protected_path=None, is_checkerboard=False, board_format="Normal", use_added_words=False):
         """
         Reduce word count by replacing high-density cells with 'dead' letters.
         """
@@ -5563,8 +5563,9 @@ class BoardGenerator:
                 if isinstance(cell, (list, tuple)):
                     protected_cells.add(tuple(cell))
 
+        effective_depth = min(rescue_depth, max(10, min_word_length + 4), 12)
         # Solve board initially with store_paths=True to build a heat map of cell popularity
-        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=True, use_added_words=use_added_words)
+        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=effective_depth, store_paths=True, use_added_words=use_added_words)
         current_count = len(current_solve)
         if current_count <= max_words: return board
         
@@ -5591,8 +5592,8 @@ class BoardGenerator:
         dead_chars = ["Z", "X", "Q", "J", "K", "V", "W", "G", "F", "B", "P", "M", "H"]
         
         for pos in positions:
-            sweep_timeout = 45.0 if use_added_words else 20.0
-            if time.time() - start_time > sweep_timeout: break # Hard time limit
+            if time.time() - start_time > 2.5: break # Hard time limit
+            time.sleep(0.002)  # Yield GIL
             f_p, r_p, c_p = (pos[0], pos[1], pos[2]) if depth > 1 else (0, pos[0], pos[1])
             
             if is_checkerboard:
@@ -5621,7 +5622,7 @@ class BoardGenerator:
             else: board[r_p][c_p] = chosen_char
             
             # Re-solve to update word count and heat map
-            current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=True, use_added_words=use_added_words)
+            current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=effective_depth, store_paths=True, use_added_words=use_added_words)
             current_count = len(current_solve)
             
             # Rebuild heat map for remaining steps
@@ -5635,7 +5636,7 @@ class BoardGenerator:
                 break
         return board
 
-    def _perform_rescue_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=15, protected_path=None, is_checkerboard=False, board_format="Normal", use_added_words=False):
+    def _perform_rescue_sweep(self, board, rows, cols, depth, dictionary, min_word_length, min_words, max_words, excluded, difficulty, rescue_depth=12, protected_path=None, is_checkerboard=False, board_format="Normal", use_added_words=False):
         """
         USER REQUEST: Perform IO operations on random locations until desired word count is reached.
         """
@@ -5657,14 +5658,16 @@ class BoardGenerator:
                     if pos not in excluded and pos not in protected_cells:
                         positions.append(pos)
         random.shuffle(positions)
-        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=use_added_words)
+        
+        effective_rescue_depth = min(rescue_depth, max(10, min_word_length + 4), 12)
+        current_solve = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=effective_rescue_depth, store_paths=False, use_added_words=use_added_words)
         current_count = len(current_solve)
         if current_count >= min_words: return board
         print(f"[BoardGen] 🆘 RESCUE SWEEP START (Current: {current_count}, Target: {min_words})")
         max_rescue_tiles = 16 if rows * cols >= 48 else min(12, len(positions))
         rescue_pool = positions[:max_rescue_tiles]
         for pos in rescue_pool:
-            if time.time() - start_time > 8.0: break
+            if time.time() - start_time > 2.0: break
             time.sleep(0.002)  # Micro-yield GIL to keep web server threads responsive
             f_p, r_p, c_p = (pos[0], pos[1], pos[2]) if depth > 1 else (0, pos[0], pos[1])
             old_char = board[f_p][r_p][c_p] if depth > 1 else board[r_p][c_p]
@@ -5677,7 +5680,7 @@ class BoardGenerator:
                 else:
                     test_chars = [c for c in test_chars if not self._is_vowel(c)]
             for char in list(set(test_chars)):
-                if time.time() - start_time > 8.0: break
+                if time.time() - start_time > 2.0: break
                 if char == old_char: continue
                 if difficulty in ["Medium", "Hard"] and self._is_creating_forbidden_sequence(board, char, r_p, c_p, f_p, depth=depth):
                     continue
@@ -5686,8 +5689,8 @@ class BoardGenerator:
                 if depth > 1: board[f_p][r_p][c_p] = char
                 else: board[r_p][c_p] = char
                 
-                # Solve (Deeper depth for accuracy in rescue)
-                res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=rescue_depth, store_paths=False, use_added_words=use_added_words)
+                # Solve (capped depth for speed and low GIL contention)
+                res = self._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=effective_rescue_depth, store_paths=False, use_added_words=use_added_words)
                 new_count = len(res)
                 if new_count > max_score and new_count <= max_words:
                     max_score, best_char = new_count, char
