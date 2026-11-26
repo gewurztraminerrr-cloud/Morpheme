@@ -3125,9 +3125,9 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     contain: layout style;
     will-change: scroll-position;
     /* Scrollable list */
-    padding-left: 20px;
-    padding-right: 20px;
-    /* Equal padding on left and right side of cell */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    /* Full width matching dropdown menus above */
     margin-bottom: 10px;
 }
 
@@ -3152,9 +3152,9 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     contain: layout style;
     will-change: scroll-position;
     /* Scrollable list */
-    padding-left: 20px;
-    padding-right: 20px;
-    /* Equal padding on left and right side of cell */
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    /* Full width matching dropdown menus above */
     margin-bottom: 10px;
 }
 
@@ -3579,10 +3579,10 @@ body.theme-light-gray .notepad-item.bonus-word:not(.finder-active) .word-text {
 #previous-words-list .word-item.finder-active::before {
     content: '▶' !important;
     position: absolute !important;
-    left: -16px !important;
+    left: 12px !important;
     top: 50% !important;
     transform: translateY(-50%);
-    font-size: 11px !important;
+    font-size: 18px !important;
     line-height: 1 !important;
     color: var(--selected-border-color, #60a5fa) !important;
     filter: drop-shadow(0 0 6px var(--selected-border-color, #3b82f6)) drop-shadow(0 0 12px var(--selected-border-color, rgba(96, 165, 250, 0.8)));
@@ -3596,6 +3596,7 @@ body.theme-light-gray .notepad-item.bonus-word:not(.finder-active) .word-text {
 #previous-words-list .word-item.finder-active {
     min-height: 44px !important;
     box-sizing: border-box !important;
+    padding-left: 40px !important;
 }
 
 .word-item.finder-active.added-word,
