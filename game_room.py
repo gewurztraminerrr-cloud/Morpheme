@@ -2179,12 +2179,28 @@ class GameRoom:
                 if _s_d_req and str(_s_d_req).lower() != 'random':
                     raw_diff_label = SpinnerSet.strip_difficulty_pct(_s_d_req)
                     if raw_diff_label == 'Easy' and fr > 0.15:
-                        _bg._sanitize_uniqueness(fb, clean_dict, max_ratio=0.15, depth=d_cnt, bonus_cell=fc, min_word_length=f_min_l, use_added_words=use_aw_from_p)
+                        _bg._sanitize_uniqueness(fb, clean_dict, max_ratio=0.15, depth=d_cnt, bonus_cell=fc, min_word_length=f_min_l, use_added_words=use_aw_from_p, min_words=min_accept)
                         _re_s = _bg._solve_board(fb, clean_dict, (0, 99999), f_min_l, max_depth=20, store_paths=True, timeout=5.0, bonus_cell=fc, use_added_words=use_aw_from_p)
                         self.next_round_word_paths = {w: p for w, p in _re_s.items() if len(w) >= f_min_l}
                         self.next_round_words = list(self.next_round_word_paths.keys())
                         fr = _bg._calculate_uniqueness_ratio(fb, clean_dict, d_cnt, fc, f_min_l, use_added_words=use_aw_from_p)
                         self.next_round_uniqueness = fr
+                        if target_range and not is_board_count_valid(len(self.next_round_words), target_range):
+                            _min_req_en, _max_req_en = _bg._parse_word_count_range(target_range)
+                            if use_aw_from_p: _min_req_en = max(300, _min_req_en)
+                            if len(self.next_round_words) < _min_req_en:
+                                fb = _bg._perform_rescue_sweep(
+                                    fb, r_cnt, c_cnt, d_cnt, clean_dict, f_min_l, _min_req_en, _max_req_en, set(),
+                                    difficulty='Easy', rescue_depth=25,
+                                    is_checkerboard=('checkerboard' in str(self.next_round_format).lower()),
+                                    board_format=self.next_round_format, use_added_words=use_aw_from_p
+                                )
+                                self.next_round_board = fb
+                                _re_s2 = _bg._solve_board(fb, clean_dict, (0, 99999), f_min_l, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=fc, use_added_words=use_aw_from_p)
+                                self.next_round_word_paths = {w: p for w, p in _re_s2.items() if len(w) >= f_min_l}
+                                self.next_round_words = list(self.next_round_word_paths.keys())
+                                fr = _bg._calculate_uniqueness_ratio(fb, clean_dict, d_cnt, fc, f_min_l, use_added_words=use_aw_from_p)
+                                self.next_round_uniqueness = fr
             formatted_diff = SpinnerSet.format_difficulty_with_pct(raw_diff_label, fr)
 
             _eff_fmt = ff or target_params.get('board_format') or fparams.get('board_format', 'Normal')
@@ -2327,7 +2343,12 @@ class GameRoom:
             if _s_d_req and str(_s_d_req).lower() != 'random':
                 e_diff_raw = SpinnerSet.strip_difficulty_pct(_s_d_req)
                 if e_diff_raw == 'Easy' and e_ratio > 0.15:
-                    _bg_inst._sanitize_uniqueness(e_board, clean_e_dict, max_ratio=0.15, depth=d_cnt_e, bonus_cell=e_bonus_c, min_word_length=final_e_min, use_added_words=e_aw_val)
+                    _min_w_e = 300 if e_aw_val else 50
+                    if e_wc:
+                        try: _min_w_e = int(str(e_wc).split('-')[0])
+                        except: pass
+                    if e_aw_val: _min_w_e = max(300, _min_w_e)
+                    _bg_inst._sanitize_uniqueness(e_board, clean_e_dict, max_ratio=0.15, depth=d_cnt_e, bonus_cell=e_bonus_c, min_word_length=final_e_min, use_added_words=e_aw_val, min_words=_min_w_e)
                     _re_s = _bg_inst._solve_board(e_board, clean_e_dict, (0, 99999), final_e_min, max_depth=20, store_paths=True, timeout=5.0, bonus_cell=e_bonus_c, use_added_words=e_aw_val)
                     e_paths = {w: p for w, p in _re_s.items() if len(w) >= final_e_min}
                     e_words = list(e_paths.keys())
@@ -2981,7 +3002,13 @@ class GameRoom:
                 _bg_inst = _room_manager_instance.board_generator if (_room_manager_instance and hasattr(_room_manager_instance, 'board_generator')) else BoardGenerator()
                 dims_p = str(self.board_dimensions).lower().split('x')
                 d_p = int(dims_p[0]) if len(dims_p) == 3 else 1
-                _bg_inst._sanitize_uniqueness(fb, dict_val, max_ratio=0.15, depth=d_p, bonus_cell=fc, min_word_length=min_l_val, use_added_words=use_aw_val)
+                _min_w_s2 = 300 if use_aw_val else 50
+                _wc_s2 = sp.get('word_count_range')
+                if _wc_s2:
+                    try: _min_w_s2 = int(str(_wc_s2).split('-')[0])
+                    except: pass
+                if use_aw_val: _min_w_s2 = max(300, _min_w_s2)
+                _bg_inst._sanitize_uniqueness(fb, dict_val, max_ratio=0.15, depth=d_p, bonus_cell=fc, min_word_length=min_l_val, use_added_words=use_aw_val, min_words=_min_w_s2)
                 _re_s = _bg_inst._solve_board(fb, dict_val, (0, 99999), min_l_val, max_depth=20, store_paths=True, timeout=5.0, bonus_cell=fc, use_added_words=use_aw_val)
                 fp = {w: p for w, p in _re_s.items() if len(w) >= min_l_val}
                 fw = list(fp.keys())
@@ -4072,7 +4099,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             l_b, l_w, l_c, l_f, l_p, l_r = live_res[:6]
             norm_diff_req = SpinnerSet.strip_difficulty_pct(difficulty or "Medium")
             if norm_diff_req == 'Easy' and l_r > 0.15:
-                bg._sanitize_uniqueness(l_b, dictionary, max_ratio=0.15, depth=6 if is_3d else 1, bonus_cell=l_c, min_word_length=min_word_length, use_added_words=use_added_words)
+                bg._sanitize_uniqueness(l_b, dictionary, max_ratio=0.15, depth=6 if is_3d else 1, bonus_cell=l_c, min_word_length=min_word_length, use_added_words=use_added_words, min_words=min_accept, max_words=max_accept)
                 _re_s = bg._solve_board(l_b, dictionary, (0, 99999), min_word_length, max_depth=20, store_paths=True, timeout=5.0, bonus_cell=l_c, use_added_words=use_added_words)
                 l_w = [w for w in _re_s if len(w) >= min_word_length]
                 l_p = {w: p for w, p in _re_s.items() if len(w) >= min_word_length}
@@ -4283,13 +4310,13 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     # Strict uniqueness sanitization for Easy fallback boards
     cur_em_ratio = bg._calculate_uniqueness_ratio(board, dictionary, 6 if is_3d else 1, bonus_cell, min_word_length, use_added_words=use_added_words)
     if norm_diff_em == 'Easy' and cur_em_ratio > 0.15:
-        bg._sanitize_uniqueness(board, dictionary, max_ratio=0.15, depth=6 if is_3d else 1, bonus_cell=bonus_cell, min_word_length=min_word_length, use_added_words=use_added_words)
+        bg._sanitize_uniqueness(board, dictionary, max_ratio=0.15, depth=6 if is_3d else 1, bonus_cell=bonus_cell, min_word_length=min_word_length, use_added_words=use_added_words, min_words=min_accept, max_words=max_accept)
         emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=20, store_paths=True, timeout=5.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
         words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
         paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
         cur_em_ratio = bg._calculate_uniqueness_ratio(board, dictionary, 6 if is_3d else 1, bonus_cell, min_word_length, use_added_words=use_added_words)
     elif norm_diff_em == 'Hard' and cur_em_ratio < 0.28:
-        bg._boost_uniqueness(board, dictionary, min_ratio=0.28, depth=6 if is_3d else 1, bonus_cell=bonus_cell, min_word_length=min_word_length, use_added_words=use_added_words)
+        bg._boost_uniqueness(board, dictionary, min_ratio=0.28, depth=6 if is_3d else 1, bonus_cell=bonus_cell, min_word_length=min_word_length, use_added_words=use_added_words, min_words=min_accept)
         emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=20, store_paths=True, timeout=5.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
         words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
         paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
@@ -6384,6 +6411,7 @@ class RoomManager:
                     target_dict_raw = room.spinner_params.get('dictionary', 'NWL')
                     target_bw_len = int(room.spinner_params.get('bonus_word_length', 8) or 8)
                     target_diff_solo = room.spinner_params.get('difficulty', 'Medium')
+                    target_wc_solo = target_range
                     if getattr(room, 'initial_solo_params', None):
                         if room.initial_solo_params.get('board_format') and str(room.initial_solo_params.get('board_format')).lower() != 'random':
                             target_fmt = room.initial_solo_params['board_format']
@@ -6391,6 +6419,8 @@ class RoomManager:
                             target_diff_solo = room.initial_solo_params['difficulty']
                         if room.initial_solo_params.get('dictionary') and str(room.initial_solo_params.get('dictionary')).lower() != 'random':
                             target_dict_raw = room.initial_solo_params['dictionary']
+                        if room.initial_solo_params.get('word_count_range') and str(room.initial_solo_params.get('word_count_range')).lower() != 'random':
+                            target_wc_solo = room.initial_solo_params['word_count_range']
                     from board_generator import pop_compatible_cached_board
                     solo_pop = pop_compatible_cached_board(
                         room.board_dimensions,
@@ -6399,6 +6429,7 @@ class RoomManager:
                         room.spinner_params.get('min_word_length', 3),
                         use_aw_flag,
                         bonus_word_len=target_bw_len,
+                        word_count_range=target_wc_solo,
                         difficulty=target_diff_solo
                     )
                     if not solo_pop and str(target_fmt).lower() == 'normal':
@@ -6408,6 +6439,7 @@ class RoomManager:
                             target_fmt,
                             room.spinner_params.get('min_word_length', 3),
                             use_aw_flag,
+                            word_count_range=target_wc_solo,
                             difficulty=target_diff_solo
                         )
                     
@@ -6438,13 +6470,16 @@ class RoomManager:
                         if solo_pop:
                             swords_filtered = [w for w in swords if len(w) >= m_len]
                             spaths_filtered = {w: p for w, p in (spaths or {}).items() if len(w) >= m_len}
-                            if not sbonus_word or len(sbonus_word) != target_bw_len or sbonus_word not in swords_filtered or sbonus_word.upper().endswith(('ING', 'INGS')) or 'ING' in sbonus_word.upper():
+                            if target_wc_solo and not is_board_count_valid(len(swords_filtered), target_wc_solo):
+                                print(f"[RoomManager] Solo cached board count {len(swords_filtered)} outside requested range {target_wc_solo}. Discarding pop...")
+                                solo_pop = None
+                            elif not sbonus_word or len(sbonus_word) != target_bw_len or sbonus_word not in swords_filtered or sbonus_word.upper().endswith(('ING', 'INGS')) or 'ING' in sbonus_word.upper():
                                 _exact_bw_s = [w for w in swords_filtered if len(w) == target_bw_len and not w.upper().endswith(('ING', 'INGS')) and 'ING' not in w.upper()]
                                 if _exact_bw_s:
                                     sbonus_word = random.choice(_exact_bw_s).upper()
                                 else:
                                     sbonus_word = None
-                            if len(swords_filtered) >= 10 and sbonus_word and len(sbonus_word) == target_bw_len:
+                            if solo_pop and len(swords_filtered) >= 10 and sbonus_word and len(sbonus_word) == target_bw_len:
                                 print(f"[RoomManager] INSTANT Solo cached board popped for room {room_id} in 1ms! (format={target_fmt}, bonus={sbonus_word})")
                                 res = (sboard, swords_filtered, sbonus_cell, target_fmt, spaths_filtered, sratio, sbonus_word)
 
@@ -6830,7 +6865,11 @@ class RoomManager:
                 if _req_solo_d and str(_req_solo_d).lower() != 'random':
                     _target_diff_base = SpinnerSet.strip_difficulty_pct(_req_solo_d)
                     if _target_diff_base == 'Easy' and u_ratio > 0.15:
-                        self.board_generator._sanitize_uniqueness(room.board, room.spinner_params.get('dictionary', 'NWL'), max_ratio=0.15, depth=d_num, bonus_cell=room.bonus_cell, min_word_length=display_min_start, use_added_words=room.use_added_words)
+                        self.board_generator._sanitize_uniqueness(
+                            room.board, room.spinner_params.get('dictionary', 'NWL'), max_ratio=0.15,
+                            depth=d_num, bonus_cell=room.bonus_cell, min_word_length=display_min_start,
+                            use_added_words=room.use_added_words, min_words=min_accept, max_words=max_limit if 'max_limit' in locals() else None
+                        )
                         _re_s = self.board_generator._solve_board(room.board, room.spinner_params.get('dictionary', 'NWL'), (0, 99999), display_min_start, max_depth=20, store_paths=True, timeout=5.0, bonus_cell=room.bonus_cell, use_added_words=room.use_added_words)
                         all_words_dict = {w: p for w, p in _re_s.items() if len(w) >= display_min_start}
                         room.all_words = set(all_words_dict.keys())
@@ -6838,6 +6877,36 @@ class RoomManager:
                         room.total_words_count = len(room.all_words)
                         room.initial_total_words = room.total_words_count
                         u_ratio = self.board_generator._calculate_uniqueness_ratio(room.board, room.spinner_params.get('dictionary', 'NWL'), d_num, room.bonus_cell, display_min_start, use_added_words=room.use_added_words)
+
+                        # WORD COUNT RESCUE: Guarantee uniqueness sanitization did not breach required word count range
+                        _req_wc_range = _decl_rng or target_range or (room.spinner_params or {}).get('word_count_range')
+                        if _req_wc_range and not is_board_count_valid(len(room.all_words), _req_wc_range):
+                            print(f"[RoomManager] Word count {len(room.all_words)} dropped outside {_req_wc_range} after uniqueness sanitization in start_round. Rescuing...")
+                            _min_w_req, _max_w_req = self.board_generator._parse_word_count_range(_req_wc_range)
+                            if room.use_added_words:
+                                _min_w_req = max(300, _min_w_req)
+                            if len(room.all_words) < _min_w_req:
+                                room.board = self.board_generator._perform_rescue_sweep(
+                                    room.board, r_num, c_num, d_num, room.spinner_params.get('dictionary', 'NWL'),
+                                    display_min_start, _min_w_req, _max_w_req, set(),
+                                    difficulty=room.spinner_params.get('difficulty', 'Medium'),
+                                    rescue_depth=25, is_checkerboard=('checkerboard' in str(room.current_board_format).lower()),
+                                    board_format=room.current_board_format, use_added_words=room.use_added_words
+                                )
+                                _re_s2 = self.board_generator._solve_board(
+                                    room.board, room.spinner_params.get('dictionary', 'NWL'), (0, 99999),
+                                    display_min_start, max_depth=25, store_paths=True, timeout=10.0,
+                                    bonus_cell=room.bonus_cell, use_added_words=room.use_added_words
+                                )
+                                all_words_dict = {w: p for w, p in _re_s2.items() if len(w) >= display_min_start}
+                                room.all_words = set(all_words_dict.keys())
+                                room.all_words_paths = all_words_dict
+                                room.total_words_count = len(room.all_words)
+                                room.initial_total_words = room.total_words_count
+                                u_ratio = self.board_generator._calculate_uniqueness_ratio(
+                                    room.board, room.spinner_params.get('dictionary', 'NWL'), d_num,
+                                    room.bonus_cell, display_min_start, use_added_words=room.use_added_words
+                                )
                     achieved_diff = _target_diff_base
                 _req_solo_fmt = room.initial_solo_params.get('board_format')
                 if _req_solo_fmt and str(_req_solo_fmt).lower() != 'random':
@@ -8539,7 +8608,7 @@ class RoomManager:
                             if gen_diff != search_diff_base:
                                 if search_diff_base == 'Easy':
                                     _, easy_max = self.board_generator._get_uniqueness_range('Easy', rows, cols, search_dict, d_val, min_word_length=search_min)
-                                    board, all_words_dict, u_ratio = self.board_generator._sanitize_uniqueness(board, d_val, search_dict, search_min, easy_max, rows, cols)
+                                    board, all_words_dict, u_ratio = self.board_generator._sanitize_uniqueness(board, d_val, search_dict, search_min, easy_max, rows, cols, min_words=min_accept)
                                     all_words = sorted(list(all_words_dict.keys()))
                                     gen_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val, board=board, min_word_length=search_min)
                                 elif search_diff_base in ['Medium', 'Hard']:
@@ -8717,11 +8786,32 @@ class RoomManager:
                         if _solo_d_req and str(_solo_d_req).lower() != 'random':
                             _solo_d_base = SpinnerSet.strip_difficulty_pct(_solo_d_req)
                             if _solo_d_base == 'Easy' and u_ratio > 0.15:
-                                self.board_generator._sanitize_uniqueness(board, search_dict, max_ratio=0.15, depth=d_val, bonus_cell=final_bonus_cell, min_word_length=_sb_min_len, use_added_words=use_aw_flag)
+                                _target_wc_sb = target_room.next_spinner_params.get('word_count_range') if getattr(target_room, 'next_spinner_params', None) else None
+                                _min_w_sb = 300 if use_aw_flag else 50
+                                if _target_wc_sb:
+                                    try: _min_w_sb = int(str(_target_wc_sb).split('-')[0])
+                                    except: pass
+                                if use_aw_flag: _min_w_sb = max(300, _min_w_sb)
+                                self.board_generator._sanitize_uniqueness(board, search_dict, max_ratio=0.15, depth=d_val, bonus_cell=final_bonus_cell, min_word_length=_sb_min_len, use_added_words=use_aw_flag, min_words=_min_w_sb)
                                 _re_s = self.board_generator._solve_board(board, search_dict, (0, 99999), _sb_min_len, max_depth=20, store_paths=True, timeout=5.0, bonus_cell=final_bonus_cell, use_added_words=use_aw_flag)
                                 all_words_dict = {w: p for w, p in _re_s.items() if len(w) >= _sb_min_len}
                                 all_words = list(all_words_dict.keys())
                                 u_ratio = self.board_generator._calculate_uniqueness_ratio(board, search_dict, d_val, final_bonus_cell, _sb_min_len, use_added_words=use_aw_flag)
+                                if _target_wc_sb and not is_board_count_valid(len(all_words), _target_wc_sb):
+                                    print(f"[RoomManager] Word count {len(all_words)} dropped outside {_target_wc_sb} after uniqueness sanitization in bg search. Rescuing...")
+                                    _min_req_sb, _max_req_sb = self.board_generator._parse_word_count_range(_target_wc_sb)
+                                    if use_aw_flag: _min_req_sb = max(300, _min_req_sb)
+                                    if len(all_words) < _min_req_sb:
+                                        board = self.board_generator._perform_rescue_sweep(
+                                            board, rows, cols, d_val, search_dict, _sb_min_len, _min_req_sb, _max_req_sb, set(),
+                                            difficulty='Easy', rescue_depth=25,
+                                            is_checkerboard=('checkerboard' in str(updated_format).lower()),
+                                            board_format=updated_format, use_added_words=use_aw_flag
+                                        )
+                                        _re_s2 = self.board_generator._solve_board(board, search_dict, (0, 99999), _sb_min_len, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=final_bonus_cell, use_added_words=use_aw_flag)
+                                        all_words_dict = {w: p for w, p in _re_s2.items() if len(w) >= _sb_min_len}
+                                        all_words = list(all_words_dict.keys())
+                                        u_ratio = self.board_generator._calculate_uniqueness_ratio(board, search_dict, d_val, final_bonus_cell, _sb_min_len, use_added_words=use_aw_flag)
                             achieved_diff = _solo_d_base
                         _solo_fmt_req = target_room.initial_solo_params.get('board_format')
                         if _solo_fmt_req and str(_solo_fmt_req).lower() != 'random':
@@ -9376,13 +9466,43 @@ class RoomManager:
                         if _req_solo_d and str(_req_solo_d).lower() != 'random':
                             _actual_diff = SpinnerSet.strip_difficulty_pct(_req_solo_d)
                             if _actual_diff == 'Easy' and room.current_uniqueness > 0.15 and getattr(room, 'board', None):
-                                self.board_generator._sanitize_uniqueness(room.board, room.current_dictionary, max_ratio=0.15, depth=d_cnt, bonus_cell=room.bonus_cell, min_word_length=getattr(room, 'current_min_length', 3), use_added_words=room.use_added_words)
-                                _re_s = self.board_generator._solve_board(room.board, room.current_dictionary, (0, 99999), getattr(room, 'current_min_length', 3), max_depth=20, store_paths=True, timeout=5.0, bonus_cell=room.bonus_cell, use_added_words=room.use_added_words)
-                                room.all_words_paths = {w: p for w, p in _re_s.items() if len(w) >= getattr(room, 'current_min_length', 3)}
+                                _curr_m_len = getattr(room, 'current_min_length', 3)
+                                _target_wc = (room.spinner_params or {}).get('word_count_range')
+                                _min_w_p = 50
+                                if _target_wc:
+                                    try: _min_w_p = int(str(_target_wc).split('-')[0])
+                                    except: pass
+                                if room.use_added_words: _min_w_p = max(300, _min_w_p)
+                                self.board_generator._sanitize_uniqueness(
+                                    room.board, room.current_dictionary, max_ratio=0.15, depth=d_cnt,
+                                    bonus_cell=room.bonus_cell, min_word_length=_curr_m_len,
+                                    use_added_words=room.use_added_words, min_words=_min_w_p
+                                )
+                                _re_s = self.board_generator._solve_board(room.board, room.current_dictionary, (0, 99999), _curr_m_len, max_depth=20, store_paths=True, timeout=5.0, bonus_cell=room.bonus_cell, use_added_words=room.use_added_words)
+                                room.all_words_paths = {w: p for w, p in _re_s.items() if len(w) >= _curr_m_len}
                                 room.all_words = set(room.all_words_paths.keys())
                                 room.total_words_count = len(room.all_words)
                                 room.initial_total_words = room.total_words_count
-                                room.current_uniqueness = self.board_generator._calculate_uniqueness_ratio(room.board, room.current_dictionary, d_cnt, room.bonus_cell, getattr(room, 'current_min_length', 3), use_added_words=room.use_added_words)
+                                room.current_uniqueness = self.board_generator._calculate_uniqueness_ratio(room.board, room.current_dictionary, d_cnt, room.bonus_cell, _curr_m_len, use_added_words=room.use_added_words)
+
+                                if _target_wc and not is_board_count_valid(len(room.all_words), _target_wc):
+                                    print(f"[RoomManager] Word count {len(room.all_words)} dropped outside {_target_wc} after uniqueness sanitization in promote_staged. Rescuing...")
+                                    _min_req, _max_req = self.board_generator._parse_word_count_range(_target_wc)
+                                    if room.use_added_words: _min_req = max(300, _min_req)
+                                    if len(room.all_words) < _min_req:
+                                        room.board = self.board_generator._perform_rescue_sweep(
+                                            room.board, r_cnt, c_cnt, d_cnt, room.current_dictionary,
+                                            _curr_m_len, _min_req, _max_req, set(),
+                                            difficulty='Easy', rescue_depth=25,
+                                            is_checkerboard=('checkerboard' in str(room.current_board_format).lower()),
+                                            board_format=room.current_board_format, use_added_words=room.use_added_words
+                                        )
+                                        _re_s2 = self.board_generator._solve_board(room.board, room.current_dictionary, (0, 99999), _curr_m_len, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=room.bonus_cell, use_added_words=room.use_added_words)
+                                        room.all_words_paths = {w: p for w, p in _re_s2.items() if len(w) >= _curr_m_len}
+                                        room.all_words = set(room.all_words_paths.keys())
+                                        room.total_words_count = len(room.all_words)
+                                        room.initial_total_words = room.total_words_count
+                                        room.current_uniqueness = self.board_generator._calculate_uniqueness_ratio(room.board, room.current_dictionary, d_cnt, room.bonus_cell, _curr_m_len, use_added_words=room.use_added_words)
                         _req_solo_fmt = room.initial_solo_params.get('board_format')
                         if _req_solo_fmt and str(_req_solo_fmt).lower() != 'random':
                             _req_solo_fmt = SpinnerSet.resolve_specific_format(_req_solo_fmt, (room.spinner_params or {}).get('board_format') if isinstance(room.spinner_params, dict) else None)

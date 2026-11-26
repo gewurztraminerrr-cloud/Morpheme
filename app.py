@@ -8697,10 +8697,12 @@ def get_room_state_dict(room_id, uid=None, is_bg_poll=False):
                                             nd_dict = room.initial_solo_params['dictionary']
                                         if 'use_added_words' in room.initial_solo_params:
                                             nd_aw = room.initial_solo_params['use_added_words']
+                                        if room.initial_solo_params.get('word_count_range') and str(room.initial_solo_params.get('word_count_range')).lower() != 'random':
+                                            nd_wc = room.initial_solo_params['word_count_range']
 
-                                    pre_next = pop_compatible_cached_board(room.board_dimensions, nd_dict, nd_fmt, nd_min, nd_aw, difficulty=nd_diff)
+                                    pre_next = pop_compatible_cached_board(room.board_dimensions, nd_dict, nd_fmt, nd_min, nd_aw, word_count_range=nd_wc, difficulty=nd_diff)
                                     if not pre_next and nd_fmt == 'Normal':
-                                        pre_next = pop_any_cached_board(room.board_dimensions, min_word_length=nd_min, target_format='Normal', dictionary=nd_dict, use_added_words=nd_aw, difficulty=nd_diff)
+                                        pre_next = pop_any_cached_board(room.board_dimensions, min_word_length=nd_min, target_format='Normal', dictionary=nd_dict, use_added_words=nd_aw, word_count_range=nd_wc, difficulty=nd_diff)
                                     if not pre_next:
                                         pre_next = get_emergency_fallback_board(room.board_dimensions, nd_fmt, room.time_limit, dictionary=nd_dict, use_added_words=nd_aw, target_range=nd_wc, min_word_length=nd_min, difficulty=nd_diff)
                                     if pre_next:
