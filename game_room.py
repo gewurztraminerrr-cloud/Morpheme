@@ -10073,7 +10073,7 @@ class RoomManager:
                 # 319 words on a board is '300-400', aligning header with board count.
                 wc_cnt  = len(room.all_words)
                 if getattr(room, 'game_type', None) == 'subanagrams':
-                    real_wc = SpinnerSet.get_subanagrams_factchecked_wc_range(wc_cnt)
+                    real_wc = SpinnerSet.get_subanagrams_factchecked_wc_range(wc_cnt, use_added_words=_use_aw, dictionary=room.current_dictionary)
                 else:
                     real_wc = self._get_factchecked_wc_range(wc_cnt, use_added_words=_use_aw, dictionary=room.current_dictionary)
 
@@ -10134,7 +10134,7 @@ class RoomManager:
                             room.total_words_count = len(hw)
                             room.initial_total_words = len(hw)
                             room.current_board_format = 'Word Guaranteed'
-                            room.current_word_count_range = hp.get('word_count_range') or SpinnerSet.get_subanagrams_factchecked_wc_range(len(hw))
+                            room.current_word_count_range = hp.get('word_count_range') or SpinnerSet.get_subanagrams_factchecked_wc_range(len(hw), use_added_words=getattr(room, 'use_added_words', False), dictionary=room.current_dictionary)
                             if isinstance(room.spinner_params, dict):
                                 room.spinner_params['word_count_range'] = room.current_word_count_range
                                 room.spinner_params['bonus_word'] = hbw
