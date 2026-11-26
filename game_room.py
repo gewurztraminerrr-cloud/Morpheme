@@ -5295,6 +5295,17 @@ class RoomManager:
                                     print(f"[RoomManager] Popped cached board actual format {_chk_fmt} != requested {s_fmt}. Discarding pop...")
                                     pre_pop = None
 
+                            # Keep the cache stocked: replace whatever Solo just consumed
+                            if pre_pop and not is_24h_room:
+                                try:
+                                    _pp = pre_pop[-1]
+                                    if isinstance(_pp, dict) and _pp.get('dimensions'):
+                                        from board_generator import refill_board_cache_bg
+                                        import json as _json_rf
+                                        refill_board_cache_bg(self.board_generator, _json_rf.dumps(_pp, sort_keys=True), target_count=3)
+                                except Exception as _rf_err:
+                                    print(f"[RoomManager] Solo cache refill skipped: {_rf_err}")
+
                             # If cache had no compliant board, perform synchronous live generation with exact parameters
                             if not pre_pop and (is_explicit_diff or is_explicit_fmt or is_24h_room):
                                 print(f"[RoomManager] No cached board strictly matching {s_diff} / {s_fmt} for {room_id}. Performing live generation...")

@@ -1210,6 +1210,14 @@ def seed_pregenerated_cache_bg():
             ("6x8", "NWL + AW", (400, 500), "Normal", 6, "Medium", True),
             ("6x8", "CSW + AW", (500, 999), "Normal", 6, "Medium", True),
         ]
+        # Hard-difficulty boards for Solo rooms (Solo pops by dimensions/dict/format/min-length/difficulty,
+        # so these make the common Hard Solo configs instant instead of needing minutes of live search).
+        _hard_min_lens = {"4x4": (3, 4, 5), "4x6": (4, 5, 6), "5x7": (5, 6, 7)}
+        for _hd, _mls in _hard_min_lens.items():
+            for _hdict in ("NWL", "CSW"):
+                for _hfmt in ("Normal", "Density"):
+                    for _hml in _mls:
+                        common_configs.append((_hd, _hdict, (100, 200), _hfmt, _hml, "Hard", False))
         for dims, dict_name, wc_range, fmt, min_l, diff, use_aw in common_configs:
             try:
                 p_key = serialize_param_key(dims, None, wc_range, dict_name, fmt, min_l, diff, use_added_words=use_aw)
