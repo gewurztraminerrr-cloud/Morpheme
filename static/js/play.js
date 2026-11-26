@@ -3901,14 +3901,9 @@ async function _doUpdateGameState(incomingState = null) {
                         lastSubmittedWordsHtml = newHtml;
                         listEl.innerHTML = newHtml;
 
-                        // Preserve scroll position (Prevents Safari WebKit twitch/jump back to top on 1s timer/poll updates)
+                        // Preserve scroll position
                         if (prevScrollTop > 0) {
                             listEl.scrollTop = prevScrollTop;
-                            requestAnimationFrame(() => {
-                                if (listEl && Math.abs(listEl.scrollTop - prevScrollTop) > 2) {
-                                    listEl.scrollTop = prevScrollTop;
-                                }
-                            });
                         }
 
                         // Add click listeners
@@ -4011,11 +4006,6 @@ async function _doUpdateGameState(incomingState = null) {
 
                         if (prevScrollTop > 0 && !wasEmpty) {
                             listEl.scrollTop = prevScrollTop;
-                            requestAnimationFrame(() => {
-                                if (listEl && Math.abs(listEl.scrollTop - prevScrollTop) > 2) {
-                                    listEl.scrollTop = prevScrollTop;
-                                }
-                            });
                         }
 
                         // Add click listeners
@@ -4243,11 +4233,6 @@ async function _doUpdateGameState(incomingState = null) {
                 targetEl.innerHTML = html;
                 if (prevScrollTop > 0) {
                     targetEl.scrollTop = prevScrollTop;
-                    requestAnimationFrame(() => {
-                        if (targetEl && Math.abs(targetEl.scrollTop - prevScrollTop) > 2) {
-                            targetEl.scrollTop = prevScrollTop;
-                        }
-                    });
                 }
                 if (showRemainingInClues) {
                     targetEl.style.display = 'block';
@@ -4362,11 +4347,6 @@ async function _doUpdateGameState(incomingState = null) {
                         cluesListEl.innerHTML = clueListHtml;
                         if (oldScrollTop > 0) {
                             cluesListEl.scrollTop = oldScrollTop;
-                            requestAnimationFrame(() => {
-                                if (cluesListEl && Math.abs(cluesListEl.scrollTop - oldScrollTop) > 2) {
-                                    cluesListEl.scrollTop = oldScrollTop;
-                                }
-                            });
                         }
                     }
                 }
@@ -4513,11 +4493,6 @@ async function _doUpdateGameState(incomingState = null) {
                     prevListEl.innerHTML = html;
                     if (oldScrollTop > 0) {
                         prevListEl.scrollTop = oldScrollTop;
-                        requestAnimationFrame(() => {
-                            if (prevListEl && Math.abs(prevListEl.scrollTop - oldScrollTop) > 2) {
-                                prevListEl.scrollTop = oldScrollTop;
-                            }
-                        });
                     }
 
                     // Render the board after HTML is injected
@@ -4937,11 +4912,6 @@ function renderDailyScoreSums() {
         listEl.innerHTML = html;
         if (oldScrollTop > 0) {
             listEl.scrollTop = oldScrollTop;
-            requestAnimationFrame(() => {
-                if (listEl && Math.abs(listEl.scrollTop - oldScrollTop) > 2) {
-                    listEl.scrollTop = oldScrollTop;
-                }
-            });
         }
     }
 }
@@ -7391,11 +7361,6 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
         listEl.innerHTML = allWordsHtml;
         if (prevScrollTop > 0) {
             listEl.scrollTop = prevScrollTop;
-            requestAnimationFrame(() => {
-                if (listEl && Math.abs(listEl.scrollTop - prevScrollTop) > 2) {
-                    listEl.scrollTop = prevScrollTop;
-                }
-            });
         }
     }
 

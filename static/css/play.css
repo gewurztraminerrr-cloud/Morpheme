@@ -188,7 +188,7 @@
 .play-grid {
     display: grid;
     /* Equal side panels so center board is mathematically centered on the screen */
-    grid-template-columns: var(--left-panel-w, 420px) 1fr var(--right-panel-w, 420px);
+    grid-template-columns: var(--left-panel-w, 420px) minmax(0, 1fr) var(--right-panel-w, 420px);
     gap: 12px; /* Slightly tighter gap to gain a few pixels */
     flex: 1;
     min-height: 0;
@@ -219,6 +219,7 @@
     min-width: 0; /* Allow the grid item to shrink below min-content width */
     container-type: inline-size;
     container-name: wordspanel;
+    overflow-anchor: none !important;
 }
 
 .words-table-box {
@@ -230,6 +231,7 @@
     flex: 1;
     min-height: 0;
     overflow: hidden; /* Ensure inner tabs and lists handle scrolling cleanly */
+    overflow-anchor: none !important;
 }
 
 
@@ -246,7 +248,7 @@
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     touch-action: pan-y;
-    overflow-anchor: auto;
+    overflow-anchor: none !important;
     contain: layout style;
     will-change: scroll-position;
 }
@@ -1827,8 +1829,8 @@ body[class*="theme-light-"] .board-panel.low-time-warning {
     color: var(--text-primary);
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum" 1;
-    min-width: auto;
-    text-align: left;
+    min-width: 140px;
+    text-align: center;
     display: inline-block;
 }
 
@@ -2988,6 +2990,7 @@ body:not(.is-subanagrams) #shuffle-board-btn {
     flex: 1;
     min-height: 0 !important;
     overflow: hidden;
+    overflow-anchor: none !important;
     /* Prevent container from scrolling */
 }
 
@@ -3027,9 +3030,9 @@ body:not(.is-subanagrams) #shuffle-board-btn {
     overflow-y: auto;
     padding-right: 5px;
     min-height: 0;
-    overflow-anchor: auto;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    overflow-anchor: none !important;
+    contain: layout style;
+    will-change: scroll-position;
     /* Important for flex child scrolling */
 }
 
@@ -3118,9 +3121,9 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y;
-    overflow-anchor: auto;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    overflow-anchor: none !important;
+    contain: layout style;
+    will-change: scroll-position;
     /* Scrollable list */
     padding-left: 8px;
     padding-right: 8px;
@@ -3145,9 +3148,9 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     -webkit-overflow-scrolling: touch;
     overscroll-behavior-y: contain;
     touch-action: pan-y;
-    overflow-anchor: auto;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    overflow-anchor: none !important;
+    contain: layout style;
+    will-change: scroll-position;
     /* Scrollable list */
     padding-left: 8px;
     padding-right: 8px;
@@ -16630,9 +16633,9 @@ body.theme-white .find-count-division-badge,
     padding-right: 4px;
     scrollbar-width: thin;
     scrollbar-color: rgba(var(--text-primary-rgb), 0.3) transparent;
-    overflow-anchor: auto;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    overflow-anchor: none !important;
+    contain: layout style;
+    will-change: scroll-position;
 }
 #score-sum-list::-webkit-scrollbar {
     width: 6px;
@@ -19813,7 +19816,7 @@ body.is-desktop .left-panel-container .chat-panel {
 
 body.is-desktop .play-grid {
     display: grid !important;
-    grid-template-columns: var(--left-panel-w, 380px) 1fr var(--right-panel-w, 380px) !important;
+    grid-template-columns: var(--left-panel-w, 380px) minmax(0, 1fr) var(--right-panel-w, 380px) !important;
     gap: 15px !important;
     width: 100% !important;
     max-width: 100% !important;
