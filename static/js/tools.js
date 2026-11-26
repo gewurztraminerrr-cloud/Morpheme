@@ -4327,6 +4327,9 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
         if (typeof window.updateReplayScroller === 'function') {
             window.updateReplayScroller();
         }
+        if (typeof window.hideWordDefinitionPopup === 'function') {
+            window.hideWordDefinitionPopup();
+        }
     };
 
     if (useOverlay) {
@@ -4734,8 +4737,9 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
         if (word.points < 0) ptsClass += ' penalty';
         if (word.is_bonus) ptsClass += ' bonus';
 
+        const safeWord = String(word.word || '').replace(/'/g, "\\'");
         return `
-        <div class="walkthrough-item reveal" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${word.word.replace(/'/g, "\\'")}')">
+        <div class="walkthrough-item reveal" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${safeWord}', event)">
             <span class="walkthrough-time">${timeStr}</span>
             <span class="walkthrough-word">${word.word}</span>
             <span class="${ptsClass}">${word.points} pts</span>
@@ -4745,6 +4749,7 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
 
     const renderAllWordItem = (wStr) => {
         const upper = String(wStr).trim().toUpperCase();
+        const safeWord = upper.replace(/'/g, "\\'");
         const userObj = userWordsMap.get(upper);
         const isGot = !!userObj;
 
@@ -4754,7 +4759,7 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
 
         if (isGot) {
             return `
-            <div class="walkthrough-item reveal is-got" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${upper.replace(/'/g, "\\'")}')">
+            <div class="walkthrough-item reveal is-got" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${safeWord}', event)">
                 <span class="walkthrough-badge-got">✓ GOT</span>
                 <span class="walkthrough-word">${upper}</span>
                 <span class="${ptsClass}">+${pts} pts</span>
@@ -4762,7 +4767,7 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
             `;
         } else {
             return `
-            <div class="walkthrough-item reveal is-missed" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${upper.replace(/'/g, "\\'")}')">
+            <div class="walkthrough-item reveal is-missed" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${safeWord}', event)">
                 <span class="walkthrough-word">${upper}</span>
                 <span class="${ptsClass}">${pts} pts</span>
             </div>
@@ -12388,7 +12393,7 @@ window.showWordDefinitionPopup = async function (word, event) {
             const p = document.getElementById('tool-word-def-popover');
             if (p && p.classList.contains('active')) {
                 if (Date.now() - (p._openedAt || 0) < 180) return;
-                if (!p.contains(e.target) && !e.target.closest('#wikipedia-article-modal') && !e.target.closest('.clickable-word-link') && !e.target.closest('.full-list-item') && !e.target.closest('.notepad-word-line') && !e.target.closest('.notepad-scroll-btn')) {
+                if (!p.contains(e.target) && !e.target.closest('#wikipedia-article-modal') && !e.target.closest('.clickable-word-link') && !e.target.closest('.full-list-item') && !e.target.closest('.notepad-word-line') && !e.target.closest('.notepad-scroll-btn') && !e.target.closest('.walkthrough-item')) {
                     window.hideWordDefinitionPopup();
                 }
             }
@@ -12748,52 +12753,99 @@ window.lookupWord = function (word, event) {
 
 window.findWordPath = findWordPath;
 
-window.highlightWordPathOnReplay = function(wordText) {
-    const round = window.currentActiveReplayRound;
-    if (!round || !round.board) return;
-    
-    let board = round.board;
-    if (board && typeof board === 'object' && !Array.isArray(board)) {
-        board = board.board;
+window.highlightWordPathOnReplay = function(wordText, event) {
+    const cleanWord = String(wordText || '').trim().toUpperCase();
+    if (!cleanWord) return;
+
+    // Pause ongoing replay playback if running so user can examine word and board
+    if (window.replayInterval) {
+        clearInterval(window.replayInterval);
+        window.replayInterval = null;
+        const startBtn = document.getElementById('start-replay-btn') || document.getElementById('integrated-start-btn');
+        const skipBtn = document.getElementById('skip-replay-btn') || document.getElementById('integrated-skip-btn');
+        if (startBtn) startBtn.classList.remove('hidden');
+        if (skipBtn) skipBtn.classList.add('hidden');
     }
-    if (!board) return;
-    
-    const rows = board.length;
-    const firstRow = board[0];
-    const is3D = rows === 6 && Array.isArray(firstRow) && Array.isArray(firstRow[0]);
-    const overlay = document.getElementById('history-review-overlay');
-    const prefix = overlay ? 'review' : 'integrated';
-    const boardContainer = document.getElementById(`${prefix}-board-container`);
-    if (!boardContainer) return;
-    
-    const cells = boardContainer.querySelectorAll('.review-cell');
-    cells.forEach(c => c.classList.remove('highlight'));
-    
-    if (is3D) {
-        if (typeof findWordPathOnCube === 'function') {
-            const path = findWordPathOnCube(wordText, board);
-            if (path) {
-                path.forEach((p, i) => {
-                    const idx = p.f * 9 + p.r * 3 + p.c;
-                    setTimeout(() => {
-                        if (cells[idx]) cells[idx].classList.add('highlight');
-                    }, i * 40);
+
+    // Clear any pending highlight timer wave from rapid clicking
+    if (window._replayHighlightTimeouts && Array.isArray(window._replayHighlightTimeouts)) {
+        window._replayHighlightTimeouts.forEach(t => clearTimeout(t));
+    }
+    window._replayHighlightTimeouts = [];
+
+    const round = window.currentActiveReplayRound;
+    if (round && round.board) {
+        let board = round.board;
+        if (board && typeof board === 'object' && !Array.isArray(board)) {
+            board = board.board;
+        }
+        if (board) {
+            const rows = board.length;
+            const firstRow = board[0];
+            const is3D = rows === 6 && Array.isArray(firstRow) && Array.isArray(firstRow[0]);
+
+            // Locate active board container(s)
+            const containers = [
+                document.getElementById('review-board-container'),
+                document.getElementById('integrated-board-container')
+            ].filter(el => el && el.querySelectorAll('.review-cell').length > 0);
+
+            if (containers.length > 0) {
+                containers.forEach(boardContainer => {
+                    const cells = boardContainer.querySelectorAll('.review-cell');
+                    cells.forEach(c => c.classList.remove('highlight'));
+
+                    if (is3D) {
+                        if (typeof findWordPathOnCube === 'function') {
+                            const path = findWordPathOnCube(cleanWord, board);
+                            if (path) {
+                                path.forEach((p, i) => {
+                                    const idx = p.f * 9 + p.r * 3 + p.c;
+                                    const tid = setTimeout(() => {
+                                        if (cells[idx]) cells[idx].classList.add('highlight');
+                                    }, i * 40);
+                                    window._replayHighlightTimeouts.push(tid);
+                                });
+                            }
+                        }
+                    } else {
+                        if (typeof findWordPath === 'function') {
+                            const path = findWordPath(board, cleanWord);
+                            if (path) {
+                                const gridCols = (board[0] && Array.isArray(board[0])) ? board[0].length : 4;
+                                path.forEach((p, i) => {
+                                    const idx = p.row * gridCols + p.col;
+                                    const tid = setTimeout(() => {
+                                        if (cells[idx]) cells[idx].classList.add('highlight');
+                                    }, i * 40);
+                                    window._replayHighlightTimeouts.push(tid);
+                                });
+                            }
+                        }
+                    }
                 });
             }
         }
-    } else {
-        if (typeof findWordPath === 'function') {
-            const path = findWordPath(board, wordText);
-            if (path) {
-                const gridCols = board[0].length;
-                path.forEach((p, i) => {
-                    const idx = p.row * gridCols + p.col;
-                    setTimeout(() => {
-                        if (cells[idx]) cells[idx].classList.add('highlight');
-                    }, i * 40);
-                });
-            }
+    }
+
+    const evt = event || window.event;
+    if (evt && typeof evt.stopPropagation === 'function') {
+        evt.stopPropagation();
+    }
+
+    // Visually mark selected item in the walkthrough list
+    const clickedItem = evt ? (evt.currentTarget || (evt.target && evt.target.closest('.walkthrough-item'))) : null;
+    if (clickedItem) {
+        const parentList = clickedItem.parentElement;
+        if (parentList) {
+            parentList.querySelectorAll('.walkthrough-item.selected').forEach(el => el.classList.remove('selected'));
+            clickedItem.classList.add('selected');
         }
+    }
+
+    // Display definition popup
+    if (typeof window.showWordDefinitionPopup === 'function') {
+        window.showWordDefinitionPopup(cleanWord, evt);
     }
 };
 

@@ -5758,6 +5758,37 @@ html[class*="theme-light"] .walkthrough-item.is-missed::before {
     transform: translateX(-10px);
 }
 
+.walkthrough-item {
+    cursor: pointer !important;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.walkthrough-item:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 6px !important;
+}
+
+.walkthrough-item.selected {
+    background: rgba(56, 189, 248, 0.18) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 0 0 1.5px rgba(56, 189, 248, 0.6) inset !important;
+}
+
+[class*="theme-white"] .walkthrough-item:hover,
+[class*="theme-light"] .walkthrough-item:hover,
+body.theme-white .walkthrough-item:hover,
+body.theme-light-gray .walkthrough-item:hover {
+    background: rgba(0, 0, 0, 0.06) !important;
+}
+
+[class*="theme-white"] .walkthrough-item.selected,
+[class*="theme-light"] .walkthrough-item.selected,
+body.theme-white .walkthrough-item.selected,
+body.theme-light-gray .walkthrough-item.selected {
+    background: rgba(2, 132, 199, 0.15) !important;
+    box-shadow: 0 0 0 1.5px rgba(2, 132, 199, 0.6) inset !important;
+}
+
 @keyframes itemReveal {
     to {
         opacity: 1;
