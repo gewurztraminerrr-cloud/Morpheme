@@ -6810,30 +6810,32 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
     }
 
     // Configure and populate dictionary filter dropdown
+    const calcPct = (f, t) => t > 0 ? Math.round((f / t) * 100) : 0;
+
     let dictOptions = [];
     if (isCSW && useAW) {
         dictOptions = [
-            { value: 'all', label: `CSW + AW (${countTotalFound} / ${countTotal})` },
-            { value: 'CSW', label: `CSW (${countCswFound} / ${countCsw})` },
-            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnlyFound} / ${countCswOnly})` },
-            { value: 'NWL', label: `NWL (${countNwlFound} / ${countNwl})` },
-            { value: 'AW', label: `AW (${countAwFound} / ${countAw})` }
+            { value: 'all', label: `CSW + AW (${countTotalFound}/${countTotal})  ${calcPct(countTotalFound, countTotal)}%` },
+            { value: 'CSW', label: `CSW (${countCswFound}/${countCsw})  ${calcPct(countCswFound, countCsw)}%` },
+            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnlyFound}/${countCswOnly})  ${calcPct(countCswOnlyFound, countCswOnly)}%` },
+            { value: 'NWL', label: `NWL (${countNwlFound}/${countNwl})  ${calcPct(countNwlFound, countNwl)}%` },
+            { value: 'AW', label: `AW (${countAwFound}/${countAw})  ${calcPct(countAwFound, countAw)}%` }
         ];
     } else if (isCSW) {
         dictOptions = [
-            { value: 'all', label: `CSW (${countTotalFound} / ${countTotal})` },
-            { value: 'NWL', label: `NWL (${countNwlFound} / ${countNwl})` },
-            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnlyFound} / ${countCswOnly})` }
+            { value: 'all', label: `CSW (${countTotalFound}/${countTotal})  ${calcPct(countTotalFound, countTotal)}%` },
+            { value: 'NWL', label: `NWL (${countNwlFound}/${countNwl})  ${calcPct(countNwlFound, countNwl)}%` },
+            { value: 'CSW_ONLY', label: `CSW Only (${countCswOnlyFound}/${countCswOnly})  ${calcPct(countCswOnlyFound, countCswOnly)}%` }
         ];
     } else if (useAW) {
         dictOptions = [
-            { value: 'all', label: `NWL + AW (${countTotalFound} / ${countTotal})` },
-            { value: 'NWL', label: `NWL (${countNwlFound} / ${countNwl})` },
-            { value: 'AW', label: `AW (${countAwFound} / ${countAw})` }
+            { value: 'all', label: `NWL + AW (${countTotalFound}/${countTotal})  ${calcPct(countTotalFound, countTotal)}%` },
+            { value: 'NWL', label: `NWL (${countNwlFound}/${countNwl})  ${calcPct(countNwlFound, countNwl)}%` },
+            { value: 'AW', label: `AW (${countAwFound}/${countAw})  ${calcPct(countAwFound, countAw)}%` }
         ];
     } else {
         dictOptions = [
-            { value: 'all', label: `NWL (${countTotalFound} / ${countTotal})` }
+            { value: 'all', label: `NWL (${countTotalFound}/${countTotal})  ${calcPct(countTotalFound, countTotal)}%` }
         ];
     }
 
@@ -6918,11 +6920,13 @@ function displayAllWords(allWords, bonusWord, targetUserWords = [], allFoundWord
 
     if (filterDropdown) {
         const prevSelection = window.selectedAllWordsLength || 'all';
+        const allPct = calcPct(totalDictFound, totalDictWords);
         const currentOptionsKey = `${selectedDict}:${availableLengths.map(l => `${l}:${lengthStats[l].found}/${lengthStats[l].total}`).join(',')}:${totalDictFound}/${totalDictWords}`;
         if (filterDropdown.dataset.currentOptionsKey !== currentOptionsKey) {
-            let optionsHtml = `<option value="all">All (${totalDictFound}/${totalDictWords})</option>`;
+            let optionsHtml = `<option value="all">All (${totalDictFound}/${totalDictWords})  ${allPct}%</option>`;
             availableLengths.forEach(len => {
-                optionsHtml += `<option value="${len}">${len}LW (${lengthStats[len].found}/${lengthStats[len].total})</option>`;
+                const lenPct = calcPct(lengthStats[len].found, lengthStats[len].total);
+                optionsHtml += `<option value="${len}">${len}LW (${lengthStats[len].found}/${lengthStats[len].total})  ${lenPct}%</option>`;
             });
             filterDropdown.innerHTML = optionsHtml;
             filterDropdown.dataset.currentOptionsKey = currentOptionsKey;
