@@ -21562,10 +21562,11 @@ body.theme-light .walkthrough-item.is-got,
 body.theme-light-gray .walkthrough-item.is-got,
 html[class*="theme-white"] .walkthrough-item.is-got,
 html[class*="theme-light"] .walkthrough-item.is-got {
-    background: #dcfce7 !important;
-    border-left: 4px solid #16a34a !important;
-    border-bottom: 1px solid #bbf7d0 !important;
+    background: rgba(59, 130, 246, 0.22) !important;
+    border-left: 4px solid #2563eb !important;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.3) !important;
     border-radius: 6px !important;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2) !important;
 }
 
 [class*="theme-white"] .walkthrough-item.is-got::before,
@@ -21576,9 +21577,9 @@ body.theme-light .walkthrough-item.is-got::before,
 body.theme-light-gray .walkthrough-item.is-got::before,
 html[class*="theme-white"] .walkthrough-item.is-got::before,
 html[class*="theme-light"] .walkthrough-item.is-got::before {
-    background: #16a34a !important;
+    background: #2563eb !important;
     border: 3px solid #ffffff !important;
-    box-shadow: 0 0 0 1.5px #15803d, 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 0 0 1.5px #1d4ed8, 0 1px 3px rgba(0, 0, 0, 0.15) !important;
 }
 
 [class*="theme-white"] .walkthrough-item.is-got .walkthrough-word,
@@ -21589,24 +21590,9 @@ body.theme-light .walkthrough-item.is-got .walkthrough-word,
 body.theme-light-gray .walkthrough-item.is-got .walkthrough-word,
 html[class*="theme-white"] .walkthrough-item.is-got .walkthrough-word,
 html[class*="theme-light"] .walkthrough-item.is-got .walkthrough-word {
-    color: #14532d !important;
+    color: #1e3a8a !important;
     font-weight: 900 !important;
     text-shadow: none !important;
-}
-
-[class*="theme-white"] .walkthrough-item.is-got .walkthrough-badge-got,
-[class*="theme-light"] .walkthrough-item.is-got .walkthrough-badge-got,
-[class*="theme-light-"] .walkthrough-item.is-got .walkthrough-badge-got,
-body.theme-white .walkthrough-item.is-got .walkthrough-badge-got,
-body.theme-light .walkthrough-item.is-got .walkthrough-badge-got,
-body.theme-light-gray .walkthrough-item.is-got .walkthrough-badge-got,
-html[class*="theme-white"] .walkthrough-item.is-got .walkthrough-badge-got,
-html[class*="theme-light"] .walkthrough-item.is-got .walkthrough-badge-got {
-    background: #16a34a !important;
-    color: #ffffff !important;
-    border: 1px solid #15803d !important;
-    font-weight: 800 !important;
-    box-shadow: 0 1px 2px rgba(22, 101, 52, 0.25) !important;
 }
 
 [class*="theme-white"] .walkthrough-item.is-got .walkthrough-pts,
@@ -21617,10 +21603,14 @@ body.theme-light .walkthrough-item.is-got .walkthrough-pts,
 body.theme-light-gray .walkthrough-item.is-got .walkthrough-pts,
 html[class*="theme-white"] .walkthrough-item.is-got .walkthrough-pts,
 html[class*="theme-light"] .walkthrough-item.is-got .walkthrough-pts {
-    background: #bbf7d0 !important;
-    color: #14532d !important;
-    border: 1.5px solid #86efac !important;
+    background: #bfdbfe !important;
+    color: #1e3a8a !important;
+    border: 1.5px solid #93c5fd !important;
     font-weight: 800 !important;
+}
+
+.walkthrough-badge-got {
+    display: none !important;
 }
 
 [class*="theme-white"] .walkthrough-item.is-got .walkthrough-time,

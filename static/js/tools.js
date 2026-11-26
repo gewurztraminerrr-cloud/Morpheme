@@ -4760,7 +4760,6 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
         if (isGot) {
             return `
             <div class="walkthrough-item reveal is-got" style="cursor: pointer;" onclick="highlightWordPathOnReplay('${safeWord}', event)">
-                <span class="walkthrough-badge-got">✓ GOT</span>
                 <span class="walkthrough-word">${upper}</span>
                 <span class="${ptsClass}">+${pts} pts</span>
             </div>
