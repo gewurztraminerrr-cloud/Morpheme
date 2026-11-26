@@ -3125,8 +3125,8 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     contain: layout style;
     will-change: scroll-position;
     /* Scrollable list */
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 20px;
+    padding-right: 20px;
     /* Equal padding on left and right side of cell */
     margin-bottom: 10px;
 }
@@ -3152,8 +3152,8 @@ body.is-mobile .words-panel #remaining-words-table .count-cell {
     contain: layout style;
     will-change: scroll-position;
     /* Scrollable list */
-    padding-left: 8px;
-    padding-right: 8px;
+    padding-left: 20px;
+    padding-right: 20px;
     /* Equal padding on left and right side of cell */
     margin-bottom: 10px;
 }
@@ -3523,9 +3523,9 @@ body.theme-light-gray .notepad-item.bonus-word:not(.finder-active) .word-text {
         opacity: 0.85;
     }
     50% {
-        transform: translateY(-50%) translateX(4px);
+        transform: translateY(-50%) translateX(5px);
         opacity: 1;
-        filter: drop-shadow(0 0 6px var(--selected-border-color, #60a5fa)) drop-shadow(0 0 14px var(--selected-border-color, #3b82f6));
+        filter: drop-shadow(0 0 8px var(--selected-border-color, #60a5fa)) drop-shadow(0 0 16px var(--selected-border-color, #3b82f6));
     }
 }
 
@@ -3579,14 +3579,14 @@ body.theme-light-gray .notepad-item.bonus-word:not(.finder-active) .word-text {
 #previous-words-list .word-item.finder-active::before {
     content: '▶' !important;
     position: absolute !important;
-    left: -7px !important;
+    left: -16px !important;
     top: 50% !important;
     transform: translateY(-50%);
-    font-size: 10px !important;
+    font-size: 11px !important;
     line-height: 1 !important;
     color: var(--selected-border-color, #60a5fa) !important;
     filter: drop-shadow(0 0 6px var(--selected-border-color, #3b82f6)) drop-shadow(0 0 12px var(--selected-border-color, rgba(96, 165, 250, 0.8)));
-    animation: pin-bounce 1.2s infinite ease-in-out !important;
+    animation: pin-bounce 1.0s infinite ease-in-out !important;
     pointer-events: none !important;
     z-index: 30 !important;
 }
