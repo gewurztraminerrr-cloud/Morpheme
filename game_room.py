@@ -5299,17 +5299,41 @@ class RoomManager:
                             if not pre_pop and (is_explicit_diff or is_explicit_fmt or is_24h_room):
                                 print(f"[RoomManager] No cached board strictly matching {s_diff} / {s_fmt} for {room_id}. Performing live generation...")
                                 bonus_w_gen = self._get_bonus_word(length=s_bw_len, dictionary=s_dict) if hasattr(self, '_get_bonus_word') else 'PLANETS'
-                                live_res = self.board_generator.generate_board(
-                                    dimensions=room.board_dimensions,
-                                    bonus_word=bonus_w_gen,
-                                    word_count_range='300-400' if is_24h_room else s_wc,
-                                    board_format='Valued Letters' if is_24h_room else s_fmt,
-                                    dictionary=s_dict,
-                                    min_word_length=grid_floor if is_24h_room else s_min_len,
-                                    difficulty=s_diff,
-                                    timeout=8.0 if is_24h_room else 4.0,
-                                    use_added_words=False if is_24h_room else s_use_aw
-                                )
+                                live_res = None
+                                _want_diff = SpinnerSet.strip_difficulty_pct(s_diff)
+                                for _live_try in range(5):
+                                    live_res = self.board_generator.generate_board(
+                                        dimensions=room.board_dimensions,
+                                        bonus_word=bonus_w_gen,
+                                        word_count_range='300-400' if is_24h_room else s_wc,
+                                        board_format='Valued Letters' if is_24h_room else s_fmt,
+                                        dictionary=s_dict,
+                                        min_word_length=grid_floor if is_24h_room else s_min_len,
+                                        difficulty=s_diff,
+                                        timeout=8.0 if is_24h_room else 4.0,
+                                        use_added_words=False if is_24h_room else s_use_aw
+                                    )
+                                    if not (live_res and len(live_res) >= 6) or is_24h_room or not is_explicit_diff:
+                                        break
+                                    _lr = live_res[5]
+                                    _got = self.board_generator.get_difficulty_label(_lr, _r0, _c0, s_dict, depth=_d0, min_word_length=s_min_len)
+                                    if _got == _want_diff:
+                                        break
+                                    print(f"[RoomManager] Live board difficulty {_got} ({_lr:.2%}) != requested {_want_diff} (try {_live_try + 1}/5). Retrying...")
+                                    if _live_try == 4:
+                                        # Last resort: push the last board toward the requested difficulty
+                                        try:
+                                            _lb_board = live_res[0]
+                                            _lm = 'mania' in str(live_res[3]).lower()
+                                            _lp = live_res[3].split()[0].upper() if _lm and len(str(live_res[3]).split()[0]) == 1 else None
+                                            self.board_generator.active_mania_letter = _lp
+                                            if _want_diff == 'Easy':
+                                                _lb_board, _lw_dict, _lr2 = self.board_generator._sanitize_uniqueness(_lb_board, _d0, s_dict, s_min_len, 0.15, _r0, _c0)
+                                            else:
+                                                _lb_board, _lw_dict, _lr2 = self.board_generator._boost_uniqueness(_lb_board, _d0, s_dict, s_min_len, self.board_generator._get_uniqueness_range(_want_diff, _r0, _c0, s_dict, _d0, min_word_length=s_min_len)[0], _r0, _c0)
+                                            live_res = (_lb_board, sorted(_lw_dict.keys()), live_res[2], live_res[3], _lw_dict, _lr2) + tuple(live_res[6:])
+                                        except Exception as _enf_err:
+                                            print(f"[RoomManager] Difficulty enforcement fallback failed: {_enf_err}")
                                 if live_res and len(live_res) >= 6:
                                     lb_b, lb_w, lb_c, lb_f, lb_p, lb_r = live_res[:6]
                                     lb_bw = live_res[6] if len(live_res) >= 7 else bonus_w_gen
