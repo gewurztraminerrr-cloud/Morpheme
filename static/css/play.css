@@ -6453,6 +6453,9 @@ body[class*="theme-light-"] #random-words-table-body .suggested-word-cell,
     padding: 0 14px !important;
     box-sizing: border-box !important;
     vertical-align: middle !important;
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 #combo-input {
@@ -17309,7 +17312,9 @@ body.theme-white .find-count-division-badge,
         text-align: center !important;
         text-transform: uppercase !important;
         background: rgba(0, 0, 0, 0.35) !important;
-        border: 1px solid rgba(167, 139, 250, 0.35) !important;
+        border: 2px solid rgba(167, 139, 250, 0.35) !important;
+        outline: none !important;
+        transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
         color: #fff !important;
     }
 

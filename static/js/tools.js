@@ -9302,6 +9302,34 @@ let _subCurrentMinLength = 2;
 let _subAbortController = null;
 let _isSubLoading = false;
 
+function highlightToolInput(inputEl, isValid) {
+    if (!inputEl) return;
+    if (inputEl._borderTimeout) {
+        clearTimeout(inputEl._borderTimeout);
+        inputEl._borderTimeout = null;
+    }
+    const color = isValid ? '#4caf50' : '#ff5252';
+    const shadow = isValid ? '0 0 8px rgba(76, 175, 80, 0.6)' : '0 0 8px rgba(255, 82, 82, 0.6)';
+    inputEl.style.setProperty('border-color', color, 'important');
+    inputEl.style.setProperty('border-width', '2px', 'important');
+    inputEl.style.setProperty('border-style', 'solid', 'important');
+    inputEl.style.setProperty('box-shadow', shadow, 'important');
+    inputEl.style.setProperty('outline', 'none', 'important');
+    inputEl.style.borderColor = color;
+    inputEl._borderTimeout = setTimeout(() => {
+        if (inputEl) {
+            inputEl.style.removeProperty('border-color');
+            inputEl.style.removeProperty('border-width');
+            inputEl.style.removeProperty('border-style');
+            inputEl.style.removeProperty('box-shadow');
+            inputEl.style.removeProperty('outline');
+            inputEl.style.borderColor = '';
+            inputEl._borderTimeout = null;
+        }
+    }, 500);
+}
+window.highlightToolInput = highlightToolInput;
+
 function setupSubanagramsTool() {
     const findAllBtn = document.getElementById('sub-find-all-btn');
     const practiceBtn = document.getElementById('sub-practice-btn');
@@ -9464,7 +9492,11 @@ function setupSubanagramsTool() {
                 const raw = customInput.value.trim();
                 const dict = getDict();
                 const minLen = getMinLen();
-                if (raw) findAndRevealAllSubanagrams(raw, dict, minLen);
+                if (raw) {
+                    findAndRevealAllSubanagrams(raw, dict, minLen);
+                } else {
+                    highlightToolInput(customInput, false);
+                }
             }
         };
         customInput.addEventListener('keydown', handleCustomEnter);
@@ -9553,8 +9585,9 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2
     const customInput = document.getElementById('sub-input');
 
     const clean = rawLetters.toUpperCase().replace(/[^A-Z]/g, '');
-    if (!clean) {
-        showSubFeedback('Please enter valid letters (A-Z)', 'error');
+    if (!clean || clean.length < 2) {
+        if (customInput) highlightToolInput(customInput, false);
+        showSubFeedback(clean ? 'Sequence must be at least 2 letters.' : 'Please enter valid letters (A-Z)', 'error');
         _isSubLoading = false;
         return;
     }
@@ -9592,6 +9625,7 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2
 
         const data = await response.json();
         if (data.error) {
+            if (customInput) highlightToolInput(customInput, false);
             showSubFeedback(data.error, 'error');
             if (countInfo) countInfo.textContent = '';
             if (resultsContainer) {
@@ -9608,6 +9642,7 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2
 
         if (customInput) {
             customInput.value = _subCurrentLetters;
+            highlightToolInput(customInput, _subAllWords.length > 0);
             customInput.focus();
             setTimeout(() => { if (customInput) customInput.focus(); }, 10);
         }
@@ -9622,6 +9657,7 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2
 
     } catch (err) {
         if (err.name === 'AbortError') return;
+        if (customInput) highlightToolInput(customInput, false);
         console.error("Failed to find all subanagrams:", err);
         showSubFeedback('Failed to analyze sequence', 'error');
     } finally {
@@ -9752,8 +9788,9 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
     const customInput = document.getElementById('sub-input');
 
     const clean = rawLetters.toUpperCase().replace(/[^A-Z]/g, '');
-    if (!clean) {
-        showSubFeedback('Please enter valid letters (A-Z)', 'error');
+    if (!clean || clean.length < 2) {
+        if (customInput) highlightToolInput(customInput, false);
+        showSubFeedback(clean ? 'Sequence must be at least 2 letters.' : 'Please enter valid letters (A-Z)', 'error');
         _isSubLoading = false;
         return;
     }
@@ -9791,6 +9828,7 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
 
         const data = await response.json();
         if (data.error) {
+            if (customInput) highlightToolInput(customInput, false);
             showSubFeedback(data.error, 'error');
             if (countInfo) countInfo.textContent = '';
             if (resultsContainer) {
@@ -9807,6 +9845,7 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
 
         if (customInput) {
             customInput.value = _subCurrentLetters;
+            highlightToolInput(customInput, _subAllWords.length > 0);
             customInput.focus();
             setTimeout(() => { if (customInput) customInput.focus(); }, 10);
         }
@@ -9825,6 +9864,7 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
 
     } catch (err) {
         if (err.name === 'AbortError') return;
+        if (customInput) highlightToolInput(customInput, false);
         console.error("Failed to load custom subanagrams:", err);
         showSubFeedback('Failed to analyze sequence', 'error');
     } finally {
@@ -9836,21 +9876,7 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
 
 function highlightSubWordInput(isValid) {
     const wordInput = document.getElementById('sub-word-input');
-    if (!wordInput) return;
-    if (wordInput._borderTimeout) {
-        clearTimeout(wordInput._borderTimeout);
-        wordInput._borderTimeout = null;
-    }
-    const color = isValid ? '#4caf50' : '#ff5252';
-    wordInput.style.setProperty('border-color', color, 'important');
-    wordInput.style.borderColor = color;
-    wordInput._borderTimeout = setTimeout(() => {
-        if (wordInput) {
-            wordInput.style.removeProperty('border-color');
-            wordInput.style.borderColor = '';
-            wordInput._borderTimeout = null;
-        }
-    }, isValid ? 300 : 500);
+    highlightToolInput(wordInput, isValid);
 }
 
 function submitSubanagramWord() {
@@ -11075,16 +11101,7 @@ function checkUnscrambleGuess() {
             unscrambleState.found.push(guess);
             renderUnscrambleFound();
 
-            if (input._borderTimeout) clearTimeout(input._borderTimeout);
-            input.style.setProperty('border-color', '#4caf50', 'important');
-            input.style.borderColor = '#4caf50';
-            input._borderTimeout = setTimeout(() => {
-                if (input) {
-                    input.style.removeProperty('border-color');
-                    input.style.borderColor = '';
-                    input._borderTimeout = null;
-                }
-            }, 300);
+            highlightToolInput(input, true);
 
             // Only auto-advance if ALL possible words are found
             if (unscrambleState.found.length === unscrambleState.solution.size) {
@@ -11099,16 +11116,7 @@ function checkUnscrambleGuess() {
             unscrambleState.incorrect.push(guess);
             renderUnscrambleFound();
         }
-        if (input._borderTimeout) clearTimeout(input._borderTimeout);
-        input.style.setProperty('border-color', '#ff5252', 'important');
-        input.style.borderColor = '#ff5252';
-        input._borderTimeout = setTimeout(() => {
-            if (input) {
-                input.style.removeProperty('border-color');
-                input.style.borderColor = '';
-                input._borderTimeout = null;
-            }
-        }, 500);
+        highlightToolInput(input, false);
     }
 
     input.value = '';
