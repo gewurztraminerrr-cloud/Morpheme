@@ -27352,3 +27352,26 @@ body.is-mobile #word-length-radar,
         gap: 4px !important;
     }
 }
+
+/* Ensure Profile stat titles and numbers are perfectly aligned on desktop and laptop */
+.profile-stats-grid .stat-box {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.profile-stats-grid .stat-box .stat-num {
+    height: 24px !important;
+    min-height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+.profile-stats-grid .stat-box .stat-desc {
+    margin-top: 4px !important;
+    line-height: 1 !important;
+}
+

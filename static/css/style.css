@@ -3226,6 +3226,27 @@ body.theme-white .header {
     margin-bottom: 25px;
 }
 
+.profile-stats-grid .stat-box {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.profile-stats-grid .stat-box .stat-num {
+    height: 24px !important;
+    min-height: 24px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+}
+
+.profile-stats-grid .stat-box .stat-desc {
+    margin-top: 4px !important;
+    line-height: 1 !important;
+}
+
 .stat-box {
     background: rgba(0, 0, 0, 0.2);
     padding: 15px;
@@ -3233,6 +3254,7 @@ body.theme-white .header {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     /* Centered stats */
     text-align: center;
     border: 1px solid rgba(var(--text-primary-rgb), 0.03);
@@ -3247,6 +3269,12 @@ body.theme-white .header {
     text-overflow: ellipsis;
     max-width: 100%;
     letter-spacing: -0.5px; /* Tighter letter spacing for numbers */
+    height: 24px;
+    min-height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
 }
 
 .stat-desc {
@@ -3254,7 +3282,8 @@ body.theme-white .header {
     font-weight: 800;
     letter-spacing: 1px;
     color: var(--text-30);
-    margin-top: 2px;
+    margin-top: 4px;
+    line-height: 1;
 }
 
 .profile-footer-actions {

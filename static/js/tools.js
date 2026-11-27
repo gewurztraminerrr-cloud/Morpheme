@@ -2325,6 +2325,21 @@ if (window._profileTimeIntervalId) {
 function applyDynamicStatSize(el, str) {
     if (!el) return;
     const len = (str !== undefined && str !== null ? String(str) : (el.innerText || '')).trim().length;
+    // On desktop/laptop (.profile-stats-grid with wide columns > 900px), numbers up to 8 characters fit comfortably at standard 1.15rem
+    const isDesktopProfileGrid = el.closest && el.closest('.profile-stats-grid') && (window.innerWidth > 900 || !window.matchMedia('(max-width: 900px)').matches);
+    if (isDesktopProfileGrid) {
+        if (len <= 8) {
+            el.style.fontSize = '';
+            el.style.letterSpacing = '';
+        } else if (len <= 10) {
+            el.style.fontSize = '1rem';
+            el.style.letterSpacing = '-0.3px';
+        } else {
+            el.style.fontSize = '0.85rem';
+            el.style.letterSpacing = '-0.5px';
+        }
+        return;
+    }
     if (len <= 5) {
         el.style.fontSize = '';
         el.style.letterSpacing = '';
