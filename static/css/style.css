@@ -12291,8 +12291,8 @@ body.theme-white #sub-submit-word-btn,
 
 body.theme-white #sub-results-container,
 [class*="theme-white"] #sub-results-container {
-    background: #f1f5f9 !important;
-    border: 1.5px solid #cbd5e1 !important;
+    background: #ebebeb !important;
+    border: 1.5px solid #cccccc !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
 }
 
@@ -12421,8 +12421,8 @@ body.theme-white #tool-unscramble .unscramble-game-area,
 
 body.theme-white #unscramble-found-container,
 [class*="theme-white"] #unscramble-found-container {
-    background: #f1f5f9 !important;
-    border: 1.5px solid #cbd5e1 !important;
+    background: #ebebeb !important;
+    border: 1.5px solid #cccccc !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
 }
 
