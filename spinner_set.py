@@ -297,8 +297,11 @@ class SpinnerSet:
 
             # Enforce physical ceilings and Odds Window boundaries for standard dictionaries:
             if '4x4' in dims:
-                if min_word_length >= 4:
+                if min_word_length >= 5:
                     if wc_range not in ['50-100', '100-200']:
+                        wc_range = '100-200'
+                elif min_word_length == 4:
+                    if wc_range not in ['50-100', '100-200', '200-300']:
                         wc_range = '100-200'
                 elif min_word_length == 3:
                     if wc_range in ['50-100']:
@@ -368,9 +371,12 @@ class SpinnerSet:
             use_added_words = is_aw_effective
 
             # 2. Min Word Length
-            # For + AW, ensure min_word_length allows reaching 300+ words (e.g. 3L or 4L on 4x4)
-            if is_aw_effective and len(allowed_mins) >= 2:
-                min_word_length = _rng.choice(allowed_mins[:-1])
+            # For + AW, ensure min_word_length allows reaching 300+ words (3L or 4L on 4x4; full range on larger boards)
+            if is_aw_effective:
+                if '4x4' in dims:
+                    min_word_length = _rng.choices([3, 4], weights=[50, 50])[0]
+                else:
+                    min_word_length = _rng.choices(allowed_mins, weights=[34, 33, 33])[0]
             else:
                 min_word_length = _rng.choices(allowed_mins, weights=[25, 50, 25])[0]
 
@@ -449,6 +455,8 @@ class SpinnerSet:
             # CRITICAL RULE: "NWL + AW" and "CSW + AW" word lists should NEVER have a word count below 300.
             # The only options for them are 300-400, 400-500, and 500+ words. Nothing else.
             # Published Odds Window: 33% 300-400, 33% 400-500, 34% 500+
+            if '4x4' in dims and mwl >= 4:
+                return _rng.choices(['300-400', '400-500'], weights=[50, 50])[0]
             choices = ['300-400', '400-500', '500+']
             weights = [33, 33, 34]
             return _rng.choices(choices, weights=weights)[0]
@@ -462,30 +470,30 @@ class SpinnerSet:
                 if mwl >= 5:
                     return _rng.choices(['50-100', '100-200'], weights=[50, 50])[0]
                 elif mwl == 4:
-                    return _rng.choices(['50-100', '100-200'], weights=[25, 75])[0]
+                    return _rng.choices(['50-100', '100-200', '200-300'], weights=[20, 50, 30])[0]
                 else:  # 3L
-                    return _rng.choices(['100-200', '200-300', '300-400'], weights=[34, 33, 33])[0]
+                    return _rng.choices(['100-200', '200-300', '300-400'], weights=[20, 40, 40])[0]
             elif '4x6' in dims:
                 if mwl >= 6:
                     return _rng.choices(['50-100', '100-200'], weights=[50, 50])[0]
                 elif mwl == 5:
-                    return _rng.choices(['50-100', '100-200', '200-300'], weights=[25, 45, 30])[0]
+                    return _rng.choices(['50-100', '100-200', '200-300'], weights=[20, 45, 35])[0]
                 else:  # 4L
-                    return _rng.choices(['100-200', '200-300', '300-400'], weights=[34, 33, 33])[0]
+                    return _rng.choices(['100-200', '200-300', '300-400'], weights=[20, 40, 40])[0]
             elif '5x7' in dims:
                 if mwl >= 7:
-                    return _rng.choices(['50-100', '100-200'], weights=[50, 50])[0]
+                    return _rng.choices(['50-100', '100-200', '200-300'], weights=[40, 40, 20])[0]
                 elif mwl == 6:
-                    return _rng.choices(['50-100', '100-200', '200-300'], weights=[25, 45, 30])[0]
+                    return _rng.choices(['50-100', '100-200', '200-300', '300-400'], weights=[15, 35, 35, 15])[0]
                 else:  # 5L
-                    return _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
+                    return _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[25, 36, 36, 3])[0]
             else:  # 6x8, 3x3x3
                 if mwl >= 8:
-                    return _rng.choices(['50-100', '100-200'], weights=[50, 50])[0]
+                    return _rng.choices(['50-100', '100-200', '200-300'], weights=[40, 40, 20])[0]
                 elif mwl == 7:
-                    return _rng.choices(['50-100', '100-200', '200-300'], weights=[25, 45, 30])[0]
+                    return _rng.choices(['50-100', '100-200', '200-300', '300-400'], weights=[15, 35, 35, 15])[0]
                 else:  # 6L
-                    return _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[33, 33, 33, 1])[0]
+                    return _rng.choices(['100-200', '200-300', '300-400', '500+'], weights=[25, 36, 36, 3])[0]
 
     @staticmethod
     def _spin_dictionary():

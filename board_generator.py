@@ -2552,7 +2552,7 @@ class BoardGenerator:
             import word_validator
             if hasattr(word_validator, 'word_validator'):
                 word_validator.word_validator.ensure_csw_loaded()
-                if dictionary == 'CSW':
+                if dictionary == 'CSW' and "checkerboard" not in str(board_format).lower():
                     csw_cnt = sum(1 for w in matching_words if word_validator.word_validator.is_csw_only(w))
                     if csw_cnt == 0:
                         print(f"[BoardGen] CSW board had 0 CSW-only words. Injecting CSW letters into board...")
@@ -2570,7 +2570,7 @@ class BoardGenerator:
                         )
                         all_words = sorted(list(all_words_dict.keys()))
 
-                if val_ctx:
+                if val_ctx and "checkerboard" not in str(board_format).lower():
                     aw_cnt = sum(1 for w in matching_words if word_validator.word_validator.is_added_word(w))
                     if aw_cnt == 0:
                         print(f"[BoardGen] +AW board had 0 Added Words. Injecting AW letters into board...")
@@ -2684,6 +2684,31 @@ class BoardGenerator:
                     all_words = sorted(list(all_words_dict.keys()))
         except Exception as _final_wc_err:
             print(f"[BoardGen] Warning in absolute final word count enforcement: {_final_wc_err}")
+
+        # ABSOLUTE FINAL CHECKERBOARD GATEKEEPER
+        try:
+            if "checkerboard" in str(board_format).lower():
+                from board_generator import LETTER_WEIGHTS
+                if not self._is_checkerboard_layout(board):
+                    print(f"[BoardGen] 🛡️ FINAL GATEKEEPER: Repairing broken checkerboard alternation before return.")
+                    self._verify_checkerboard_safeguard(board, LETTER_WEIGHTS, set())
+                    final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
+                    all_words_dict = self._solve_board(
+                        board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=5.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+                    )
+                    all_words = sorted(list(all_words_dict.keys()))
+                    ratio = self.get_uniqueness_ratio(board, all_words, len(board[0]) if is_3d else len(board), len(board[0][0]) if is_3d else len(board[0]), dictionary, depth)
+            else:
+                if self._is_checkerboard_layout(board):
+                    self._break_accidental_checkerboard(board)
+                    final_depth = 25 if (not is_3d and len(board)*len(board[0]) <= 16) else 14
+                    all_words_dict = self._solve_board(
+                        board, dictionary, (0, 99999), min_word_length, max_depth=final_depth, store_paths=True, timeout=5.0, bonus_cell=bonus_cell, use_added_words=val_ctx
+                    )
+                    all_words = sorted(list(all_words_dict.keys()))
+                    ratio = self.get_uniqueness_ratio(board, all_words, len(board[0]) if is_3d else len(board), len(board[0][0]) if is_3d else len(board[0]), dictionary, depth)
+        except Exception as _final_chk_err:
+            print(f"[BoardGen] Warning in absolute final checkerboard gatekeeper: {_final_chk_err}")
 
         # Trigger background refill to populate the cache up to 3
         refill_board_cache_bg(self, param_key_str, target_count=10)
@@ -4126,6 +4151,13 @@ class BoardGenerator:
                 bonus_cell = _sanitize_special_tiles_for_format(board, board_format, bonus_cell)
                 ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
  
+                if is_checkerboard and not self._is_checkerboard_layout(board, depth=depth):
+                    self._verify_checkerboard_safeguard(board)
+                    final_solve = self._solve_board(
+                        board, dictionary, (0, 99999), display_min, max_depth=final_depth, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_aw_flag
+                    )
+                    ratio = self.get_uniqueness_ratio(board, list(final_solve.keys()), rows, cols, dictionary, depth)
+
                 board_hash = get_board_hash(board)
                 if not mark_board_hash_used(board_hash):
                     print(f"[BoardGen] Race condition: emergency board hash {board_hash} was already used. Retrying...")
@@ -4135,9 +4167,12 @@ class BoardGenerator:
                 print(f"[BoardGen] ✗ EMERGENCY ATTEMPT {_attempt} FAILED: {count} words is not in {min_words}-{max_words}")
     def _final_rare_letter_polish(self, board, depth, protected_positions=None, difficulty=None, board_format=None, mania_letter=None):
         """Final audit to clean rare letters and forbidden sequences."""
-        self._sanitize_rare_letters(board, depth, protected_positions=protected_positions, difficulty=difficulty, board_format=board_format, mania_letter=mania_letter)
+        is_chk = "checkerboard" in str(board_format).lower() if board_format else False
+        self._sanitize_rare_letters(board, depth, protected_positions=protected_positions, is_checkerboard=is_chk, difficulty=difficulty, board_format=board_format, mania_letter=mania_letter)
         if _normalize_difficulty_base(difficulty) in ["Medium", "Hard"]:
-            self._sanitize_forbidden_sequences(board, depth, protected_positions=protected_positions)
+            self._sanitize_forbidden_sequences(board, depth, protected_positions=protected_positions, is_checkerboard=is_chk)
+        if is_chk and not self._is_checkerboard_layout(board, depth=depth):
+            self._verify_checkerboard_safeguard(board)
 
     def _generate_io_base_board_procedure(
         self, dimensions, bonus_word, word_count_range, dictionary, min_word_length, difficulty, board_format="Normal", use_added_words=False, timeout=None
@@ -4528,7 +4563,12 @@ class BoardGenerator:
                 best_ratio = ratio
                 best_words_dict = all_words_dict
                 
-                test_letters = ['E', 'A', 'R', 'I', 'O', 'T', 'N', 'S', 'L', 'C', 'D', 'P', 'M', 'H', 'U', 'B', 'G']
+                is_chk = self._is_checkerboard_layout(board, depth=depth)
+                orig_is_v = self._is_vowel(orig_char)
+                if is_chk:
+                    test_letters = ['E', 'A', 'I', 'O', 'U'] if orig_is_v else ['R', 'T', 'N', 'S', 'L', 'C', 'D', 'P', 'M', 'H', 'B', 'G']
+                else:
+                    test_letters = ['E', 'A', 'R', 'I', 'O', 'T', 'N', 'S', 'L', 'C', 'D', 'P', 'M', 'H', 'U', 'B', 'G']
                 min_acceptable_words = max(min_words or 0, int(len(all_words_dict) * 0.70))
                 for char in test_letters:
                     if char == orig_char:
@@ -4568,6 +4608,13 @@ class BoardGenerator:
             if not optimized_any or ratio <= max_ratio:
                 break
                     
+        if is_chk and not self._is_checkerboard_layout(board, depth=depth):
+            self._verify_checkerboard_safeguard(board)
+            all_words_dict = self._solve_board(
+                board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=5.0
+            )
+            ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
+
         return board, all_words_dict, ratio
 
     def _boost_uniqueness(self, board, *args, **kwargs):
@@ -4598,6 +4645,8 @@ class BoardGenerator:
 
         min_acceptable_words = max(min_words, int(len(all_words_dict) * 0.80)) if min_words else int(len(all_words_dict) * 0.70)
         rare_boosters = ['J', 'Z', 'X', 'Q', 'K', 'V', 'W', 'Y', 'B', 'F']
+        vowel_boosters = ['U', 'O', 'I']
+        is_chk = self._is_checkerboard_layout(board, depth=depth)
         for iteration in range(5):
             if ratio >= min_ratio:
                 break
@@ -4613,7 +4662,12 @@ class BoardGenerator:
                         if orig == getattr(self, 'active_mania_letter', None):
                             continue
                         if orig in ['E', 'T', 'A', 'O', 'I', 'N', 'S', 'R']:
-                            for b_char in rare_boosters:
+                            orig_is_v = self._is_vowel(orig)
+                            if is_chk:
+                                cand_boosters = vowel_boosters if orig_is_v else rare_boosters
+                            else:
+                                cand_boosters = rare_boosters
+                            for b_char in cand_boosters:
                                 if depth > 1: board[f][r][c] = b_char
                                 else: board[r][c] = b_char
 
@@ -4643,6 +4697,13 @@ class BoardGenerator:
                 print(f"[BoardGen] Boosted uniqueness at cell {best_cell}: new ratio {ratio:.2%}, words {len(all_words_dict)}")
             else:
                 break
+
+        if is_chk and not self._is_checkerboard_layout(board, depth=depth):
+            self._verify_checkerboard_safeguard(board)
+            all_words_dict = self._solve_board(
+                board, dictionary, (0, 99999), min_word_length, max_depth=12 if rows * cols >= 35 else 25, store_paths=True, timeout=5.0
+            )
+            ratio = self.get_uniqueness_ratio(board, list(all_words_dict.keys()), rows, cols, dictionary, depth)
 
         return board, all_words_dict, ratio
 
@@ -5751,6 +5812,8 @@ class BoardGenerator:
             if current_count >= min_words:
                 print(f"[BoardGen] ✅ RESCUE SUCCESSFUL: Hit {current_count} words.")
                 break
+        if is_checkerboard and not self._is_checkerboard_layout(board, depth=depth):
+            self._verify_checkerboard_safeguard(board)
         return board
 
     def _apply_io_b_uniqueness_optimization(self, board, rows, cols, dictionary, excluded_cells, min_word_length, depth=1, difficulty="Medium", max_words=200, is_checkerboard=False, min_words=0, use_added_words=False):

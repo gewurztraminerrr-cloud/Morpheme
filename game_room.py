@@ -4168,7 +4168,12 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             rows, cols = 4, 4
         # Use high-density distribution for high-target or AW rounds to ensure word counts match requirements
         from board_generator import LETTER_FREQ_SUPER_DENSITY
-        if (is_aw or min_accept >= 200) and hasattr(bg, '_create_normal_board'):
+        if is_chk_fmt:
+            board = bg._create_checkerboard(
+                rows, cols, LETTER_FREQ_SUPER_DENSITY if (is_aw or min_accept >= 200) else bg.weights,
+                depth=1 if not is_3d else 6, difficulty=difficulty or 'Easy'
+            )
+        elif (is_aw or min_accept >= 200) and hasattr(bg, '_create_normal_board'):
             board = bg._create_normal_board(
                 rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=1 if not is_3d else 6,
                 difficulty='Easy', dictionary=dictionary, word_count_range=target_range_resolved, use_added_words=use_added_words
@@ -4213,10 +4218,16 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         print(f"[get_emergency_fallback_board] Emergency board had only {len(words_filtered)} words (needed >= {min_accept}). Rescuing to guarantee word count...")
         from board_generator import LETTER_FREQ_SUPER_DENSITY
         for _dense_try in range(1):
-            dense_b = bg._create_normal_board(
-                rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=1 if not is_3d else 6,
-                difficulty='Easy', dictionary=dictionary, word_count_range=target_range_resolved, use_added_words=use_added_words
-            )
+            if is_chk_fmt:
+                dense_b = bg._create_checkerboard(
+                    rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=1 if not is_3d else 6,
+                    difficulty='Easy'
+                )
+            else:
+                dense_b = bg._create_normal_board(
+                    rows, cols, LETTER_FREQ_SUPER_DENSITY, depth=1 if not is_3d else 6,
+                    difficulty='Easy', dictionary=dictionary, word_count_range=target_range_resolved, use_added_words=use_added_words
+                )
             if is_mania_fmt:
                 bg._apply_mania_to_board(dense_b, m_l, set(), is_checkerboard=False)
             dense_s = bg._solve_board(dense_b, dictionary, (0, 99999), min_word_length, max_depth=20, store_paths=True, timeout=2.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
@@ -4233,7 +4244,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
     import word_validator
     if hasattr(word_validator, 'word_validator'):
         word_validator.word_validator.ensure_csw_loaded()
-        if 'CSW' in str(dictionary).upper():
+        if 'CSW' in str(dictionary).upper() and not is_chk_fmt:
             csw_cnt = sum(1 for w in words_filtered if word_validator.word_validator.is_csw_only(w))
             if csw_cnt == 0:
                 print(f"[get_emergency_fallback_board] Emergency board has 0 CSW-only words. Injecting CSW letters...")
@@ -4266,7 +4277,7 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
             words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
             paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
 
-        if is_aw:
+        if is_aw and not is_chk_fmt:
             aw_cnt = sum(1 for w in words_filtered if word_validator.word_validator.is_added_word(w))
             if aw_cnt == 0:
                 print(f"[get_emergency_fallback_board] Emergency board has 0 Added Words. Injecting AW letters...")
@@ -4340,6 +4351,20 @@ def get_emergency_fallback_board(dimensions, board_format='Normal', time_limit=6
         if bonus_word and bonus_word not in words_filtered:
             words_filtered.append(bonus_word)
             paths_filtered[bonus_word] = [bonus_cell or (0, 0)]
+
+    # Final guarantee that emergency board matches checkerboard requirements
+    if is_chk_fmt:
+        if not bg._is_checkerboard_layout(board):
+            bg._verify_checkerboard_safeguard(board)
+            emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
+            words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
+            paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
+    else:
+        if bg._is_checkerboard_layout(board):
+            bg._break_accidental_checkerboard(board)
+            emergency_solve = bg._solve_board(board, dictionary, (0, 99999), min_word_length, max_depth=25, store_paths=True, timeout=10.0, bonus_cell=bonus_cell, use_added_words=use_added_words)
+            words_filtered = [w for w in emergency_solve if len(w) >= min_word_length]
+            paths_filtered = {w: p for w, p in emergency_solve.items() if len(w) >= min_word_length}
 
     actual_cnt = len(words_filtered)
     if is_24h:
@@ -8625,6 +8650,12 @@ class RoomManager:
                                     board, all_words_dict, u_ratio = self.board_generator._boost_uniqueness(board, d_val, search_dict, search_min, med_min, rows, cols)
                                     all_words = sorted(list(all_words_dict.keys()))
                                     gen_diff = self.board_generator.get_difficulty_label(u_ratio, rows, cols, search_dict, depth=d_val, board=board, min_word_length=search_min)
+                                if 'checkerboard' in str(search_fmt).lower():
+                                    if not self.board_generator._is_checkerboard_layout(board):
+                                        self.board_generator._verify_checkerboard_safeguard(board)
+                                        all_words_dict = self.board_generator._solve_board(board, search_dict, (0, 99999), search_min, max_depth=25, store_paths=True, timeout=10.0, use_added_words=use_aw_flag)
+                                        all_words = sorted(list(all_words_dict.keys()))
+                                        u_ratio = self.board_generator.get_uniqueness_ratio(board, all_words, rows, cols, search_dict, d_val)
                                 if gen_diff != search_diff_base and board_attempts < 4:
                                     print(f"[RoomManager] Generated board difficulty '{gen_diff}' (ratio {u_ratio:.3f}) != requested '{search_diff_base}'. Retrying generation attempt {board_attempts + 1}...")
                                     board_attempts += 1
@@ -10010,6 +10041,40 @@ class RoomManager:
                                 print(f"[RoomManager] Mania Guard: Room {room_id} has format {_fmt_cur} with {_m_cnt} '{_m_letter}' (target {_target_m_cnt}). Preserving board without overwriting live cells to protect word count integrity.")
                 except Exception as _mania_guard_err:
                     print(f"[RoomManager] Mania guard error: {_mania_guard_err}")
+
+                # CHECKERBOARD GUARD: Guarantee active board strictly matches announced format
+                try:
+                    _fmt_cur_chk = str(room.current_board_format or '').lower()
+                    if 'checkerboard' in _fmt_cur_chk and room.board:
+                        if not self.board_generator._is_checkerboard_layout(room.board):
+                            print(f"[RoomManager] Checkerboard Guard: Enforcing strict C/V alternation on active board for {room_id}")
+                            self.board_generator._verify_checkerboard_safeguard(room.board)
+                            _is_chk_aw = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper()) or ('+AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                            _re_chk = self.board_generator._solve_board(room.board, room.current_dictionary, (0, 99999), display_min, max_depth=25, store_paths=True, timeout=10.0, use_added_words=_is_chk_aw)
+                            room.all_words_paths = {w: p for w, p in _re_chk.items() if len(w) >= display_min}
+                            room.all_words = set(room.all_words_paths.keys())
+                            room.total_words_count = len(room.all_words)
+                            room.initial_total_words = room.total_words_count
+                            if hasattr(word_validator, 'word_validator'):
+                                word_validator.word_validator.ensure_csw_loaded()
+                                room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                                room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)] if room.use_added_words else []
+                    elif room.board and getattr(room, 'game_type', None) != 'subanagrams':
+                        if self.board_generator._is_checkerboard_layout(room.board):
+                            print(f"[RoomManager] Checkerboard Guard: Breaking accidental checkerboard pattern on non-checkerboard board for {room_id}")
+                            self.board_generator._break_accidental_checkerboard(room.board)
+                            _is_acc_aw = bool(getattr(room, 'use_added_words', False)) or ('+ AW' in str(getattr(room, 'current_dictionary', '')).upper()) or ('+AW' in str(getattr(room, 'current_dictionary', '')).upper())
+                            _re_acc = self.board_generator._solve_board(room.board, room.current_dictionary, (0, 99999), display_min, max_depth=25, store_paths=True, timeout=10.0, use_added_words=_is_acc_aw)
+                            room.all_words_paths = {w: p for w, p in _re_acc.items() if len(w) >= display_min}
+                            room.all_words = set(room.all_words_paths.keys())
+                            room.total_words_count = len(room.all_words)
+                            room.initial_total_words = room.total_words_count
+                            if hasattr(word_validator, 'word_validator'):
+                                word_validator.word_validator.ensure_csw_loaded()
+                                room.csw_only_words = [w for w in room.all_words if word_validator.word_validator.is_csw_only(w)]
+                                room.added_words = [w for w in room.all_words if word_validator.word_validator.is_added_word(w)] if room.use_added_words else []
+                except Exception as _chk_guard_err:
+                    print(f"[RoomManager] Checkerboard guard error: {_chk_guard_err}")
 
                 # --- 4. ACCURACY ENFORCEMENT (inside lock — all_words must be consistent before state='active') ---
                 # These loops run over ~100-500 words and take < 5ms — not the bottleneck.
