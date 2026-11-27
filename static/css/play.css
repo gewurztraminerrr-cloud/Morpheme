@@ -3901,15 +3901,136 @@ body.theme-light-gray .word-item.missed .word-text {
 .seq-results-container {
     flex: 1;
     margin-top: 20px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(var(--text-primary-rgb), 0.1);
-    border-radius: 12px;
-    overflow: hidden;
+    background: rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(var(--text-primary-rgb), 0.12);
+    border-radius: 14px !important;
+    overflow: hidden !important;
     display: flex;
     flex-direction: column;
     height: calc(100vh - 270px);
     max-height: 650px;
     min-height: 320px;
+    box-sizing: border-box;
+}
+
+.seq-results-header {
+    padding: 10px 16px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.1);
+    color: var(--text-primary);
+    border-radius: 14px 14px 0 0;
+}
+
+.seq-output-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.seq-word-row td,
+.seq-word-cell {
+    padding: 5px 12px !important;
+    border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.06) !important;
+    transition: background 0.15s ease;
+}
+
+.seq-word-row:hover td,
+.seq-word-row:hover .seq-word-cell {
+    background: rgba(var(--text-primary-rgb), 0.07) !important;
+}
+
+#tool-sequence .clickable-word-link {
+    color: var(--accent-color, #38bdf8);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+#tool-sequence .clickable-word-link:hover {
+    color: #60a5fa;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Bright styling for Sequence Output Table in Light-Colored Layouts */
+body.theme-white .seq-results-container,
+body[class*="theme-white"] .seq-results-container,
+[class*="theme-white"] .seq-results-container,
+body[class*="theme-light-"] .seq-results-container,
+[class*="theme-light-"] .seq-results-container {
+    background: #ffffff !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+body.theme-white .seq-results-header,
+body[class*="theme-white"] .seq-results-header,
+[class*="theme-white"] .seq-results-header,
+body[class*="theme-light-"] .seq-results-header,
+[class*="theme-light-"] .seq-results-header {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-bottom: 1.5px solid rgba(0, 0, 0, 0.1) !important;
+    font-weight: 800 !important;
+    font-size: 0.95rem !important;
+}
+
+body.theme-white .seq-output-table,
+body[class*="theme-white"] .seq-output-table,
+[class*="theme-white"] .seq-output-table,
+body[class*="theme-light-"] .seq-output-table,
+[class*="theme-light-"] .seq-output-table {
+    background: #ffffff !important;
+}
+
+body.theme-white .seq-word-row td,
+body.theme-white .seq-word-cell,
+body[class*="theme-white"] .seq-word-row td,
+body[class*="theme-white"] .seq-word-cell,
+[class*="theme-white"] .seq-word-row td,
+[class*="theme-white"] .seq-word-cell,
+body[class*="theme-light-"] .seq-word-row td,
+body[class*="theme-light-"] .seq-word-cell,
+[class*="theme-light-"] .seq-word-row td,
+[class*="theme-light-"] .seq-word-cell {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #0f172a !important;
+}
+
+body.theme-white .seq-word-row:hover td,
+body.theme-white .seq-word-row:hover .seq-word-cell,
+body[class*="theme-white"] .seq-word-row:hover td,
+body[class*="theme-white"] .seq-word-row:hover .seq-word-cell,
+[class*="theme-white"] .seq-word-row:hover td,
+[class*="theme-white"] .seq-word-row:hover .seq-word-cell,
+body[class*="theme-light-"] .seq-word-row:hover td,
+body[class*="theme-light-"] .seq-word-row:hover .seq-word-cell,
+[class*="theme-light-"] .seq-word-row:hover td,
+[class*="theme-light-"] .seq-word-row:hover .seq-word-cell {
+    background: #f0f9ff !important;
+}
+
+body.theme-white #tool-sequence .clickable-word-link,
+body[class*="theme-white"] #tool-sequence .clickable-word-link,
+[class*="theme-white"] #tool-sequence .clickable-word-link,
+body[class*="theme-light-"] #tool-sequence .clickable-word-link,
+[class*="theme-light-"] #tool-sequence .clickable-word-link {
+    color: #0284c7 !important;
+    font-weight: 700 !important;
+}
+
+body.theme-white #tool-sequence .clickable-word-link:hover,
+body[class*="theme-white"] #tool-sequence .clickable-word-link:hover,
+[class*="theme-white"] #tool-sequence .clickable-word-link:hover,
+body[class*="theme-light-"] #tool-sequence .clickable-word-link:hover,
+[class*="theme-light-"] #tool-sequence .clickable-word-link:hover {
+    color: #0369a1 !important;
+    text-decoration: underline !important;
 }
 
 /* --- MANUAL TOOL STYLING --- */
@@ -27628,5 +27749,154 @@ body.is-mobile #word-length-radar,
 .profile-stats-grid .stat-box .stat-desc {
     margin-top: 4px !important;
     line-height: 1 !important;
+}
+
+/* ========================================================
+   ROUNDED EDGES FOR ALL PANELS IN TOOLS, MODS, AND SETTINGS
+   ======================================================== */
+
+/* Outer Split Layouts & Sidebars (Desktop & Mobile) */
+#page-tools .tools-split-layout,
+#page-mods .tools-split-layout,
+#page-settings .tools-split-layout,
+.tools-split-layout {
+    border-radius: 16px !important;
+    overflow: hidden !important;
+}
+
+#page-tools .tools-sidebar,
+#page-mods .tools-sidebar,
+#page-settings .tools-sidebar,
+.tools-sidebar {
+    border-radius: 14px !important;
+}
+
+#page-tools .tools-content-column,
+#page-mods .tools-content-column,
+#page-settings .tools-content-column,
+.tools-content-column {
+    border-radius: 14px !important;
+    overflow: hidden !important;
+}
+
+#page-tools .tools-content,
+#page-mods .tools-content,
+#page-settings .tools-content,
+.tools-content {
+    border-radius: 14px !important;
+}
+
+#page-tools .tool-pane,
+#page-mods .tool-pane,
+#page-settings .tool-pane,
+.tool-pane {
+    border-radius: 14px !important;
+}
+
+/* Tools Inner Panels, Containers & Cards */
+#page-tools .combo-control-panel,
+#page-tools .combo-unified-panel,
+#page-tools .combo-results-container,
+#page-tools .combo-explorer-card,
+#page-tools .seq-results-container,
+#page-tools .lists-container,
+#page-tools .list-column,
+#page-tools .random-word-container,
+#page-tools .reverse-dict-input-panel,
+#page-tools .reverse-dict-table-card,
+#page-tools .work-on-input-panel,
+#page-tools .work-on-table-card,
+#page-tools .subanagrams-container,
+#page-tools .subanagrams-game-area,
+#page-tools .unscramble-container,
+#page-tools .unscramble-game-area,
+#page-tools .new-users-table-container,
+#page-tools .word-chart-table-container,
+#page-tools .good-at-summary-banner,
+#page-tools .good-at-table-container,
+#page-tools .account-card,
+#page-tools .result-section,
+#page-tools .wotd-container,
+#page-tools .manual-grid-scroll,
+#page-tools #valid-results-container,
+#page-tools .timer-container,
+#page-tools .store-item,
+#page-tools .store-item-image {
+    border-radius: 14px !important;
+}
+
+#page-tools .combo-tabs-header,
+#page-tools .work-on-table-header,
+#page-tools .reverse-dict-table-header,
+#page-tools .sub-tab-bar,
+#page-tools .player-stats-subtabs {
+    border-radius: 10px !important;
+}
+
+/* Mods Inner Panels & Cards */
+#page-mods .mod-action-card,
+#page-mods .mod-add-section,
+#page-mods .mod-words-box,
+#page-mods .def-entry-card,
+#page-mods .def-guidelines-card,
+#page-mods .timeout-duration-box,
+#page-mods .tool-pane > div:not(.tool-header) {
+    border-radius: 14px !important;
+}
+
+/* Settings Inner Panels, Cards & Subpages */
+#page-settings .settings-subnav-menu,
+#page-settings .settings-subnav-btn,
+#page-settings .setting-card,
+#page-settings .setting-subpage,
+#page-settings .setting-subpage-content,
+#page-settings .settings-preview-box,
+#page-settings .preview-board-container,
+#page-settings .highlight-preview-box,
+#page-settings .dim-slider-box,
+#page-settings .cube-container,
+#page-settings .synesthesia-section,
+#page-settings .tool-pane > div:not(.tool-header) {
+    border-radius: 14px !important;
+}
+
+/* Mobile Responsive Panels */
+@media (max-width: 900px) {
+    body.is-mobile #page-tools .tools-sidebar,
+    body.is-mobile #page-mods .tools-sidebar,
+    body.is-mobile #page-settings .tools-sidebar,
+    #page-tools .tools-sidebar,
+    #page-mods .tools-sidebar,
+    #page-settings .tools-sidebar {
+        border-radius: 16px !important;
+    }
+
+    body.is-mobile #page-tools .tools-content-column,
+    body.is-mobile #page-mods .tools-content-column,
+    body.is-mobile #page-settings .tools-content-column,
+    #page-tools .tools-content-column,
+    #page-mods .tools-content-column,
+    #page-settings .tools-content-column {
+        border-radius: 16px !important;
+        overflow: hidden !important;
+    }
+
+    body.is-mobile #page-tools .tools-content,
+    body.is-mobile #page-mods .tools-content,
+    body.is-mobile #page-settings .tools-content,
+    #page-tools .tools-content,
+    #page-mods .tools-content,
+    #page-settings .tools-content {
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    body.is-mobile #page-tools .mobile-bottom-nav,
+    body.is-mobile #page-mods .mobile-bottom-nav,
+    body.is-mobile #page-settings .mobile-bottom-nav,
+    #page-tools .mobile-bottom-nav,
+    #page-mods .mobile-bottom-nav,
+    #page-settings .mobile-bottom-nav {
+        border-radius: 0 0 16px 16px !important;
+    }
 }
 

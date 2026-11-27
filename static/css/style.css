@@ -595,6 +595,12 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     body:not(.is-mobile)[class*="theme-white"] #page-tools .seq-results-container,
     body.is-desktop.theme-white #page-tools .seq-results-container,
     body.is-desktop[class*="theme-white"] #page-tools .seq-results-container,
+    body.theme-white #page-tools #seq-results-container,
+    [class*="theme-white"] #page-tools #seq-results-container,
+    [class*="theme-light-"] #page-tools #seq-results-container,
+    [class*="theme-light-"] #page-tools .seq-results-container,
+    body[class*="theme-light-"] #page-tools #seq-results-container,
+    body[class*="theme-light-"] #page-tools .seq-results-container,
 
     body:not(.is-mobile).theme-white #page-tools .subanagrams-game-area,
     body:not(.is-mobile)[class*="theme-white"] #page-tools .subanagrams-game-area,
@@ -657,7 +663,7 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     body.is-desktop[class*="theme-white"] #page-tools .store-item {
         background: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         overflow: hidden !important;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
         color: var(--text-primary) !important;
@@ -683,11 +689,6 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     body:not(.is-mobile)[class*="theme-white"] #page-tools #combo-results,
     body.is-desktop.theme-white #page-tools #combo-results,
     body.is-desktop[class*="theme-white"] #page-tools #combo-results,
-
-    body:not(.is-mobile).theme-white #page-tools #seq-results-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools #seq-results-container,
-    body.is-desktop.theme-white #page-tools #seq-results-container,
-    body.is-desktop[class*="theme-white"] #page-tools #seq-results-container,
 
     body:not(.is-mobile).theme-white #page-tools #sub-results-container,
     body:not(.is-mobile)[class*="theme-white"] #page-tools #sub-results-container,
@@ -840,7 +841,6 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
 [class*="theme-light-"] .combo-results-container,
 [class*="theme-light-"] #combo-results,
 [class*="theme-light-"] #sub-results-container,
-[class*="theme-light-"] #seq-results-container,
 [class*="theme-light-"] #find-count-results-container {
     background: transparent !important;
     border: none !important;

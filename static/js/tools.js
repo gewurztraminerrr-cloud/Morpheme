@@ -8613,18 +8613,18 @@ async function runSequenceSearch() {
 
         // Render Results Table
         let html = `
-            <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.2);">
+            <div class="seq-results-header">
                 Found ${count} words
             </div>
             <div class="list-scroll-area-wrapper" style="position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column;">
                 <div class="seq-scroll-area list-scroll-area" id="seq-list-results" style="height: 100%; overflow-y: auto; padding: 10px;">
-                    <table class="group-table" style="width: 100%;">
+                    <table class="group-table seq-output-table" style="width: 100%;">
                         <tbody>
         `;
 
         // Clickable words for Sequence search
         html += words.map(w => `
-            <tr class="seq-word-row" data-word="${w}"><td style="padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+            <tr class="seq-word-row" data-word="${w}"><td class="seq-word-cell">
                 <span class="clickable-word-link" onclick="window.lookupWord('${w}', event)" style="font-family: monospace;">${w}</span>
             </td></tr>
         `).join('');
