@@ -12267,6 +12267,32 @@ body.theme-white #sub-word-input,
     color: var(--text-primary) !important;
 }
 
+body.theme-white #sub-input.tool-input-valid,
+body.theme-white #sub-word-input.tool-input-valid,
+body[class*="theme-light-"] #sub-input.tool-input-valid,
+body[class*="theme-light-"] #sub-word-input.tool-input-valid,
+body[class*="theme-white"] #sub-input.tool-input-valid,
+body[class*="theme-white"] #sub-word-input.tool-input-valid {
+    border-color: #4caf50 !important;
+    border-width: 2px !important;
+    border-style: solid !important;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.75) !important;
+    transition: none !important;
+}
+
+body.theme-white #sub-input.tool-input-invalid,
+body.theme-white #sub-word-input.tool-input-invalid,
+body[class*="theme-light-"] #sub-input.tool-input-invalid,
+body[class*="theme-light-"] #sub-word-input.tool-input-invalid,
+body[class*="theme-white"] #sub-input.tool-input-invalid,
+body[class*="theme-white"] #sub-word-input.tool-input-invalid {
+    border-color: #ff5252 !important;
+    border-width: 2px !important;
+    border-style: solid !important;
+    box-shadow: 0 0 10px rgba(255, 82, 82, 0.75) !important;
+    transition: none !important;
+}
+
 body.theme-white #sub-word-input::placeholder,
 [class*="theme-white"] #sub-word-input::placeholder,
 [class*="theme-light-"] #sub-word-input::placeholder {

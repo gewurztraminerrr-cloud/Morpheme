@@ -9309,21 +9309,25 @@ function highlightToolInput(inputEl, isValid) {
         inputEl._borderTimeout = null;
     }
     const color = isValid ? '#4caf50' : '#ff5252';
-    const shadow = isValid ? '0 0 8px rgba(76, 175, 80, 0.6)' : '0 0 8px rgba(255, 82, 82, 0.6)';
+    const shadow = isValid ? '0 0 10px rgba(76, 175, 80, 0.75)' : '0 0 10px rgba(255, 82, 82, 0.75)';
+
+    inputEl.classList.remove('tool-input-valid', 'tool-input-invalid');
+    inputEl.classList.add(isValid ? 'tool-input-valid' : 'tool-input-invalid');
+
     inputEl.style.setProperty('border-color', color, 'important');
     inputEl.style.setProperty('border-width', '2px', 'important');
     inputEl.style.setProperty('border-style', 'solid', 'important');
     inputEl.style.setProperty('box-shadow', shadow, 'important');
     inputEl.style.setProperty('outline', 'none', 'important');
-    inputEl.style.borderColor = color;
+
     inputEl._borderTimeout = setTimeout(() => {
         if (inputEl) {
+            inputEl.classList.remove('tool-input-valid', 'tool-input-invalid');
             inputEl.style.removeProperty('border-color');
             inputEl.style.removeProperty('border-width');
             inputEl.style.removeProperty('border-style');
             inputEl.style.removeProperty('box-shadow');
             inputEl.style.removeProperty('outline');
-            inputEl.style.borderColor = '';
             inputEl._borderTimeout = null;
         }
     }, 500);
@@ -9487,7 +9491,7 @@ function setupSubanagramsTool() {
         customInput.addEventListener('focus', function() { this.value = ''; });
         customInput.addEventListener('click', function() { this.value = ''; });
         const handleCustomEnter = (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.keyCode === 13 || e.which === 13) {
                 e.preventDefault();
                 const raw = customInput.value.trim();
                 const dict = getDict();
@@ -9501,6 +9505,16 @@ function setupSubanagramsTool() {
         };
         customInput.addEventListener('keydown', handleCustomEnter);
         customInput.addEventListener('keypress', handleCustomEnter);
+        customInput.addEventListener('search', () => {
+            const raw = customInput.value.trim();
+            const dict = getDict();
+            const minLen = getMinLen();
+            if (raw) {
+                findAndRevealAllSubanagrams(raw, dict, minLen);
+            } else {
+                highlightToolInput(customInput, false);
+            }
+        });
     }
 
     if (modeSelect) {
@@ -9551,20 +9565,26 @@ function setupSubanagramsTool() {
         submitBtn.addEventListener('pointerdown', (e) => {
             e.preventDefault();
         });
-        submitBtn.addEventListener('click', submitSubanagramWord);
+        submitBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            submitSubanagramWord();
+        });
     }
 
     if (wordInput) {
         wordInput.addEventListener('focus', function() { this.value = ''; });
         wordInput.addEventListener('click', function() { this.value = ''; });
         const handleWordEnter = (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' || e.keyCode === 13 || e.which === 13) {
                 e.preventDefault();
                 submitSubanagramWord();
             }
         };
         wordInput.addEventListener('keydown', handleWordEnter);
         wordInput.addEventListener('keypress', handleWordEnter);
+        wordInput.addEventListener('search', () => {
+            submitSubanagramWord();
+        });
     }
 
     if (revealBtn) revealBtn.addEventListener('click', revealAllSubanagrams);
@@ -9891,6 +9911,7 @@ function submitSubanagramWord() {
     };
 
     if (!word) {
+        highlightSubWordInput(false);
         refocus();
         return;
     }

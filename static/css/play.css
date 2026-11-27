@@ -6455,7 +6455,25 @@ body[class*="theme-light-"] #random-words-table-body .suggested-word-cell,
     vertical-align: middle !important;
     border: 2px solid rgba(255, 255, 255, 0.15);
     outline: none;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tool-input-valid {
+    border-color: #4caf50 !important;
+    border-width: 2px !important;
+    border-style: solid !important;
+    box-shadow: 0 0 10px rgba(76, 175, 80, 0.75) !important;
+    outline: none !important;
+    transition: none !important;
+}
+
+.tool-input-invalid {
+    border-color: #ff5252 !important;
+    border-width: 2px !important;
+    border-style: solid !important;
+    box-shadow: 0 0 10px rgba(255, 82, 82, 0.75) !important;
+    outline: none !important;
+    transition: none !important;
 }
 
 #combo-input {
@@ -17314,8 +17332,28 @@ body.theme-white .find-count-division-badge,
         background: rgba(0, 0, 0, 0.35) !important;
         border: 2px solid rgba(167, 139, 250, 0.35) !important;
         outline: none !important;
-        transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
         color: #fff !important;
+    }
+
+    #tool-subanagrams #sub-word-input.tool-input-valid,
+    #tool-subanagrams #sub-input.tool-input-valid {
+        border-color: #4caf50 !important;
+        border-width: 2px !important;
+        border-style: solid !important;
+        box-shadow: 0 0 10px rgba(76, 175, 80, 0.75) !important;
+        outline: none !important;
+        transition: none !important;
+    }
+
+    #tool-subanagrams #sub-word-input.tool-input-invalid,
+    #tool-subanagrams #sub-input.tool-input-invalid {
+        border-color: #ff5252 !important;
+        border-width: 2px !important;
+        border-style: solid !important;
+        box-shadow: 0 0 10px rgba(255, 82, 82, 0.75) !important;
+        outline: none !important;
+        transition: none !important;
     }
 
     #tool-subanagrams #sub-submit-word-btn {
