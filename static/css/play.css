@@ -3957,15 +3957,167 @@ body.theme-light-gray .word-item.missed .word-text {
 }
 
 /* Bright styling for Sequence Output Table in Light-Colored Layouts */
-body.theme-white .seq-results-container,
-body[class*="theme-white"] .seq-results-container,
-[class*="theme-white"] .seq-results-container,
-body[class*="theme-light-"] .seq-results-container,
-[class*="theme-light-"] .seq-results-container {
+body.theme-white #tool-sequence .seq-results-container,
+body[class*="theme-white"] #tool-sequence .seq-results-container,
+[class*="theme-white"] #tool-sequence .seq-results-container,
+body[class*="theme-light-"] #tool-sequence .seq-results-container,
+[class*="theme-light-"] #tool-sequence .seq-results-container,
+body.theme-white #seq-results-container,
+body[class*="theme-white"] #seq-results-container,
+[class*="theme-white"] #seq-results-container,
+body[class*="theme-light-"] #seq-results-container,
+[class*="theme-light-"] #seq-results-container {
     background: #ffffff !important;
     border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
     border-radius: 14px !important;
+}
+
+/* Light Grey styling for Subanagrams Words Panel and Unscramble History Panel in Light-Colored Layouts */
+body.theme-white #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-white"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-white"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-light-"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-light-"] #page-tools #tool-subanagrams #sub-results-container,
+body.theme-white #tool-subanagrams #sub-results-container,
+[class*="theme-white"] #tool-subanagrams #sub-results-container,
+body[class*="theme-light-"] #tool-subanagrams #sub-results-container,
+[class*="theme-light-"] #tool-subanagrams #sub-results-container,
+body.theme-white #sub-results-container,
+[class*="theme-white"] #sub-results-container,
+body[class*="theme-light-"] #sub-results-container,
+[class*="theme-light-"] #sub-results-container,
+body.theme-white #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-white"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-white"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-light-"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-light-"] #page-tools #tool-unscramble #unscramble-found-container,
+body.theme-white #tool-unscramble #unscramble-found-container,
+[class*="theme-white"] #tool-unscramble #unscramble-found-container,
+body[class*="theme-light-"] #tool-unscramble #unscramble-found-container,
+[class*="theme-light-"] #tool-unscramble #unscramble-found-container,
+body.theme-white #unscramble-found-container,
+[class*="theme-white"] #unscramble-found-container,
+body[class*="theme-light-"] #unscramble-found-container,
+[class*="theme-light-"] #unscramble-found-container {
+    background: #f1f5f9 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* Subanagrams Words Panel Elements in Light Layouts */
+body.theme-white #sub-results-container .sub-group-header,
+[class*="theme-white"] #sub-results-container .sub-group-header,
+body[class*="theme-light-"] #sub-results-container .sub-group-header,
+[class*="theme-light-"] #sub-results-container .sub-group-header {
+    color: #0f172a !important;
+    font-weight: 800 !important;
+}
+
+body.theme-white #sub-results-container .group-table td,
+[class*="theme-white"] #sub-results-container .group-table td,
+body[class*="theme-light-"] #sub-results-container .group-table td,
+[class*="theme-light-"] #sub-results-container .group-table td {
+    border-bottom: 1px solid #cbd5e1 !important;
+}
+
+body.theme-white #sub-results-container .clickable-word-link,
+[class*="theme-white"] #sub-results-container .clickable-word-link,
+body[class*="theme-light-"] #sub-results-container .clickable-word-link,
+[class*="theme-light-"] #sub-results-container .clickable-word-link {
+    color: #0f172a !important;
+}
+
+body.theme-white #sub-results-container .seq-results-placeholder,
+[class*="theme-white"] #sub-results-container .seq-results-placeholder,
+body[class*="theme-light-"] #sub-results-container .seq-results-placeholder,
+[class*="theme-light-"] #sub-results-container .seq-results-placeholder,
+body.theme-white #sub-results-container .sub-empty-prompt,
+[class*="theme-white"] #sub-results-container .sub-empty-prompt,
+body[class*="theme-light-"] #sub-results-container .sub-empty-prompt,
+[class*="theme-light-"] #sub-results-container .sub-empty-prompt {
+    color: #475569 !important;
+}
+
+/* Unscramble History Panel Elements in Light Layouts */
+body.theme-white #unscramble-found-container h3,
+[class*="theme-white"] #unscramble-found-container h3,
+body[class*="theme-light-"] #unscramble-found-container h3,
+[class*="theme-light-"] #unscramble-found-container h3 {
+    color: #475569 !important;
+    border-bottom: 1.5px solid #cbd5e1 !important;
+}
+
+body.theme-white #unscramble-found-container div[style*="letter-spacing: 1.5px"],
+[class*="theme-white"] #unscramble-found-container div[style*="letter-spacing: 1.5px"],
+body[class*="theme-light-"] #unscramble-found-container div[style*="letter-spacing: 1.5px"],
+[class*="theme-light-"] #unscramble-found-container div[style*="letter-spacing: 1.5px"] {
+    color: #312e81 !important;
+    text-shadow: none !important;
+}
+
+body.theme-white #unscramble-found-container div[style*="letter-spacing: 2px"],
+[class*="theme-white"] #unscramble-found-container div[style*="letter-spacing: 2px"],
+body[class*="theme-light-"] #unscramble-found-container div[style*="letter-spacing: 2px"],
+[class*="theme-light-"] #unscramble-found-container div[style*="letter-spacing: 2px"] {
+    color: #0f172a !important;
+}
+
+body.theme-white #unscramble-found-container button[onclick*="clearUnscrambleHistory"],
+[class*="theme-white"] #unscramble-found-container button[onclick*="clearUnscrambleHistory"],
+body[class*="theme-light-"] #unscramble-found-container button[onclick*="clearUnscrambleHistory"],
+[class*="theme-light-"] #unscramble-found-container button[onclick*="clearUnscrambleHistory"] {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
+}
+
+body.theme-white #unscramble-found-container .unscramble-history-item,
+[class*="theme-white"] #unscramble-found-container .unscramble-history-item,
+body[class*="theme-light-"] #unscramble-found-container .unscramble-history-item,
+[class*="theme-light-"] #unscramble-found-container .unscramble-history-item {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+body.theme-white #unscramble-found-container .unscramble-history-jumbled,
+[class*="theme-white"] #unscramble-found-container .unscramble-history-jumbled,
+body[class*="theme-light-"] #unscramble-found-container .unscramble-history-jumbled,
+[class*="theme-light-"] #unscramble-found-container .unscramble-history-jumbled {
+    color: #312e81 !important;
+}
+
+body.theme-white #unscramble-found-container .unscramble-history-pill,
+[class*="theme-white"] #unscramble-found-container .unscramble-history-pill,
+body[class*="theme-light-"] #unscramble-found-container .unscramble-history-pill,
+[class*="theme-light-"] #unscramble-found-container .unscramble-history-pill {
+    background: #f1f5f9 !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+body.theme-white #unscramble-found-container .unscramble-history-time,
+[class*="theme-white"] #unscramble-found-container .unscramble-history-time,
+body[class*="theme-light-"] #unscramble-found-container .unscramble-history-time,
+[class*="theme-light-"] #unscramble-found-container .unscramble-history-time {
+    color: #64748b !important;
+}
+
+body.theme-white #unscramble-found-container .unscramble-history-header,
+[class*="theme-white"] #unscramble-found-container .unscramble-history-header,
+body[class*="theme-light-"] #unscramble-found-container .unscramble-history-header,
+[class*="theme-light-"] #unscramble-found-container .unscramble-history-header {
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+body.theme-white #unscramble-found-container .clickable-word-link,
+[class*="theme-white"] #unscramble-found-container .clickable-word-link,
+body[class*="theme-light-"] #unscramble-found-container .clickable-word-link,
+[class*="theme-light-"] #unscramble-found-container .clickable-word-link {
+    text-shadow: none !important;
 }
 
 body.theme-white .seq-results-header,

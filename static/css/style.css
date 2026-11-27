@@ -622,11 +622,6 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     body.is-desktop.theme-white #page-tools .unscramble-game-area,
     body.is-desktop[class*="theme-white"] #page-tools .unscramble-game-area,
 
-    body:not(.is-mobile).theme-white #page-tools #unscramble-found-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools #unscramble-found-container,
-    body.is-desktop.theme-white #page-tools #unscramble-found-container,
-    body.is-desktop[class*="theme-white"] #page-tools #unscramble-found-container,
-
     body:not(.is-mobile).theme-white #page-tools .random-words-table-wrapper,
     body:not(.is-mobile)[class*="theme-white"] #page-tools .random-words-table-wrapper,
     body.is-desktop.theme-white #page-tools .random-words-table-wrapper,
@@ -689,11 +684,6 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
     body:not(.is-mobile)[class*="theme-white"] #page-tools #combo-results,
     body.is-desktop.theme-white #page-tools #combo-results,
     body.is-desktop[class*="theme-white"] #page-tools #combo-results,
-
-    body:not(.is-mobile).theme-white #page-tools #sub-results-container,
-    body:not(.is-mobile)[class*="theme-white"] #page-tools #sub-results-container,
-    body.is-desktop.theme-white #page-tools #sub-results-container,
-    body.is-desktop[class*="theme-white"] #page-tools #sub-results-container,
 
     body:not(.is-mobile).theme-white #page-tools #find-count-results-container,
     body:not(.is-mobile)[class*="theme-white"] #page-tools #find-count-results-container,
@@ -840,7 +830,6 @@ body[class*="theme-light-"] .tool-nav-btn:not(.active):hover .tool-btn-title {
 [class*="theme-light-"] .list-scroll-area,
 [class*="theme-light-"] .combo-results-container,
 [class*="theme-light-"] #combo-results,
-[class*="theme-light-"] #sub-results-container,
 [class*="theme-light-"] #find-count-results-container {
     background: transparent !important;
     border: none !important;
@@ -12301,17 +12290,12 @@ body.theme-white #sub-submit-word-btn,
 }
 
 body.theme-white #sub-results-container,
-[class*="theme-white"] #sub-results-container {
-    background: #ffffff !important;
-    border: 1.5px solid #cbd5e1 !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
-}
-
+[class*="theme-white"] #sub-results-container,
+body[class*="theme-light-"] #sub-results-container,
 [class*="theme-light-"] #sub-results-container {
-    background: var(--bg-primary) !important;
-    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
-    border: 1.5px solid var(--card-border) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    background: #f1f5f9 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
 }
 
 .seq-results-placeholder {
@@ -12438,17 +12422,12 @@ body.theme-white #tool-unscramble .unscramble-game-area,
 }
 
 body.theme-white #unscramble-found-container,
-[class*="theme-white"] #unscramble-found-container {
-    background: #ffffff !important;
-    border: 1.5px solid #cbd5e1 !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
-}
-
+[class*="theme-white"] #unscramble-found-container,
+body[class*="theme-light-"] #unscramble-found-container,
 [class*="theme-light-"] #unscramble-found-container {
-    background: var(--bg-primary) !important;
-    background-image: linear-gradient(var(--bg-panel), var(--bg-panel)) !important;
-    border: 1.5px solid var(--card-border) !important;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+    background: #f1f5f9 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
 }
 
 body.theme-white #unscramble-found-container h3,
