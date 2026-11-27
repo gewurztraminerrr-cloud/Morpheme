@@ -1563,7 +1563,12 @@ window.showModTab = function(tabId) {
         const paneTitle = content.querySelector(`#mod-tab-${tabId} .tool-header h2`);
         if (paneTitle) tabTitle = paneTitle.textContent.trim();
     }
-    if (titleHeader) {
+    if (typeof window.updatePageTitleWithHelp === 'function') {
+        const targetSel = (tabId === 'access') ? '#mod-tab-access .tool-header p' : null;
+        const descEl = content ? content.querySelector(`#mod-tab-${tabId} .tool-header p`) : null;
+        const modDesc = descEl ? descEl.textContent.trim() : '';
+        window.updatePageTitleWithHelp('page-mods', tabTitle ? `Mods - ${tabTitle}` : 'Mods', modDesc, targetSel);
+    } else if (titleHeader) {
         titleHeader.textContent = tabTitle ? `Mods - ${tabTitle}` : 'Mods';
         titleHeader.classList.remove('title-hidden');
     }
@@ -1633,7 +1638,9 @@ window.resetModsTab = function(immediate = false) {
     const sidebar = document.querySelector('#page-mods .tools-sidebar');
     const content = document.querySelector('#page-mods .tools-content');
     const titleHeader = document.querySelector('#page-mods .page-title-header');
-    if (titleHeader) {
+    if (typeof window.updatePageTitleWithHelp === 'function') {
+        window.updatePageTitleWithHelp('page-mods', 'Mods', 'Administrative and moderation controls for Morpheme.');
+    } else if (titleHeader) {
         titleHeader.textContent = 'Mods';
         titleHeader.classList.remove('title-hidden');
     }

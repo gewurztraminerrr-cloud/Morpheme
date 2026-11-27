@@ -258,13 +258,13 @@
         }
     </script>
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1795689000" as="style">
+    <link rel="preload" href="/css/style.css?v=1795690000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794380007" as="style">
-    <link rel="preload" href="/css/play.css?v=1795689000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1795689000" onerror="_handleStyleRetry(this)">
+    <link rel="preload" href="/css/play.css?v=1795690000" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1795690000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/lobby.css?v=1794380007" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/play.css?v=1795689000" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=1792844000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1795690000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=1795690000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
     <style id="mobile-back-nav-theme-override">
@@ -1404,6 +1404,47 @@
             }
         };
 
+        
+        window.updatePageTitleWithHelp = function(pageId, titleText, descText, targetSel) {
+            var page = document.getElementById(pageId);
+            if (!page) return;
+            var header = page.querySelector('.page-title-header');
+            if (!header) return;
+
+            titleText = titleText || '';
+            var span = header.querySelector('.page-title-text');
+            var btn = header.querySelector('.title-help-btn');
+
+            if (!span) {
+                header.innerHTML = '';
+                span = document.createElement('span');
+                span.className = 'page-title-text';
+                header.appendChild(span);
+            }
+            span.textContent = titleText;
+
+            if (!btn) {
+                btn = document.createElement('button');
+                btn.className = 'title-help-btn';
+                btn.type = 'button';
+                btn.textContent = '?';
+                header.appendChild(btn);
+            }
+
+            btn.setAttribute('data-title', titleText);
+            if (targetSel) {
+                btn.setAttribute('data-desc-target', targetSel);
+                btn.removeAttribute('data-desc');
+            } else {
+                btn.setAttribute('data-desc', descText || '');
+                btn.removeAttribute('data-desc-target');
+            }
+            btn.setAttribute('title', 'About ' + titleText);
+            btn.setAttribute('aria-label', 'About ' + titleText);
+            btn.style.display = 'inline-flex';
+            header.classList.remove('title-hidden');
+        };
+
         window.showDescriptionPopup = function(title, description) {
             var modal = document.getElementById('description-info-modal');
             var titleEl = document.getElementById('desc-modal-title');
@@ -1602,7 +1643,7 @@
         <!-- Profile Page -->
         <div id="page-profile" class="page" style="display: none;">
                         <div class="tool-header">
-                            <h2>User Profile <button class="title-help-btn" type="button" data-title="User Profile" data-desc="View player stats and rankings." title="About User Profile" aria-label="About User Profile">?</button></h2>
+                            <h2>User Profile</h2>
                             <p>View player stats and rankings.</p>
                         </div>
 
@@ -4355,7 +4396,7 @@
 
         <!-- Tools Page -->
         <div id="page-tools" class="page">
-            <h2 class="page-title-header">Tools</h2>
+            <h2 class="page-title-header"><span class="page-title-text">Tools</span> <button class="title-help-btn" type="button" data-title="Tools" data-desc="Browse Morpheme's word study, validation, and analytics tools." title="About Tools" aria-label="About Tools">?</button></h2>
             <div class="tools-split-layout">
                 <!-- Sidebar (1/3) -->
                 <div class="tools-sidebar">
@@ -4435,7 +4476,7 @@
                     <!-- Find Count Interface -->
                     <div id="tool-find-count" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Find Count <button class="title-help-btn" type="button" data-title="Find Count" data-desc="Enter a word to see how many times it has been found since Morpheme began in 2026, as well as the 10 most recent users who found it." title="About Find Count" aria-label="About Find Count">?</button></h2>
+                            <h2>Find Count</h2>
                             <p>Enter a word to see how many times it has been found since Morpheme began in 2026, as well as the 10 most recent users who found it.</p>
                         </div>
                         <!-- Suggested Words Section (Above Search Input) -->
@@ -4501,7 +4542,7 @@
                     <!-- Words User is Good at Interface -->
                     <div id="tool-good-at" class="tool-pane" style="display: none; flex-direction: column; width: 100%; box-sizing: border-box;">
                         <div class="tool-header">
-                            <h2>Words User is Good at <button class="title-help-btn" type="button" data-title="Words User is Good at" data-desc="Discover what words do not fool players! Explore the words that experienced players consistently spot and master. Search for your own name to inspect your most reliable vocabulary, or search any player to study which challenging words never fool them. Explore words experienced players consistently spot and master. Search any player to inspect their mastered vocabulary." title="About Words User is Good at" aria-label="About Words User is Good at">?</button></h2>
+                            <h2>Words User is Good at</h2>
                             <p>
                                 <span class="header-full">Discover what words do not fool players! Explore the words that experienced players consistently spot and master. Search for your own name to inspect your most reliable vocabulary, or search any player to study which challenging words never fool them.</span>
                                 <span class="header-compact">Explore words experienced players consistently spot and master. Search any player to inspect their mastered vocabulary.</span>
@@ -4595,7 +4636,7 @@
                     <!-- Personal Timer Interface -->
                     <div id="tool-timer" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Personal Timer <button class="title-help-btn" type="button" data-title="Personal Timer" data-desc="Set a timer for your play session. When time is up, a gong will alert you at the same time as the red-flashing “Time’s up!” notice across the definitions panel as well." title="About Personal Timer" aria-label="About Personal Timer">?</button></h2>
+                            <h2>Personal Timer</h2>
                             <p>Set a timer for your play session. When time is up, a gong will alert you at the same time as the red-flashing “Time’s up!” notice across the definitions panel as well.</p>
                         </div>
                         <div class="combo-control-panel" style="padding: 40px; border-radius: 20px;">
@@ -4641,7 +4682,7 @@
                     <!-- Player Activity & Stats Interface -->
                     <div id="tool-new-users" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Player Activity & Stats <button class="title-help-btn" type="button" data-title="Player Activity & Stats" data-desc="Live platform counts, daily user activity, and recently registered members." title="About Player Activity & Stats" aria-label="About Player Activity & Stats">?</button></h2>
+                            <h2>Player Activity & Stats</h2>
                             <p>Live platform counts, daily user activity, and recently registered members.</p>
                         </div>
 
@@ -4729,7 +4770,7 @@
                     <!-- Word Charts Interface -->
                     <div id="tool-word-chart" class="tool-pane" style="display: none;">
                         <div class="tool-header">
-                            <h2>Word Charts <button class="title-help-btn" type="button" data-title="Word Charts" data-desc="Point values, dynamic divisions, and live dictionary counts." title="About Word Charts" aria-label="About Word Charts">?</button></h2>
+                            <h2>Word Charts</h2>
                             <p>Point values, dynamic divisions, and live dictionary counts.</p>
                         </div>
 
@@ -4876,7 +4917,7 @@
                     <!-- Change Password / Email Interface -->
                     <div id="tool-change-account" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Change Password / Email <button class="title-help-btn" type="button" data-title="Change Password / Email" data-desc="Update your account security and contact credentials." title="About Change Password / Email" aria-label="About Change Password / Email">?</button></h2>
+                            <h2>Change Password / Email</h2>
                             <p>Update your account security and contact credentials.</p>
                         </div>
 
@@ -4968,7 +5009,7 @@
                     <!-- Store Interface -->
                     <div id="tool-store" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Morpheme Store <button class="title-help-btn" type="button" data-title="Morpheme Store" data-desc="Tournament-grade hardware, official dictionaries, and accessories optimized for competitive play." title="About Morpheme Store" aria-label="About Morpheme Store">?</button></h2>
+                            <h2>Morpheme Store</h2>
                             <p>Tournament-grade hardware, official dictionaries, and accessories optimized for competitive play.</p>
                         </div>
                         <div class="store-scroll-area-wrapper list-scroll-area-wrapper" style="position: relative; flex: 1 1 0px; min-height: 0; height: 100%; display: flex; flex-direction: column; overflow: hidden;">
@@ -4987,7 +5028,7 @@
                     <!-- Word of the Day Interface -->
                     <div id="tool-wotd" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Word of the Day <button class="title-help-btn" type="button" data-title="Word of the Day" data-desc="A new word to learn and master every 24 hours." title="About Word of the Day" aria-label="About Word of the Day">?</button></h2>
+                            <h2>Word of the Day</h2>
                             <p>A new word to learn and master every 24 hours.</p>
                         </div>
 
@@ -5006,7 +5047,7 @@
                     <!-- Random Word Interface -->
                     <div id="tool-random" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Random Word Generator <button class="title-help-btn" type="button" data-title="Random Word Generator" data-desc="Discover new words based on length and dictionary criteria." title="About Random Word Generator" aria-label="About Random Word Generator">?</button></h2>
+                            <h2>Random Word Generator</h2>
                             <p>Discover new words based on length and dictionary criteria.</p>
                         </div>
 
@@ -5109,7 +5150,7 @@
                     <!-- Reverse Dictionary Interface -->
                     <div id="tool-reverse-dictionary" class="tool-pane" style="display: none; flex-direction: column; width: 100%; box-sizing: border-box;">
                         <div class="tool-header">
-                            <h2>Reverse Dictionary <button class="title-help-btn" type="button" data-title="Reverse Dictionary" data-desc="Search for words by definition keywords, inflections, or related concepts and synonyms." title="About Reverse Dictionary" aria-label="About Reverse Dictionary">?</button></h2>
+                            <h2>Reverse Dictionary</h2>
                             <p>Search for words by definition keywords, inflections, or related concepts and synonyms.</p>
                         </div>
 
@@ -5208,7 +5249,7 @@
                     <div id="tool-combo" class="tool-pane" style="display: none;">
                         <div id="combo-scroll-container" class="combo-scroll-container">
                             <div class="tool-header">
-                                <h2>Combo Checker <button class="title-help-btn" type="button" data-title="Combo Checker" data-desc="Find connected words via MP and LIC, and explore connections using the MP Word Explorer." title="About Combo Checker" aria-label="About Combo Checker">?</button></h2>
+                                <h2>Combo Checker</h2>
                                 <p>Find connected words via MP and LIC, and explore connections using the MP Word Explorer.</p>
                             </div>
 
@@ -5268,7 +5309,7 @@
                                                     <div id="combo-pane-mp" class="combo-tab-pane active">
                                                         <div class="result-section">
                                                             <div class="combo-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px; margin-bottom: 10px; gap: 16px;">
-                                                                <h3 style="color: #ffd700; margin: 0; padding: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.3px;">MP (Microprocedures) <button class="title-help-btn" type="button" data-title="MP (Microprocedures)" data-desc="Determining the distance away from one word to another using specific Morpheme connectivity rules (0MP to 3MP). The MP words shown in these tables are associations among existing words. Another way to help you is to make up sequences of letters to facilitate the finding of other sequences — sometimes the extremities of a word don't matter. For example, in WASTRIE → ASTRIDE, the W in front is dropped and a D gets inserted, making this 1MP. Or, start with a made-up sequence like LIVEE (LIVE + E), then append the W at the end and reverse it to make the word WEEVIL. If making up LIVEE helps you to arrive at WEEVIL, then do it! You can make up any sequence that works for you!" title="About MP" aria-label="About MP">?</button></h3>
+                                                                <h3 style="color: #ffd700; margin: 0; padding: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.3px;">MP (Microprocedures)</h3>
                                                                 <div class="table-scroll-arrows" style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
                                                                     <button class="table-scroll-btn" onclick="window.scrollContainerLeft('mp-container')" title="Scroll left">◄</button>
                                                                     <button class="table-scroll-btn" onclick="window.scrollContainerRight('mp-container')" title="Scroll right">►</button>
@@ -5287,7 +5328,7 @@
                                                     <div id="combo-pane-lic" class="combo-tab-pane" style="display: none;">
                                                         <div class="result-section">
                                                             <div class="combo-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px; margin-bottom: 10px; gap: 16px;">
-                                                                <h3 style="color: #60a5fa; margin: 0; padding: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.3px;">LIC (Letters In Common) <button class="title-help-btn" type="button" data-title="LIC (Letters In Common)" data-desc="The letters are there, but are they arranged in such a way so as to have both be present?" title="About LIC" aria-label="About LIC">?</button></h3>
+                                                                <h3 style="color: #60a5fa; margin: 0; padding: 0; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.3px;">LIC (Letters In Common)</h3>
                                                                 <div class="table-scroll-arrows" style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
                                                                     <button class="table-scroll-btn" onclick="window.scrollContainerLeft('lic-container')" title="Scroll left">◄</button>
                                                                     <button class="table-scroll-btn" onclick="window.scrollContainerRight('lic-container')" title="Scroll right">►</button>
@@ -5309,7 +5350,7 @@
                                 <div id="combo-main-pane-explorer" class="combo-main-tab-pane" style="display: none;">
                                     <div class="result-section" id="combo-explorer-section">
                                         <div class="combo-explorer-top-bar" style="margin-bottom: 6px;">
-                                            <h3 id="combo-explorer-title" class="combo-explorer-title">MP Word Explorer <button class="title-help-btn" type="button" data-title="MP Word Explorer" data-desc="Explore words with non-plural and non-inflection MP connections." title="About MP Word Explorer" aria-label="About MP Word Explorer">?</button></h3>
+                                            <h3 id="combo-explorer-title" class="combo-explorer-title">MP Word Explorer</h3>
                                             <div class="chart-desc" id="mp-explorer-chart-desc">Explore words with non-plural and non-inflection MP connections.</div>
                                         </div>
 
@@ -5451,7 +5492,7 @@
                     <!-- Is Valid Tool Interface -->
                     <div id="tool-is-valid" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Word Validator <button class="title-help-btn" type="button" data-title="Word Validator" data-desc="Check if a word exists in the official dictionaries and see their definitions." title="About Word Validator" aria-label="About Word Validator">?</button></h2>
+                            <h2>Word Validator</h2>
                             <p>Check if a word exists in the official dictionaries and see their definitions.</p>
                         </div>
 
@@ -5499,7 +5540,7 @@
                     <div id="tool-subanagrams" class="tool-pane"
                         style="flex-direction: column; width: 100%; box-sizing: border-box;">
                         <div class="tool-header">
-                            <h2>Subanagrams <button class="title-help-btn" type="button" data-title="Subanagrams" data-desc="Find all words contained within any sequence of letters, or test your skills in interactive practice mode." title="About Subanagrams" aria-label="About Subanagrams">?</button></h2>
+                            <h2>Subanagrams</h2>
                             <p>Find all words contained within any sequence of letters, or test your skills in interactive practice mode.</p>
                         </div>
 
@@ -5664,7 +5705,7 @@
                     <!-- Sequence Tool Interface (New) -->
                     <div id="tool-sequence" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Sequence Search <button class="title-help-btn" type="button" data-title="Sequence Search" data-desc="Find words starting with, ending with, or containing a sequence." title="About Sequence Search" aria-label="About Sequence Search">?</button></h2>
+                            <h2>Sequence Search</h2>
                             <p>Find words starting with, ending with, or containing a sequence.
                             </p>
                         </div>
@@ -5731,7 +5772,7 @@
                     <!-- Lists Tool Interface (New) -->
                     <div id="tool-lists" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Word Lists <button class="title-help-btn" type="button" data-title="Word Lists" data-desc="Browse official dictionaries and unique collections. Below, without adjusting the parameters, the first 10,000 words in NWL are on display. To see more, change the parameters using the dropdown menus or select “View Full List”." title="About Word Lists" aria-label="About Word Lists">?</button></h2>
+                            <h2>Word Lists</h2>
                             <p>Browse official dictionaries and unique collections. Below, without adjusting the parameters, the first 10,000 words in NWL are on display. To see more, change the parameters using the dropdown menus or select “View Full List”.</p>
                         </div>
 
@@ -5834,7 +5875,7 @@
                     <!-- Words to Work on Tool Interface -->
                     <div id="tool-work-on" class="tool-pane" style="display: none; flex-direction: column; width: 100%; box-sizing: border-box;">
                         <div class="tool-header">
-                            <h2>Words to Work on <button class="title-help-btn" type="button" data-title="Words to Work on" data-desc="A dedicated space to add or remove words to study or work on. If you wish to categorize the words in any way, use the Lists tab in Tools to do that." title="About Words to Work on" aria-label="About Words to Work on">?</button></h2>
+                            <h2>Words to Work on</h2>
                             <p>A dedicated space to add or remove words to study or work on. If you wish to categorize the words in any way, use the Lists tab in Tools to do that.</p>
                         </div>
 
@@ -5896,7 +5937,7 @@
                     <div id="tool-unscramble" class="tool-pane"
                         style="flex-direction: column; width: 100%; box-sizing: border-box;">
                         <div class="tool-header">
-                            <h2>Unscramble <button class="title-help-btn" type="button" data-title="Unscramble" data-desc="Test your skills: Guess the word from jumbled letters." title="About Unscramble" aria-label="About Unscramble">?</button></h2>
+                            <h2>Unscramble</h2>
                             <p>Test your skills: Guess the word from jumbled letters.</p>
                         </div>
 
@@ -6053,7 +6094,7 @@
         </div>
 
         <div id="page-mods" class="page">
-            <h2 class="page-title-header">Mods</h2>
+            <h2 class="page-title-header"><span class="page-title-text">Mods</span> <button class="title-help-btn" type="button" data-title="Mods" data-desc="Administrative and moderation controls for Morpheme." title="About Mods" aria-label="About Mods">?</button></h2>
             <div class="tools-split-layout">
                 <!-- Sidebar (1/3) -->
                 <div class="tools-sidebar">
@@ -6110,7 +6151,7 @@
                     <!-- Moderator Control: Ban / Timeout User -->
                     <div id="mod-tab-ban" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Ban / Timeout User <button class="title-help-btn" type="button" data-title="Ban / Timeout User" data-desc="Manage temporary timeouts (starting at 10 minutes and escalating exponentially) or permanent account bans." title="About Ban / Timeout User" aria-label="About Ban / Timeout User">?</button></h2>
+                            <h2>Ban / Timeout User</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 12px;">Manage temporary timeouts (starting at 10 minutes and escalating exponentially) or permanent account bans.</p>
                         </div>
                         <div id="ban-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
@@ -6193,7 +6234,7 @@
                     <!-- Lobby Notice Management -->
                     <div id="mod-tab-notice" class="tool-pane" style="width: 100%; box-sizing: border-box;">
                         <div class="tool-header">
-                            <h2>Global Lobby Notice <button class="title-help-btn" type="button" data-title="Global Lobby Notice" data-desc="This message will be displayed as a popup to players ONLY when they enter the Lobby (never during gameplay)." title="About Global Lobby Notice" aria-label="About Global Lobby Notice">?</button></h2>
+                            <h2>Global Lobby Notice</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 15px;">This message will be displayed as a popup to players <strong>ONLY</strong> when they enter the Lobby (never during gameplay).</p>
                         </div>
                         
@@ -6225,7 +6266,7 @@
                     <!-- Supporters & Donations Management -->
                     <div id="mod-tab-donations" class="tool-pane" style="width: 100%; box-sizing: border-box;">
                         <div class="tool-header">
-                            <h2>Supporters & Donations <button class="title-help-btn" type="button" data-title="Supporters & Donations" data-desc="Record confirmed player donations from PayPal to immediately credit the Hall of Fame and advance the Monthly Hosting Goal Meter." title="About Supporters & Donations" aria-label="About Supporters & Donations">?</button></h2>
+                            <h2>Supporters & Donations</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 15px;">Record confirmed player donations from PayPal to immediately credit the <strong>Hall of Fame</strong> and advance the <strong>Monthly Hosting Goal Meter</strong>.</p>
                         </div>
                         
@@ -6287,7 +6328,7 @@
                     <!-- Definition Management -->
                     <div id="mod-tab-def" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Definition Management <button class="title-help-btn" type="button" data-title="Definition Management" data-desc="Add, update, or remove definitions for any word. You can separate multiple words with commas to apply the definition to all of them at once (e.g. arity,arities)." title="About Definition Management" aria-label="About Definition Management">?</button></h2>
+                            <h2>Definition Management</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 5px;">Add, update, or remove definitions for any word. You can separate multiple words with commas to apply the definition to all of them at once (e.g. <strong>arity,arities</strong>).</p>
                         </div>
                         
@@ -6408,7 +6449,7 @@
                     <!-- Pronunciation Management -->
                     <div id="mod-tab-pron" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Pronunciation Management <button class="title-help-btn" type="button" data-title="Pronunciation Management" data-desc="Add, update, or remove phonetic pronunciations for spelling play." title="About Pronunciation Management" aria-label="About Pronunciation Management">?</button></h2>
+                            <h2>Pronunciation Management</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7;">Add, update, or remove phonetic pronunciations for spelling play.</p>
                         </div>
                         <div id="pron-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
@@ -6455,7 +6496,7 @@
                     <!-- Added Words Management -->
                     <div id="mod-tab-added" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Added Words Management <button class="title-help-btn" type="button" data-title="Added Words Management" data-desc="Words in this list are always included in board solving and are highlighted purple when found on the board." title="About Added Words Management" aria-label="About Added Words Management">?</button></h2>
+                            <h2>Added Words Management</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 10px;">Words in this list are always included in board solving and are highlighted <strong>purple</strong> when found on the board.</p>
                             <p style="font-size: 0.9rem; color: #ffdd57; font-weight: bold; margin-bottom: 12px; background: rgba(255, 221, 87, 0.08); border-left: 3px solid #ffdd57; padding: 8px 12px; border-radius: 4px;">
                                 To anyone adding a word: PLEASE define it and add a pronunciation!
@@ -6487,7 +6528,7 @@
                     <!-- Database Submission Section -->
                     <div id="mod-tab-db" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Database Submission <button class="title-help-btn" type="button" data-title="Database Submission" data-desc="Upload a text file (e.g., newNWL.txt or newCSW.txt) to permanently add words to the dictionary DB and tracking tables." title="About Database Submission" aria-label="About Database Submission">?</button></h2>
+                            <h2>Database Submission</h2>
                             <p style="font-size: 0.85rem; line-height: 1.4; margin-bottom: 15px; color: var(--text-primary); opacity: 0.9;">
                                 Upload a text file (e.g., <code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newNWL.txt</code> or <code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newCSW.txt</code>) 
                                 to permanently add words to the dictionary DB and tracking tables.
@@ -6506,7 +6547,7 @@
                     <!-- Moderator Access -->
                     <div id="mod-tab-access" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Moderator Access <button class="title-help-btn" type="button" data-title="Moderator Access" data-desc="Manage user permissions and moderator access." title="About Moderator Access" aria-label="About Moderator Access">?</button></h2>
+                            <h2>Moderator Access</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7;">Manage user permissions and moderator access.</p>
                         </div>
                         <div id="mod-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
@@ -6523,7 +6564,7 @@
                     <!-- Constant Parameter Rating Adjustment -->
                     <div id="mod-tab-ratings" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Constant Parameter Rating Adjustment <button class="title-help-btn" type="button" data-title="Constant Parameter Rating Adjustment" data-desc="Adjust user ratings across specific constant parameter configurations (e.g. ACC 4x4 45s, ACC 4x4 3m). Only root administrator jeffb can perform adjustments." title="About Constant Parameter Rating Adjustment" aria-label="About Constant Parameter Rating Adjustment">?</button></h2>
+                            <h2>Constant Parameter Rating Adjustment</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 12px;">Adjust user ratings across specific constant parameter configurations (e.g. ACC 4x4 45s, ACC 4x4 3m). Only root administrator jeffb can perform adjustments.</p>
                         </div>
                         <div id="rating-adj-status-area" style="min-height: 25px; margin-bottom: 10px; font-weight: 600; font-size: 0.9rem;"></div>
@@ -6623,7 +6664,7 @@
                     <!-- Moderator Control: Tally Divisions Board Hardness -->
                     <div id="mod-tab-tally-divisions" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Tally Divisions Board Hardness <button class="title-help-btn" type="button" data-title="Tally Divisions Board Hardness" data-desc="Toggle board difficulty evaluation from static unique files (uniqueNWL.txt / uniqueCSW.txt) to dynamic find-count divisions accumulated in the tally file." title="About Tally Divisions Board Hardness" aria-label="About Tally Divisions Board Hardness">?</button></h2>
+                            <h2>Tally Divisions Board Hardness</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 12px;">
                                 Toggle board difficulty evaluation from static unique files (uniqueNWL.txt / uniqueCSW.txt) to dynamic find-count divisions accumulated in the tally file.
                             </p>
@@ -6736,7 +6777,7 @@
                     <!-- Moderator Control: Forum Thread Maintenance -->
                     <div id="mod-tab-forum-maintenance" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Forum Thread Maintenance <button class="title-help-btn" type="button" data-title="Forum Thread Maintenance" data-desc="Manage forum discussion capacity across all categories." title="About Forum Thread Maintenance" aria-label="About Forum Thread Maintenance">?</button></h2>
+                            <h2>Forum Thread Maintenance</h2>
                             <p style="font-size: 0.85rem; opacity: 0.7; margin-bottom: 12px;">
                                 Manage forum discussion capacity across all categories.
                             </p>
@@ -6808,7 +6849,7 @@
 
         <!-- Settings Page -->
         <div id="page-settings" class="page">
-            <h2 class="page-title-header">Settings</h2>
+            <h2 class="page-title-header"><span class="page-title-text">Settings</span> <button class="title-help-btn" type="button" data-title="Settings" data-desc="Customize your game appearance, audio, and gameplay preferences." title="About Settings" aria-label="About Settings">?</button></h2>
             <div class="tools-split-layout">
                 <!-- Sidebar (1/3) -->
                 <div class="tools-sidebar">
@@ -6833,7 +6874,7 @@
                     <!-- Appearance Tab -->
                     <div id="setting-tab-appearance" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Appearance <button class="title-help-btn" type="button" data-title="Appearance" data-desc="Customize the visual layout, themes, sizes, and styling of the game." title="About Appearance" aria-label="About Appearance">?</button></h2>
+                            <h2>Appearance</h2>
                             <p>Customize the visual layout, themes, sizes, and styling of the game.</p>
                         </div>
 
@@ -6885,7 +6926,7 @@
                         <div id="setting-subpage-theme" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Layout / App Theme <button class="title-help-btn" type="button" data-title="Layout / App Theme" data-desc="Choose your preferred color scheme." title="About Layout / App Theme" aria-label="About Layout / App Theme">?</button></h3>
+                                <h3 class="setting-subpage-title">Layout / App Theme</h3>
                                 <p class="setting-subpage-desc">Choose your preferred color scheme.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -6974,7 +7015,7 @@
                         <div id="setting-subpage-board-size" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header" style="align-items: center; text-align: center;">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')" style="align-self: flex-start;">← Back</button>
-                                <h3 class="setting-subpage-title" style="text-align: center; width: 100%;">Board Size <button class="title-help-btn" type="button" data-title="Board Size" data-desc="Configure tile dimensions for each board format (4x4, 4x6, 5x7, 6x8). Morpheme automatically applies these values when you enter a room of that size." title="About Board Size" aria-label="About Board Size">?</button></h3>
+                                <h3 class="setting-subpage-title" style="text-align: center; width: 100%;">Board Size</h3>
                                 <p class="setting-subpage-desc" style="text-align: center; margin: 0 auto 14px auto; max-width: 540px;">Configure tile dimensions for each board format (4x4, 4x6, 5x7, 6x8). Morpheme automatically applies these values when you enter a room of that size.</p>
                             </div>
                             <div class="setting-subpage-content" style="align-items: center; width: 100%;">
@@ -7041,7 +7082,7 @@
                         <div id="setting-subpage-cube-scale" class="setting-subpage desktop-only-setting" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Cube Scale (3D) <button class="title-help-btn" type="button" data-title="Cube Scale (3D)" data-desc="Adjust the size of the 3D game board." title="About Cube Scale (3D)" aria-label="About Cube Scale (3D)">?</button></h3>
+                                <h3 class="setting-subpage-title">Cube Scale (3D)</h3>
                                 <p class="setting-subpage-desc">Adjust the size of the 3D game board.</p>
                             </div>
                             <div class="setting-subpage-content" id="setting-panel-cube-scale">
@@ -7078,7 +7119,7 @@
                         <div id="setting-subpage-subanagrams-tile-size" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Subanagrams Tile Size <button class="title-help-btn" type="button" data-title="Subanagrams Tile Size" data-desc="Adjust the size of the letter tiles in multiplayer Subanagrams rounds." title="About Subanagrams Tile Size" aria-label="About Subanagrams Tile Size">?</button></h3>
+                                <h3 class="setting-subpage-title">Subanagrams Tile Size</h3>
                                 <p class="setting-subpage-desc">Adjust the size of the letter tiles in multiplayer Subanagrams rounds.</p>
                             </div>
                             <div class="setting-subpage-content" id="setting-panel-subanagrams-tile-size">
@@ -7108,7 +7149,7 @@
                         <div id="setting-subpage-chat-size" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Chat Text Size <button class="title-help-btn" type="button" data-title="Chat Text Size" data-desc="Adjust the font size of chat messages." title="About Chat Text Size" aria-label="About Chat Text Size">?</button></h3>
+                                <h3 class="setting-subpage-title">Chat Text Size</h3>
                                 <p class="setting-subpage-desc">Adjust the font size of chat messages.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7133,7 +7174,7 @@
                         <div id="setting-subpage-def-size" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Definition Text Size <button class="title-help-btn" type="button" data-title="Definition Text Size" data-desc="Adjust the font size of word definitions." title="About Definition Text Size" aria-label="About Definition Text Size">?</button></h3>
+                                <h3 class="setting-subpage-title">Definition Text Size</h3>
                                 <p class="setting-subpage-desc">Adjust the font size of word definitions.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7159,7 +7200,7 @@
                         <div id="setting-subpage-word-flash" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Word Flash Effect <button class="title-help-btn" type="button" data-title="Word Flash Effect" data-desc="Flash word trace tiles on the board (blue: valid, green: bonus, red: invalid/penalty, purple: already found) on submission." title="About Word Flash Effect" aria-label="About Word Flash Effect">?</button></h3>
+                                <h3 class="setting-subpage-title">Word Flash Effect</h3>
                                 <p class="setting-subpage-desc">Flash word trace tiles on the board (blue: valid, green: bonus, red: invalid/penalty, purple: already found) on submission.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7184,7 +7225,7 @@
                         <div id="setting-subpage-highlight-typing" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Highlight as you Type <button class="title-help-btn" type="button" data-title="Highlight as you Type" data-desc="Highlight letters on the board as you type in the input box." title="About Highlight as you Type" aria-label="About Highlight as you Type">?</button></h3>
+                                <h3 class="setting-subpage-title">Highlight as you Type</h3>
                                 <p class="setting-subpage-desc">Highlight letters on the board as you type in the input box.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7228,7 +7269,7 @@
                         <div id="setting-subpage-highlight-mouse" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Highlight as you Mouse/Swipe <button class="title-help-btn" type="button" data-title="Highlight as you Mouse/Swipe" data-desc="Highlight letters on the board as you drag or swipe over them." title="About Highlight as you Mouse/Swipe" aria-label="About Highlight as you Mouse/Swipe">?</button></h3>
+                                <h3 class="setting-subpage-title">Highlight as you Mouse/Swipe</h3>
                                 <p class="setting-subpage-desc">Highlight letters on the board as you drag or swipe over them.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7272,7 +7313,7 @@
                         <div id="setting-subpage-synesthesia" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('appearance')">← Back</button>
-                                <h3 class="setting-subpage-title">Synesthesia <button class="title-help-btn" type="button" data-title="Synesthesia" data-desc="Tailor the color of each individual letter on the game board." title="About Synesthesia" aria-label="About Synesthesia">?</button></h3>
+                                <h3 class="setting-subpage-title">Synesthesia</h3>
                                 <p class="setting-subpage-desc">Tailor the color of each individual letter on the game board.</p>
                             </div>
                             <div class="setting-subpage-content synesthesia-section">
@@ -7289,7 +7330,7 @@
                     <!-- Audio & Sounds Tab -->
                     <div id="setting-tab-audio" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Audio & Sounds <button class="title-help-btn" type="button" data-title="Audio & Sounds" data-desc="Manage background music, sound effects, and next round alerts." title="About Audio & Sounds" aria-label="About Audio & Sounds">?</button></h2>
+                            <h2>Audio & Sounds</h2>
                             <p>Manage background music, sound effects, and next round alerts.</p>
                         </div>
 
@@ -7321,7 +7362,7 @@
                         <div id="setting-subpage-lobby-music" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
-                                <h3 class="setting-subpage-title">Lobby Music <button class="title-help-btn" type="button" data-title="Lobby Music" data-desc="Play background music when in the lobby." title="About Lobby Music" aria-label="About Lobby Music">?</button></h3>
+                                <h3 class="setting-subpage-title">Lobby Music</h3>
                                 <p class="setting-subpage-desc">Play background music when in the lobby.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7339,7 +7380,7 @@
                         <div id="setting-subpage-triple-music" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
-                                <h3 class="setting-subpage-title">Triple Format Music <button class="title-help-btn" type="button" data-title="Triple Format Music" data-desc="Play background music when the format is Triple." title="About Triple Format Music" aria-label="About Triple Format Music">?</button></h3>
+                                <h3 class="setting-subpage-title">Triple Format Music</h3>
                                 <p class="setting-subpage-desc">Play background music when the format is Triple.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7357,7 +7398,7 @@
                         <div id="setting-subpage-board-sounds" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
-                                <h3 class="setting-subpage-title">Board Sound Effects <button class="title-help-btn" type="button" data-title="Board Sound Effects" data-desc="Play sound effects when pressing, swiping, and validating words during play." title="About Board Sound Effects" aria-label="About Board Sound Effects">?</button></h3>
+                                <h3 class="setting-subpage-title">Board Sound Effects</h3>
                                 <p class="setting-subpage-desc">Play sound effects when pressing, swiping, and validating words during play.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7375,7 +7416,7 @@
                         <div id="setting-subpage-next-round-bell" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
-                                <h3 class="setting-subpage-title">Next Round Notification <button class="title-help-btn" type="button" data-title="Next Round Notification" data-desc="Play a bell or a set of beeps 10 seconds before a new round starts." title="About Next Round Notification" aria-label="About Next Round Notification">?</button></h3>
+                                <h3 class="setting-subpage-title">Next Round Notification</h3>
                                 <p class="setting-subpage-desc">Play a bell or a set of beeps 10 seconds before a new round starts.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7411,7 +7452,7 @@
                         <div id="setting-subpage-vibration-alert" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('audio')">← Back</button>
-                                <h3 class="setting-subpage-title">Intermission Vibration Alert <button class="title-help-btn" type="button" data-title="Intermission Vibration Alert" data-desc="Vibrate mobile devices 10 seconds before a new round starts." title="About Intermission Vibration Alert" aria-label="About Intermission Vibration Alert">?</button></h3>
+                                <h3 class="setting-subpage-title">Intermission Vibration Alert</h3>
                                 <p class="setting-subpage-desc">Vibrate mobile devices 10 seconds before a new round starts.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7435,7 +7476,7 @@
                     <!-- Gameplay & Preferences Tab -->
                     <div id="setting-tab-gameplay" class="tool-pane">
                         <div class="tool-header">
-                            <h2>Gameplay & Preferences <button class="title-help-btn" type="button" data-title="Gameplay & Preferences" data-desc="Configure game options and tile interaction hitboxes." title="About Gameplay & Preferences" aria-label="About Gameplay & Preferences">?</button></h2>
+                            <h2>Gameplay & Preferences</h2>
                             <p>Configure game options and tile interaction hitboxes.</p>
                         </div>
 
@@ -7471,7 +7512,7 @@
                         <div id="setting-subpage-corner-cutoff" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header" style="align-items: center; text-align: center;">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')" style="align-self: flex-start;">← Back</button>
-                                <h3 class="setting-subpage-title" style="text-align: center; width: 100%;">Tile Selectable Space (Octagon vs Diamond) <button class="title-help-btn" type="button" data-title="Tile Selectable Space (Octagon vs Diamond)" data-desc="Adjust the diagonal selectable space of a tile for easier mousing and swiping. This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!" title="About Tile Selectable Space (Octagon vs Diamond)" aria-label="About Tile Selectable Space (Octagon vs Diamond)">?</button></h3>
+                                <h3 class="setting-subpage-title" style="text-align: center; width: 100%;">Tile Selectable Space (Octagon vs Diamond)</h3>
                                 <p class="setting-subpage-desc" style="text-align: center; margin: 0 auto 16px auto; max-width: 480px;">Adjust the diagonal selectable space of a tile for easier mousing and swiping. This alters the diagonal space of the tile that responds to mousing and swiping. Adjusting from 30% towards 50% morphs the interactive space closer to a diamond shape to accommodate easier selection!</p>
                             </div>
                             <div class="setting-subpage-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: 16px; margin: 0 auto;">
@@ -7497,7 +7538,7 @@
                         <div id="setting-subpage-timezone" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
-                                <h3 class="setting-subpage-title">Time Zone <button class="title-help-btn" type="button" data-title="Time Zone" data-desc="Choose your preferred time zone for recorded match history, round logs, and profile activity." title="About Time Zone" aria-label="About Time Zone">?</button></h3>
+                                <h3 class="setting-subpage-title">Time Zone</h3>
                                 <p class="setting-subpage-desc">Choose your preferred time zone for recorded match history, round logs, and profile activity.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7545,7 +7586,7 @@
                         <div id="setting-subpage-allow-pm" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
-                                <h3 class="setting-subpage-title">Allow Private Messages <button class="title-help-btn" type="button" data-title="Allow Private Messages" data-desc="Allow other players to send you private messages. When disabled, the &quot;Message&quot; button on your profile will be hidden from everyone." title="About Allow Private Messages" aria-label="About Allow Private Messages">?</button></h3>
+                                <h3 class="setting-subpage-title">Allow Private Messages</h3>
                                 <p class="setting-subpage-desc">Allow other players to send you private messages. When disabled, the "Message" button on your profile will be hidden from everyone.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7563,7 +7604,7 @@
                         <div id="setting-subpage-allow-invites" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
-                                <h3 class="setting-subpage-title">Allow Game Invitations <button class="title-help-btn" type="button" data-title="Allow Game Invitations" data-desc="Allow other players to send you &quot;With Friends&quot; room invitations. When disabled, players cannot invite you to matches." title="About Allow Game Invitations" aria-label="About Allow Game Invitations">?</button></h3>
+                                <h3 class="setting-subpage-title">Allow Game Invitations</h3>
                                 <p class="setting-subpage-desc">Allow other players to send you "With Friends" room invitations. When disabled, players cannot invite you to matches.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7581,7 +7622,7 @@
                         <div id="setting-subpage-game-room-chat" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
-                                <h3 class="setting-subpage-title">Game Room Chat <button class="title-help-btn" type="button" data-title="Game Room Chat" data-desc="Enable or disable chat in game rooms. When disabled, the chat box will be hidden during gameplay." title="About Game Room Chat" aria-label="About Game Room Chat">?</button></h3>
+                                <h3 class="setting-subpage-title">Game Room Chat</h3>
                                 <p class="setting-subpage-desc">Enable or disable chat in game rooms. When disabled, the chat box will be hidden during gameplay.</p>
                             </div>
                             <div class="setting-subpage-content">
@@ -7599,7 +7640,7 @@
                         <div id="setting-subpage-lobby-guide" class="setting-subpage" style="display: none;">
                             <div class="setting-subpage-header">
                                 <button class="setting-subpage-back-btn" type="button" onclick="window.backToSettingSubMenu('gameplay')">← Back</button>
-                                <h3 class="setting-subpage-title">Lobby Guide ("What am I looking at?") <button class="title-help-btn" type="button" data-title="Lobby Guide (&quot;What am I looking at?&quot;)" data-desc="Display the &quot;For New Users Asking: What am I looking at?&quot; explanation banner at the top of the Lobby." title="About Lobby Guide (&quot;What am I looking at?&quot;)" aria-label="About Lobby Guide (&quot;What am I looking at?&quot;)">?</button></h3>
+                                <h3 class="setting-subpage-title">Lobby Guide ("What am I looking at?")</h3>
                                 <p class="setting-subpage-desc">Display the "For New Users Asking: What am I looking at?" explanation banner at the top of the Lobby.</p>
                             </div>
                             <div class="setting-subpage-content">

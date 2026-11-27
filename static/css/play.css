@@ -5172,18 +5172,17 @@ body.theme-white #page-settings .mobile-bottom-nav {
         box-sizing: border-box !important;
     }
 
+    #page-tools .tool-pane .tool-header,
+    #page-settings .tool-pane .tool-header,
+    #page-mods .tool-pane .tool-header,
+    #page-tools .tool-header,
+    #page-settings .tool-header,
+    #page-mods .tool-header,
     #page-tools .tool-pane .tool-header h2,
-    #page-tools .tool-header h2,
     #page-settings .tool-pane .tool-header h2,
-    #page-settings .tool-header h2,
     #page-mods .tool-pane .tool-header h2,
-    #page-mods .tool-header h2 {
-        display: flex !important;
-        align-items: center !important;
-        font-size: 1.25rem !important;
-        font-weight: 700 !important;
-        color: var(--text-primary) !important;
-        margin: 0 0 10px 0 !important;
+    .setting-subpage-title {
+        display: none !important;
     }
 
     #page-tools .tool-pane .tool-header p,
@@ -8430,6 +8429,10 @@ body[class*="theme-light-"] .notepad-item {
 
 /* --- SETTINGS PAGE --- */
 .page-title-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
     font-size: 2.2rem;
     font-weight: 800;
     color: var(--text-primary);
@@ -8447,7 +8450,7 @@ body[class*="theme-light-"] .notepad-item {
     max-width: 1400px;
     box-sizing: border-box;
     padding: 0;
-    text-align: left;
+    text-align: center;
 }
 
 #page-tools,
@@ -11884,7 +11887,10 @@ body.theme-white .m-scroller-thumb.dragging {
     #page-tools .page-title-header,
     #page-mods .page-title-header,
     #page-settings .page-title-header {
-        display: block !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
         font-size: 1.25rem !important;
         font-weight: 800 !important;
         color: var(--text-primary, #ffffff) !important;
@@ -11912,18 +11918,17 @@ body.theme-white .m-scroller-thumb.dragging {
         box-sizing: border-box !important;
     }
 
+    #page-tools .tool-pane .tool-header,
+    #page-settings .tool-pane .tool-header,
+    #page-mods .tool-pane .tool-header,
+    #page-tools .tool-header,
+    #page-settings .tool-header,
+    #page-mods .tool-header,
     #page-tools .tool-pane .tool-header h2,
-    #page-tools .tool-header h2,
     #page-settings .tool-pane .tool-header h2,
-    #page-settings .tool-header h2,
     #page-mods .tool-pane .tool-header h2,
-    #page-mods .tool-header h2 {
-        display: flex !important;
-        align-items: center !important;
-        font-size: 1.25rem !important;
-        font-weight: 700 !important;
-        color: var(--text-primary) !important;
-        margin: 0 0 10px 0 !important;
+    .setting-subpage-title {
+        display: none !important;
     }
 
     .tool-header p,
@@ -22950,15 +22955,15 @@ body.is-mobile #combo-explorer-response-list {
     display: inline-flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 22px !important;
-    height: 22px !important;
-    min-width: 22px !important;
-    min-height: 22px !important;
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    min-height: 26px !important;
     border-radius: 50% !important;
-    background: rgba(var(--text-primary-rgb), 0.12) !important;
-    border: 1px solid rgba(var(--text-primary-rgb), 0.28) !important;
+    background: rgba(var(--text-primary-rgb), 0.14) !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.32) !important;
     color: var(--text-primary) !important;
-    font-size: 0.78rem !important;
+    font-size: 0.88rem !important;
     font-weight: 700 !important;
     font-family: inherit !important;
     line-height: 1 !important;
@@ -22973,10 +22978,10 @@ body.is-mobile #combo-explorer-response-list {
 }
 
 .title-help-btn:hover {
-    background: rgba(var(--text-primary-rgb), 0.25) !important;
-    border-color: rgba(var(--text-primary-rgb), 0.5) !important;
+    background: rgba(var(--text-primary-rgb), 0.28) !important;
+    border-color: rgba(var(--text-primary-rgb), 0.6) !important;
     transform: scale(1.1) !important;
-    box-shadow: 0 0 8px rgba(var(--text-primary-rgb), 0.2) !important;
+    box-shadow: 0 0 8px rgba(var(--text-primary-rgb), 0.25) !important;
 }
 
 .title-help-btn:active {
@@ -22986,15 +22991,15 @@ body.is-mobile #combo-explorer-response-list {
 body.theme-white .title-help-btn,
 body[class*="theme-white"] .title-help-btn,
 [class*="theme-white"] .title-help-btn {
-    background: rgba(0, 0, 0, 0.07) !important;
-    border-color: rgba(0, 0, 0, 0.22) !important;
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(0, 0, 0, 0.25) !important;
     color: #111827 !important;
 }
 
 body[class*="theme-light-"] .title-help-btn,
 [class*="theme-light-"] .title-help-btn {
-    background: rgba(0, 0, 0, 0.08) !important;
-    border-color: rgba(0, 0, 0, 0.2) !important;
+    background: rgba(0, 0, 0, 0.09) !important;
+    border-color: rgba(0, 0, 0, 0.24) !important;
     color: #1f2937 !important;
 }
 
@@ -23007,6 +23012,213 @@ body[class*="theme-light-"] .title-help-btn,
         font-size: 0.82rem !important;
         margin-left: 6px !important;
     }
+}
+
+/* ========================================================
+   DESCRIPTION INFO MODAL - ALL COLOR LAYOUT COMPATIBILITY
+   ======================================================== */
+#description-info-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 100060 !important;
+    background: rgba(0, 0, 0, 0.75) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+}
+
+#description-info-modal .desc-modal-card {
+    max-width: 460px !important;
+    width: 92% !important;
+    max-height: 85vh !important;
+    background: #1e293b !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    color: #f1f5f9 !important;
+    box-sizing: border-box !important;
+}
+
+#description-info-modal .desc-modal-header {
+    padding: 16px 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12) !important;
+    background: #0f172a !important;
+    box-sizing: border-box !important;
+}
+
+#description-info-modal #desc-modal-title {
+    margin: 0 !important;
+    font-size: 1.15rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#description-info-modal #close-desc-modal {
+    background: transparent !important;
+    border: none !important;
+    font-size: 1.6rem !important;
+    line-height: 1 !important;
+    color: #94a3b8 !important;
+    cursor: pointer !important;
+    padding: 0 4px !important;
+    transition: color 0.15s ease !important;
+}
+
+#description-info-modal #close-desc-modal:hover {
+    color: #ffffff !important;
+}
+
+#description-info-modal #desc-modal-body {
+    padding: 22px 20px !important;
+    font-size: 0.98rem !important;
+    line-height: 1.65 !important;
+    color: #f1f5f9 !important;
+    overflow-y: auto !important;
+    max-height: 55vh !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent !important;
+    text-align: left !important;
+    word-break: break-word !important;
+    background: #1e293b !important;
+    box-sizing: border-box !important;
+}
+
+#description-info-modal .desc-modal-footer {
+    padding: 12px 20px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    background: #0f172a !important;
+    box-sizing: border-box !important;
+}
+
+#description-info-modal #desc-modal-ok-btn {
+    padding: 9px 24px !important;
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 0.92rem !important;
+    cursor: pointer !important;
+    transition: background 0.18s ease, transform 0.1s ease !important;
+}
+
+#description-info-modal #desc-modal-ok-btn:hover {
+    background: #2563eb !important;
+    transform: translateY(-1px) !important;
+}
+
+/* --- Black Theme Overrides --- */
+body.theme-black #description-info-modal .desc-modal-card,
+body[class*="theme-black"] #description-info-modal .desc-modal-card,
+[class*="theme-black"] #description-info-modal .desc-modal-card {
+    background: #111113 !important;
+    border-color: rgba(255, 255, 255, 0.24) !important;
+    box-shadow: 0 25px 65px rgba(0, 0, 0, 0.95) !important;
+}
+body.theme-black #description-info-modal .desc-modal-header,
+body[class*="theme-black"] #description-info-modal .desc-modal-header,
+[class*="theme-black"] #description-info-modal .desc-modal-header {
+    background: #08080a !important;
+    border-bottom-color: rgba(255, 255, 255, 0.12) !important;
+}
+body.theme-black #description-info-modal #desc-modal-body,
+body[class*="theme-black"] #description-info-modal #desc-modal-body,
+[class*="theme-black"] #description-info-modal #desc-modal-body {
+    background: #111113 !important;
+    color: #f4f4f5 !important;
+}
+body.theme-black #description-info-modal .desc-modal-footer,
+body[class*="theme-black"] #description-info-modal .desc-modal-footer,
+[class*="theme-black"] #description-info-modal .desc-modal-footer {
+    background: #08080a !important;
+    border-top-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* --- Pure White and All Light Themes Overrides --- */
+body.theme-white #description-info-modal,
+body[class*="theme-white"] #description-info-modal,
+[class*="theme-white"] #description-info-modal,
+body[class*="theme-light-"] #description-info-modal,
+[class*="theme-light-"] #description-info-modal {
+    background: rgba(0, 0, 0, 0.5) !important;
+}
+
+body.theme-white #description-info-modal .desc-modal-card,
+body[class*="theme-white"] #description-info-modal .desc-modal-card,
+[class*="theme-white"] #description-info-modal .desc-modal-card,
+body[class*="theme-light-"] #description-info-modal .desc-modal-card,
+[class*="theme-light-"] #description-info-modal .desc-modal-card {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.16) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.35) !important;
+    color: #1e293b !important;
+}
+
+body.theme-white #description-info-modal .desc-modal-header,
+body[class*="theme-white"] #description-info-modal .desc-modal-header,
+[class*="theme-white"] #description-info-modal .desc-modal-header,
+body[class*="theme-light-"] #description-info-modal .desc-modal-header,
+[class*="theme-light-"] #description-info-modal .desc-modal-header {
+    background: #f8fafc !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+body.theme-white #description-info-modal #desc-modal-title,
+body[class*="theme-white"] #description-info-modal #desc-modal-title,
+[class*="theme-white"] #description-info-modal #desc-modal-title,
+body[class*="theme-light-"] #description-info-modal #desc-modal-title,
+[class*="theme-light-"] #description-info-modal #desc-modal-title {
+    color: #0f172a !important;
+}
+
+body.theme-white #description-info-modal #close-desc-modal,
+body[class*="theme-white"] #description-info-modal #close-desc-modal,
+[class*="theme-white"] #description-info-modal #close-desc-modal,
+body[class*="theme-light-"] #description-info-modal #close-desc-modal,
+[class*="theme-light-"] #description-info-modal #close-desc-modal {
+    color: #64748b !important;
+}
+
+body.theme-white #description-info-modal #close-desc-modal:hover,
+body[class*="theme-white"] #description-info-modal #close-desc-modal:hover,
+[class*="theme-white"] #description-info-modal #close-desc-modal:hover,
+body[class*="theme-light-"] #description-info-modal #close-desc-modal:hover,
+[class*="theme-light-"] #description-info-modal #close-desc-modal:hover {
+    color: #0f172a !important;
+}
+
+body.theme-white #description-info-modal #desc-modal-body,
+body[class*="theme-white"] #description-info-modal #desc-modal-body,
+[class*="theme-white"] #description-info-modal #desc-modal-body,
+body[class*="theme-light-"] #description-info-modal #desc-modal-body,
+[class*="theme-light-"] #description-info-modal #desc-modal-body {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    scrollbar-color: rgba(0, 0, 0, 0.25) transparent !important;
+}
+
+body.theme-white #description-info-modal .desc-modal-footer,
+body[class*="theme-white"] #description-info-modal .desc-modal-footer,
+[class*="theme-white"] #description-info-modal .desc-modal-footer,
+body[class*="theme-light-"] #description-info-modal .desc-modal-footer,
+[class*="theme-light-"] #description-info-modal .desc-modal-footer {
+    background: #f8fafc !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 .tool-header p::-webkit-scrollbar,

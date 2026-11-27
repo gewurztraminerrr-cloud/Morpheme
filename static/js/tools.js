@@ -289,7 +289,11 @@ window.showTool = function(toolId) {
         const paneTitle = content.querySelector(`#tool-${toolId} .tool-header h2`);
         if (paneTitle) tabTitle = paneTitle.textContent.trim();
     }
-    if (titleHeader) {
+    if (typeof window.updatePageTitleWithHelp === 'function') {
+        const descEl = content ? content.querySelector(`#tool-${toolId} .tool-header p`) : null;
+        const toolDesc = descEl ? descEl.textContent.trim() : '';
+        window.updatePageTitleWithHelp('page-tools', tabTitle ? `Tools - ${tabTitle}` : 'Tools', toolDesc);
+    } else if (titleHeader) {
         titleHeader.textContent = tabTitle ? `Tools - ${tabTitle}` : 'Tools';
         titleHeader.classList.remove('title-hidden');
     }
@@ -606,7 +610,9 @@ window.resetToolsTab = function(immediate = false) {
     const sidebar = document.querySelector('#page-tools .tools-sidebar');
     const content = document.querySelector('#page-tools .tools-content');
     const titleHeader = document.querySelector('#page-tools .page-title-header');
-    if (titleHeader) {
+    if (typeof window.updatePageTitleWithHelp === 'function') {
+        window.updatePageTitleWithHelp('page-tools', 'Tools', "Browse Morpheme's word study, validation, and analytics tools.");
+    } else if (titleHeader) {
         titleHeader.textContent = 'Tools';
         titleHeader.classList.remove('title-hidden');
     }

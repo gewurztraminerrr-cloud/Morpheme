@@ -1294,7 +1294,11 @@ function debounce(func, wait) {
             const paneTitle = content.querySelector(`#setting-tab-${tabId} .tool-header h2`);
             if (paneTitle) tabTitle = paneTitle.textContent.trim();
         }
-        if (titleHeader) {
+        if (typeof window.updatePageTitleWithHelp === 'function') {
+            const descEl = content ? content.querySelector(`#setting-tab-${tabId} .tool-header p`) : null;
+            const tabDesc = descEl ? descEl.textContent.trim() : '';
+            window.updatePageTitleWithHelp('page-settings', tabTitle ? `Settings - ${tabTitle}` : 'Settings', tabDesc);
+        } else if (titleHeader) {
             titleHeader.textContent = tabTitle ? `Settings - ${tabTitle}` : 'Settings';
             titleHeader.classList.remove('title-hidden');
         }
@@ -1365,6 +1369,21 @@ function debounce(func, wait) {
             targetPage.style.display = 'block';
             targetPage.classList.add('active');
 
+            let subTitle = '';
+            let subDesc = '';
+            const tEl = targetPage.querySelector('.setting-subpage-title');
+            if (tEl) {
+                const clone = tEl.cloneNode(true);
+                const inClone = clone.querySelector('.title-help-btn');
+                if (inClone) inClone.remove();
+                subTitle = clone.textContent.trim();
+            }
+            const pEl = targetPage.querySelector('.setting-subpage-desc');
+            if (pEl) subDesc = pEl.textContent.trim();
+            if (typeof window.updatePageTitleWithHelp === 'function') {
+                window.updatePageTitleWithHelp('page-settings', subTitle ? `Settings - ${subTitle}` : 'Settings', subDesc);
+            }
+
             if (subPageId === 'board-size') {
                 const previewBoard = document.getElementById('preview-board');
                 const sizes = (window.userSettings && window.userSettings.board_sizes) ? window.userSettings.board_sizes : { '4x4': 82 };
@@ -1398,6 +1417,19 @@ function debounce(func, wait) {
         if (subnav) subnav.style.display = '';
         if (tabHeader) tabHeader.style.display = '';
 
+        const sidebar = document.querySelector('#page-settings .tools-sidebar');
+        const activeBtn = sidebar ? sidebar.querySelector(`.tool-nav-btn[data-setting-tab="${tabId}"]`) : null;
+        let tabTitle = '';
+        if (activeBtn) {
+            const titleEl = activeBtn.querySelector('.tool-btn-title');
+            if (titleEl) tabTitle = titleEl.textContent.trim();
+        }
+        if (typeof window.updatePageTitleWithHelp === 'function') {
+            const descEl = pane ? pane.querySelector('.tool-header p') : null;
+            const tabDesc = descEl ? descEl.textContent.trim() : '';
+            window.updatePageTitleWithHelp('page-settings', tabTitle ? `Settings - ${tabTitle}` : 'Settings', tabDesc);
+        }
+
         const bottomNav = document.querySelector('#page-settings .settings-bottom-nav');
         if (bottomNav) bottomNav.classList.remove('show-setting-back');
 
@@ -1415,7 +1447,9 @@ function debounce(func, wait) {
         const sidebar = document.querySelector('#page-settings .tools-sidebar');
         const content = document.querySelector('#page-settings .tools-content');
         const titleHeader = document.querySelector('#page-settings .page-title-header');
-        if (titleHeader) {
+        if (typeof window.updatePageTitleWithHelp === 'function') {
+            window.updatePageTitleWithHelp('page-settings', 'Settings', 'Customize your game appearance, audio, and gameplay preferences.');
+        } else if (titleHeader) {
             titleHeader.textContent = 'Settings';
             titleHeader.classList.remove('title-hidden');
         }
