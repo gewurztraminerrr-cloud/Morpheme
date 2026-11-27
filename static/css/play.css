@@ -27900,3 +27900,255 @@ body.is-mobile #word-length-radar,
     }
 }
 
+/* ==========================================================================
+   SETTINGS SUBPAGES — CONTENT PANELS BRIGHTNESS & STANDOUT STYLING
+   Subpages: Synesthesia, Lobby Music, Triple Format music, Board Sound Effects,
+   Intermission Vibration Alert, Allow Private Messages, Allow Game Invitations,
+   Game Rooms Chat, Lobby Guide ("What am I looking at?")
+   ========================================================================== */
+
+/* Synesthesia Section Panel Layout */
+#setting-subpage-synesthesia .synesthesia-section {
+    width: 100% !important;
+    max-width: 540px !important;
+    margin: 0 auto !important;
+    padding: 16px 20px !important;
+    box-sizing: border-box !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+/* Default / Dark-Colored Layouts: Stand out from background (closer to white) */
+#setting-subpage-synesthesia .synesthesia-section,
+#setting-subpage-lobby-music .setting-toggle-row,
+#setting-subpage-triple-music .setting-toggle-row,
+#setting-subpage-board-sounds .setting-toggle-row,
+#setting-subpage-vibration-alert .setting-toggle-row,
+#setting-subpage-allow-pm .setting-toggle-row,
+#setting-subpage-allow-invites .setting-toggle-row,
+#setting-subpage-game-room-chat .setting-toggle-row,
+#setting-subpage-lobby-guide .setting-toggle-row {
+    background: rgba(255, 255, 255, 0.13) !important;
+    border: 1px solid rgba(255, 255, 255, 0.22) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+    color: #f8fafc !important;
+    border-radius: 14px !important;
+}
+
+#setting-subpage-lobby-music .setting-toggle-row:hover,
+#setting-subpage-triple-music .setting-toggle-row:hover,
+#setting-subpage-board-sounds .setting-toggle-row:hover,
+#setting-subpage-vibration-alert .setting-toggle-row:hover,
+#setting-subpage-allow-pm .setting-toggle-row:hover,
+#setting-subpage-allow-invites .setting-toggle-row:hover,
+#setting-subpage-game-room-chat .setting-toggle-row:hover,
+#setting-subpage-lobby-guide .setting-toggle-row:hover {
+    background: rgba(255, 255, 255, 0.18) !important;
+    border-color: rgba(255, 255, 255, 0.32) !important;
+}
+
+/* Light-Colored Layouts: Brighter in color (Crisp white cards) */
+body.theme-white #setting-subpage-synesthesia .synesthesia-section,
+[class*="theme-white"] #setting-subpage-synesthesia .synesthesia-section,
+body[class*="theme-light-"] #setting-subpage-synesthesia .synesthesia-section,
+[class*="theme-light-"] #setting-subpage-synesthesia .synesthesia-section,
+body.theme-white #setting-subpage-lobby-music .setting-toggle-row,
+[class*="theme-white"] #setting-subpage-lobby-music .setting-toggle-row,
+body[class*="theme-light-"] #setting-subpage-lobby-music .setting-toggle-row,
+[class*="theme-light-"] #setting-subpage-lobby-music .setting-toggle-row,
+body.theme-white #setting-subpage-triple-music .setting-toggle-row,
+[class*="theme-white"] #setting-subpage-triple-music .setting-toggle-row,
+body[class*="theme-light-"] #setting-subpage-triple-music .setting-toggle-row,
+[class*="theme-light-"] #setting-subpage-triple-music .setting-toggle-row,
+body.theme-white #setting-subpage-board-sounds .setting-toggle-row,
+[class*="theme-white"] #setting-subpage-board-sounds .setting-toggle-row,
+body[class*="theme-light-"] #setting-subpage-board-sounds .setting-toggle-row,
+[class*="theme-light-"] #setting-subpage-board-sounds .setting-toggle-row,
+body.theme-white #setting-subpage-vibration-alert .setting-toggle-row,
+[class*="theme-white"] #setting-subpage-vibration-alert .setting-toggle-row,
+body[class*="theme-light-"] #setting-subpage-vibration-alert .setting-toggle-row,
+[class*="theme-light-"] #setting-subpage-vibration-alert .setting-toggle-row,
+body.theme-white #setting-subpage-allow-pm .setting-toggle-row,
+[class*="theme-white"] #setting-subpage-allow-pm .setting-toggle-row,
+body[class*="theme-light-"] #setting-subpage-allow-pm .setting-toggle-row,
+[class*="theme-light-"] #setting-subpage-allow-pm .setting-toggle-row,
+body.theme-white #setting-subpage-allow-invites .setting-toggle-row,
+[class*="theme-white"] #setting-subpage-allow-invites .setting-toggle-row,
+body[class*="theme-light-"] #setting-subpage-allow-invites .setting-toggle-row,
+[class*="theme-light-"] #setting-subpage-allow-invites .setting-toggle-row,
+body.theme-white #setting-subpage-game-room-chat .setting-toggle-row,
+[class*="theme-white"] #setting-subpage-game-room-chat .setting-toggle-row,
+body[class*="theme-light-"] #setting-subpage-game-room-chat .setting-toggle-row,
+[class*="theme-light-"] #setting-subpage-game-room-chat .setting-toggle-row,
+body.theme-white #setting-subpage-lobby-guide .setting-toggle-row,
+[class*="theme-white"] #setting-subpage-lobby-guide .setting-toggle-row,
+body[class*="theme-light-"] #setting-subpage-lobby-guide .setting-toggle-row,
+[class*="theme-light-"] #setting-subpage-lobby-guide .setting-toggle-row {
+    background: #ffffff !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.12) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+    border-radius: 14px !important;
+}
+
+body.theme-white #setting-subpage-lobby-music .setting-toggle-row:hover,
+[class*="theme-white"] #setting-subpage-lobby-music .setting-toggle-row:hover,
+body[class*="theme-light-"] #setting-subpage-lobby-music .setting-toggle-row:hover,
+[class*="theme-light-"] #setting-subpage-lobby-music .setting-toggle-row:hover,
+body.theme-white #setting-subpage-triple-music .setting-toggle-row:hover,
+[class*="theme-white"] #setting-subpage-triple-music .setting-toggle-row:hover,
+body[class*="theme-light-"] #setting-subpage-triple-music .setting-toggle-row:hover,
+[class*="theme-light-"] #setting-subpage-triple-music .setting-toggle-row:hover,
+body.theme-white #setting-subpage-board-sounds .setting-toggle-row:hover,
+[class*="theme-white"] #setting-subpage-board-sounds .setting-toggle-row:hover,
+body[class*="theme-light-"] #setting-subpage-board-sounds .setting-toggle-row:hover,
+[class*="theme-light-"] #setting-subpage-board-sounds .setting-toggle-row:hover,
+body.theme-white #setting-subpage-vibration-alert .setting-toggle-row:hover,
+[class*="theme-white"] #setting-subpage-vibration-alert .setting-toggle-row:hover,
+body[class*="theme-light-"] #setting-subpage-vibration-alert .setting-toggle-row:hover,
+[class*="theme-light-"] #setting-subpage-vibration-alert .setting-toggle-row:hover,
+body.theme-white #setting-subpage-allow-pm .setting-toggle-row:hover,
+[class*="theme-white"] #setting-subpage-allow-pm .setting-toggle-row:hover,
+body[class*="theme-light-"] #setting-subpage-allow-pm .setting-toggle-row:hover,
+[class*="theme-light-"] #setting-subpage-allow-pm .setting-toggle-row:hover,
+body.theme-white #setting-subpage-allow-invites .setting-toggle-row:hover,
+[class*="theme-white"] #setting-subpage-allow-invites .setting-toggle-row:hover,
+body[class*="theme-light-"] #setting-subpage-allow-invites .setting-toggle-row:hover,
+[class*="theme-light-"] #setting-subpage-allow-invites .setting-toggle-row:hover,
+body.theme-white #setting-subpage-game-room-chat .setting-toggle-row:hover,
+[class*="theme-white"] #setting-subpage-game-room-chat .setting-toggle-row:hover,
+body[class*="theme-light-"] #setting-subpage-game-room-chat .setting-toggle-row:hover,
+[class*="theme-light-"] #setting-subpage-game-room-chat .setting-toggle-row:hover,
+body.theme-white #setting-subpage-lobby-guide .setting-toggle-row:hover,
+[class*="theme-white"] #setting-subpage-lobby-guide .setting-toggle-row:hover,
+body[class*="theme-light-"] #setting-subpage-lobby-guide .setting-toggle-row:hover,
+[class*="theme-light-"] #setting-subpage-lobby-guide .setting-toggle-row:hover {
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.22) !important;
+}
+
+/* ==========================================================================
+   SEQUENCE TOOL — PLACEHOLDER LEFT PADDING
+   ========================================================================== */
+#tool-sequence .seq-results-placeholder,
+#seq-results-container .seq-results-placeholder,
+.seq-results-container .seq-results-placeholder {
+    padding: 18px 24px !important;
+    padding-left: 24px !important;
+    font-size: 0.95rem !important;
+    text-align: left !important;
+    box-sizing: border-box !important;
+}
+
+/* ==========================================================================
+   REVERSE DICTIONARY — WHITESPACE SURROUNDING CONTROLS & DROPDOWNS
+   ========================================================================== */
+#tool-reverse-dictionary .reverse-dict-input-panel {
+    background: var(--bg-panel) !important;
+    border: 1px solid var(--input-border, rgba(255, 255, 255, 0.12)) !important;
+    border-radius: 14px !important;
+    padding: 16px 20px !important;
+    margin-bottom: 16px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
+
+body.theme-white #tool-reverse-dictionary .reverse-dict-input-panel,
+[class*="theme-white"] #tool-reverse-dictionary .reverse-dict-input-panel,
+body[class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-input-panel,
+[class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-input-panel {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+}
+
+#tool-reverse-dictionary .reverse-dict-controls-row {
+    display: flex !important;
+    gap: 14px !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+}
+
+#tool-reverse-dictionary .reverse-dict-controls-actions {
+    display: flex !important;
+    gap: 12px !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+    flex-wrap: wrap !important;
+}
+
+#tool-reverse-dictionary .reverse-dict-select {
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 12px !important;
+    margin: 2px 4px !important;
+    font-size: 0.9rem !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    box-sizing: border-box !important;
+    outline: none !important;
+}
+
+body.theme-white #tool-reverse-dictionary .reverse-dict-select,
+[class*="theme-white"] #tool-reverse-dictionary .reverse-dict-select,
+body[class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-select,
+[class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-select {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+}
+
+#tool-reverse-dictionary .reverse-dict-search-btn {
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 20px !important;
+    margin: 2px 4px 2px 8px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 0.95rem !important;
+    box-sizing: border-box !important;
+}
+
+#tool-reverse-dictionary .reverse-dict-input {
+    height: 42px !important;
+    min-height: 42px !important;
+    padding: 0 36px 0 14px !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 900px) {
+    #tool-reverse-dictionary .reverse-dict-input-panel,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-input-panel {
+        padding: 12px 14px !important;
+        margin-bottom: 12px !important;
+        border-radius: 12px !important;
+    }
+    #tool-reverse-dictionary .reverse-dict-controls-row,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-controls-row {
+        gap: 10px !important;
+    }
+    #tool-reverse-dictionary .reverse-dict-controls-actions,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-controls-actions {
+        gap: 8px !important;
+    }
+    #tool-reverse-dictionary .reverse-dict-select,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-select {
+        height: 38px !important;
+        min-height: 38px !important;
+        padding: 0 10px !important;
+        margin: 2px 0 !important;
+    }
+    #tool-reverse-dictionary .reverse-dict-search-btn,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-search-btn {
+        height: 38px !important;
+        min-height: 38px !important;
+        padding: 0 14px !important;
+        margin: 4px 0 2px 0 !important;
+    }
+}
+

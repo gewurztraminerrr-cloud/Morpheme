@@ -258,12 +258,12 @@
         }
     </script>
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1795710000" as="style">
+    <link rel="preload" href="/css/style.css?v=1795720000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794380007" as="style">
-    <link rel="preload" href="/css/play.css?v=1795710000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1795710000" onerror="_handleStyleRetry(this)">
+    <link rel="preload" href="/css/play.css?v=1795720000" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1795720000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/lobby.css?v=1794380007" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/play.css?v=1795710000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1795720000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1795700000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
@@ -5860,8 +5860,7 @@
                         </div>
 
                         <div id="seq-results-container" class="seq-results-container">
-                            <div class="seq-results-placeholder">Enter a sequence to search.
-                            </div>
+                            <div class="seq-results-placeholder">Please enter a sequence.</div>
                             <!-- Results Table will be injected here -->
                         </div>
                     </div>
@@ -7463,7 +7462,7 @@
                                 <p class="setting-subpage-desc">Play background music when in the lobby.</p>
                             </div>
                             <div class="setting-subpage-content">
-                                <label for="setting-lobby-music" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                <label for="setting-lobby-music" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Lobby Background Music</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-lobby-music" checked>
@@ -7481,7 +7480,7 @@
                                 <p class="setting-subpage-desc">Play background music when the format is Triple.</p>
                             </div>
                             <div class="setting-subpage-content">
-                                <label for="setting-triple-music" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                <label for="setting-triple-music" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Triple Format Music</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-triple-music" checked>
@@ -7499,7 +7498,7 @@
                                 <p class="setting-subpage-desc">Play sound effects when pressing, swiping, and validating words during play.</p>
                             </div>
                             <div class="setting-subpage-content">
-                                <label for="setting-board-sounds" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                <label for="setting-board-sounds" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable In-Game Sound Effects</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-board-sounds" checked>
@@ -7553,7 +7552,7 @@
                                 <p class="setting-subpage-desc">Vibrate mobile devices 10 seconds before a new round starts.</p>
                             </div>
                             <div class="setting-subpage-content">
-                                <label for="setting-vibration-alert" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                <label for="setting-vibration-alert" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Vibration on Mobile</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-vibration-alert">
@@ -7687,7 +7686,7 @@
                                 <p class="setting-subpage-desc">Allow other players to send you private messages. When disabled, the "Message" button on your profile will be hidden from everyone.</p>
                             </div>
                             <div class="setting-subpage-content">
-                                <label for="setting-allow-pm" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                <label for="setting-allow-pm" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Allow Incoming Private Messages</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-allow-pm" checked>
@@ -7705,7 +7704,7 @@
                                 <p class="setting-subpage-desc">Allow other players to send you "With Friends" room invitations. When disabled, players cannot invite you to matches.</p>
                             </div>
                             <div class="setting-subpage-content">
-                                <label for="setting-allow-invites" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                <label for="setting-allow-invites" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Allow Room Match <span class="invitations-mobile-break">Invitations</span></span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-allow-invites" checked>
@@ -7723,7 +7722,7 @@
                                 <p class="setting-subpage-desc">Enable or disable chat in game rooms. When disabled, the chat box will be hidden during gameplay.</p>
                             </div>
                             <div class="setting-subpage-content">
-                                <label for="setting-game-room-chat" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                <label for="setting-game-room-chat" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Enable Game Room Chat</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-game-room-chat" checked>
@@ -7741,7 +7740,7 @@
                                 <p class="setting-subpage-desc">Display the "For New Users Asking: What am I looking at?" explanation banner at the top of the Lobby.</p>
                             </div>
                             <div class="setting-subpage-content">
-                                <label for="setting-lobby-guide-toggle" class="setting-toggle-row" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; background: rgba(0,0,0,0.15); border-radius: 12px;">
+                                <label for="setting-lobby-guide-toggle" class="setting-toggle-row">
                                     <span style="font-weight: 600; font-size: 0.95rem;">Show Lobby Explanation Banner</span>
                                     <span class="toggle-switch">
                                         <input type="checkbox" id="setting-lobby-guide-toggle" checked>
