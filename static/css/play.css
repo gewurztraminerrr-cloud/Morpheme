@@ -27354,6 +27354,21 @@ body.is-mobile #word-length-radar,
 }
 
 /* Ensure Profile stat titles and numbers are perfectly aligned on desktop and laptop */
+#profile-quote-val,
+#profile-description-val,
+#profile-quote-val[contenteditable="true"],
+#profile-description-val[contenteditable="true"],
+#profile-quote-val[contenteditable="true"]:focus,
+#profile-description-val[contenteditable="true"]:focus {
+    height: 110px !important;
+    min-height: 110px !important;
+    max-height: 110px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    overscroll-behavior-y: contain !important;
+}
+
 .profile-stats-grid .stat-box {
     display: flex !important;
     flex-direction: column !important;
