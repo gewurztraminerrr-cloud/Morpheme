@@ -14197,28 +14197,23 @@ window.lookupWordChartWord = async function() {
             </div>
 
             <!-- Metric Cards Grid -->
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 12px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
                 <div class="wc-metric-card" style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 800; color: #38bdf8;">${data.points} pts</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #38bdf8; white-space: nowrap;">${data.points} pt${data.points !== 1 ? 's' : ''} of ${(data.max_points !== undefined && data.max_points !== null ? data.max_points : data.points)} pt${(data.max_points !== undefined && data.max_points !== null ? data.max_points : data.points) !== 1 ? 's' : ''}</div>
                     <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Dynamic Value</div>
                 </div>
                 <div class="wc-metric-card" style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 800; color: #a78bfa;">Div ${data.division} / ${data.max_divisions}</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #a78bfa; white-space: nowrap;">Div ${data.division} of ${data.max_divisions}</div>
                     <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Division Status</div>
                 </div>
                 <div class="wc-metric-card" style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 800; color: #fbbf24;">${data.find_count} finds</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #fbbf24; white-space: nowrap;">${data.find_count} finds</div>
                     <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Tally History</div>
                 </div>
                 <div class="wc-metric-card" style="background: rgba(var(--text-primary-rgb), 0.04); border-radius: 8px; padding: 10px; text-align: center;">
-                    <div style="font-size: 1.25rem; font-weight: 800; color: #34d399;">${data.bonus_word_points} pts</div>
+                    <div style="font-size: 1.15rem; font-weight: 800; color: #34d399; white-space: nowrap;">${data.bonus_word_points} pts</div>
                     <div style="font-size: 0.7rem; color: var(--muted-text); text-transform: uppercase; font-weight: 600; margin-top: 2px;">As Bonus Word</div>
                 </div>
-            </div>
-
-            <div class="wc-details-box" style="font-size: 0.83rem; line-height: 1.5; color: var(--muted-text); background: rgba(var(--text-primary-rgb), 0.02); padding: 8px 12px; border-radius: 6px;">
-                <strong>Division Details:</strong> ${escapeHtml(data.division_str || '')}. Base score: ${data.base_points} pt${data.base_points !== 1 ? 's' : ''}. Maximum for ${data.length}-letter words in tally is ${data.max_count} finds.
-                ${data.definition ? `<div style="margin-top: 6px; color: var(--text-primary); font-style: italic;">&ldquo;${escapeHtml(data.definition)}&rdquo;</div>` : ''}
             </div>
         `;
     } catch (err) {

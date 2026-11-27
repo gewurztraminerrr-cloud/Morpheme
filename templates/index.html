@@ -6639,9 +6639,26 @@
                             <p style="font-size: 0.85rem; line-height: 1.4; margin-bottom: 12px; color: var(--text-primary); opacity: 0.9;">
                                 Upload a text file (<code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newNWL.txt</code> or <code style="color: var(--accent-color); font-weight: 800; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 4px; border-radius: 4px;">newCSW.txt</code>) to permanently add words to the dictionary DB and tracking tables.
                             </p>
-                            <div style="font-size: 0.85rem; line-height: 1.45; margin-bottom: 15px; background: rgba(var(--accent-rgb, 100, 150, 255), 0.08); border-left: 3px solid var(--accent-color, #4a90e2); padding: 10px 14px; border-radius: 6px; box-sizing: border-box;">
-                                <strong>How word processing works:</strong><br>
-                                When uploading, each word is checked against the respective dictionary (NWL or CSW). If the word is <em>already present</em>, it is skipped and the system moves on to the next word. If the word is <em>not present</em> in NWL or CSW, it is added and automatically promoted from Added Words.
+                            <div style="font-size: 0.84rem; line-height: 1.55; margin-bottom: 15px; background: rgba(var(--accent-rgb, 100, 150, 255), 0.08); border-left: 3px solid var(--accent-color, #4a90e2); padding: 12px 16px; border-radius: 6px; box-sizing: border-box; color: var(--text-primary);">
+                                <div style="font-weight: 800; font-size: 0.92rem; margin-bottom: 8px; color: var(--accent-color, #4a90e2);">
+                                    What happens when uploading a text file (<code style="font-size: 0.88rem; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 5px; border-radius: 4px;">newNWL.txt</code> / <code style="font-size: 0.88rem; background: rgba(var(--text-primary-rgb), 0.1); padding: 2px 5px; border-radius: 4px;">newCSW.txt</code>):
+                                </div>
+                                <div style="margin-bottom: 8px;">
+                                    When you submit any text file, the system checks each word individually against the respective official dictionary (NWL or CSW):
+                                </div>
+                                <ul style="margin: 0 0 10px 0; padding-left: 20px;">
+                                    <li style="margin-bottom: 6px;">
+                                        <strong>If the file contains ONLY new words (without words already present):</strong><br>
+                                        All words in the file are verified as new additions. Each word is added to the dictionary, recorded in the "New Words" tracking table with today's date, and automatically promoted (removed) from the Added Words staging list.
+                                    </li>
+                                    <li>
+                                        <strong>If the file contains BOTH new words AND words already present (e.g. a full list or cumulative update):</strong><br>
+                                        Each word is checked one by one. Any word that is <em>already present</em> in the dictionary is recognized as valid, skipped, and left untouched. The system immediately advances to the next word. Only words that are <em>not present</em> in the dictionary are added, tracked, and promoted from Added Words.
+                                    </li>
+                                </ul>
+                                <div style="opacity: 0.85; font-size: 0.78rem;">
+                                    <em>Note: Existing words are never duplicated or overwritten. Only genuinely new words are merged into the dictionary DB.</em>
+                                </div>
                             </div>
                         </div>
                         <div id="dict-upload-status" style="min-height: 20px; margin-bottom: 12px; font-weight: 700; font-size: 0.9rem;"></div>
@@ -11080,7 +11097,7 @@
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1795770005"></script>
+    <script src="/js/tools.js?v=1795770006"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1795700001"></script>
