@@ -5178,7 +5178,12 @@ body.theme-white #page-settings .mobile-bottom-nav {
     #page-settings .tool-header h2,
     #page-mods .tool-pane .tool-header h2,
     #page-mods .tool-header h2 {
-        display: none !important;
+        display: flex !important;
+        align-items: center !important;
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+        color: var(--text-primary) !important;
+        margin: 0 0 10px 0 !important;
     }
 
     #page-tools .tool-pane .tool-header p,
@@ -11913,7 +11918,12 @@ body.theme-white .m-scroller-thumb.dragging {
     #page-settings .tool-header h2,
     #page-mods .tool-pane .tool-header h2,
     #page-mods .tool-header h2 {
-        display: none !important;
+        display: flex !important;
+        align-items: center !important;
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+        color: var(--text-primary) !important;
+        margin: 0 0 10px 0 !important;
     }
 
     .tool-header p,
@@ -15140,18 +15150,7 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     #page-tools #tool-lists .tool-header p,
     #page-tools #tool-sequence .tool-header p,
     #page-tools #tool-good-at .tool-header p {
-        margin: 0 0 6px 0 !important;
-        padding: 5px 12px !important;
-        font-size: 0.78rem !important;
-        line-height: 1.35 !important;
-        height: calc(2.7em + 8px) !important;
-        max-height: calc(2.7em + 8px) !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
-        overscroll-behavior-y: contain !important;
-        scrollbar-width: thin !important;
-        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
+        display: none !important;
     }
 
     /* Compact filter panel */
@@ -22940,27 +22939,74 @@ body.is-mobile #combo-explorer-response-list {
 #tool-word-chart .tool-header p,
 #tool-change-account .tool-header p,
 #tool-store .tool-header p,
-#forum-category-desc.forum-desc-scrolling-box {
-    display: block !important;
-    font-size: 0.82rem !important;
-    line-height: 1.35 !important;
-    height: calc(2.7em + 8px) !important;
-    max-height: calc(2.7em + 8px) !important;
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch !important;
-    touch-action: pan-y !important;
-    overscroll-behavior-y: contain !important;
-    padding: 6px 12px !important;
-    margin-bottom: 10px !important;
-    border: 1px solid rgba(var(--text-primary-rgb), 0.16) !important;
-    border-radius: 8px !important;
-    background: rgba(var(--text-primary-rgb), 0.04) !important;
-    color: rgba(var(--text-primary-rgb), 0.4) !important;
+#forum-category-desc,
+#forum-category-desc.forum-desc-scrolling-box,
+.tool-header p {
+    display: none !important;
+}
+
+/* "?" Help Button Next to Titles */
+.title-help-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 22px !important;
+    height: 22px !important;
+    min-width: 22px !important;
+    min-height: 22px !important;
+    border-radius: 50% !important;
+    background: rgba(var(--text-primary-rgb), 0.12) !important;
+    border: 1px solid rgba(var(--text-primary-rgb), 0.28) !important;
+    color: var(--text-primary) !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    font-family: inherit !important;
+    line-height: 1 !important;
+    margin-left: 8px !important;
+    vertical-align: middle !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
     box-sizing: border-box !important;
-    text-align: left !important;
-    width: 100% !important;
-    scrollbar-width: thin !important;
-    scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+}
+
+.title-help-btn:hover {
+    background: rgba(var(--text-primary-rgb), 0.25) !important;
+    border-color: rgba(var(--text-primary-rgb), 0.5) !important;
+    transform: scale(1.1) !important;
+    box-shadow: 0 0 8px rgba(var(--text-primary-rgb), 0.2) !important;
+}
+
+.title-help-btn:active {
+    transform: scale(0.95) !important;
+}
+
+body.theme-white .title-help-btn,
+body[class*="theme-white"] .title-help-btn,
+[class*="theme-white"] .title-help-btn {
+    background: rgba(0, 0, 0, 0.07) !important;
+    border-color: rgba(0, 0, 0, 0.22) !important;
+    color: #111827 !important;
+}
+
+body[class*="theme-light-"] .title-help-btn,
+[class*="theme-light-"] .title-help-btn {
+    background: rgba(0, 0, 0, 0.08) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+    color: #1f2937 !important;
+}
+
+@media (max-width: 900px) {
+    .title-help-btn {
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+        min-height: 24px !important;
+        font-size: 0.82rem !important;
+        margin-left: 6px !important;
+    }
 }
 
 .tool-header p::-webkit-scrollbar,
@@ -23762,28 +23808,10 @@ body.is-mobile #combo-explorer-response-list {
     #page-tools #tool-change-account .tool-header p,
     #tool-store .tool-header p,
     #page-tools #tool-store .tool-header p,
-    #forum-category-desc.forum-desc-scrolling-box {
-        display: block !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        font-size: 0.78rem !important;
-        line-height: 1.35 !important;
-        height: calc(2.7em + 8px) !important;
-        max-height: calc(2.7em + 8px) !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
-        touch-action: pan-y !important;
-        overscroll-behavior-y: contain !important;
-        padding: 5px 12px !important;
-        margin: 0 0 8px 0 !important;
-        border: 1px solid rgba(var(--text-primary-rgb), 0.18) !important;
-        border-radius: 8px !important;
-        background: rgba(var(--text-primary-rgb), 0.04) !important;
-        color: rgba(var(--text-primary-rgb), 0.45) !important;
-        box-sizing: border-box !important;
-        text-align: left !important;
-        scrollbar-width: thin !important;
-        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
+    #forum-category-desc,
+    #forum-category-desc.forum-desc-scrolling-box,
+    .tool-header p {
+        display: none !important;
     }
 
     .tool-header p::-webkit-scrollbar,
