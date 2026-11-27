@@ -2294,6 +2294,10 @@ window.showPage = showPage;
     }
 
     if (pageId === 'page-login') {
+        const loginInputs = document.querySelectorAll('#page-login input, #page-login select, #page-login button');
+        loginInputs.forEach(el => {
+            if (el.id !== 'signup-submit-btn') el.disabled = false;
+        });
         if (typeof window.refreshCaptchas === 'function') {
             window.refreshCaptchas();
         }
@@ -2309,6 +2313,9 @@ window.showPage = showPage;
             const un = document.getElementById('username-display');
             if (un) un.textContent = '';
         }
+    } else {
+        const loginInputs = document.querySelectorAll('#page-login input, #page-login select, #page-login button');
+        loginInputs.forEach(el => el.disabled = true);
     }
 
     // Intercept leaving tournament play mid-round

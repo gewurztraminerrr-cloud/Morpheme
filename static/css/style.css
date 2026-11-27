@@ -1610,10 +1610,27 @@ body:not(.is-mobile) .tool-word-badges-row,
     border: 1px solid var(--input-border);
 }
 
+/* Reset input[type="search"] to behave identically to standard text inputs */
+input[type="search"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+}
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+    -webkit-appearance: none;
+    display: none;
+}
+
 /* Input Styles for Light Themes */
 [class*="theme-white"] input[type="text"],
+[class*="theme-white"] input[type="search"],
 [class*="theme-white"] textarea,
 [class*="theme-light-"] input[type="text"],
+[class*="theme-light-"] input[type="search"],
 [class*="theme-light-"] textarea {
     background: rgba(0, 0, 0, 0.06) !important;
     border-color: rgba(0, 0, 0, 0.2) !important;

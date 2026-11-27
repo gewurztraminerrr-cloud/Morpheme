@@ -318,6 +318,11 @@ window.showTool = function(toolId) {
                 p.style.display = 'none';
             }
         });
+        const changeAccPane = document.getElementById('tool-change-account');
+        if (changeAccPane) {
+            const accInputs = changeAccPane.querySelectorAll('input, button[type="submit"]');
+            accInputs.forEach(el => el.disabled = (toolId !== 'change-account'));
+        }
         if (toolId === 'sequence' || toolId === 'subanagrams' || toolId === 'unscramble' || toolId === 'lists' || toolId === 'combo' || toolId === 'work-on' || toolId === 'store' || toolId === 'reverse-dictionary' || toolId === 'word-chart' || toolId === 'good-at') {
             content.classList.add('no-outer-scroll');
         } else {

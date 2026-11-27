@@ -6438,7 +6438,9 @@ body[class*="theme-light-"] #random-words-table-body .suggested-word-cell,
 
 /* Unified Input Textboxes Across All Tools (Vertically Equal at 42px) */
 .input-row > input[type="text"],
+.input-row > input[type="search"],
 #page-tools input[type="text"],
+#page-tools input[type="search"],
 #find-count-input,
 #combo-input,
 #valid-input,
