@@ -9400,6 +9400,11 @@ function setupSubanagramsTool() {
     clampMinLen();
 
     if (findAllBtn) {
+        findAllBtn.addEventListener('pointerdown', (e) => {
+            if (document.activeElement === customInput) {
+                e.preventDefault();
+            }
+        });
         findAllBtn.addEventListener('click', () => {
             const raw = customInput ? customInput.value.trim() : '';
             const dict = getDict();
@@ -9453,14 +9458,17 @@ function setupSubanagramsTool() {
     if (customInput) {
         customInput.addEventListener('focus', function() { this.value = ''; });
         customInput.addEventListener('click', function() { this.value = ''; });
-        customInput.addEventListener('keypress', (e) => {
+        const handleCustomEnter = (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 const raw = customInput.value.trim();
                 const dict = getDict();
                 const minLen = getMinLen();
                 if (raw) findAndRevealAllSubanagrams(raw, dict, minLen);
             }
-        });
+        };
+        customInput.addEventListener('keydown', handleCustomEnter);
+        customInput.addEventListener('keypress', handleCustomEnter);
     }
 
     if (modeSelect) {
@@ -9507,14 +9515,24 @@ function setupSubanagramsTool() {
     if (minLenSelect) minLenSelect.addEventListener('change', onDictChange);
     if (minLenSelectRandom) minLenSelectRandom.addEventListener('change', onDictChange);
 
-    if (submitBtn) submitBtn.addEventListener('click', submitSubanagramWord);
+    if (submitBtn) {
+        submitBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+        });
+        submitBtn.addEventListener('click', submitSubanagramWord);
+    }
 
     if (wordInput) {
         wordInput.addEventListener('focus', function() { this.value = ''; });
         wordInput.addEventListener('click', function() { this.value = ''; });
-        wordInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') submitSubanagramWord();
-        });
+        const handleWordEnter = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitSubanagramWord();
+            }
+        };
+        wordInput.addEventListener('keydown', handleWordEnter);
+        wordInput.addEventListener('keypress', handleWordEnter);
     }
 
     if (revealBtn) revealBtn.addEventListener('click', revealAllSubanagrams);
@@ -9588,7 +9606,11 @@ async function findAndRevealAllSubanagrams(rawLetters, dictionary, minLength = 2
         _subIsRevealed = true;
         _subCurrentMinLength = minLength;
 
-        if (customInput) customInput.value = _subCurrentLetters;
+        if (customInput) {
+            customInput.value = _subCurrentLetters;
+            customInput.focus();
+            setTimeout(() => { if (customInput) customInput.focus(); }, 10);
+        }
         if (lettersDisplay) {
             lettersDisplay.textContent = _subCurrentLetters;
             window.applyDynamicSequenceStyle(lettersDisplay, _subCurrentLetters);
@@ -9684,7 +9706,11 @@ async function generateRandomSubanagrams(length, dictionary, mode = 'word', inst
         _subCurrentMode = data.mode || mode;
         _subCurrentMinLength = minLength;
 
-        if (customInput) customInput.value = _subCurrentLetters;
+        if (customInput) {
+            customInput.value = _subCurrentLetters;
+            customInput.focus();
+            setTimeout(() => { if (customInput) customInput.focus(); }, 10);
+        }
         if (lettersDisplay) {
             lettersDisplay.textContent = _subCurrentLetters;
             window.applyDynamicSequenceStyle(lettersDisplay, _subCurrentLetters);
@@ -9779,7 +9805,11 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
         _subIsRevealed = false;
         _subCurrentMinLength = minLength;
 
-        if (customInput) customInput.value = _subCurrentLetters;
+        if (customInput) {
+            customInput.value = _subCurrentLetters;
+            customInput.focus();
+            setTimeout(() => { if (customInput) customInput.focus(); }, 10);
+        }
         if (lettersDisplay) {
             lettersDisplay.textContent = _subCurrentLetters;
             window.applyDynamicSequenceStyle(lettersDisplay, _subCurrentLetters);
@@ -9808,22 +9838,32 @@ function submitSubanagramWord() {
     const wordInput = document.getElementById('sub-word-input');
     if (!wordInput) return;
     const word = wordInput.value.trim().toUpperCase();
-    if (!word) return;
+
+    const refocus = () => {
+        wordInput.value = '';
+        wordInput.focus();
+        setTimeout(() => { if (wordInput) wordInput.focus(); }, 10);
+    };
+
+    if (!word) {
+        refocus();
+        return;
+    }
 
     if (!_subCurrentLetters || _subAllWords.length === 0) {
         showSubFeedback('Please load or generate a sequence first.', 'error');
+        refocus();
         return;
     }
 
     if (_subFoundWords.has(word)) {
         showSubFeedback(`"${word}" is already in your found list!`, 'warning');
-        wordInput.select();
+        refocus();
         return;
     }
 
     if (_subAllWords.includes(word)) {
         _subFoundWords.add(word);
-        wordInput.value = '';
         updateSubanagramsHeader();
         renderSubanagramsResults();
 
@@ -9832,6 +9872,7 @@ function submitSubanagramWord() {
         } else {
             showSubFeedback(`✓ "${word}" found! (+${word.length} pts) [${_subFoundWords.size}/${_subAllWords.length}]`, 'success');
         }
+        refocus();
     } else {
         const poolCounts = {};
         for (const ch of _subCurrentLetters) poolCounts[ch] = (poolCounts[ch] || 0) + 1;
@@ -9851,7 +9892,7 @@ function submitSubanagramWord() {
         } else {
             showSubFeedback(`"${word}" is not a valid word in this dictionary.`, 'error');
         }
-        wordInput.select();
+        refocus();
     }
 }
 
@@ -10687,16 +10728,23 @@ function setupUnscrambleTool() {
     const input = document.getElementById('unscramble-input');
 
     if (genBtn) genBtn.onclick = () => startNewUnscramble();
-    if (checkBtn) checkBtn.onclick = () => checkUnscrambleGuess();
+    if (checkBtn) {
+        checkBtn.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+        });
+        checkBtn.onclick = () => checkUnscrambleGuess();
+    }
     if (revealBtn) revealBtn.onclick = () => revealUnscrambleSolutions();
 
     if (input) {
-        input.addEventListener('keydown', (e) => {
+        const handleUnscrambleEnter = (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 checkUnscrambleGuess();
             }
-        });
+        };
+        input.addEventListener('keydown', handleUnscrambleEnter);
+        input.addEventListener('keypress', handleUnscrambleEnter);
         input.addEventListener('focus', () => {
             const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
             if (isMobile) {
@@ -11027,9 +11075,11 @@ function checkUnscrambleGuess() {
     }
 
     input.value = '';
-    const isMobile = window.innerWidth <= 900 || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    if (!isMobile) {
+    if (!input.disabled) {
         input.focus();
+        setTimeout(() => {
+            if (input && !input.disabled) input.focus();
+        }, 10);
     }
 }
 
