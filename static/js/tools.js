@@ -9834,6 +9834,25 @@ async function loadCustomSubanagrams(rawLetters, dictionary, minLength = 2) {
     }
 }
 
+function highlightSubWordInput(isValid) {
+    const wordInput = document.getElementById('sub-word-input');
+    if (!wordInput) return;
+    if (wordInput._borderTimeout) {
+        clearTimeout(wordInput._borderTimeout);
+        wordInput._borderTimeout = null;
+    }
+    const color = isValid ? '#4caf50' : '#ff5252';
+    wordInput.style.setProperty('border-color', color, 'important');
+    wordInput.style.borderColor = color;
+    wordInput._borderTimeout = setTimeout(() => {
+        if (wordInput) {
+            wordInput.style.removeProperty('border-color');
+            wordInput.style.borderColor = '';
+            wordInput._borderTimeout = null;
+        }
+    }, isValid ? 300 : 500);
+}
+
 function submitSubanagramWord() {
     const wordInput = document.getElementById('sub-word-input');
     if (!wordInput) return;
@@ -9852,12 +9871,14 @@ function submitSubanagramWord() {
 
     if (!_subCurrentLetters || _subAllWords.length === 0) {
         showSubFeedback('Please load or generate a sequence first.', 'error');
+        highlightSubWordInput(false);
         refocus();
         return;
     }
 
     if (_subFoundWords.has(word)) {
         showSubFeedback(`"${word}" is already in your found list!`, 'warning');
+        highlightSubWordInput(false);
         refocus();
         return;
     }
@@ -9872,6 +9893,7 @@ function submitSubanagramWord() {
         } else {
             showSubFeedback(`✓ "${word}" found! (+${word.length} pts) [${_subFoundWords.size}/${_subAllWords.length}]`, 'success');
         }
+        highlightSubWordInput(true);
         refocus();
     } else {
         const poolCounts = {};
@@ -9892,6 +9914,7 @@ function submitSubanagramWord() {
         } else {
             showSubFeedback(`"${word}" is not a valid word in this dictionary.`, 'error');
         }
+        highlightSubWordInput(false);
         refocus();
     }
 }
@@ -11052,8 +11075,16 @@ function checkUnscrambleGuess() {
             unscrambleState.found.push(guess);
             renderUnscrambleFound();
 
+            if (input._borderTimeout) clearTimeout(input._borderTimeout);
+            input.style.setProperty('border-color', '#4caf50', 'important');
             input.style.borderColor = '#4caf50';
-            setTimeout(() => { if (input) input.style.borderColor = ''; }, 300);
+            input._borderTimeout = setTimeout(() => {
+                if (input) {
+                    input.style.removeProperty('border-color');
+                    input.style.borderColor = '';
+                    input._borderTimeout = null;
+                }
+            }, 300);
 
             // Only auto-advance if ALL possible words are found
             if (unscrambleState.found.length === unscrambleState.solution.size) {
@@ -11068,9 +11099,15 @@ function checkUnscrambleGuess() {
             unscrambleState.incorrect.push(guess);
             renderUnscrambleFound();
         }
+        if (input._borderTimeout) clearTimeout(input._borderTimeout);
+        input.style.setProperty('border-color', '#ff5252', 'important');
         input.style.borderColor = '#ff5252';
-        setTimeout(() => {
-            if (input) input.style.borderColor = '';
+        input._borderTimeout = setTimeout(() => {
+            if (input) {
+                input.style.removeProperty('border-color');
+                input.style.borderColor = '';
+                input._borderTimeout = null;
+            }
         }, 500);
     }
 
