@@ -13455,10 +13455,17 @@ body[class*="theme-light-"] .play-header:not(.low-time-warning) {
 
     #tool-work-on .tool-header p {
         margin: 0 0 4px 0 !important;
-        padding: 4px 8px !important;
-        font-size: 0.74rem !important;
-        line-height: 1.25 !important;
-        max-height: 48px !important;
+        padding: 5px 12px !important;
+        font-size: 0.78rem !important;
+        line-height: 1.35 !important;
+        height: calc(2.7em + 8px) !important;
+        max-height: calc(2.7em + 8px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
     }
 
     #tool-work-on .work-on-input-panel {
@@ -14367,10 +14374,17 @@ body.is-mobile #setting-subpage-allow-invites .invitations-mobile-break {
     #page-tools #tool-random .tool-header p,
     body.is-mobile #page-tools #tool-random .tool-header p {
         margin: 0 0 6px 0 !important;
-        padding: 4px 8px !important;
-        font-size: 0.76rem !important;
-        line-height: 1.25 !important;
-        max-height: 42px !important;
+        padding: 5px 12px !important;
+        font-size: 0.78rem !important;
+        line-height: 1.35 !important;
+        height: calc(2.7em + 8px) !important;
+        max-height: calc(2.7em + 8px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
     }
 
     #page-tools #tool-random .combo-control-panel,

@@ -14985,10 +14985,17 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
 
     #page-tools #tool-new-users .tool-header p {
         margin: 0 0 4px 0 !important;
-        padding: 4px 8px !important;
-        font-size: 0.74rem !important;
-        line-height: 1.2 !important;
-        max-height: 36px !important;
+        padding: 5px 12px !important;
+        font-size: 0.78rem !important;
+        line-height: 1.35 !important;
+        height: calc(2.7em + 8px) !important;
+        max-height: calc(2.7em + 8px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
     }
 
     /* Mobile Devices: Slight padding above tabs to separate description from the tabs */
@@ -15134,11 +15141,17 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     #page-tools #tool-sequence .tool-header p,
     #page-tools #tool-good-at .tool-header p {
         margin: 0 0 6px 0 !important;
-        padding: 4px 8px !important;
-        font-size: 0.74rem !important;
-        line-height: 1.25 !important;
-        max-height: 56px !important;
-        overflow: hidden !important;
+        padding: 5px 12px !important;
+        font-size: 0.78rem !important;
+        line-height: 1.35 !important;
+        height: calc(2.7em + 8px) !important;
+        max-height: calc(2.7em + 8px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
     }
 
     /* Compact filter panel */
@@ -15265,10 +15278,17 @@ body[class*="theme-light-"] #page-tools #tool-new-users .history-table td,
     #page-tools #tool-random .tool-header p,
     body.is-mobile #page-tools #tool-random .tool-header p {
         margin: 0 0 6px 0 !important;
-        padding: 4px 8px !important;
-        font-size: 0.76rem !important;
-        line-height: 1.25 !important;
-        max-height: 42px !important;
+        padding: 5px 12px !important;
+        font-size: 0.78rem !important;
+        line-height: 1.35 !important;
+        height: calc(2.7em + 8px) !important;
+        max-height: calc(2.7em + 8px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
     }
 
     #page-tools #tool-random .combo-control-panel,
@@ -22882,18 +22902,45 @@ body.is-mobile #combo-explorer-response-list {
     margin-top: 0 !important;
 }
 
-/* Ensure all Combo Checker descriptions (Tool header, MP, MP Word Explorer, LIC) share the exact same scrolling box effect */
+/* Ensure all descriptions throughout the app share the exact same scrolling box effect matching Combo Checker */
+.tool-header p,
+#page-tools .tool-header p,
+#page-tools .tool-pane .tool-header p,
+#page-settings .tool-header p,
+#page-settings .tool-pane .tool-header p,
+#page-mods .tool-header p,
+#page-mods .tool-pane .tool-header p,
+#page-profile .tool-header p,
+.setting-subpage-desc,
+.chart-desc,
+#lic-chart-desc,
+#mp-explorer-chart-desc,
 #tool-combo .tool-header p,
 #tool-combo .chart-desc,
 .combo-results-container .chart-desc,
-#lic-chart-desc,
-#mp-explorer-chart-desc,
 #tool-combo #lic-chart-desc,
 #tool-combo #mp-explorer-chart-desc,
 .combo-results-container #lic-chart-desc,
 .combo-results-container #mp-explorer-chart-desc,
 #tool-combo .result-section:has(#lic-container) .chart-desc,
-#tool-combo #combo-explorer-section .chart-desc {
+#tool-combo #combo-explorer-section .chart-desc,
+#tool-lists .tool-header p,
+#tool-is-valid .tool-header p,
+#tool-work-on .tool-header p,
+#tool-sequence .tool-header p,
+#tool-subanagrams .tool-header p,
+#tool-random .tool-header p,
+#tool-reverse-dictionary .tool-header p,
+#tool-wotd .tool-header p,
+#tool-unscramble .tool-header p,
+#tool-find-count .tool-header p,
+#tool-good-at .tool-header p,
+#tool-timer .tool-header p,
+#tool-new-users .tool-header p,
+#tool-word-chart .tool-header p,
+#tool-change-account .tool-header p,
+#tool-store .tool-header p,
+#forum-category-desc.forum-desc-scrolling-box {
     display: block !important;
     font-size: 0.82rem !important;
     line-height: 1.35 !important;
@@ -22902,6 +22949,7 @@ body.is-mobile #combo-explorer-response-list {
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch !important;
     touch-action: pan-y !important;
+    overscroll-behavior-y: contain !important;
     padding: 6px 12px !important;
     margin-bottom: 10px !important;
     border: 1px solid rgba(var(--text-primary-rgb), 0.16) !important;
@@ -22911,38 +22959,57 @@ body.is-mobile #combo-explorer-response-list {
     box-sizing: border-box !important;
     text-align: left !important;
     width: 100% !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
 }
 
-#tool-combo .tool-header p::-webkit-scrollbar,
-#tool-combo .chart-desc::-webkit-scrollbar,
-.combo-results-container .chart-desc::-webkit-scrollbar,
+.tool-header p::-webkit-scrollbar,
+#page-tools .tool-header p::-webkit-scrollbar,
+#page-settings .tool-header p::-webkit-scrollbar,
+#page-mods .tool-header p::-webkit-scrollbar,
+#page-profile .tool-header p::-webkit-scrollbar,
+.setting-subpage-desc::-webkit-scrollbar,
+.chart-desc::-webkit-scrollbar,
 #lic-chart-desc::-webkit-scrollbar,
-#mp-explorer-chart-desc::-webkit-scrollbar {
+#mp-explorer-chart-desc::-webkit-scrollbar,
+#forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar {
     width: 4px !important;
+    height: 4px !important;
 }
 
-#tool-combo .tool-header p::-webkit-scrollbar-track,
-#tool-combo .chart-desc::-webkit-scrollbar-track,
-.combo-results-container .chart-desc::-webkit-scrollbar-track,
+.tool-header p::-webkit-scrollbar-track,
+#page-tools .tool-header p::-webkit-scrollbar-track,
+#page-settings .tool-header p::-webkit-scrollbar-track,
+#page-mods .tool-header p::-webkit-scrollbar-track,
+#page-profile .tool-header p::-webkit-scrollbar-track,
+.setting-subpage-desc::-webkit-scrollbar-track,
+.chart-desc::-webkit-scrollbar-track,
 #lic-chart-desc::-webkit-scrollbar-track,
-#mp-explorer-chart-desc::-webkit-scrollbar-track {
+#mp-explorer-chart-desc::-webkit-scrollbar-track,
+#forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-track {
     background: transparent !important;
 }
 
-#tool-combo .tool-header p::-webkit-scrollbar-thumb,
-#tool-combo .chart-desc::-webkit-scrollbar-thumb,
-.combo-results-container .chart-desc::-webkit-scrollbar-thumb,
+.tool-header p::-webkit-scrollbar-thumb,
+#page-tools .tool-header p::-webkit-scrollbar-thumb,
+#page-settings .tool-header p::-webkit-scrollbar-thumb,
+#page-mods .tool-header p::-webkit-scrollbar-thumb,
+#page-profile .tool-header p::-webkit-scrollbar-thumb,
+.setting-subpage-desc::-webkit-scrollbar-thumb,
+.chart-desc::-webkit-scrollbar-thumb,
 #lic-chart-desc::-webkit-scrollbar-thumb,
-#mp-explorer-chart-desc::-webkit-scrollbar-thumb {
+#mp-explorer-chart-desc::-webkit-scrollbar-thumb,
+#forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb {
     background: rgba(var(--text-primary-rgb), 0.25) !important;
     border-radius: 4px !important;
 }
 
-#tool-combo .tool-header p *,
-#tool-combo .chart-desc *,
-.combo-results-container .chart-desc *,
+.tool-header p *,
+.setting-subpage-desc *,
+.chart-desc *,
 #lic-chart-desc *,
-#mp-explorer-chart-desc * {
+#mp-explorer-chart-desc *,
+#forum-category-desc.forum-desc-scrolling-box * {
     color: inherit !important;
     font-weight: 500;
 }
@@ -23642,15 +23709,60 @@ body.is-mobile #combo-explorer-response-list {
         transform: translateY(-1px) !important;
     }
 
-    /* Harmonized Descriptions Across Entire Combo Checker on Mobile */
+    /* Harmonized Descriptions Across Entire App on Mobile */
+    .tool-header p,
+    #page-tools .tool-header p,
+    #page-tools .tool-pane .tool-header p,
+    #page-settings .tool-header p,
+    #page-settings .tool-pane .tool-header p,
+    #page-mods .tool-header p,
+    #page-mods .tool-pane .tool-header p,
+    #page-profile .tool-header p,
+    .setting-subpage-desc,
+    .chart-desc,
+    #lic-chart-desc,
+    #mp-explorer-chart-desc,
     #tool-combo .tool-header p,
     #page-tools #tool-combo .tool-header p,
     #tool-combo .chart-desc,
     .combo-results-container .chart-desc,
-    #lic-chart-desc,
-    #mp-explorer-chart-desc,
     #tool-combo #lic-chart-desc,
-    #tool-combo #mp-explorer-chart-desc {
+    #tool-combo #mp-explorer-chart-desc,
+    .combo-results-container #lic-chart-desc,
+    .combo-results-container #mp-explorer-chart-desc,
+    #tool-lists .tool-header p,
+    #page-tools #tool-lists .tool-header p,
+    #tool-is-valid .tool-header p,
+    #page-tools #tool-is-valid .tool-header p,
+    #tool-work-on .tool-header p,
+    #page-tools #tool-work-on .tool-header p,
+    #tool-sequence .tool-header p,
+    #page-tools #tool-sequence .tool-header p,
+    #tool-subanagrams .tool-header p,
+    #page-tools #tool-subanagrams .tool-header p,
+    #tool-random .tool-header p,
+    #page-tools #tool-random .tool-header p,
+    #tool-reverse-dictionary .tool-header p,
+    #page-tools #tool-reverse-dictionary .tool-header p,
+    #tool-wotd .tool-header p,
+    #page-tools #tool-wotd .tool-header p,
+    #tool-unscramble .tool-header p,
+    #page-tools #tool-unscramble .tool-header p,
+    #tool-find-count .tool-header p,
+    #page-tools #tool-find-count .tool-header p,
+    #tool-good-at .tool-header p,
+    #page-tools #tool-good-at .tool-header p,
+    #tool-timer .tool-header p,
+    #page-tools #tool-timer .tool-header p,
+    #tool-new-users .tool-header p,
+    #page-tools #tool-new-users .tool-header p,
+    #tool-word-chart .tool-header p,
+    #page-tools #tool-word-chart .tool-header p,
+    #tool-change-account .tool-header p,
+    #page-tools #tool-change-account .tool-header p,
+    #tool-store .tool-header p,
+    #page-tools #tool-store .tool-header p,
+    #forum-category-desc.forum-desc-scrolling-box {
         display: block !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -23661,6 +23773,7 @@ body.is-mobile #combo-explorer-response-list {
         overflow-y: auto !important;
         -webkit-overflow-scrolling: touch !important;
         touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
         padding: 5px 12px !important;
         margin: 0 0 8px 0 !important;
         border: 1px solid rgba(var(--text-primary-rgb), 0.18) !important;
@@ -23669,33 +23782,47 @@ body.is-mobile #combo-explorer-response-list {
         color: rgba(var(--text-primary-rgb), 0.45) !important;
         box-sizing: border-box !important;
         text-align: left !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
     }
 
-    #tool-combo .tool-header p::-webkit-scrollbar,
-    #page-tools #tool-combo .tool-header p::-webkit-scrollbar,
-    #tool-combo .chart-desc::-webkit-scrollbar,
-    .combo-results-container .chart-desc::-webkit-scrollbar,
+    .tool-header p::-webkit-scrollbar,
+    #page-tools .tool-header p::-webkit-scrollbar,
+    #page-settings .tool-header p::-webkit-scrollbar,
+    #page-mods .tool-header p::-webkit-scrollbar,
+    #page-profile .tool-header p::-webkit-scrollbar,
+    .setting-subpage-desc::-webkit-scrollbar,
+    .chart-desc::-webkit-scrollbar,
     #lic-chart-desc::-webkit-scrollbar,
-    #mp-explorer-chart-desc::-webkit-scrollbar {
+    #mp-explorer-chart-desc::-webkit-scrollbar,
+    #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar {
         width: 4px !important;
         height: 4px !important;
     }
 
-    #tool-combo .tool-header p::-webkit-scrollbar-track,
-    #page-tools #tool-combo .tool-header p::-webkit-scrollbar-track,
-    #tool-combo .chart-desc::-webkit-scrollbar-track,
-    .combo-results-container .chart-desc::-webkit-scrollbar-track,
+    .tool-header p::-webkit-scrollbar-track,
+    #page-tools .tool-header p::-webkit-scrollbar-track,
+    #page-settings .tool-header p::-webkit-scrollbar-track,
+    #page-mods .tool-header p::-webkit-scrollbar-track,
+    #page-profile .tool-header p::-webkit-scrollbar-track,
+    .setting-subpage-desc::-webkit-scrollbar-track,
+    .chart-desc::-webkit-scrollbar-track,
     #lic-chart-desc::-webkit-scrollbar-track,
-    #mp-explorer-chart-desc::-webkit-scrollbar-track {
+    #mp-explorer-chart-desc::-webkit-scrollbar-track,
+    #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-track {
         background: transparent !important;
     }
 
-    #tool-combo .tool-header p::-webkit-scrollbar-thumb,
-    #page-tools #tool-combo .tool-header p::-webkit-scrollbar-thumb,
-    #tool-combo .chart-desc::-webkit-scrollbar-thumb,
-    .combo-results-container .chart-desc::-webkit-scrollbar-thumb,
+    .tool-header p::-webkit-scrollbar-thumb,
+    #page-tools .tool-header p::-webkit-scrollbar-thumb,
+    #page-settings .tool-header p::-webkit-scrollbar-thumb,
+    #page-mods .tool-header p::-webkit-scrollbar-thumb,
+    #page-profile .tool-header p::-webkit-scrollbar-thumb,
+    .setting-subpage-desc::-webkit-scrollbar-thumb,
+    .chart-desc::-webkit-scrollbar-thumb,
     #lic-chart-desc::-webkit-scrollbar-thumb,
-    #mp-explorer-chart-desc::-webkit-scrollbar-thumb {
+    #mp-explorer-chart-desc::-webkit-scrollbar-thumb,
+    #forum-category-desc.forum-desc-scrolling-box::-webkit-scrollbar-thumb {
         background: rgba(var(--text-primary-rgb), 0.25) !important;
         border-radius: 4px !important;
     }
@@ -24112,14 +24239,18 @@ body[class*="theme-light-"] #tool-combo .combo-tab-pane .result-section,
 }
 
 /* Scrolling Box Descriptions in Light & White Themes */
-body.theme-white #tool-combo .tool-header p,
-[class*="theme-white"] #tool-combo .tool-header p,
-body[class*="theme-light-"] #tool-combo .tool-header p,
-[class*="theme-light-"] #tool-combo .tool-header p,
-body.theme-white #tool-combo .chart-desc,
-[class*="theme-white"] #tool-combo .chart-desc,
-body[class*="theme-light-"] #tool-combo .chart-desc,
-[class*="theme-light-"] #tool-combo .chart-desc,
+body.theme-white .tool-header p,
+[class*="theme-white"] .tool-header p,
+body[class*="theme-light-"] .tool-header p,
+[class*="theme-light-"] .tool-header p,
+body.theme-white .setting-subpage-desc,
+[class*="theme-white"] .setting-subpage-desc,
+body[class*="theme-light-"] .setting-subpage-desc,
+[class*="theme-light-"] .setting-subpage-desc,
+body.theme-white .chart-desc,
+[class*="theme-white"] .chart-desc,
+body[class*="theme-light-"] .chart-desc,
+[class*="theme-light-"] .chart-desc,
 body.theme-white #lic-chart-desc,
 [class*="theme-white"] #lic-chart-desc,
 body[class*="theme-light-"] #lic-chart-desc,
@@ -24127,7 +24258,11 @@ body[class*="theme-light-"] #lic-chart-desc,
 body.theme-white #mp-explorer-chart-desc,
 [class*="theme-white"] #mp-explorer-chart-desc,
 body[class*="theme-light-"] #mp-explorer-chart-desc,
-[class*="theme-light-"] #mp-explorer-chart-desc {
+[class*="theme-light-"] #mp-explorer-chart-desc,
+body.theme-white #forum-category-desc.forum-desc-scrolling-box,
+[class*="theme-white"] #forum-category-desc.forum-desc-scrolling-box,
+body[class*="theme-light-"] #forum-category-desc.forum-desc-scrolling-box,
+[class*="theme-light-"] #forum-category-desc.forum-desc-scrolling-box {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #334155 !important;
@@ -26276,9 +26411,18 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     }
 
     #tool-word-chart .tool-header p {
-        font-size: 0.8rem !important;
+        font-size: 0.78rem !important;
         margin: 0 0 6px 0 !important;
-        line-height: 1.2 !important;
+        padding: 5px 12px !important;
+        line-height: 1.35 !important;
+        height: calc(2.7em + 8px) !important;
+        max-height: calc(2.7em + 8px) !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        touch-action: pan-y !important;
+        overscroll-behavior-y: contain !important;
+        scrollbar-width: thin !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
     }
 
     #tool-word-chart .word-chart-subtabs {
