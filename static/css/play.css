@@ -27306,6 +27306,27 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
         margin-bottom: 0 !important;
     }
 
+    #tool-word-chart #subtab-pane-wc-dicts #wc-dicts-table {
+        height: 100% !important;
+        min-height: 100% !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-dicts #wc-dicts-table-scroll {
+        height: 100% !important;
+    }
+
+    #tool-word-chart #wc-dicts-table tbody tr:last-child td {
+        border-bottom: none !important;
+    }
+
+    #tool-word-chart #wc-dicts-table tbody tr:last-child td:first-child {
+        border-bottom-left-radius: 7px !important;
+    }
+
+    #tool-word-chart #wc-dicts-table tbody tr:last-child td:last-child {
+        border-bottom-right-radius: 7px !important;
+    }
+
     /* Table Scroll Areas on Desktop */
     #tool-word-chart .word-chart-table-scroll {
         flex: 1 1 0px !important;
@@ -27687,11 +27708,17 @@ body[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child
 [class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child td {
     background: #f8fafc !important;
     border-top: 2px solid #cbd5e1 !important;
+    border-bottom: none !important;
 }
 body.theme-white #tool-word-chart #wc-dicts-table tbody tr:last-child td:first-child,
 body[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child td:first-child {
     color: #0f172a !important;
     font-weight: 800 !important;
+    border-bottom-left-radius: 7px !important;
+}
+body.theme-white #tool-word-chart #wc-dicts-table tbody tr:last-child td:last-child,
+body[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 7px !important;
 }
 
 /* Sub-tab 3: Dynamic Word Lookup (Pure White Tables & Cards) */
@@ -27960,6 +27987,79 @@ body[class*="theme-light-"] #list-update-btn:hover,
     color: #ffffff !important;
     box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45) !important;
     opacity: 0.95 !important;
+}
+
+/* Words User is Good at: Previous & Next Pagination Buttons in Light Themes */
+body.theme-white #page-tools #tool-good-at #good-at-prev-btn,
+body.theme-white #page-tools #tool-good-at #good-at-next-btn,
+body[class*="theme-white"] #page-tools #tool-good-at #good-at-prev-btn,
+body[class*="theme-white"] #page-tools #tool-good-at #good-at-next-btn,
+[class*="theme-white"] #page-tools #tool-good-at #good-at-prev-btn,
+[class*="theme-white"] #page-tools #tool-good-at #good-at-next-btn,
+body.theme-light-gray #page-tools #tool-good-at #good-at-prev-btn,
+body.theme-light-gray #page-tools #tool-good-at #good-at-next-btn,
+body.theme-light-light-gray #page-tools #tool-good-at #good-at-prev-btn,
+body.theme-light-light-gray #page-tools #tool-good-at #good-at-next-btn,
+body[class*="theme-light-"] #page-tools #tool-good-at #good-at-prev-btn,
+body[class*="theme-light-"] #page-tools #tool-good-at #good-at-next-btn,
+[class*="theme-light-"] #page-tools #tool-good-at #good-at-prev-btn,
+[class*="theme-light-"] #page-tools #tool-good-at #good-at-next-btn,
+body.theme-light #page-tools #tool-good-at #good-at-prev-btn,
+body.theme-light #page-tools #tool-good-at #good-at-next-btn,
+[class*="theme-light"] #page-tools #tool-good-at #good-at-prev-btn,
+[class*="theme-light"] #page-tools #tool-good-at #good-at-next-btn {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #1e293b !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+}
+
+body.theme-white #page-tools #tool-good-at #good-at-prev-btn:not(:disabled):hover,
+body.theme-white #page-tools #tool-good-at #good-at-next-btn:not(:disabled):hover,
+body[class*="theme-white"] #page-tools #tool-good-at #good-at-prev-btn:not(:disabled):hover,
+body[class*="theme-white"] #page-tools #tool-good-at #good-at-next-btn:not(:disabled):hover,
+[class*="theme-white"] #page-tools #tool-good-at #good-at-prev-btn:not(:disabled):hover,
+[class*="theme-white"] #page-tools #tool-good-at #good-at-next-btn:not(:disabled):hover,
+body.theme-light-gray #page-tools #tool-good-at #good-at-prev-btn:not(:disabled):hover,
+body.theme-light-gray #page-tools #tool-good-at #good-at-next-btn:not(:disabled):hover,
+body.theme-light-light-gray #page-tools #tool-good-at #good-at-prev-btn:not(:disabled):hover,
+body.theme-light-light-gray #page-tools #tool-good-at #good-at-next-btn:not(:disabled):hover,
+body[class*="theme-light-"] #page-tools #tool-good-at #good-at-prev-btn:not(:disabled):hover,
+body[class*="theme-light-"] #page-tools #tool-good-at #good-at-next-btn:not(:disabled):hover,
+[class*="theme-light-"] #page-tools #tool-good-at #good-at-prev-btn:not(:disabled):hover,
+[class*="theme-light-"] #page-tools #tool-good-at #good-at-next-btn:not(:disabled):hover,
+body.theme-light #page-tools #tool-good-at #good-at-prev-btn:not(:disabled):hover,
+body.theme-light #page-tools #tool-good-at #good-at-next-btn:not(:disabled):hover,
+[class*="theme-light"] #page-tools #tool-good-at #good-at-prev-btn:not(:disabled):hover,
+[class*="theme-light"] #page-tools #tool-good-at #good-at-next-btn:not(:disabled):hover {
+    background: #f1f5f9 !important;
+    border-color: #94a3b8 !important;
+    color: #0f172a !important;
+}
+
+body.theme-white #page-tools #tool-good-at #good-at-prev-btn:disabled,
+body.theme-white #page-tools #tool-good-at #good-at-next-btn:disabled,
+body[class*="theme-white"] #page-tools #tool-good-at #good-at-prev-btn:disabled,
+body[class*="theme-white"] #page-tools #tool-good-at #good-at-next-btn:disabled,
+[class*="theme-white"] #page-tools #tool-good-at #good-at-prev-btn:disabled,
+[class*="theme-white"] #page-tools #tool-good-at #good-at-next-btn:disabled,
+body.theme-light-gray #page-tools #tool-good-at #good-at-prev-btn:disabled,
+body.theme-light-gray #page-tools #tool-good-at #good-at-next-btn:disabled,
+body.theme-light-light-gray #page-tools #tool-good-at #good-at-prev-btn:disabled,
+body.theme-light-light-gray #page-tools #tool-good-at #good-at-next-btn:disabled,
+body[class*="theme-light-"] #page-tools #tool-good-at #good-at-prev-btn:disabled,
+body[class*="theme-light-"] #page-tools #tool-good-at #good-at-next-btn:disabled,
+[class*="theme-light-"] #page-tools #tool-good-at #good-at-prev-btn:disabled,
+[class*="theme-light-"] #page-tools #tool-good-at #good-at-next-btn:disabled,
+body.theme-light #page-tools #tool-good-at #good-at-prev-btn:disabled,
+body.theme-light #page-tools #tool-good-at #good-at-next-btn:disabled,
+[class*="theme-light"] #page-tools #tool-good-at #good-at-prev-btn:disabled,
+[class*="theme-light"] #page-tools #tool-good-at #good-at-next-btn:disabled {
+    background: rgba(255, 255, 255, 0.6) !important;
+    border-color: #e2e8f0 !important;
+    color: #94a3b8 !important;
+    opacity: 0.5 !important;
 }
 
 

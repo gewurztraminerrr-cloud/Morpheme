@@ -14068,12 +14068,12 @@ window.renderWordChartDicts = function(totals, dists) {
     // Grand total row
     html += `
         <tr style="background: rgba(var(--text-primary-rgb), 0.06); font-weight: 800; border-top: 2px solid rgba(var(--text-primary-rgb), 0.18);">
-            <td style="padding: 10px 12px; text-align: left; color: var(--text-primary);">Total</td>
+            <td style="padding: 10px 12px; text-align: left; color: var(--text-primary); border-bottom-left-radius: 7px;">Total</td>
             <td style="padding: 10px 12px; color: #60a5fa;">${(totals.nwl || 0).toLocaleString()}</td>
             <td style="padding: 10px 12px; color: #fbbf24;">${(totals.csw || 0).toLocaleString()}</td>
             <td style="padding: 10px 12px; color: #c084fc;">${(totals.aw || 0).toLocaleString()}</td>
             <td style="padding: 10px 12px; color: #f87171;">${(totals.long || 0).toLocaleString()}</td>
-            <td style="padding: 10px 12px; color: #34d399; font-size: 0.95rem;">${(totals.all || 0).toLocaleString()}</td>
+            <td style="padding: 10px 12px; color: #34d399; font-size: 0.95rem; border-bottom-right-radius: 7px;">${(totals.all || 0).toLocaleString()}</td>
         </tr>
     `;
 
