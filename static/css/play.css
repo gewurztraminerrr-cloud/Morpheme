@@ -21787,7 +21787,12 @@ body.theme-light-gray .mod-item {
 
 [class*="theme-white"] label[for="toggle-use-added-words"],
 [class*="theme-light-"] label[for="toggle-use-added-words"],
-body.theme-white label[for="toggle-use-added-words"] {
+body.theme-white label[for="toggle-use-added-words"],
+body.theme-light-gray label[for="toggle-use-added-words"],
+[class*="theme-white"] label[for="toggle-use-offensive-words"],
+[class*="theme-light-"] label[for="toggle-use-offensive-words"],
+body.theme-white label[for="toggle-use-offensive-words"],
+body.theme-light-gray label[for="toggle-use-offensive-words"] {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
