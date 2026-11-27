@@ -32,6 +32,8 @@ class WordValidator:
         self.added_trie = TrieNode()
         
         self.use_added_words = True # Global toggle for moderator words
+        self.use_offensive_words = False # Global toggle for offensive / removed words
+        self.offensive_words = set()
         self.base_path = os.path.join(os.path.dirname(__file__), 'dictionaries')
         self.config_path = os.path.join(self.base_path, 'added_words_config.json')
         
@@ -39,20 +41,22 @@ class WordValidator:
         self._load_dictionaries()
 
     def _load_config(self):
-        """Load global config for added words"""
+        """Load global config for added words and offensive words"""
         if os.path.exists(self.config_path):
             try:
                 import json
                 with open(self.config_path, 'r') as f:
                     config = json.load(f)
                     self.use_added_words = config.get('use_added_words', True)
+                    self.use_offensive_words = config.get('use_offensive_words', False)
             except Exception as e:
                 import traceback
                 print(f"[WordValidator] Error loading config: {e}\n{traceback.format_exc()}")
                 self.use_added_words = True
+                self.use_offensive_words = False
 
     def _save_config(self):
-        """Save global config for added words atomically"""
+        """Save global config for added words and offensive words atomically"""
         try:
             import json
             import tempfile
@@ -60,7 +64,10 @@ class WordValidator:
             fd, temp_path = tempfile.mkstemp(dir=self.base_path, suffix='.tmp')
             try:
                 with os.fdopen(fd, 'w') as f:
-                    json.dump({'use_added_words': self.use_added_words}, f)
+                    json.dump({
+                        'use_added_words': getattr(self, 'use_added_words', True),
+                        'use_offensive_words': getattr(self, 'use_offensive_words', False)
+                    }, f)
                 os.replace(temp_path, self.config_path)
             except Exception as e:
                 if os.path.exists(temp_path):
@@ -79,6 +86,14 @@ class WordValidator:
         self._load_dictionaries()
         return self.use_added_words
 
+    def toggle_offensive_words(self, enabled):
+        """Toggle offensive words and REBUILD Tries for immediate game-wide effect"""
+        self.use_offensive_words = enabled
+        self._save_config()
+        # Full Rebuild to ensure Tries and sets are clean
+        self._load_dictionaries()
+        return self.use_offensive_words
+
     def get_use_added_words(self, force=False):
         """Actively read config and check for word list changes to sync across multiple Gunicorn workers"""
         import time
@@ -89,6 +104,7 @@ class WordValidator:
         self._last_config_check = now
 
         old_val = getattr(self, 'use_added_words', True)
+        old_off = getattr(self, 'use_offensive_words', False)
         self._load_config()
         
         # Check added_words.txt timestamp for changes even if toggle didn't change
@@ -99,9 +115,9 @@ class WordValidator:
         
         old_mtime = getattr(self, '_added_words_mtime', 0)
         
-        if old_val != self.use_added_words:
+        if old_val != self.use_added_words or old_off != self.use_offensive_words:
             self._added_words_mtime = curr_mtime
-            # Full dictionary rebuild only if toggle changed
+            # Full dictionary rebuild if toggle changed
             self._load_dictionaries()
         elif curr_mtime != old_mtime:
             self._added_words_mtime = curr_mtime
@@ -116,6 +132,14 @@ class WordValidator:
         base_dir = os.path.dirname(__file__)
         self.csw_loaded = False
         
+        # Load offensive words list
+        off_path = os.path.join(base_dir, 'dictionaries', 'offensive_words.txt')
+        if os.path.exists(off_path):
+            with open(off_path, 'r', encoding='utf-8', errors='ignore') as f:
+                self.offensive_words = {line.strip().upper() for line in f if line.strip()}
+        else:
+            self.offensive_words = set()
+        
         # Load NWL
         nwl_path = os.path.join(base_dir, 'dictionaries', 'NWL.txt')
         with open(nwl_path, 'r') as f:
@@ -127,6 +151,9 @@ class WordValidator:
             with open(custom_nwl_path, 'r') as f:
                 custom_nwl = {line.strip().upper() for line in f if line.strip()}
                 self.nwl_words.update(custom_nwl)
+
+        if not getattr(self, 'use_offensive_words', False):
+            self.nwl_words = self.nwl_words - self.offensive_words
         
         # Load CSW word set and CSW-only set immediately (fast set load ~70ms; trie built in ensure_csw_loaded)
         self.csw_words = set()
@@ -139,6 +166,10 @@ class WordValidator:
             with open(custom_csw_path, 'r') as f:
                 custom_csw = {line.strip().upper() for line in f if line.strip()}
                 self.csw_words.update(custom_csw)
+
+        if not getattr(self, 'use_offensive_words', False):
+            self.csw_words = self.csw_words - self.offensive_words
+
         self.csw_only = self.csw_words - self.nwl_words
         self.unique_csw_words = set()
 
@@ -147,6 +178,8 @@ class WordValidator:
         if os.path.exists(long_path):
             with open(long_path, 'r') as f:
                 self.long_words = {line.strip().upper() for line in f if line.strip()}
+            if not getattr(self, 'use_offensive_words', False):
+                self.long_words = self.long_words - self.offensive_words
             print(f"Loaded {len(self.long_words)} supplementary 16+ words")
         else:
             print("[WordValidator] Warning: 16plus.txt not found – skipping supplementary list")
@@ -159,6 +192,8 @@ class WordValidator:
         if os.path.exists(un_path):
             with open(un_path, 'r') as f:
                 self.unique_nwl_words = {line.strip().upper() for line in f if line.strip()}
+            if not getattr(self, 'use_offensive_words', False):
+                self.unique_nwl_words = self.unique_nwl_words - self.offensive_words
         else:
             self.unique_nwl_words = set()
 
@@ -226,6 +261,8 @@ class WordValidator:
                     with open(custom_csw_path, 'r') as f:
                         custom_csw = {line.strip().upper() for line in f if line.strip()}
                         csw_set.update(custom_csw)
+                if not getattr(self, 'use_offensive_words', False):
+                    csw_set = csw_set - self.offensive_words
                 self.csw_words = csw_set
                 
             # Calculate CSW-only words
@@ -236,6 +273,8 @@ class WordValidator:
             if os.path.exists(uc_path):
                 with open(uc_path, 'r') as f:
                     self.unique_csw_words = {line.strip().upper() for line in f if line.strip()}
+                if not getattr(self, 'use_offensive_words', False):
+                    self.unique_csw_words = self.unique_csw_words - self.offensive_words
             else:
                 self.unique_csw_words = set()
                 
@@ -314,6 +353,9 @@ class WordValidator:
                             new_added_words = new_added_words - {line.strip().upper() for line in cf if line.strip()}
 
                 new_added_words_list = [w for w in new_added_words_list if w in new_added_words]
+                if not getattr(self, 'use_offensive_words', False):
+                    new_added_words = new_added_words - self.offensive_words
+                    new_added_words_list = [w for w in new_added_words_list if w not in self.offensive_words]
                 for w in new_added_words_list:
                     self._add_to_trie(new_added_trie, w)
 
@@ -415,6 +457,9 @@ class WordValidator:
     
     def is_valid_word(self, word, dictionary='NWL', use_added_words=None):
         """Check if word is valid using pre-merged sets."""
+        w = str(word).strip().upper()
+        if not getattr(self, 'use_offensive_words', False) and w in getattr(self, 'offensive_words', set()):
+            return False
         d_upper = str(dictionary).upper()
         has_aw = ('+ AW' in d_upper) or ('+AW' in d_upper) or (d_upper in ['AW', 'ADDED_WORDS', 'ALL', 'ALL + AW', 'ALL+AW'])
         if use_added_words is None:
@@ -427,27 +472,35 @@ class WordValidator:
             
         if 'CSW' in d_upper and 'NWL' not in d_upper and 'ALL' not in d_upper:
             self.ensure_csw_loaded()
-            return word in self.csw_words or word in self.long_words or (val and word in self.added_words)
+            return w in self.csw_words or w in self.long_words or (val and w in self.added_words)
         elif d_upper in ['ALL', 'ALL + AW', 'ALL+AW', 'AW', 'ADDED_WORDS'] or ('ALL' in d_upper) or ('AW' in d_upper and 'NWL' not in d_upper and 'CSW' not in d_upper):
             self.ensure_csw_loaded()
-            return word in self.nwl_words or word in self.csw_words or word in self.long_words or word in self.added_words
+            return w in self.nwl_words or w in self.csw_words or w in self.long_words or w in self.added_words
         else:  # NWL
-            return word in self.nwl_words or word in self.long_words or (val and word in self.added_words)
+            return w in self.nwl_words or w in self.long_words or (val and w in self.added_words)
     
     def is_csw_only(self, word):
         """Check if word is in CSW but not NWL"""
+        w = str(word).strip().upper()
+        if not getattr(self, 'use_offensive_words', False) and w in getattr(self, 'offensive_words', set()):
+            return False
         if not self.csw_only:
             self.ensure_csw_loaded()
-        return str(word).strip().upper() in self.csw_only
+        return w in self.csw_only
         
     def is_added_word(self, word):
         """Check if word is in the custom moderator-added list and NOT in standard NWL or CSW"""
-        return word.upper() in self.added_words
+        w = str(word).strip().upper()
+        if not getattr(self, 'use_offensive_words', False) and w in getattr(self, 'offensive_words', set()):
+            return False
+        return w in self.added_words
 
     def is_valid_word_authoritative(self, word):
         """Check if word is in ANY official dictionary (excluding Added Words)"""
+        w = str(word).strip().upper()
+        if not getattr(self, 'use_offensive_words', False) and w in getattr(self, 'offensive_words', set()):
+            return False
         self.ensure_csw_loaded()
-        w = word.upper()
         return w in self.nwl_words or w in self.csw_words or w in self.long_words
     
     def filter_valid_words(self, words, dictionary='NWL'):
@@ -462,6 +515,10 @@ class WordValidator:
         else:
             self.full_nwl_set = self.nwl_words | self.long_words
             self.full_csw_set = self.csw_words | self.long_words
+
+        if not getattr(self, 'use_offensive_words', False):
+            self.full_nwl_set = self.full_nwl_set - self.offensive_words
+            self.full_csw_set = self.full_csw_set - self.offensive_words
 
     def _filter_added_words(self):
         """Filter out standard words from added_words set and added_trie to keep them clean and fast"""
@@ -484,16 +541,21 @@ class WordValidator:
             
         d_upper = str(dict_name).upper()
         if d_upper == 'AW' or d_upper == 'ADDED_WORDS':
-            return self.added_words
+            res = self.added_words
         elif d_upper == 'CSW':
             self.ensure_csw_loaded()
             if use_added_words == self.use_added_words:
-                return self.full_csw_set
-            return self.csw_words | self.long_words | (self.added_words if use_added_words else set())
+                res = self.full_csw_set
+            else:
+                res = self.csw_words | self.long_words | (self.added_words if use_added_words else set())
         else:  # NWL (default)
             if use_added_words == self.use_added_words:
-                return self.full_nwl_set
-            return self.nwl_words | self.long_words | (self.added_words if use_added_words else set())
+                res = self.full_nwl_set
+            else:
+                res = self.nwl_words | self.long_words | (self.added_words if use_added_words else set())
+        if not getattr(self, 'use_offensive_words', False):
+            res = res - self.offensive_words
+        return res
 
     def find_word_on_board(self, board, word, return_path=False):
         """Standard DFS search for a word on a Boggle board.

@@ -932,20 +932,42 @@ def list_added_words_api():
 @mod_required
 def get_added_words_config():
     return jsonify({
-        'use_added_words': word_validator.get_use_added_words(force=False)
+        'use_added_words': word_validator.get_use_added_words(force=False),
+        'use_offensive_words': getattr(word_validator, 'use_offensive_words', False)
     })
 
 @app.route('/api/mods/added_words/toggle', methods=['POST'])
 @mod_required
 def toggle_added_words():
-    data = request.json
+    data = request.json or {}
     enabled = data.get('enabled', True)
     try:
         new_state = word_validator.toggle_added_words(enabled)
+        TOOLS_DICT_CACHE.clear()
+        LISTS_CACHE.clear()
+        COMBO_QUERY_CACHE.clear()
+        _WORD_DICTS_CACHE.clear()
         return jsonify({'success': True, 'use_added_words': new_state})
     except Exception as e:
         import traceback
         print(f"[API] Error toggling added words: {e}\n{traceback.format_exc()}")
+        return jsonify({'success': False, 'error': f"Failed to save configuration: {str(e)}"}), 500
+
+@app.route('/api/mods/offensive_words/toggle', methods=['POST'])
+@mod_required
+def toggle_offensive_words():
+    data = request.json or {}
+    enabled = data.get('enabled', False)
+    try:
+        new_state = word_validator.toggle_offensive_words(enabled)
+        TOOLS_DICT_CACHE.clear()
+        LISTS_CACHE.clear()
+        COMBO_QUERY_CACHE.clear()
+        _WORD_DICTS_CACHE.clear()
+        return jsonify({'success': True, 'use_offensive_words': new_state})
+    except Exception as e:
+        import traceback
+        print(f"[API] Error toggling offensive words: {e}\n{traceback.format_exc()}")
         return jsonify({'success': False, 'error': f"Failed to save configuration: {str(e)}"}), 500
 
 # ---------------------------------------------------------------------------
@@ -1707,8 +1729,11 @@ def remove_added_word():
 @app.route('/api/mods/dictionary/submit', methods=['POST'])
 def submit_dictionary_words():
     """
-    User Request: If it is “newNWL.txt”, add these words to NWL.txt alphabetically 
-    and remove all words in the file from the list in Added Words in Tools > Lists.
+    User Request: When uploading any list, ensure that the word currently being worked on
+    is not already present in the respective dictionary list (NWL or CSW).
+    If it is already present, move on to the next word (skip it).
+    If the word is not present in NWL or CSW already, then add the word.
+    Also remove newly added words from Added Words (promoted).
     """
     username = session.get('username')
     if not is_mod(username):
@@ -1726,90 +1751,122 @@ def submit_dictionary_words():
         return jsonify({'success': False, 'error': 'Invalid file name. Must be newNWL.txt or newCSW.txt'}), 400
 
     try:
-        content = file.read().decode('utf-8')
-        new_words = {line.strip().upper() for line in content.splitlines() if line.strip()}
+        content = file.read().decode('utf-8', errors='ignore')
+        raw_words = [line.strip().upper() for line in content.splitlines() if line.strip() and not line.strip().startswith('#')]
         
-        if not new_words:
-            return jsonify({'success': False, 'error': 'File is empty'}), 400
+        # Deduplicate while preserving order
+        seen_input = set()
+        input_words = []
+        for w in raw_words:
+            w_clean = re.sub(r'[^A-Z]', '', w)
+            if w_clean and w_clean not in seen_input:
+                seen_input.add(w_clean)
+                input_words.append(w_clean)
+
+        if not input_words:
+            return jsonify({'success': False, 'error': 'File contains no valid words'}), 400
 
         base_dir = os.path.dirname(__file__)
         dict_dir = os.path.join(base_dir, 'dictionaries')
+        is_nwl = (filename == 'newNWL.txt')
+        target_dict_label = 'NWL' if is_nwl else 'CSW'
+        custom_file_name = 'custom_nwl.txt' if is_nwl else 'custom_csw.txt'
+        custom_path = os.path.join(dict_dir, custom_file_name)
         
-        # Determine target dictionary
-        target_dict_name = 'custom_nwl.txt' if filename == 'newNWL.txt' else 'custom_csw.txt'
-        target_path = os.path.join(dict_dir, target_dict_name)
-        
-        # 1. Load existing words
-        existing_words = set()
-        if os.path.exists(target_path):
-            with open(target_path, 'r') as f:
-                existing_words = {line.strip().upper() for line in f if line.strip()}
-        
-        # 2. Add new words alphabetically
-        updated_words = sorted(list(existing_words | new_words))
-        with open(target_path, 'w') as f:
-            for w in updated_words:
-                f.write(w + '\n')
-                
-        # 3. Tracking Table: "New XXX Words"
-        tracking_filename = 'new_NWL.txt' if filename == 'newNWL.txt' else 'new_CSW.txt'
-        tracking_path = os.path.join(dict_dir, tracking_filename)
-        
-        # Read existing tracked words to avoid duplicates in the "New" list
-        tracked_words = []
-        if os.path.exists(tracking_path):
-            with open(tracking_path, 'r', encoding='utf-8', errors='ignore') as f:
-                tracked_words = [line.strip().split()[0].upper() for line in f if line.strip()]
-        
-        tracked_set = set(tracked_words)
-        added_to_track = [w for w in sorted(list(new_words)) if w not in tracked_set]
-        
-        today_str = datetime.datetime.now(ZoneInfo("America/Chicago")).strftime('%d/%m/%Y')
-        with open(tracking_path, 'a', encoding='utf-8') as f:
-            for w in added_to_track:
-                f.write(f"{w}\t{today_str}\n")
+        # 1. Load full existing dictionary words to check against
+        existing_dict_words = set()
+        base_dict_file = os.path.join(dict_dir, 'NWL.txt' if is_nwl else 'CSW.txt')
+        if os.path.exists(base_dict_file):
+            with open(base_dict_file, 'r', encoding='utf-8', errors='ignore') as f:
+                existing_dict_words.update(line.strip().upper() for line in f if line.strip())
+        if os.path.exists(custom_path):
+            with open(custom_path, 'r', encoding='utf-8', errors='ignore') as f:
+                existing_dict_words.update(line.strip().upper() for line in f if line.strip())
 
-        # 4. Remove from Added Words (Staging Area)
-        if os.path.exists(ADDED_WORDS_FILE):
-            with open(ADDED_WORDS_FILE, 'r') as f:
-                current_added = [line.strip().upper() for line in f if line.strip()]
-            
-            filtered_added = [w for w in current_added if w not in new_words]
-            
-            with open(ADDED_WORDS_FILE, 'w') as f:
-                for w in filtered_added:
+        # Word-by-word checking:
+        to_add = []
+        skipped = []
+        for w in input_words:
+            if w in existing_dict_words:
+                skipped.append(w)
+            else:
+                to_add.append(w)
+                existing_dict_words.add(w)
+
+        # 2. Add non-present words to custom dictionary file alphabetically
+        if to_add:
+            curr_custom = set()
+            if os.path.exists(custom_path):
+                with open(custom_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    curr_custom = {line.strip().upper() for line in f if line.strip()}
+            curr_custom.update(to_add)
+            with open(custom_path, 'w', encoding='utf-8') as f:
+                for w in sorted(curr_custom):
                     f.write(w + '\n')
 
-        # 4.5 Also remove from added_words_dates.txt
-        if os.path.exists(ADDED_WORDS_DATES_FILE):
-            try:
-                with open(ADDED_WORDS_DATES_FILE, 'r', encoding='utf-8', errors='ignore') as f:
-                    date_lines = [l.strip() for l in f if l.strip()]
-                kept_dates = [l for l in date_lines if l.startswith('#') or l.split('\t')[0].upper() not in new_words]
-                with open(ADDED_WORDS_DATES_FILE, 'w', encoding='utf-8') as f:
-                    for entry in kept_dates:
-                        f.write(f"{entry}\n")
-            except Exception as e:
-                print(f"[Tools] Error removing from added_words_dates.txt on promotion: {e}")
-        
-        # 5. Initialize counts in word_stats.json for the new words
-        for w in new_words:
-            _update_word_stats(w, "add")
+            # 3. Tracking Table: "new_NWL.txt" or "new_CSW.txt"
+            tracking_filename = 'new_NWL.txt' if is_nwl else 'new_CSW.txt'
+            tracking_path = os.path.join(dict_dir, tracking_filename)
+            tracked_words = set()
+            if os.path.exists(tracking_path):
+                with open(tracking_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    tracked_words = {line.strip().split()[0].upper() for line in f if line.strip() and not line.strip().startswith('#')}
 
-        # 6. Reload Word Validator
+            new_to_track = [w for w in sorted(to_add) if w not in tracked_words]
+            today_str = datetime.datetime.now(ZoneInfo("America/Chicago")).strftime('%d/%m/%Y')
+            with open(tracking_path, 'a', encoding='utf-8') as f:
+                for w in new_to_track:
+                    f.write(f"{w}\t{today_str}\n")
+
+            # 4. Remove from Added Words (Staging Area: added_words.txt, added_words_duplicate.txt, added_words_dates.txt)
+            to_add_set = set(to_add)
+            for aw_file in [ADDED_WORDS_FILE, os.path.join(dict_dir, 'added_words_duplicate.txt')]:
+                if os.path.exists(aw_file):
+                    try:
+                        with open(aw_file, 'r', encoding='utf-8', errors='ignore') as f:
+                            lines = [l.strip().upper() for l in f if l.strip()]
+                        kept = [l for l in lines if l not in to_add_set]
+                        with open(aw_file, 'w', encoding='utf-8') as f:
+                            for w in kept:
+                                f.write(w + '\n')
+                    except Exception as e:
+                        print(f"[Admin] Error updating {aw_file}: {e}")
+
+            if os.path.exists(ADDED_WORDS_DATES_FILE):
+                try:
+                    with open(ADDED_WORDS_DATES_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+                        date_lines = [l.strip() for l in f if l.strip()]
+                    kept_dates = [l for l in date_lines if l.startswith('#') or l.split('\t')[0].upper() not in to_add_set]
+                    with open(ADDED_WORDS_DATES_FILE, 'w', encoding='utf-8') as f:
+                        for entry in kept_dates:
+                            f.write(f"{entry}\n")
+                except Exception as e:
+                    print(f"[Admin] Error removing from added_words_dates.txt on promotion: {e}")
+
+            # 5. Initialize counts in word_stats.json for the new words
+            for w in to_add:
+                _update_word_stats(w, "add")
+
+            # Trigger dynamic definitions processing in background
+            ensure_definitions_background(list(to_add))
+
+        # 6. Reload Word Validator & Caches
         if word_validator:
             word_validator._load_dictionaries()
-            
-        global LISTS_CACHE
+
+        global LISTS_CACHE, TOOLS_DICT_CACHE, COMBO_QUERY_CACHE, _WORD_DICTS_CACHE
         LISTS_CACHE.clear()
-        
-        # Trigger dynamic definitions processing and auto-saving rules in background
-        ensure_definitions_background(list(new_words))
-            
+        TOOLS_DICT_CACHE.clear()
+        COMBO_QUERY_CACHE.clear()
+        _WORD_DICTS_CACHE.clear()
+
         return jsonify({
-            'success': True, 
-            'added_count': len(new_words), 
-            'target': target_dict_name
+            'success': True,
+            'added_count': len(to_add),
+            'skipped_count': len(skipped),
+            'total_processed': len(input_words),
+            'target': target_dict_label,
+            'message': f"Processed {len(input_words)} words: {len(to_add)} added to {target_dict_label}, {len(skipped)} already in dictionary (skipped)."
         })
 
     except Exception as e:
@@ -10795,6 +10852,10 @@ def lookup_word_definition_and_pronunciation(word, allow_online=True):
         load_pronunciations()
 
     word_upper = word.upper().strip()
+    if word_validator and not getattr(word_validator, 'use_offensive_words', False):
+        if word_upper in getattr(word_validator, 'offensive_words', set()):
+            return None, None
+
     pronunciation = PRONUNCIATIONS_CACHE.get(word_upper)
     
     definition = format_resolved_definition(word_upper, allow_online=allow_online)
@@ -11645,6 +11706,9 @@ def get_word_dictionaries(word: str) -> list:
     if not word:
         return []
     w_upper = word.strip().upper()
+    if word_validator and not getattr(word_validator, 'use_offensive_words', False):
+        if w_upper in getattr(word_validator, 'offensive_words', set()):
+            return []
     if w_upper in _WORD_DICTS_CACHE:
         return _WORD_DICTS_CACHE[w_upper]
     word_validator.ensure_csw_loaded()
@@ -11671,6 +11735,22 @@ def get_definition():
     word = request.args.get('word', '').upper()
     if not word:
         return jsonify({'error': 'Word parameter required'}), 400
+
+    if word_validator and not getattr(word_validator, 'use_offensive_words', False):
+        if word in getattr(word_validator, 'offensive_words', set()):
+            resp = jsonify({
+                'word': word, 
+                'definition': "No definition available for this word.",
+                'pronunciation': None,
+                'image_url': None,
+                'division_info': {'count': 0, 'max_count': 0, 'division': 0, 'max_divisions': 0, 'division_str': 'None', 'points': 0, 'base_points': 0, 'max_points': 0},
+                'is_noun': False,
+                'wiki_url': None,
+                'wiki_title': None,
+                'lists': []
+            })
+            resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            return resp
 
     definition, pronunciation = lookup_word_definition_and_pronunciation(word)
     image_url = lookup_definition_image(word)
@@ -12517,6 +12597,9 @@ def load_tools_dictionary(dict_name):
         except FileNotFoundError:
             print(f"[Tools] 16plus.txt not found – skipping supplementary merge")
 
+    if word_validator and not getattr(word_validator, 'use_offensive_words', False):
+        words = words - getattr(word_validator, 'offensive_words', set())
+
     # --- OPTIMIZATION: PRE-CALCULATE FREQUENCY MATRIX & BITMASKS (C-ACCELERATED) ---
     import numpy as np
     word_list = sorted(list(words))
@@ -13314,7 +13397,7 @@ def tools_get_lists():
         order_filter = request.args.get('order', 'alphabetical').lower()
 
         # Check cache first (only for deterministic alphabetical order)
-        cache_key = f"endpoint_{list_type}_{length_filter}_{start_filter}_{no_limit}_{order_filter}"
+        cache_key = f"endpoint_{list_type}_{length_filter}_{start_filter}_{no_limit}_{order_filter}_{bool(getattr(word_validator, 'use_offensive_words', False))}"
         if order_filter != 'random' and cache_key in LISTS_CACHE:
             cached_val = LISTS_CACHE[cache_key]
             if isinstance(cached_val, (str, bytes)):
@@ -13608,6 +13691,15 @@ def tools_get_lists():
                         seen_all_new.add(w)
                         new_all_items.append(it)
             response['all_new'] = order_new_words_list(new_all_items)
+
+        if not getattr(word_validator, 'use_offensive_words', False):
+            off_set = getattr(word_validator, 'offensive_words', set())
+            for k in response:
+                if isinstance(response[k], list) and response[k]:
+                    if isinstance(response[k][0], dict) and 'word' in response[k][0]:
+                        response[k] = [it for it in response[k] if it.get('word') not in off_set]
+                    else:
+                        response[k] = [it for it in response[k] if it not in off_set]
 
         # Cache response (only for deterministic alphabetical order)
         if order_filter != 'random':
@@ -15446,28 +15538,31 @@ def tools_word_chart():
         word_query = (request.args.get('word') or '').strip().upper()
         lookup_result = None
         if word_query:
-            div_info = td.get_word_division_info(word_query)
-            is_hard = td.is_word_hard_by_tally(word_query)
-            definition, pronunciation = lookup_word_definition_and_pronunciation(word_query)
-            dict_lists = get_word_dictionaries(word_query)
-            bonus_val = div_info['points'] + len(word_query) if div_info['points'] > 0 else 0
-            lookup_result = {
-                'word': word_query,
-                'length': len(word_query),
-                'find_count': div_info['count'],
-                'max_count': div_info['max_count'],
-                'division': div_info['division'],
-                'max_divisions': div_info['max_divisions'],
-                'division_str': div_info['division_str'],
-                'base_points': div_info['base_points'],
-                'points': div_info['points'],
-                'max_points': div_info['max_points'],
-                'bonus_word_points': bonus_val,
-                'is_hard': is_hard,
-                'definition': definition,
-                'pronunciation': pronunciation,
-                'lists': dict_lists
-            }
+            if not getattr(word_validator, 'use_offensive_words', False) and word_query in getattr(word_validator, 'offensive_words', set()):
+                lookup_result = None
+            else:
+                div_info = td.get_word_division_info(word_query)
+                is_hard = td.is_word_hard_by_tally(word_query)
+                definition, pronunciation = lookup_word_definition_and_pronunciation(word_query)
+                dict_lists = get_word_dictionaries(word_query)
+                bonus_val = div_info['points'] + len(word_query) if div_info['points'] > 0 else 0
+                lookup_result = {
+                    'word': word_query,
+                    'length': len(word_query),
+                    'find_count': div_info['count'],
+                    'max_count': div_info['max_count'],
+                    'division': div_info['division'],
+                    'max_divisions': div_info['max_divisions'],
+                    'division_str': div_info['division_str'],
+                    'base_points': div_info['base_points'],
+                    'points': div_info['points'],
+                    'max_points': div_info['max_points'],
+                    'bonus_word_points': bonus_val,
+                    'is_hard': is_hard,
+                    'definition': definition,
+                    'pronunciation': pronunciation,
+                    'lists': dict_lists
+                }
 
         # 4. Division Examples
         try:
@@ -15506,6 +15601,8 @@ def tools_word_chart_lookup():
         word_query = (request.args.get('word') or '').strip().upper()
         if not word_query:
             return jsonify({'error': 'Word parameter is required'}), 400
+        if not getattr(word_validator, 'use_offensive_words', False) and word_query in getattr(word_validator, 'offensive_words', set()):
+            return jsonify({'error': 'Word not found'}), 404
         import tally_divisions as td
         div_info = td.get_word_division_info(word_query)
         is_hard = td.is_word_hard_by_tally(word_query)

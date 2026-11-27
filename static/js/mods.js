@@ -415,13 +415,17 @@ window.loadAddedWordsConfig = loadAddedWordsConfig;
 
 async function loadAddedWordsConfig() {
     const toggle = document.getElementById('toggle-use-added-words');
-    if (!toggle) return;
+    const toggleOffensive = document.getElementById('toggle-use-offensive-words');
+    if (!toggle && !toggleOffensive) return;
     
     try {
         const response = await fetch('/api/mods/added_words/config');
         const data = await response.json();
-        if (data.hasOwnProperty('use_added_words')) {
+        if (toggle && data.hasOwnProperty('use_added_words')) {
             toggle.checked = data.use_added_words;
+        }
+        if (toggleOffensive && data.hasOwnProperty('use_offensive_words')) {
+            toggleOffensive.checked = data.use_offensive_words;
         }
     } catch (err) {
         console.error("Error loading added words config:", err);
@@ -445,6 +449,25 @@ async function toggleAddedWords(enabled) {
     } catch (err) {
         console.error("Error toggling added words:", err);
         showModStatus("Network error toggling added words.", true, 'added-word-status-area');
+    }
+}
+
+async function toggleOffensiveWords(enabled) {
+    try {
+        const response = await fetch('/api/mods/offensive_words/toggle', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showModStatus(`Offensive Words are now ${enabled ? 'ENABLED' : 'DISABLED'} game-wide.`, false, 'added-word-status-area');
+        } else {
+            showModStatus(data.error || "Failed to toggle offensive words.", true, 'added-word-status-area');
+        }
+    } catch (err) {
+        console.error("Error toggling offensive words:", err);
+        showModStatus("Network error toggling offensive words.", true, 'added-word-status-area');
     }
 }
 
@@ -479,11 +502,14 @@ async function submitDictionaryToDatabase() {
         const data = await response.json();
         
         if (data.success) {
+            const addedCount = data.added_count || 0;
+            const skippedCount = data.skipped_count || 0;
+            const targetName = data.target || 'dictionary';
             if (statusEl) {
-                statusEl.innerText = `Success: ${data.added_count} words added to ${data.target}.`;
+                statusEl.innerText = `Success: ${addedCount} words added to ${targetName} (${skippedCount} already present skipped).`;
                 statusEl.style.color = "#4ade80";
             }
-            alert(`Dictionary Updated: ${data.added_count} words successfully merged into ${data.target}. Staging list cleaned.`);
+            alert(`Dictionary Updated:\n• ${addedCount} words added to ${targetName}\n• ${skippedCount} already present words skipped\n• Staging list cleaned.`);
             
             // Reset input
             fileInput.value = '';
@@ -646,6 +672,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggleAddedWordsEl = document.getElementById('toggle-use-added-words');
     if (toggleAddedWordsEl) {
         toggleAddedWordsEl.addEventListener('change', (e) => toggleAddedWords(e.target.checked));
+    }
+
+    const toggleOffensiveWordsEl = document.getElementById('toggle-use-offensive-words');
+    if (toggleOffensiveWordsEl) {
+        toggleOffensiveWordsEl.addEventListener('change', (e) => toggleOffensiveWords(e.target.checked));
     }
 
     // Definitions
