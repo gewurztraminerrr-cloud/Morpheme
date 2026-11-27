@@ -3973,31 +3973,238 @@ body[class*="theme-light-"] #seq-results-container,
     border-radius: 14px !important;
 }
 
-/* Light Grey styling for Subanagrams Words Panel and Unscramble History Panel in Light-Colored Layouts */
+/* Color Layouts for Subanagrams Words Panel and Unscramble History Panel */
+/* 1. White Layouts -> Light Grey */
 body.theme-white #page-tools #tool-subanagrams #sub-results-container,
 body[class*="theme-white"] #page-tools #tool-subanagrams #sub-results-container,
 [class*="theme-white"] #page-tools #tool-subanagrams #sub-results-container,
-body[class*="theme-light-"] #page-tools #tool-subanagrams #sub-results-container,
-[class*="theme-light-"] #page-tools #tool-subanagrams #sub-results-container,
 body.theme-white #tool-subanagrams #sub-results-container,
 [class*="theme-white"] #tool-subanagrams #sub-results-container,
-body[class*="theme-light-"] #tool-subanagrams #sub-results-container,
-[class*="theme-light-"] #tool-subanagrams #sub-results-container,
 body.theme-white #sub-results-container,
 [class*="theme-white"] #sub-results-container,
-body[class*="theme-light-"] #sub-results-container,
-[class*="theme-light-"] #sub-results-container,
 body.theme-white #page-tools #tool-unscramble #unscramble-found-container,
 body[class*="theme-white"] #page-tools #tool-unscramble #unscramble-found-container,
 [class*="theme-white"] #page-tools #tool-unscramble #unscramble-found-container,
-body[class*="theme-light-"] #page-tools #tool-unscramble #unscramble-found-container,
-[class*="theme-light-"] #page-tools #tool-unscramble #unscramble-found-container,
 body.theme-white #tool-unscramble #unscramble-found-container,
 [class*="theme-white"] #tool-unscramble #unscramble-found-container,
-body[class*="theme-light-"] #tool-unscramble #unscramble-found-container,
-[class*="theme-light-"] #tool-unscramble #unscramble-found-container,
 body.theme-white #unscramble-found-container,
-[class*="theme-white"] #unscramble-found-container,
+[class*="theme-white"] #unscramble-found-container {
+    background: #f1f5f9 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* 2. Green Layouts -> Light Green */
+body[class*="-green"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="-green"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-green"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-green"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="-green"] #tool-subanagrams #sub-results-container,
+[class*="-green"] #tool-subanagrams #sub-results-container,
+body[class*="-green"] #sub-results-container,
+[class*="-green"] #sub-results-container,
+body[class*="-green"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="-green"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-green"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-green"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="-green"] #tool-unscramble #unscramble-found-container,
+[class*="-green"] #tool-unscramble #unscramble-found-container,
+body[class*="-green"] #unscramble-found-container,
+[class*="-green"] #unscramble-found-container {
+    background: #dcfce7 !important;
+    border: 1.5px solid #86efac !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* 3. Blue Layouts -> Light Blue */
+body[class*="-blue"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="-blue"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-blue"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-blue"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="-blue"] #tool-subanagrams #sub-results-container,
+[class*="-blue"] #tool-subanagrams #sub-results-container,
+body[class*="-blue"] #sub-results-container,
+[class*="-blue"] #sub-results-container,
+body[class*="-blue"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="-blue"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-blue"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-blue"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="-blue"] #tool-unscramble #unscramble-found-container,
+[class*="-blue"] #tool-unscramble #unscramble-found-container,
+body[class*="-blue"] #unscramble-found-container,
+[class*="-blue"] #unscramble-found-container {
+    background: #e0f2fe !important;
+    border: 1.5px solid #93c5fd !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* 4. Red Layouts -> Light Red */
+body[class*="-red"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="-red"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-red"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-red"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="-red"] #tool-subanagrams #sub-results-container,
+[class*="-red"] #tool-subanagrams #sub-results-container,
+body[class*="-red"] #sub-results-container,
+[class*="-red"] #sub-results-container,
+body[class*="-red"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="-red"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-red"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-red"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="-red"] #tool-unscramble #unscramble-found-container,
+[class*="-red"] #tool-unscramble #unscramble-found-container,
+body[class*="-red"] #unscramble-found-container,
+[class*="-red"] #unscramble-found-container {
+    background: #fee2e2 !important;
+    border: 1.5px solid #fca5a5 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* 5. Purple Layouts -> Light Purple */
+body[class*="-purple"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="-purple"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-purple"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-purple"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="-purple"] #tool-subanagrams #sub-results-container,
+[class*="-purple"] #tool-subanagrams #sub-results-container,
+body[class*="-purple"] #sub-results-container,
+[class*="-purple"] #sub-results-container,
+body[class*="-purple"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="-purple"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-purple"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-purple"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="-purple"] #tool-unscramble #unscramble-found-container,
+[class*="-purple"] #tool-unscramble #unscramble-found-container,
+body[class*="-purple"] #unscramble-found-container,
+[class*="-purple"] #unscramble-found-container {
+    background: #f3e8ff !important;
+    border: 1.5px solid #d8b4fe !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* 6. Orange Layouts -> Light Orange */
+body[class*="-orange"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="-orange"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-orange"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-orange"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="-orange"] #tool-subanagrams #sub-results-container,
+[class*="-orange"] #tool-subanagrams #sub-results-container,
+body[class*="-orange"] #sub-results-container,
+[class*="-orange"] #sub-results-container,
+body[class*="-orange"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="-orange"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-orange"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-orange"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="-orange"] #tool-unscramble #unscramble-found-container,
+[class*="-orange"] #tool-unscramble #unscramble-found-container,
+body[class*="-orange"] #unscramble-found-container,
+[class*="-orange"] #unscramble-found-container {
+    background: #ffedd5 !important;
+    border: 1.5px solid #fdba74 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* 7. Yellow Layouts -> Light Yellow */
+body[class*="-yellow"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="-yellow"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-yellow"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-yellow"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="-yellow"] #tool-subanagrams #sub-results-container,
+[class*="-yellow"] #tool-subanagrams #sub-results-container,
+body[class*="-yellow"] #sub-results-container,
+[class*="-yellow"] #sub-results-container,
+body[class*="-yellow"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="-yellow"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-yellow"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-yellow"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="-yellow"] #tool-unscramble #unscramble-found-container,
+[class*="-yellow"] #tool-unscramble #unscramble-found-container,
+body[class*="-yellow"] #unscramble-found-container,
+[class*="-yellow"] #unscramble-found-container {
+    background: #fef9c3 !important;
+    border: 1.5px solid #fde047 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* 8. Pink Layouts -> Light Pink */
+body[class*="-pink"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="-pink"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-pink"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-pink"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="-pink"] #tool-subanagrams #sub-results-container,
+[class*="-pink"] #tool-subanagrams #sub-results-container,
+body[class*="-pink"] #sub-results-container,
+[class*="-pink"] #sub-results-container,
+body[class*="-pink"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="-pink"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-pink"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-pink"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="-pink"] #tool-unscramble #unscramble-found-container,
+[class*="-pink"] #tool-unscramble #unscramble-found-container,
+body[class*="-pink"] #unscramble-found-container,
+[class*="-pink"] #unscramble-found-container {
+    background: #fce7f3 !important;
+    border: 1.5px solid #f472b6 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* 9. Brown Layouts -> Light Brown */
+body[class*="-brown"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="-brown"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-brown"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-brown"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="-brown"] #tool-subanagrams #sub-results-container,
+[class*="-brown"] #tool-subanagrams #sub-results-container,
+body[class*="-brown"] #sub-results-container,
+[class*="-brown"] #sub-results-container,
+body[class*="-brown"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="-brown"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-brown"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-brown"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="-brown"] #tool-unscramble #unscramble-found-container,
+[class*="-brown"] #tool-unscramble #unscramble-found-container,
+body[class*="-brown"] #unscramble-found-container,
+[class*="-brown"] #unscramble-found-container {
+    background: #f5ebe0 !important;
+    border: 1.5px solid #d7c4b7 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* 10. Gray Layouts -> Light Gray */
+body[class*="-gray"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="-gray"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="theme-gray"] #page-tools #tool-subanagrams #sub-results-container,
+[class*="theme-gray"] #page-tools #tool-subanagrams #sub-results-container,
+body[class*="-gray"] #tool-subanagrams #sub-results-container,
+[class*="-gray"] #tool-subanagrams #sub-results-container,
+body[class*="-gray"] #sub-results-container,
+[class*="-gray"] #sub-results-container,
+body[class*="-gray"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="-gray"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="theme-gray"] #page-tools #tool-unscramble #unscramble-found-container,
+[class*="theme-gray"] #page-tools #tool-unscramble #unscramble-found-container,
+body[class*="-gray"] #tool-unscramble #unscramble-found-container,
+[class*="-gray"] #tool-unscramble #unscramble-found-container,
+body[class*="-gray"] #unscramble-found-container,
+[class*="-gray"] #unscramble-found-container {
+    background: #e2e8f0 !important;
+    border: 1.5px solid #cbd5e1 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
+    border-radius: 14px !important;
+}
+
+/* Generic Fallback for Any Light-Colored Layout */
+body[class*="theme-light-"] #sub-results-container,
+[class*="theme-light-"] #sub-results-container,
 body[class*="theme-light-"] #unscramble-found-container,
 [class*="theme-light-"] #unscramble-found-container {
     background: #f1f5f9 !important;
@@ -4006,117 +4213,117 @@ body[class*="theme-light-"] #unscramble-found-container,
     border-radius: 14px !important;
 }
 
-/* Subanagrams Words Panel Elements in Light Layouts */
+/* Subanagrams Words Panel Elements in Light / Color Layouts */
 body.theme-white #sub-results-container .sub-group-header,
 [class*="theme-white"] #sub-results-container .sub-group-header,
-body[class*="theme-light-"] #sub-results-container .sub-group-header,
-[class*="theme-light-"] #sub-results-container .sub-group-header {
+body[class*="theme-"] #sub-results-container .sub-group-header,
+[class*="theme-"] #sub-results-container .sub-group-header {
     color: #0f172a !important;
     font-weight: 800 !important;
 }
 
 body.theme-white #sub-results-container .group-table td,
 [class*="theme-white"] #sub-results-container .group-table td,
-body[class*="theme-light-"] #sub-results-container .group-table td,
-[class*="theme-light-"] #sub-results-container .group-table td {
-    border-bottom: 1px solid #cbd5e1 !important;
+body[class*="theme-"] #sub-results-container .group-table td,
+[class*="theme-"] #sub-results-container .group-table td {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 body.theme-white #sub-results-container .clickable-word-link,
 [class*="theme-white"] #sub-results-container .clickable-word-link,
-body[class*="theme-light-"] #sub-results-container .clickable-word-link,
-[class*="theme-light-"] #sub-results-container .clickable-word-link {
+body[class*="theme-"] #sub-results-container .clickable-word-link,
+[class*="theme-"] #sub-results-container .clickable-word-link {
     color: #0f172a !important;
 }
 
 body.theme-white #sub-results-container .seq-results-placeholder,
 [class*="theme-white"] #sub-results-container .seq-results-placeholder,
-body[class*="theme-light-"] #sub-results-container .seq-results-placeholder,
-[class*="theme-light-"] #sub-results-container .seq-results-placeholder,
+body[class*="theme-"] #sub-results-container .seq-results-placeholder,
+[class*="theme-"] #sub-results-container .seq-results-placeholder,
 body.theme-white #sub-results-container .sub-empty-prompt,
 [class*="theme-white"] #sub-results-container .sub-empty-prompt,
-body[class*="theme-light-"] #sub-results-container .sub-empty-prompt,
-[class*="theme-light-"] #sub-results-container .sub-empty-prompt {
-    color: #475569 !important;
+body[class*="theme-"] #sub-results-container .sub-empty-prompt,
+[class*="theme-"] #sub-results-container .sub-empty-prompt {
+    color: #334155 !important;
 }
 
-/* Unscramble History Panel Elements in Light Layouts */
+/* Unscramble History Panel Elements in Light / Color Layouts */
 body.theme-white #unscramble-found-container h3,
 [class*="theme-white"] #unscramble-found-container h3,
-body[class*="theme-light-"] #unscramble-found-container h3,
-[class*="theme-light-"] #unscramble-found-container h3 {
-    color: #475569 !important;
-    border-bottom: 1.5px solid #cbd5e1 !important;
+body[class*="theme-"] #unscramble-found-container h3,
+[class*="theme-"] #unscramble-found-container h3 {
+    color: #334155 !important;
+    border-bottom: 1.5px solid rgba(0, 0, 0, 0.12) !important;
 }
 
 body.theme-white #unscramble-found-container div[style*="letter-spacing: 1.5px"],
 [class*="theme-white"] #unscramble-found-container div[style*="letter-spacing: 1.5px"],
-body[class*="theme-light-"] #unscramble-found-container div[style*="letter-spacing: 1.5px"],
-[class*="theme-light-"] #unscramble-found-container div[style*="letter-spacing: 1.5px"] {
+body[class*="theme-"] #unscramble-found-container div[style*="letter-spacing: 1.5px"],
+[class*="theme-"] #unscramble-found-container div[style*="letter-spacing: 1.5px"] {
     color: #312e81 !important;
     text-shadow: none !important;
 }
 
 body.theme-white #unscramble-found-container div[style*="letter-spacing: 2px"],
 [class*="theme-white"] #unscramble-found-container div[style*="letter-spacing: 2px"],
-body[class*="theme-light-"] #unscramble-found-container div[style*="letter-spacing: 2px"],
-[class*="theme-light-"] #unscramble-found-container div[style*="letter-spacing: 2px"] {
+body[class*="theme-"] #unscramble-found-container div[style*="letter-spacing: 2px"],
+[class*="theme-"] #unscramble-found-container div[style*="letter-spacing: 2px"] {
     color: #0f172a !important;
 }
 
 body.theme-white #unscramble-found-container button[onclick*="clearUnscrambleHistory"],
 [class*="theme-white"] #unscramble-found-container button[onclick*="clearUnscrambleHistory"],
-body[class*="theme-light-"] #unscramble-found-container button[onclick*="clearUnscrambleHistory"],
-[class*="theme-light-"] #unscramble-found-container button[onclick*="clearUnscrambleHistory"] {
+body[class*="theme-"] #unscramble-found-container button[onclick*="clearUnscrambleHistory"],
+[class*="theme-"] #unscramble-found-container button[onclick*="clearUnscrambleHistory"] {
     background: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
     color: #334155 !important;
     box-shadow: 0 1px 3px rgba(0,0,0,0.05) !important;
 }
 
 body.theme-white #unscramble-found-container .unscramble-history-item,
 [class*="theme-white"] #unscramble-found-container .unscramble-history-item,
-body[class*="theme-light-"] #unscramble-found-container .unscramble-history-item,
-[class*="theme-light-"] #unscramble-found-container .unscramble-history-item {
+body[class*="theme-"] #unscramble-found-container .unscramble-history-item,
+[class*="theme-"] #unscramble-found-container .unscramble-history-item {
     background: #ffffff !important;
-    border: 1.5px solid #cbd5e1 !important;
+    border: 1.5px solid rgba(0, 0, 0, 0.1) !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
 }
 
 body.theme-white #unscramble-found-container .unscramble-history-jumbled,
 [class*="theme-white"] #unscramble-found-container .unscramble-history-jumbled,
-body[class*="theme-light-"] #unscramble-found-container .unscramble-history-jumbled,
-[class*="theme-light-"] #unscramble-found-container .unscramble-history-jumbled {
+body[class*="theme-"] #unscramble-found-container .unscramble-history-jumbled,
+[class*="theme-"] #unscramble-found-container .unscramble-history-jumbled {
     color: #312e81 !important;
 }
 
 body.theme-white #unscramble-found-container .unscramble-history-pill,
 [class*="theme-white"] #unscramble-found-container .unscramble-history-pill,
-body[class*="theme-light-"] #unscramble-found-container .unscramble-history-pill,
-[class*="theme-light-"] #unscramble-found-container .unscramble-history-pill {
-    background: #f1f5f9 !important;
-    border: 1px solid #cbd5e1 !important;
+body[class*="theme-"] #unscramble-found-container .unscramble-history-pill,
+[class*="theme-"] #unscramble-found-container .unscramble-history-pill {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
     color: #334155 !important;
 }
 
 body.theme-white #unscramble-found-container .unscramble-history-time,
 [class*="theme-white"] #unscramble-found-container .unscramble-history-time,
-body[class*="theme-light-"] #unscramble-found-container .unscramble-history-time,
-[class*="theme-light-"] #unscramble-found-container .unscramble-history-time {
+body[class*="theme-"] #unscramble-found-container .unscramble-history-time,
+[class*="theme-"] #unscramble-found-container .unscramble-history-time {
     color: #64748b !important;
 }
 
 body.theme-white #unscramble-found-container .unscramble-history-header,
 [class*="theme-white"] #unscramble-found-container .unscramble-history-header,
-body[class*="theme-light-"] #unscramble-found-container .unscramble-history-header,
-[class*="theme-light-"] #unscramble-found-container .unscramble-history-header {
-    border-bottom: 1px solid #e2e8f0 !important;
+body[class*="theme-"] #unscramble-found-container .unscramble-history-header,
+[class*="theme-"] #unscramble-found-container .unscramble-history-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 body.theme-white #unscramble-found-container .clickable-word-link,
 [class*="theme-white"] #unscramble-found-container .clickable-word-link,
-body[class*="theme-light-"] #unscramble-found-container .clickable-word-link,
-[class*="theme-light-"] #unscramble-found-container .clickable-word-link {
+body[class*="theme-"] #unscramble-found-container .clickable-word-link,
+[class*="theme-"] #unscramble-found-container .clickable-word-link {
     text-shadow: none !important;
 }
 
@@ -28395,10 +28602,10 @@ body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-s
         display: contents !important;
     }
 
-    /* Row 1: Search Textbox spanning full width across top */
+    /* Row 1, Left: Word Entry Textbox */
     #page-tools #tool-reverse-dictionary .reverse-dict-search-wrapper,
     body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-search-wrapper {
-        grid-column: 1 / -1 !important;
+        grid-column: 1 / 2 !important;
         order: 1 !important;
         width: 100% !important;
         height: 34px !important;
@@ -28433,10 +28640,10 @@ body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-s
         font-size: 11px !important;
     }
 
-    /* Row 2: Match Mode dropdown spanning full width */
+    /* Row 1, Right: "Similar to" Dropdown Menu */
     #page-tools #tool-reverse-dictionary #reverse-dict-mode,
     body.is-mobile #page-tools #tool-reverse-dictionary #reverse-dict-mode {
-        grid-column: 1 / -1 !important;
+        grid-column: 2 / 3 !important;
         order: 2 !important;
         width: 100% !important;
         max-width: 100% !important;
@@ -28451,6 +28658,7 @@ body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-s
         color: var(--text-primary) !important;
         box-sizing: border-box !important;
         margin: 0 !important;
+        text-overflow: ellipsis !important;
     }
 
     /* Row 3: Dictionary (col 1) & Length (col 2) - matching Lists 2-column dropdowns */
