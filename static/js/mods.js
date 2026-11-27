@@ -1563,13 +1563,14 @@ window.showModTab = function(tabId) {
         const paneTitle = content.querySelector(`#mod-tab-${tabId} .tool-header h2`);
         if (paneTitle) tabTitle = paneTitle.textContent.trim();
     }
+    const fullTitle = tabTitle ? `Mods - ${tabTitle}` : 'Mods';
     if (typeof window.updatePageTitleWithHelp === 'function') {
         const targetSel = (tabId === 'access') ? '#mod-tab-access .tool-header p' : null;
         const descEl = content ? content.querySelector(`#mod-tab-${tabId} .tool-header p`) : null;
-        const modDesc = descEl ? descEl.textContent.trim() : '';
-        window.updatePageTitleWithHelp('page-mods', tabTitle ? `Mods - ${tabTitle}` : 'Mods', modDesc, targetSel);
+        const modDesc = descEl ? descEl.textContent.trim() : (window.TITLE_HELP_DESCRIPTIONS ? window.TITLE_HELP_DESCRIPTIONS[fullTitle] : '');
+        window.updatePageTitleWithHelp('page-mods', fullTitle, modDesc, targetSel);
     } else if (titleHeader) {
-        titleHeader.textContent = tabTitle ? `Mods - ${tabTitle}` : 'Mods';
+        titleHeader.innerHTML = `<span class="page-title-text">${fullTitle}</span> <button class="title-help-btn" type="button" data-title="${fullTitle}">?</button>`;
         titleHeader.classList.remove('title-hidden');
     }
     if (!sidebar || !content) return;
@@ -1641,7 +1642,7 @@ window.resetModsTab = function(immediate = false) {
     if (typeof window.updatePageTitleWithHelp === 'function') {
         window.updatePageTitleWithHelp('page-mods', 'Mods', 'Administrative and moderation controls for Morpheme.');
     } else if (titleHeader) {
-        titleHeader.textContent = 'Mods';
+        titleHeader.innerHTML = '<span class="page-title-text">Mods</span> <button class="title-help-btn" type="button" data-title="Mods" data-desc="Administrative and moderation controls for Morpheme.">?</button>';
         titleHeader.classList.remove('title-hidden');
     }
 

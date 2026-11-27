@@ -1294,12 +1294,13 @@ function debounce(func, wait) {
             const paneTitle = content.querySelector(`#setting-tab-${tabId} .tool-header h2`);
             if (paneTitle) tabTitle = paneTitle.textContent.trim();
         }
+        const fullTitle = tabTitle ? `Settings - ${tabTitle}` : 'Settings';
+        const descEl = content ? content.querySelector(`#setting-tab-${tabId} .tool-header p`) : null;
+        const tabDesc = descEl ? descEl.textContent.trim() : (window.TITLE_HELP_DESCRIPTIONS ? window.TITLE_HELP_DESCRIPTIONS[fullTitle] : '');
         if (typeof window.updatePageTitleWithHelp === 'function') {
-            const descEl = content ? content.querySelector(`#setting-tab-${tabId} .tool-header p`) : null;
-            const tabDesc = descEl ? descEl.textContent.trim() : '';
-            window.updatePageTitleWithHelp('page-settings', tabTitle ? `Settings - ${tabTitle}` : 'Settings', tabDesc);
+            window.updatePageTitleWithHelp('page-settings', fullTitle, tabDesc);
         } else if (titleHeader) {
-            titleHeader.textContent = tabTitle ? `Settings - ${tabTitle}` : 'Settings';
+            titleHeader.innerHTML = `<span class="page-title-text">${fullTitle}</span> <button class="title-help-btn" type="button" data-title="${fullTitle}" data-desc="${tabDesc}">?</button>`;
             titleHeader.classList.remove('title-hidden');
         }
         if (!sidebar || !content) return;
@@ -1450,7 +1451,7 @@ function debounce(func, wait) {
         if (typeof window.updatePageTitleWithHelp === 'function') {
             window.updatePageTitleWithHelp('page-settings', 'Settings', 'Customize your game appearance, audio, and gameplay preferences.');
         } else if (titleHeader) {
-            titleHeader.textContent = 'Settings';
+            titleHeader.innerHTML = '<span class="page-title-text">Settings</span> <button class="title-help-btn" type="button" data-title="Settings" data-desc="Customize your game appearance, audio, and gameplay preferences.">?</button>';
             titleHeader.classList.remove('title-hidden');
         }
 

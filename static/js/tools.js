@@ -289,12 +289,13 @@ window.showTool = function(toolId) {
         const paneTitle = content.querySelector(`#tool-${toolId} .tool-header h2`);
         if (paneTitle) tabTitle = paneTitle.textContent.trim();
     }
+    const fullTitle = tabTitle ? `Tools - ${tabTitle}` : 'Tools';
+    const descEl = content ? content.querySelector(`#tool-${toolId} .tool-header p`) : null;
+    const toolDesc = descEl ? descEl.textContent.trim() : (window.TITLE_HELP_DESCRIPTIONS ? window.TITLE_HELP_DESCRIPTIONS[fullTitle] : '');
     if (typeof window.updatePageTitleWithHelp === 'function') {
-        const descEl = content ? content.querySelector(`#tool-${toolId} .tool-header p`) : null;
-        const toolDesc = descEl ? descEl.textContent.trim() : '';
-        window.updatePageTitleWithHelp('page-tools', tabTitle ? `Tools - ${tabTitle}` : 'Tools', toolDesc);
+        window.updatePageTitleWithHelp('page-tools', fullTitle, toolDesc);
     } else if (titleHeader) {
-        titleHeader.textContent = tabTitle ? `Tools - ${tabTitle}` : 'Tools';
+        titleHeader.innerHTML = `<span class="page-title-text">${fullTitle}</span> <button class="title-help-btn" type="button" data-title="${fullTitle}" data-desc="${toolDesc}">?</button>`;
         titleHeader.classList.remove('title-hidden');
     }
     
@@ -613,7 +614,7 @@ window.resetToolsTab = function(immediate = false) {
     if (typeof window.updatePageTitleWithHelp === 'function') {
         window.updatePageTitleWithHelp('page-tools', 'Tools', "Browse Morpheme's word study, validation, and analytics tools.");
     } else if (titleHeader) {
-        titleHeader.textContent = 'Tools';
+        titleHeader.innerHTML = '<span class="page-title-text">Tools</span> <button class="title-help-btn" type="button" data-title="Tools" data-desc="Browse Morpheme\'s word study, validation, and analytics tools.">?</button>';
         titleHeader.classList.remove('title-hidden');
     }
 

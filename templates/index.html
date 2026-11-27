@@ -258,13 +258,13 @@
         }
     </script>
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
-    <link rel="preload" href="/css/style.css?v=1795690000" as="style">
+    <link rel="preload" href="/css/style.css?v=1795700000" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794380007" as="style">
-    <link rel="preload" href="/css/play.css?v=1795690000" as="style">
-    <link rel="stylesheet" href="/css/style.css?v=1795690000" onerror="_handleStyleRetry(this)">
+    <link rel="preload" href="/css/play.css?v=1795700000" as="style">
+    <link rel="stylesheet" href="/css/style.css?v=1795700000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/lobby.css?v=1794380007" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/play.css?v=1795690000" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/howtoplay.css?v=1795690000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1795700000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/howtoplay.css?v=1795700000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/forum.css?v=1794030000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
     <style id="mobile-back-nav-theme-override">
@@ -1405,45 +1405,139 @@
         };
 
         
+        window.TITLE_HELP_DESCRIPTIONS = {
+            'Tools': "Browse Morpheme's word study, validation, and analytics tools.",
+            'Tools - Combo Checker': "Find connected words via MP and LIC, and explore connections using the MP Word Explorer.",
+            'Tools - Word Validator': "Check if a word exists in the official dictionaries and see their definitions.",
+            'Tools - Is Valid': "Check word validity and definition.",
+            'Tools - Lists': "Browse official word lists.",
+            'Tools - Words to Work on': "Add or remove words to study.",
+            'Tools - Sequence': "Search words containing a sequence.",
+            'Tools - Subanagrams': "Find words formed from letters.",
+            'Tools - Random Word Generator': "Discover new words based on length and dictionary criteria.",
+            'Tools - Random Word': "Generate random words from the lexicon.",
+            'Tools - Reverse Dictionary': "Search for words by definition keywords, inflections, or related concepts and synonyms.",
+            'Tools - Word of the Day': "A new word to learn and master every 24 hours.",
+            'Tools - Unscramble': "Solve word jumbles.",
+            'Tools - Find Count': "Enter a word to see how many times it has been found since Morpheme began in 2026, as well as the 10 most recent users who found it.",
+            'Tools - Words User is Good at': "Discover what words do not fool players! Explore the words that experienced players consistently spot and master.",
+            'Tools - Personal Timer': "Set a timer for your play session. When time is up, a gong will alert you at the same time as the red-flashing “Time’s up!” notice across the definitions panel.",
+            'Tools - Player Activity & Stats': "Live platform counts, daily user activity, and recently registered members.",
+            'Tools - Word Charts': "Point values, dynamic divisions, and live dictionary counts.",
+            'Tools - Change Password / Email': "Update your account security and contact credentials.",
+            'Tools - Change Password/Email': "Update your account security and contact credentials.",
+            'Tools - Morpheme Store': "Tournament-grade hardware, official dictionaries, and accessories optimized for competitive play.",
+            'Tools - Store': "Tournament-grade hardware, official dictionaries, and accessories optimized for competitive play.",
+            'Settings': "Customize your game appearance, audio, and gameplay preferences.",
+            'Settings - Appearance': "Customize the visual layout, themes, sizes, and styling of the game.",
+            'Settings - Audio & Sounds': "Manage background music, sound effects, and next round alerts.",
+            'Settings - Audio': "Manage background music, sound effects, and next round alerts.",
+            'Settings - Gameplay & Preferences': "Configure game options and tile interaction hitboxes.",
+            'Settings - Gameplay': "Configure game options and tile interaction hitboxes.",
+            'Settings - Layout / App Theme': "Personalize themes, tile colors, plaque borders, and visual effects.",
+            'Settings - Board & Tile Sizes': "Customize cell sizing, grid dimensions, and tile touch hitboxes.",
+            'Settings - Fonts & Text Sizes': "Adjust typography, font faces, and relative text scaling.",
+            'Settings - Plaque Border': "Personalize the board plaque border styling and visual flair.",
+            'Mods': "Administrative and moderation controls for Morpheme.",
+            'Mods - Ban/Timeout User': "Manage user bans, timeouts, and IP restrictions.",
+            'Mods - Ban / Timeout User': "Manage user bans, timeouts, and IP restrictions.",
+            'Mods - Notice Banner': "Broadcast system-wide notices and announcements.",
+            'Mods - Donations': "Manage donation acknowledgments and records.",
+            'Mods - Definition Management': "Add, update, or remove definitions for any word.",
+            'Mods - Pronunciation Management': "Add, update, or remove phonetic pronunciations for spelling play.",
+            'Mods - Added Words Management': "Manage words always included in board solving and highlighted purple.",
+            'Mods - Database Submission': "Upload and submit lexicon text updates.",
+            'Mods - Moderator Access': "Manage user permissions and moderator access.",
+            'Mods - Constant Parameter Rating Adjustment': "Adjust user ratings across specific constant parameter configurations.",
+            'Mods - Tally Divisions Board Hardness': "Toggle board difficulty evaluation between static unique files and dynamic find-count divisions.",
+            'Mods - Forum Thread Maintenance': "Manage forum discussion capacity across all categories."
+        };
+
+        window._updatingTitleHeader = false;
+
         window.updatePageTitleWithHelp = function(pageId, titleText, descText, targetSel) {
-            var page = document.getElementById(pageId);
+            var page = typeof pageId === 'string' ? document.getElementById(pageId) : pageId;
+            if (!page) {
+                var pages = ['page-tools', 'page-settings', 'page-mods'];
+                for (var i = 0; i < pages.length; i++) {
+                    var p = document.getElementById(pages[i]);
+                    if (p && (p.classList.contains('active') || p.style.display !== 'none')) {
+                        page = p;
+                        break;
+                    }
+                }
+            }
             if (!page) return;
             var header = page.querySelector('.page-title-header');
             if (!header) return;
 
-            titleText = titleText || '';
-            var span = header.querySelector('.page-title-text');
-            var btn = header.querySelector('.title-help-btn');
-
-            if (!span) {
-                header.innerHTML = '';
-                span = document.createElement('span');
-                span.className = 'page-title-text';
-                header.appendChild(span);
+            titleText = (titleText || '').replace(/\s*\?\s*$/, '').trim();
+            if (!descText && window.TITLE_HELP_DESCRIPTIONS && window.TITLE_HELP_DESCRIPTIONS[titleText]) {
+                descText = window.TITLE_HELP_DESCRIPTIONS[titleText];
             }
-            span.textContent = titleText;
 
-            if (!btn) {
-                btn = document.createElement('button');
-                btn.className = 'title-help-btn';
-                btn.type = 'button';
+            window._updatingTitleHeader = true;
+            try {
+                var span = header.querySelector('.page-title-text');
+                var btn = header.querySelector('.title-help-btn');
+
+                if (!span || !btn || !header.contains(btn)) {
+                    header.innerHTML = '<span class="page-title-text"></span> <button class="title-help-btn" type="button" tabindex="0">?</button>';
+                    span = header.querySelector('.page-title-text');
+                    btn = header.querySelector('.title-help-btn');
+                }
+
+                span.textContent = titleText;
                 btn.textContent = '?';
-                header.appendChild(btn);
+                btn.setAttribute('data-title', titleText);
+                if (targetSel) {
+                    btn.setAttribute('data-desc-target', targetSel);
+                    btn.removeAttribute('data-desc');
+                } else {
+                    btn.setAttribute('data-desc', descText || '');
+                    btn.removeAttribute('data-desc-target');
+                }
+                btn.setAttribute('title', 'About ' + titleText);
+                btn.setAttribute('aria-label', 'About ' + titleText);
+                btn.style.display = 'inline-flex';
+                header.classList.remove('title-hidden');
+            } finally {
+                setTimeout(function() {
+                    window._updatingTitleHeader = false;
+                }, 20);
+            }
+        };
+
+        window._setupTitleHeaderSelfHealing = function() {
+            var headers = document.querySelectorAll('.page-title-header');
+            if (!headers.length) return;
+
+            if (window._titleHeaderObserver) {
+                try { window._titleHeaderObserver.disconnect(); } catch(e) {}
             }
 
-            btn.setAttribute('data-title', titleText);
-            if (targetSel) {
-                btn.setAttribute('data-desc-target', targetSel);
-                btn.removeAttribute('data-desc');
-            } else {
-                btn.setAttribute('data-desc', descText || '');
-                btn.removeAttribute('data-desc-target');
-            }
-            btn.setAttribute('title', 'About ' + titleText);
-            btn.setAttribute('aria-label', 'About ' + titleText);
-            btn.style.display = 'inline-flex';
-            header.classList.remove('title-hidden');
+            window._titleHeaderObserver = new MutationObserver(function(mutations) {
+                if (window._updatingTitleHeader) return;
+                headers.forEach(function(h) {
+                    var btn = h.querySelector('.title-help-btn');
+                    if (!btn) {
+                        var text = (h.textContent || '').replace(/\s*\?\s*$/, '').trim();
+                        var page = h.closest('.page');
+                        window.updatePageTitleWithHelp(page || h.parentElement, text);
+                    }
+                });
+            });
+
+            headers.forEach(function(h) {
+                window._titleHeaderObserver.observe(h, { childList: true, subtree: false });
+            });
         };
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', window._setupTitleHeaderSelfHealing);
+        } else {
+            window._setupTitleHeaderSelfHealing();
+        }
 
         window.showDescriptionPopup = function(title, description) {
             var modal = document.getElementById('description-info-modal');
@@ -1500,16 +1594,19 @@
                 }
             }
             if (!title) {
-                var heading = btn.closest('h1, h2, h3, h4, .tool-header, .setting-subpage-header');
+                var heading = btn.closest('h1, h2, h3, h4, .tool-header, .setting-subpage-header, .page-title-header');
                 if (heading) {
                     var clone = heading.cloneNode(true);
                     var inClone = clone.querySelector('.title-help-btn');
                     if (inClone) inClone.remove();
-                    title = clone.textContent.trim();
+                    title = clone.textContent.replace(/\s*\?\s*$/, '').trim();
                 }
             }
+            if (!desc && title && window.TITLE_HELP_DESCRIPTIONS && window.TITLE_HELP_DESCRIPTIONS[title]) {
+                desc = window.TITLE_HELP_DESCRIPTIONS[title];
+            }
             if (!desc) {
-                var container = btn.closest('.tool-header, .setting-subpage-header, .result-section');
+                var container = btn.closest('.tool-header, .setting-subpage-header, .result-section, .tool-pane');
                 var p = container ? container.querySelector('p, .setting-subpage-desc, .chart-desc') : null;
                 if (p) desc = p.textContent.trim();
             }
@@ -10962,7 +11059,7 @@
         </div>
     </div>
     <!-- Core Scripts -->
-    <script src="/js/settings.js?v=1795390007"></script>
+    <script src="/js/settings.js?v=1795700000"></script>
     <script src="/js/forum.js?v=1795390001"></script>
     <script src="/js/app.js?v=1795689000"></script>
     <script src="/js/lobby.js?v=1795390032"></script>
@@ -10970,10 +11067,10 @@
     <script src="/js/tournaments.js?v=1794133000"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1795687000"></script>
+    <script src="/js/tools.js?v=1795700000"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1795390033"></script>
+    <script src="/js/mods.js?v=1795700000"></script>
     <script src="/js/private_matches.js?v=1795390031"></script>
     <script src="/js/donate.js?v=33806"></script>
     
