@@ -23587,7 +23587,7 @@ body[class*="theme-light-"] .title-help-btn,
     padding: 12px 20px !important;
     border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
     display: flex !important;
-    justify-content: flex-end !important;
+    justify-content: center !important;
     background: #0f172a !important;
     box-sizing: border-box !important;
 }
