@@ -2577,8 +2577,8 @@
                 </div>
 
                 <form id="signin-form" class="auth-form active">
-                    <input type="text" id="signin-username" placeholder="Username" required>
-                    <input type="password" id="signin-password" placeholder="Password" required>
+                    <input type="text" id="signin-username" name="username" placeholder="Username" autocomplete="username" required>
+                    <input type="password" id="signin-password" name="password" placeholder="Password" autocomplete="current-password" required>
                     
                     <div style="font-size: 0.82rem; opacity: 0.8; color: var(--accent-color); font-weight: 600; margin-top: -5px; margin-bottom: 10px; text-align: left; padding-left: 5px;">
                         * Only the password is case sensitive.
@@ -2599,12 +2599,12 @@
                 </form>
 
                 <form id="signup-form" class="auth-form">
-                    <input type="text" id="signup-username"
-                        placeholder="Username (max 16 characters)" maxlength="16" required autocomplete="off"
+                    <input type="text" id="signup-username" name="username"
+                        placeholder="Username (max 16 characters)" maxlength="16" required autocomplete="username"
                         oninput="this.value=this.value.replace(/[^a-zA-Z0-9_]/g,'').slice(0,16)">
                     <div id="signup-username-error" class="field-error-msg"></div>
                     
-                    <input type="email" id="signup-email" placeholder="Email" required>
+                    <input type="email" id="signup-email" name="email" placeholder="Email" autocomplete="email" required>
                     <div id="signup-email-error" class="field-error-msg"></div>
                     
                     <!-- Country Flag Dropdown -->
@@ -2620,11 +2620,11 @@
 
                     <!-- 6-digit Input Box (Revealed after clicking Send Email) -->
                     <div id="signup-verification-box" style="display: none; flex-direction: column; gap: 5px; margin-bottom: 15px;">
-                        <input type="text" id="signup-verification-code" placeholder="Enter 6-digit verification code" maxlength="6" pattern="[0-9]*" inputmode="numeric" style="letter-spacing: 4px; font-weight: 800; text-align: center; font-size: 1.2rem; background: rgba(0,0,0,0.3); border: 2px solid #ff007f; border-radius: 8px; color: #fff; height: 42px; margin-bottom: 0 !important;">
+                        <input type="text" id="signup-verification-code" placeholder="Enter 6-digit verification code" maxlength="6" pattern="[0-9]*" inputmode="numeric" autocomplete="one-time-code" style="letter-spacing: 4px; font-weight: 800; text-align: center; font-size: 1.2rem; background: rgba(0,0,0,0.3); border: 2px solid #ff007f; border-radius: 8px; color: #fff; height: 42px; margin-bottom: 0 !important;">
                     </div>
 
-                    <input type="password" id="signup-password" placeholder="Password (6+ characters)" required>
-                    <input type="password" id="signup-password-confirm" placeholder="Confirm Password" required>
+                    <input type="password" id="signup-password" name="new-password" placeholder="Password (6+ characters)" autocomplete="new-password" required>
+                    <input type="password" id="signup-password-confirm" name="confirm-password" placeholder="Confirm Password" autocomplete="new-password" required>
 
                     <div style="font-size: 0.82rem; opacity: 0.8; color: var(--accent-color); font-weight: 600; margin-top: -5px; margin-bottom: 10px; text-align: left; padding-left: 5px;">
                         * Only the password is case sensitive.
@@ -3972,7 +3972,7 @@
                                 <!-- Messages will be rendered here -->
                             </div>
                             <form id="lobby-chat-form" class="lobby-chat-form" onsubmit="window.handleLobbyChatSubmit(event)">
-                                <input type="text" id="lobby-chat-input" class="lobby-chat-input" placeholder="Type Lobby message..." maxlength="1000" autocomplete="off">
+                                <input type="text" id="lobby-chat-input" name="lobby-chat" class="lobby-chat-input" placeholder="Type Lobby message..." maxlength="1000" autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="send">
                                 <span id="lobby-chat-counter" class="chat-input-char-counter" style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary, #94a3b8); flex-shrink: 0; white-space: nowrap; line-height: 1; padding: 0 2px;">1000</span>
                                 <button type="submit" id="lobby-chat-send-btn" class="lobby-chat-send-btn">Send</button>
                             </form>
@@ -4030,7 +4030,7 @@
                             <p class="placeholder">No messages yet</p>
                         </div>
                         <div class="chat-input-section" style="display: flex; align-items: center; gap: 6px;">
-                            <input type="text" id="chat-input" placeholder="Say something..." maxlength="1000" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true">
+                            <input type="text" id="chat-input" name="game-chat" placeholder="Say something..." maxlength="1000" autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="send">
                             <span id="room-chat-counter" class="chat-input-char-counter" style="font-size: 0.72rem; font-weight: 600; color: var(--text-secondary, #94a3b8); flex-shrink: 0; white-space: nowrap; line-height: 1; padding: 0 2px;">1000</span>
                             <button id="chat-send-btn">Send</button>
                         </div>
@@ -4056,7 +4056,7 @@
                     <div class="word-input-section">
                         <button id="submit-word-btn" class="submit-word-btn timer-btn" type="button" onclick="if(window.submitSubanagramsInput)window.submitSubanagramsInput(event);" ontouchend="if(window.submitSubanagramsInput)window.submitSubanagramsInput(event);">Enter</button>
                         <div class="word-input-row" id="word-input-row">
-                            <input type="text" id="word-input" placeholder="Enter word" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+                            <input type="text" id="word-input" name="boggle-word" placeholder="Enter word" autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="go">
                             <button id="shuffle-board-btn" class="shuffle-btn timer-btn" type="button" onclick="if(window.shuffleSubanagramsBoard)window.shuffleSubanagramsBoard(event);" ontouchend="if(window.shuffleSubanagramsBoard)window.shuffleSubanagramsBoard(event);">Shuffle</button>
                             <button id="clear-word-btn" class="clear-btn timer-btn" type="button" style="display: none !important;">Clear</button>
                         </div>
@@ -4611,7 +4611,7 @@
 
                         <div class="combo-control-panel" style="margin-bottom: 0px;">
                             <div class="input-row">
-                                <input type="text" id="find-count-input" placeholder="Enter word..." autocomplete="off">
+                                <input type="text" id="find-count-input" name="find-count-query" placeholder="Enter word..." autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search">
                                 <button id="find-count-btn">Search</button>
                             </div>
                         </div>
@@ -4650,10 +4650,10 @@
                         <div class="combo-control-panel" style="margin-bottom: 12px; position: sticky; top: 0; z-index: 100; background: var(--bg-panel); backdrop-filter: blur(10px); padding: 14px 20px; box-sizing: border-box; width: 100%; overflow: visible !important;">
                             <div class="input-row">
                                 <div class="good-at-user-input-wrap">
-                                    <input type="text" id="good-at-user-input" placeholder="Player..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                                    <input type="text" id="good-at-user-input" name="good-at-user" placeholder="Player..." autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search">
                                     <div id="good-at-friends-dropdown" class="friends-invite-dropdown hidden" role="listbox"></div>
                                 </div>
-                                <input type="text" id="good-at-word-filter" placeholder="Filter words..." oninput="window.debounceGoodAtFilter()" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false">
+                                <input type="text" id="good-at-word-filter" name="good-at-filter" placeholder="Filter words..." oninput="window.debounceGoodAtFilter()" autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search">
                                 <select id="good-at-length-select" onchange="window.loadWordsGoodAtTool(null, true)">
                                     <option value="all">Length: All</option>
                                     <option value="3">3 Letters</option>
@@ -5255,7 +5255,7 @@
                         <div class="reverse-dict-input-panel">
                             <div class="reverse-dict-controls-row">
                                 <div class="reverse-dict-search-wrapper">
-                                    <input type="text" id="reverse-dict-input" class="reverse-dict-input" placeholder="Enter word, phrase, or concept (e.g. snake, mean old woman, derogatory)..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                                    <input type="text" id="reverse-dict-input" name="reverse-dict-query" class="reverse-dict-input" placeholder="Enter word, phrase, or concept (e.g. snake, mean old woman, derogatory)..." autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search">
                                     <button type="button" id="reverse-dict-clear-btn" class="reverse-dict-clear-btn" style="display: none;" onclick="window.clearReverseDictInput()" title="Clear search">✕</button>
                                 </div>
                                 <div class="reverse-dict-controls-actions">
@@ -5376,8 +5376,8 @@
                                         <div class="combo-unified-panel" id="combo-unified-panel">
                                             <div class="combo-control-panel">
                                                 <div class="input-row">
-                                                    <input type="text" id="combo-input" placeholder="Enter letters to check..."
-                                                        autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                                                    <input type="text" id="combo-input" name="combo-query" placeholder="Enter letters to check..."
+                                                        autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search">
                                                     <select id="combo-dict" style="min-width: 155px;">
                                                         <option value="NWL">NWL (US)</option>
                                                         <option value="CSW" selected>CSW (Intl)</option>
@@ -5540,7 +5540,7 @@
                                                     <span id="combo-explorer-input-count" class="combo-explorer-badge combo-explorer-badge-input">0</span>
                                                 </div>
                                                 <div class="combo-explorer-filter-bar" id="combo-explorer-filter-bar">
-                                                    <input id="combo-explorer-filter" class="combo-explorer-filter-input" type="text" placeholder="Filter input words..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                                                    <input id="combo-explorer-filter" name="combo-explorer-filter" class="combo-explorer-filter-input" type="text" placeholder="Filter input words..." autocomplete="one-time-code" autocorrect="off" autocapitalize="none" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true">
                                                 </div>
                                                 <div id="combo-explorer-input-list">
                                                     <div class="combo-explorer-placeholder">Loading words...</div>
@@ -5595,8 +5595,8 @@
 
                         <div class="combo-control-panel">
                             <div class="input-row">
-                                <input type="text" id="valid-input" placeholder="Enter word to check..."
-                                    autocomplete="off" style="width: 250px;">
+                                <input type="text" id="valid-input" name="valid-word-query" placeholder="Enter word to check..."
+                                    autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search" style="width: 250px;">
                                 <select id="valid-dict" style="width: 140px;">
                                     <option value="NWL">NWL (US)</option>
                                     <option value="CSW">CSW (Intl)</option>
@@ -5657,8 +5657,8 @@
                             <!-- Manual panel (Vertical layout: one element for each row) -->
                             <div id="sub-panel-manual" style="padding: 16px 20px; display: flex; justify-content: center; width: 100%; box-sizing: border-box;">
                                 <div style="display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: stretch;">
-                                    <input type="text" id="sub-input" placeholder="Letters..."
-                                        autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="this.value='';" onfocus="this.value='';" style="width: 100%; height: 42px; text-transform: uppercase; text-align: center; font-size: 1.05rem; letter-spacing: 1px; box-sizing: border-box;">
+                                    <input type="text" id="sub-input" name="subanagram-letters" placeholder="Letters..."
+                                        autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search" onclick="this.value='';" onfocus="this.value='';" style="width: 100%; height: 42px; text-transform: uppercase; text-align: center; font-size: 1.05rem; letter-spacing: 1px; box-sizing: border-box;">
                                     <select id="sub-min-len" style="width: 100%; height: 42px; padding: 0 12px; box-sizing: border-box; text-align-last: center;">
                                         <option value="2" selected>Min Word Length: 2</option>
                                         <option value="3">Min Word Length: 3</option>
@@ -5767,8 +5767,8 @@
                                     style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 520px; margin-top: 5px;">
 
                                     <div class="sub-input-row" style="display: flex; gap: 8px; width: 100%;">
-                                        <input type="text" id="sub-word-input" placeholder="Type a subanagram (e.g. MOPE)..."
-                                            autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="this.value='';" onfocus="this.value='';"
+                                        <input type="text" id="sub-word-input" name="sub-guess" placeholder="Type a subanagram (e.g. MOPE)..."
+                                            autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="go" onclick="this.value='';" onfocus="this.value='';"
                                             style="flex: 1; text-transform: uppercase; text-align: center; font-size: 1.25rem; padding: 10px; letter-spacing: 2px; border: 2px solid rgba(167,139,250,0.3); background: rgba(0,0,0,0.35); color: #fff; border-radius: 12px; transition: all 0.3s ease; outline: none;">
                                         <button id="sub-submit-word-btn"
                                             style="padding: 10px 20px; font-size: 0.95rem; font-weight: 700; border-radius: 12px; background: linear-gradient(135deg, #2ecc71, #27ae60); border: none; color: #fff; cursor: pointer; transition: all 0.2s ease;">
@@ -5809,8 +5809,8 @@
 
                         <div class="combo-control-panel">
                             <div class="input-row">
-                                <input type="text" id="seq-input" placeholder="Sequence (e.g. STR)..."
-                                    autocomplete="off" style="width: 160px;">
+                                <input type="text" id="seq-input" name="sequence-query" placeholder="Sequence (e.g. STR)..."
+                                    autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search" style="width: 160px;">
 
                                 <select id="seq-mode" style="width: 200px;">
                                     <option value="starts">Starts With</option>
@@ -5978,7 +5978,7 @@
                         <!-- Top Input & Action Controls (Full Width Stretch) -->
                         <div class="work-on-input-panel" style="background: var(--bg-panel); border: 1px solid var(--input-border); border-radius: 10px; padding: 16px 20px; margin-bottom: 16px; box-sizing: border-box; width: 100%;">
                             <div style="display: flex; flex-direction: column; gap: 12px; width: 100%;">
-                                <input type="text" id="work-on-input" placeholder="ENTER WORD TO ADD..." maxlength="30" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" style="width: 100%; box-sizing: border-box; padding: 12px 16px; font-size: 1.05rem; border-radius: 8px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); text-transform: uppercase; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
+                                <input type="text" id="work-on-input" name="work-on-word" placeholder="ENTER WORD TO ADD..." maxlength="30" autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="go" style="width: 100%; box-sizing: border-box; padding: 12px 16px; font-size: 1.05rem; border-radius: 8px; background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--input-border); text-transform: uppercase; font-family: 'JetBrains Mono', monospace; font-weight: 600;">
                                 <div style="display: flex; gap: 12px; width: 100%;">
                                     <button id="work-on-add-btn" type="button" class="work-on-btn-add" style="flex: 1; padding: 12px 18px; font-size: 1rem; font-weight: 700; border-radius: 8px; background: #2563eb; color: #ffffff; border: none; cursor: pointer; transition: background 0.2s; box-shadow: 0 2px 6px rgba(0,0,0,0.15);">Add</button>
                                     <button id="work-on-remove-btn" type="button" class="work-on-btn-remove" disabled style="flex: 1; padding: 12px 18px; font-size: 1rem; font-weight: 700; border-radius: 8px; background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); cursor: not-allowed; opacity: 0.6; transition: all 0.2s;">Remove</button>
@@ -6104,8 +6104,8 @@
                                 <div class="input-dashboard"
                                     style="display: flex; flex-direction: column; align-items: center; gap: 12px; width: 100%; max-width: 480px; margin-top: 10px;">
 
-                                    <input type="text" id="unscramble-input" placeholder="Enter word..."
-                                        autocomplete="off"
+                                    <input type="text" id="unscramble-input" name="unscramble-guess" placeholder="Enter word..."
+                                        autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="go"
                                         style="width: 100%; text-transform: uppercase; text-align: center; font-size: 1.25rem; padding: 10px; letter-spacing: 2px; border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.3); color: #fff; border-radius: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); outline: none;">
 
                                     <div style="display: flex; gap: 15px; width: 100%;">
@@ -9025,7 +9025,7 @@
                     <!-- Messages injected here -->
                 </div>
                 <div class="chat-modal-input-area">
-                    <input type="text" id="pm-input" placeholder="Type a message..." maxlength="100" autocomplete="off">
+                    <input type="text" id="pm-input" name="pm-chat" placeholder="Type a message..." maxlength="100" autocomplete="one-time-code" autocorrect="off" autocapitalize="off" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="send">
                     <button id="pm-send-btn">Send</button>
                 </div>
             </div>
@@ -10323,7 +10323,7 @@
             </div>
             <!-- Word Jump Input Bar -->
             <div id="full-list-jump-bar" style="display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-shrink: 0; position: relative;">
-                <input type="text" id="full-list-jump-input" placeholder="Enter word to jump to..." autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" inputmode="text" style="flex: 1; min-width: 0; background: #0f0c1b; border: 1.5px solid rgba(167,139,250,0.5); color: #ffffff; padding: 9px 14px; border-radius: 8px; font-size: 16px; font-weight: 700; text-transform: uppercase; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-user-select: text !important; user-select: text !important; touch-action: manipulation;">
+                <input type="text" id="full-list-jump-input" name="list-jump-word" placeholder="Enter word to jump to..." autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="go" inputmode="text" style="flex: 1; min-width: 0; background: #0f0c1b; border: 1.5px solid rgba(167,139,250,0.5); color: #ffffff; padding: 9px 14px; border-radius: 8px; font-size: 16px; font-weight: 700; text-transform: uppercase; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-user-select: text !important; user-select: text !important; touch-action: manipulation;">
                 <button id="full-list-jump-btn" style="background: rgba(167,139,250,0.2); border: 1px solid rgba(167,139,250,0.5); color: #c4b5fd; font-size: 0.9rem; font-weight: 700; padding: 9px 18px; border-radius: 8px; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; touch-action: manipulation;">Go</button>
                 <!-- Small Toast / Notification Popup -->
                 <div id="full-list-jump-toast" style="display: none; position: absolute; top: 100%; left: 0; right: 0; margin-top: 6px; z-index: 10; background: rgba(20, 15, 35, 0.96); border: 1px solid rgba(167, 139, 250, 0.5); color: #e9d5ff; font-size: 0.85rem; font-weight: 600; padding: 8px 14px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); text-align: center; pointer-events: none; transition: opacity 0.2s;"></div>
