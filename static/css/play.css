@@ -26304,21 +26304,7 @@ body[class*="theme-light-"] .preview-hitbox-tile,
     }
 
     #tool-reverse-dictionary .tool-header p {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 0.95 !important;
-        margin: 0 0 3px 0 !important;
-        padding: 4px 8px !important;
-        font-size: 0.74rem !important;
-        line-height: 1.25 !important;
-        max-height: 44px !important;
-        border: 1px solid rgba(var(--text-primary-rgb), 0.18) !important;
-        border-radius: 8px !important;
-        background: rgba(var(--text-primary-rgb), 0.04) !important;
-        color: var(--muted-text) !important;
-        box-sizing: border-box !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch !important;
+        display: none !important;
     }
 
     #tool-reverse-dictionary .reverse-dict-input-panel,
@@ -26347,9 +26333,12 @@ body[class*="theme-light-"] .preview-hitbox-tile,
     .reverse-dict-search-wrapper,
     #page-tools #tool-reverse-dictionary .reverse-dict-search-wrapper,
     body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-search-wrapper {
-        grid-column: 1 / 2 !important;
+        grid-column: 1 / -1 !important;
+        order: 1 !important;
         width: 100% !important;
-        height: 36px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
         position: relative !important;
         box-sizing: border-box !important;
         margin: 0 !important;
@@ -26360,12 +26349,15 @@ body[class*="theme-light-"] .preview-hitbox-tile,
     body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-input {
         width: 100% !important;
         max-width: 100% !important;
-        height: 36px !important;
-        min-height: 36px !important;
-        max-height: 36px !important;
-        padding: 0 28px 0 8px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 24px 0 8px !important;
         font-size: 0.82rem !important;
         border-radius: 6px !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
         box-sizing: border-box !important;
     }
 
@@ -26380,12 +26372,15 @@ body[class*="theme-light-"] .preview-hitbox-tile,
     body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-select {
         width: 100% !important;
         max-width: 100% !important;
-        height: 36px !important;
-        min-height: 36px !important;
-        max-height: 36px !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
         padding: 0 8px !important;
         font-size: 0.82rem !important;
         border-radius: 6px !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
         box-sizing: border-box !important;
         margin: 0 !important;
     }
@@ -26393,40 +26388,49 @@ body[class*="theme-light-"] .preview-hitbox-tile,
     #reverse-dict-mode,
     #page-tools #tool-reverse-dictionary #reverse-dict-mode,
     body.is-mobile #page-tools #tool-reverse-dictionary #reverse-dict-mode {
-        grid-column: 2 / 3 !important;
+        grid-column: 1 / -1 !important;
+        order: 2 !important;
     }
 
     #reverse-dict-dict,
     #page-tools #tool-reverse-dictionary #reverse-dict-dict,
     body.is-mobile #page-tools #tool-reverse-dictionary #reverse-dict-dict {
         grid-column: 1 / 2 !important;
+        order: 3 !important;
     }
 
     #reverse-dict-length,
     #page-tools #tool-reverse-dictionary #reverse-dict-length,
     body.is-mobile #page-tools #tool-reverse-dictionary #reverse-dict-length {
         grid-column: 2 / 3 !important;
+        order: 4 !important;
     }
 
     .reverse-dict-search-btn,
     #page-tools #tool-reverse-dictionary .reverse-dict-search-btn,
     body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-search-btn {
         grid-column: 1 / -1 !important;
+        order: 5 !important;
         width: 100% !important;
         max-width: 100% !important;
-        height: 36px !important;
-        min-height: 36px !important;
-        max-height: 36px !important;
-        padding: 0 12px !important;
-        font-size: 0.82rem !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 8px !important;
+        font-size: 0.85rem !important;
         font-weight: 700 !important;
         border-radius: 6px !important;
+        border: none !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
         box-sizing: border-box !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
         gap: 6px !important;
         margin: 0 !important;
+        cursor: pointer !important;
     }
 
     .reverse-dict-status-bar {
@@ -28043,112 +28047,348 @@ body[class*="theme-light-"] #setting-subpage-lobby-guide .setting-toggle-row:hov
 }
 
 /* ==========================================================================
-   REVERSE DICTIONARY — WHITESPACE SURROUNDING CONTROLS & DROPDOWNS
+   REVERSE DICTIONARY — DESKTOP/LAPTOP SINGLE ROW & MOBILE (LIKE LISTS)
    ========================================================================== */
-#tool-reverse-dictionary .reverse-dict-input-panel {
-    background: var(--bg-panel) !important;
-    border: 1px solid var(--input-border, rgba(255, 255, 255, 0.12)) !important;
-    border-radius: 14px !important;
-    padding: 16px 20px !important;
-    margin-bottom: 16px !important;
-    box-sizing: border-box !important;
-    width: 100% !important;
+
+/* --- Desktop & Laptop Layout: All controls on ONE row with Enter word on the leftmost --- */
+@media (min-width: 901px) {
+    #page-tools #tool-reverse-dictionary .reverse-dict-input-panel,
+    body.is-desktop #page-tools #tool-reverse-dictionary .reverse-dict-input-panel,
+    body:not(.is-mobile) #page-tools #tool-reverse-dictionary .reverse-dict-input-panel {
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--input-border, rgba(255, 255, 255, 0.12)) !important;
+        border-radius: 14px !important;
+        padding: 14px 18px !important;
+        margin-bottom: 14px !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+    }
+
+    #page-tools #tool-reverse-dictionary .reverse-dict-controls-row,
+    body.is-desktop #page-tools #tool-reverse-dictionary .reverse-dict-controls-row,
+    body:not(.is-mobile) #page-tools #tool-reverse-dictionary .reverse-dict-controls-row {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 10px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Leftmost section: Enter word textbox */
+    #page-tools #tool-reverse-dictionary .reverse-dict-search-wrapper,
+    body.is-desktop #page-tools #tool-reverse-dictionary .reverse-dict-search-wrapper,
+    body:not(.is-mobile) #page-tools #tool-reverse-dictionary .reverse-dict-search-wrapper {
+        flex: 1 1 auto !important;
+        min-width: 200px !important;
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+        order: 1 !important;
+        margin: 0 !important;
+    }
+
+    #page-tools #tool-reverse-dictionary .reverse-dict-input,
+    body.is-desktop #page-tools #tool-reverse-dictionary .reverse-dict-input,
+    body:not(.is-mobile) #page-tools #tool-reverse-dictionary .reverse-dict-input {
+        width: 100% !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0 36px 0 14px !important;
+        border-radius: 8px !important;
+        font-size: 0.95rem !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Right section: dropdown menus & search button on the SAME line/row */
+    #page-tools #tool-reverse-dictionary .reverse-dict-controls-actions,
+    body.is-desktop #page-tools #tool-reverse-dictionary .reverse-dict-controls-actions,
+    body:not(.is-mobile) #page-tools #tool-reverse-dictionary .reverse-dict-controls-actions {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex-shrink: 0 !important;
+        order: 2 !important;
+        margin: 0 !important;
+    }
+
+    #page-tools #tool-reverse-dictionary #reverse-dict-mode,
+    body.is-desktop #page-tools #tool-reverse-dictionary #reverse-dict-mode,
+    body:not(.is-mobile) #page-tools #tool-reverse-dictionary #reverse-dict-mode {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 170px !important;
+        max-width: 220px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        padding: 0 12px !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-reverse-dictionary #reverse-dict-dict,
+    body.is-desktop #page-tools #tool-reverse-dictionary #reverse-dict-dict,
+    body:not(.is-mobile) #page-tools #tool-reverse-dictionary #reverse-dict-dict {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 130px !important;
+        max-width: 160px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        padding: 0 12px !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-reverse-dictionary #reverse-dict-length,
+    body.is-desktop #page-tools #tool-reverse-dictionary #reverse-dict-length,
+    body:not(.is-mobile) #page-tools #tool-reverse-dictionary #reverse-dict-length {
+        flex: 0 0 auto !important;
+        width: auto !important;
+        min-width: 110px !important;
+        max-width: 135px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        font-size: 0.9rem !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        padding: 0 12px !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-reverse-dictionary #reverse-dict-search-btn,
+    body.is-desktop #page-tools #tool-reverse-dictionary #reverse-dict-search-btn,
+    body:not(.is-mobile) #page-tools #tool-reverse-dictionary #reverse-dict-search-btn {
+        flex: 0 0 auto !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        padding: 0 20px !important;
+        font-size: 0.95rem !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+        margin-left: 2px !important;
+    }
 }
 
-body.theme-white #tool-reverse-dictionary .reverse-dict-input-panel,
-[class*="theme-white"] #tool-reverse-dictionary .reverse-dict-input-panel,
-body[class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-input-panel,
-[class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-input-panel {
+/* Light theme for desktop/laptop Reverse Dictionary */
+body.theme-white #page-tools #tool-reverse-dictionary .reverse-dict-input-panel,
+[class*="theme-white"] #page-tools #tool-reverse-dictionary .reverse-dict-input-panel,
+body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-input-panel,
+[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-input-panel {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05) !important;
 }
 
-#tool-reverse-dictionary .reverse-dict-controls-row {
-    display: flex !important;
-    gap: 14px !important;
-    align-items: center !important;
-    flex-wrap: wrap !important;
-    width: 100% !important;
-}
-
-#tool-reverse-dictionary .reverse-dict-controls-actions {
-    display: flex !important;
-    gap: 12px !important;
-    align-items: center !important;
-    flex-shrink: 0 !important;
-    flex-wrap: wrap !important;
-}
-
-#tool-reverse-dictionary .reverse-dict-select {
-    height: 42px !important;
-    min-height: 42px !important;
-    padding: 0 12px !important;
-    margin: 2px 4px !important;
-    font-size: 0.9rem !important;
-    font-weight: 600 !important;
-    border-radius: 8px !important;
-    box-sizing: border-box !important;
-    outline: none !important;
-}
-
-body.theme-white #tool-reverse-dictionary .reverse-dict-select,
-[class*="theme-white"] #tool-reverse-dictionary .reverse-dict-select,
-body[class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-select,
-[class*="theme-light-"] #tool-reverse-dictionary .reverse-dict-select {
+body.theme-white #page-tools #tool-reverse-dictionary .reverse-dict-select,
+[class*="theme-white"] #page-tools #tool-reverse-dictionary .reverse-dict-select,
+body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-select,
+[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-select {
     background: #ffffff !important;
     border: 1px solid #cbd5e1 !important;
     color: #0f172a !important;
 }
 
-#tool-reverse-dictionary .reverse-dict-search-btn {
-    height: 42px !important;
-    min-height: 42px !important;
-    padding: 0 20px !important;
-    margin: 2px 4px 2px 8px !important;
-    border-radius: 8px !important;
-    font-weight: 700 !important;
-    font-size: 0.95rem !important;
-    box-sizing: border-box !important;
-}
-
-#tool-reverse-dictionary .reverse-dict-input {
-    height: 42px !important;
-    min-height: 42px !important;
-    padding: 0 36px 0 14px !important;
-    border-radius: 8px !important;
-    font-size: 0.95rem !important;
-    box-sizing: border-box !important;
-}
-
+/* --- Mobile Devices Layout: Arranged EXACTLY like Lists in Tools --- */
 @media (max-width: 900px) {
-    #tool-reverse-dictionary .reverse-dict-input-panel,
+    #page-tools #tool-reverse-dictionary .tool-header,
+    body.is-mobile #page-tools #tool-reverse-dictionary .tool-header {
+        flex: 0 0 auto !important;
+        margin-bottom: 2px !important;
+        padding: 0 !important;
+    }
+
+    #page-tools #tool-reverse-dictionary .tool-header p,
+    body.is-mobile #page-tools #tool-reverse-dictionary .tool-header p {
+        display: none !important;
+    }
+
+    #page-tools #tool-reverse-dictionary .reverse-dict-input-panel,
     body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-input-panel {
-        padding: 12px 14px !important;
-        margin-bottom: 12px !important;
-        border-radius: 12px !important;
+        flex: 0 0 auto !important;
+        padding: 8px 10px !important;
+        margin-bottom: 8px !important;
+        border-radius: 8px !important;
+        background: var(--bg-panel) !important;
+        border: 1px solid var(--input-border, rgba(255, 255, 255, 0.12)) !important;
+        box-sizing: border-box !important;
+        width: 100% !important;
+        display: block !important;
     }
-    #tool-reverse-dictionary .reverse-dict-controls-row,
+
+    #page-tools #tool-reverse-dictionary .reverse-dict-controls-row,
     body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-controls-row {
-        gap: 10px !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
     }
-    #tool-reverse-dictionary .reverse-dict-controls-actions,
+
+    #page-tools #tool-reverse-dictionary .reverse-dict-controls-actions,
     body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-controls-actions {
-        gap: 8px !important;
+        display: contents !important;
     }
-    #tool-reverse-dictionary .reverse-dict-select,
-    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-select {
-        height: 38px !important;
-        min-height: 38px !important;
-        padding: 0 10px !important;
-        margin: 2px 0 !important;
+
+    /* Row 1: Search Textbox spanning full width across top */
+    #page-tools #tool-reverse-dictionary .reverse-dict-search-wrapper,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-search-wrapper {
+        grid-column: 1 / -1 !important;
+        order: 1 !important;
+        width: 100% !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        position: relative !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
     }
-    #tool-reverse-dictionary .reverse-dict-search-btn,
-    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-search-btn {
-        height: 38px !important;
-        min-height: 38px !important;
-        padding: 0 14px !important;
-        margin: 4px 0 2px 0 !important;
+
+    #page-tools #tool-reverse-dictionary .reverse-dict-input,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-input {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 24px 0 8px !important;
+        font-size: 0.82rem !important;
+        border-radius: 6px !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-reverse-dictionary .reverse-dict-clear-btn,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-clear-btn {
+        right: 4px !important;
+        width: 20px !important;
+        height: 20px !important;
+        font-size: 11px !important;
+    }
+
+    /* Row 2: Match Mode dropdown spanning full width */
+    #page-tools #tool-reverse-dictionary #reverse-dict-mode,
+    body.is-mobile #page-tools #tool-reverse-dictionary #reverse-dict-mode {
+        grid-column: 1 / -1 !important;
+        order: 2 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 8px !important;
+        font-size: 0.82rem !important;
+        border-radius: 6px !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
+
+    /* Row 3: Dictionary (col 1) & Length (col 2) - matching Lists 2-column dropdowns */
+    #page-tools #tool-reverse-dictionary #reverse-dict-dict,
+    body.is-mobile #page-tools #tool-reverse-dictionary #reverse-dict-dict {
+        grid-column: 1 / 2 !important;
+        order: 3 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 8px !important;
+        font-size: 0.82rem !important;
+        border-radius: 6px !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
+
+    #page-tools #tool-reverse-dictionary #reverse-dict-length,
+    body.is-mobile #page-tools #tool-reverse-dictionary #reverse-dict-length {
+        grid-column: 2 / 3 !important;
+        order: 4 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 8px !important;
+        font-size: 0.82rem !important;
+        border-radius: 6px !important;
+        border: 1px solid var(--input-border) !important;
+        background: var(--input-bg) !important;
+        color: var(--text-primary) !important;
+        box-sizing: border-box !important;
+        margin: 0 !important;
+    }
+
+    /* Row 4: Search button spanning full width 1 / -1 (just like #list-update-btn in Lists) */
+    #page-tools #tool-reverse-dictionary .reverse-dict-search-btn,
+    #page-tools #tool-reverse-dictionary #reverse-dict-search-btn,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-search-btn,
+    body.is-mobile #page-tools #tool-reverse-dictionary #reverse-dict-search-btn {
+        grid-column: 1 / -1 !important;
+        order: 5 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 34px !important;
+        min-height: 34px !important;
+        max-height: 34px !important;
+        padding: 0 8px !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        border-radius: 6px !important;
+        border: none !important;
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+        color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3) !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 6px !important;
+        margin: 0 !important;
+        cursor: pointer !important;
+    }
+
+    #page-tools #tool-reverse-dictionary .reverse-dict-status-bar,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-status-bar {
+        flex: 0 0 auto !important;
+        padding: 2px 4px !important;
+        margin: 0 0 4px 0 !important;
+        min-height: 20px !important;
+        font-size: 0.76rem !important;
+        line-height: 1.2 !important;
+    }
+
+    #page-tools #tool-reverse-dictionary .reverse-dict-table-card,
+    body.is-mobile #page-tools #tool-reverse-dictionary .reverse-dict-table-card {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+        margin: 0 !important;
+        border-radius: 8px !important;
     }
 }
 
