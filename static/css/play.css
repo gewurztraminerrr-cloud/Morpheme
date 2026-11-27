@@ -27250,9 +27250,9 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     }
 
     #tool-word-chart #subtab-pane-wc-points .word-chart-table-container {
-        flex: 1 1 0px !important;
+        flex: 0 1 auto !important;
         min-height: 0 !important;
-        height: 100% !important;
+        height: auto !important;
         max-height: 100% !important;
         position: relative !important;
         display: flex !important;
@@ -27261,6 +27261,24 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
         border: 1px solid rgba(var(--text-primary-rgb), 0.12) !important;
         border-radius: 8px !important;
         margin-bottom: 6px !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-points #wc-points-table-scroll {
+        flex: 0 1 auto !important;
+        height: auto !important;
+        max-height: 100% !important;
+    }
+
+    #tool-word-chart #wc-points-table tbody tr:last-child td {
+        border-bottom: none !important;
+    }
+
+    #tool-word-chart #wc-points-table tbody tr:last-child td:first-child {
+        border-bottom-left-radius: 7px !important;
+    }
+
+    #tool-word-chart #wc-points-table tbody tr:last-child td:last-child {
+        border-bottom-right-radius: 7px !important;
     }
 
     #tool-word-chart #subtab-pane-wc-points .word-chart-footnote {
@@ -27718,6 +27736,23 @@ body[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child
 }
 body.theme-white #tool-word-chart #wc-dicts-table tbody tr:last-child td:last-child,
 body[class*="theme-light-"] #tool-word-chart #wc-dicts-table tbody tr:last-child td:last-child {
+    border-bottom-right-radius: 7px !important;
+}
+
+/* Sub-tab 1: Last Row (16+ Letters) Rounding & Border Cleanliness */
+body.theme-white #tool-word-chart #wc-points-table tbody tr:last-child td,
+body[class*="theme-white"] #tool-word-chart #wc-points-table tbody tr:last-child td,
+[class*="theme-white"] #tool-word-chart #wc-points-table tbody tr:last-child td,
+body[class*="theme-light-"] #tool-word-chart #wc-points-table tbody tr:last-child td,
+[class*="theme-light-"] #tool-word-chart #wc-points-table tbody tr:last-child td {
+    border-bottom: none !important;
+}
+body.theme-white #tool-word-chart #wc-points-table tbody tr:last-child td:first-child,
+body[class*="theme-light-"] #tool-word-chart #wc-points-table tbody tr:last-child td:first-child {
+    border-bottom-left-radius: 7px !important;
+}
+body.theme-white #tool-word-chart #wc-points-table tbody tr:last-child td:last-child,
+body[class*="theme-light-"] #tool-word-chart #wc-points-table tbody tr:last-child td:last-child {
     border-bottom-right-radius: 7px !important;
 }
 

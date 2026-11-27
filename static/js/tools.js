@@ -13975,9 +13975,10 @@ window.renderWordChartPoints = function(pointsList) {
     const tbody = document.getElementById('wc-points-tbody');
     if (!tbody || !Array.isArray(pointsList)) return;
 
+    const filteredList = pointsList.filter(item => !(String(item.length) === '2' || item.length === 2));
     let html = '';
-    pointsList.forEach(item => {
-        if (String(item.length) === '2' || item.length === 2) return;
+    filteredList.forEach((item, idx) => {
+        const isLast = (idx === filteredList.length - 1);
         const baseScoreStr = typeof item.base_score === 'number' ? `${item.base_score} pt${item.base_score !== 1 ? 's' : ''}` : item.base_score;
         const numDivsStr = item.num_divisions === 1 ? '1 Division' : `${item.num_divisions} Divisions`;
 
@@ -13988,9 +13989,13 @@ window.renderWordChartPoints = function(pointsList) {
             hardBadgeStyle = 'color: #fb923c; font-weight: 600;';
         }
 
+        const borderStyle = isLast ? 'border-bottom: none;' : 'border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.06);';
+        const firstTdRadius = isLast ? 'border-bottom-left-radius: 7px;' : '';
+        const lastTdRadius = isLast ? 'border-bottom-right-radius: 7px;' : '';
+
         html += `
-            <tr style="border-bottom: 1px solid rgba(var(--text-primary-rgb), 0.06);">
-                <td style="padding: 9px 12px; text-align: left; font-weight: 700; color: var(--text-primary);">
+            <tr style="${borderStyle}">
+                <td style="padding: 9px 12px; text-align: left; font-weight: 700; color: var(--text-primary); ${firstTdRadius}">
                     ${item.length_label}
                 </td>
                 <td style="padding: 9px 12px; font-weight: 600;">
@@ -14008,7 +14013,7 @@ window.renderWordChartPoints = function(pointsList) {
                 <td style="padding: 9px 12px; color: #10b981; font-weight: 600;">
                     ${item.bonus_premium}
                 </td>
-                <td style="padding: 9px 12px; color: #34d399; font-weight: 700;">
+                <td style="padding: 9px 12px; color: #34d399; font-weight: 700; ${lastTdRadius}">
                     ${item.total_bonus_score}
                 </td>
             </tr>
