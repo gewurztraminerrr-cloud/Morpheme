@@ -2917,6 +2917,10 @@ function attachForumCategoryItemHandlers() {
             if (row) {
                 row.classList.toggle('is-selected', e.target.checked);
             }
+            const outer = listContainer.querySelector(`.forum-cat-box-outer[data-cat-id="${catId}"]`);
+            if (outer) {
+                outer.classList.toggle('is-selected', e.target.checked);
+            }
             updateForumMaintenanceSummary();
         };
     });
@@ -2990,29 +2994,31 @@ function renderForumCategoriesList() {
             : `<span class="forum-cat-badge is-within-limit">✓ ≤ ${limit} (${count})</span>`;
 
         html += `
-            <div class="forum-cat-row ${isSelected ? 'is-selected' : ''}" data-cat-id="${catId}">
-                <div class="forum-cat-main-col">
-                    <div class="forum-cat-header-row">
-                        <label class="forum-cat-name-label" for="forum-cat-cb-${catId}">
-                            <input type="checkbox" id="forum-cat-cb-${catId}" class="forum-cat-checkbox" data-cat-id="${catId}" ${isSelected ? 'checked' : ''} title="Select this category">
-                            <span class="forum-cat-name-text">${escapeHtml(cat.category_name)}</span>
-                        </label>
-                        <div class="forum-cat-badge-container" data-cat-id="${catId}">
-                            ${badgeHtml}
+            <div class="forum-cat-box-outer ${isSelected ? 'is-selected' : ''}" data-cat-id="${catId}">
+                <div class="forum-cat-row ${isSelected ? 'is-selected' : ''}" data-cat-id="${catId}">
+                    <div class="forum-cat-main-col">
+                        <div class="forum-cat-header-row">
+                            <label class="forum-cat-name-label" for="forum-cat-cb-${catId}">
+                                <input type="checkbox" id="forum-cat-cb-${catId}" class="forum-cat-checkbox" data-cat-id="${catId}" ${isSelected ? 'checked' : ''} title="Select this category">
+                                <span class="forum-cat-name-text">${escapeHtml(cat.category_name)}</span>
+                            </label>
+                            <div class="forum-cat-badge-container" data-cat-id="${catId}">
+                                ${badgeHtml}
+                            </div>
+                        </div>
+                        <div class="forum-cat-stats-label" data-cat-id="${catId}">
+                            Total: <strong>${count}</strong> threads &bull; Keep: <strong>${keep}</strong> &bull; Excess: <strong>${prunable}</strong>
                         </div>
                     </div>
-                    <div class="forum-cat-stats-label" data-cat-id="${catId}">
-                        Total: <strong>${count}</strong> threads &bull; Keep: <strong>${keep}</strong> &bull; Excess: <strong>${prunable}</strong>
+                    <div class="forum-cat-actions-row">
+                        <div class="forum-cat-limit-group">
+                            <label for="forum-cat-limit-${catId}">Limit:</label>
+                            <input type="number" id="forum-cat-limit-${catId}" class="forum-cat-limit-input" data-cat-id="${catId}" value="${limit}" min="1" max="10000" step="10" title="Thread limit for this category">
+                        </div>
+                        <button type="button" class="forum-cat-single-prune-btn" data-cat-id="${catId}" data-cat-name="${escapeHtml(cat.category_name)}" title="Prune this category only">
+                            ✂️ Prune
+                        </button>
                     </div>
-                </div>
-                <div class="forum-cat-actions-row">
-                    <div class="forum-cat-limit-group">
-                        <label for="forum-cat-limit-${catId}">Limit:</label>
-                        <input type="number" id="forum-cat-limit-${catId}" class="forum-cat-limit-input" data-cat-id="${catId}" value="${limit}" min="1" max="10000" step="10" title="Thread limit for this category">
-                    </div>
-                    <button type="button" class="forum-cat-single-prune-btn" data-cat-id="${catId}" data-cat-name="${escapeHtml(cat.category_name)}" title="Prune this category only">
-                        ✂️ Prune
-                    </button>
                 </div>
             </div>
         `;
