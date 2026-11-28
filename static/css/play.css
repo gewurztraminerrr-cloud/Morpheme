@@ -28285,11 +28285,11 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     }
 
     #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar {
-        position: sticky !important;
-        bottom: 0 !important;
+        position: relative !important;
+        bottom: auto !important;
         width: 100% !important;
-        margin: 0 !important;
-        padding: 6px 0 6px 0 !important;
+        margin: 14px 0 0 0 !important;
+        padding: 0 !important;
         box-sizing: border-box !important;
     }
 
@@ -29841,14 +29841,12 @@ body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-s
 
 /* ==========================================================================
    Tools: Dynamic Word Lookup Bottom Refresh & Mobile Search Bar Side-by-Side
-   Mods: Tally Divisions Difficulty Sticky Bottom Refresh Button
+   Mods: Tally Divisions Difficulty Bottom Refresh Button
    ========================================================================== */
 #subtab-pane-wc-lookup .wc-lookup-bottom-bar {
-    position: sticky !important;
-    bottom: 0 !important;
     width: 100% !important;
-    margin: 0 !important;
-    padding: 6px 0 6px 0 !important;
+    margin: 14px 0 0 0 !important;
+    padding: 0 !important;
     box-sizing: border-box !important;
 }
 
@@ -29861,11 +29859,11 @@ body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-s
     justify-content: center !important;
     gap: 8px !important;
     padding: 0 16px !important;
-    font-size: 0.85rem !important;
+    font-size: 0.88rem !important;
     font-weight: 700 !important;
     border-radius: 8px !important;
-    background: rgba(56, 189, 248, 0.12) !important;
-    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    background: rgba(56, 189, 248, 0.14) !important;
+    border: 1px solid rgba(56, 189, 248, 0.38) !important;
     color: #38bdf8 !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
@@ -29874,7 +29872,7 @@ body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-s
 
 #subtab-pane-wc-lookup .wc-refresh-tally-btn:hover,
 #wc-refresh-tally-btn:hover {
-    background: rgba(56, 189, 248, 0.22) !important;
+    background: rgba(56, 189, 248, 0.24) !important;
     border-color: rgba(56, 189, 248, 0.6) !important;
 }
 
@@ -29977,7 +29975,7 @@ body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-sear
         flex-direction: column !important;
         overflow-y: hidden !important;
         overflow-x: hidden !important;
-        padding: 4px 8px 4px 8px !important;
+        padding: 4px 8px 1px 8px !important;
         height: 100% !important;
         max-height: 100% !important;
         flex: 1 1 0px !important;
@@ -29994,6 +29992,7 @@ body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-sear
         max-height: 100% !important;
         min-height: 0 !important;
         overflow: hidden !important;
+        padding-bottom: 0 !important;
         box-sizing: border-box !important;
     }
 
@@ -30040,13 +30039,13 @@ body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-sear
         bottom: 0 !important;
         width: 100% !important;
         margin: 0 !important;
-        padding: 4px 0 4px 0 !important;
+        padding: 2px 0 1px 0 !important;
         z-index: 20 !important;
         box-sizing: border-box !important;
     }
 }
 
-/* Mods: Tally Divisions Difficulty Sticky Bottom Refresh Button */
+/* Mods: Tally Divisions Difficulty Bottom Refresh Button */
 #mod-tab-tally-divisions {
     position: relative !important;
     box-sizing: border-box !important;
@@ -30057,42 +30056,107 @@ body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-sear
     display: none !important;
 }
 
-#mod-tab-tally-divisions .mod-tally-bottom-bar,
-#tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
-#subtab-pane-wc-lookup .wc-lookup-bottom-bar,
-.wc-lookup-bottom-bar {
-    position: sticky !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    z-index: 20 !important;
-    padding: 6px 0 6px 0 !important;
-    margin: 0 !important;
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.45) 35%, rgba(15, 23, 42, 0.88) 100%) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-    box-sizing: border-box !important;
-    border: none !important;
-    box-shadow: none !important;
+/* ==========================================================================
+   Desktop & Laptop: Clean, Non-Messy Repopulate Examples Buttons
+   ========================================================================== */
+@media (min-width: 901px) {
+    #mod-tab-tally-divisions .mod-tally-bottom-bar,
+    #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    .wc-lookup-bottom-bar,
+    .mod-tally-bottom-bar {
+        position: relative !important;
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: 100% !important;
+        z-index: 5 !important;
+        padding: 0 !important;
+        margin: 14px 0 6px 0 !important;
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        box-sizing: border-box !important;
+    }
+
+    body.theme-black .wc-lookup-bottom-bar,
+    body.theme-black .mod-tally-bottom-bar,
+    body.theme-dark-gray .wc-lookup-bottom-bar,
+    body.theme-dark-gray .mod-tally-bottom-bar,
+    body.theme-light-gray .wc-lookup-bottom-bar,
+    body.theme-light-gray .mod-tally-bottom-bar,
+    body[class*="theme-light-"] .wc-lookup-bottom-bar,
+    body[class*="theme-light-"] .mod-tally-bottom-bar,
+    body.theme-white .wc-lookup-bottom-bar,
+    body.theme-white .mod-tally-bottom-bar,
+    [class*="theme-white"] .wc-lookup-bottom-bar,
+    [class*="theme-white"] .mod-tally-bottom-bar {
+        background: transparent !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
 }
 
-body.theme-black #mod-tab-tally-divisions .mod-tally-bottom-bar,
-body.theme-black #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
-body.theme-black .wc-lookup-bottom-bar {
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.45) 35%, rgba(0, 0, 0, 0.88) 100%) !important;
-}
+/* ==========================================================================
+   Mobile: Translucent Frosted Sticky Bottom Bar with Reduced Bottom Padding
+   ========================================================================== */
+@media (max-width: 900px), (pointer: coarse) {
+    #mod-tab-tally-divisions .mod-tally-bottom-bar,
+    #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    .wc-lookup-bottom-bar {
+        position: sticky !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        z-index: 20 !important;
+        padding: 2px 0 1px 0 !important;
+        margin: 0 !important;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.45) 35%, rgba(15, 23, 42, 0.88) 100%) !important;
+        backdrop-filter: blur(8px) !important;
+        -webkit-backdrop-filter: blur(8px) !important;
+        box-sizing: border-box !important;
+        border: none !important;
+        box-shadow: none !important;
+    }
 
-body.theme-dark-gray #mod-tab-tally-divisions .mod-tally-bottom-bar,
-body.theme-dark-gray #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
-body.theme-dark-gray .wc-lookup-bottom-bar {
-    background: linear-gradient(180deg, rgba(30, 30, 35, 0) 0%, rgba(30, 30, 35, 0.45) 35%, rgba(30, 30, 35, 0.88) 100%) !important;
-}
+    body.theme-black #mod-tab-tally-divisions .mod-tally-bottom-bar,
+    body.theme-black #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    body.theme-black .wc-lookup-bottom-bar {
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.45) 35%, rgba(0, 0, 0, 0.88) 100%) !important;
+    }
 
-body.theme-light-gray #mod-tab-tally-divisions .mod-tally-bottom-bar,
-body.theme-light-gray #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
-body.theme-light-gray .wc-lookup-bottom-bar {
-    background: linear-gradient(180deg, rgba(241, 245, 249, 0) 0%, rgba(241, 245, 249, 0.45) 35%, rgba(241, 245, 249, 0.88) 100%) !important;
+    body.theme-dark-gray #mod-tab-tally-divisions .mod-tally-bottom-bar,
+    body.theme-dark-gray #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    body.theme-dark-gray .wc-lookup-bottom-bar {
+        background: linear-gradient(180deg, rgba(30, 30, 35, 0) 0%, rgba(30, 30, 35, 0.45) 35%, rgba(30, 30, 35, 0.88) 100%) !important;
+    }
+
+    body.theme-light-gray #mod-tab-tally-divisions .mod-tally-bottom-bar,
+    body.theme-light-gray #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    body.theme-light-gray .wc-lookup-bottom-bar {
+        background: linear-gradient(180deg, rgba(241, 245, 249, 0) 0%, rgba(241, 245, 249, 0.45) 35%, rgba(241, 245, 249, 0.88) 100%) !important;
+    }
+
+    body[class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-bottom-bar,
+    body.theme-white #mod-tab-tally-divisions .mod-tally-bottom-bar,
+    [class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-bottom-bar,
+    [class*="theme-white"] #mod-tab-tally-divisions .mod-tally-bottom-bar,
+    body[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    body.theme-white #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    [class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    [class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    body[class*="theme-light-"] .wc-lookup-bottom-bar,
+    body.theme-white .wc-lookup-bottom-bar,
+    [class*="theme-light-"] .wc-lookup-bottom-bar,
+    [class*="theme-white"] .wc-lookup-bottom-bar {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 35%, rgba(255, 255, 255, 0.88) 100%) !important;
+    }
 }
 
 #mod-tab-tally-divisions .mod-tally-refresh-btn,
@@ -30152,21 +30216,6 @@ body.theme-light-gray .wc-lookup-bottom-bar {
 }
 
 /* Light / White Theme Overrides for Bottom Refresh Buttons */
-body[class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-bottom-bar,
-body.theme-white #mod-tab-tally-divisions .mod-tally-bottom-bar,
-[class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-bottom-bar,
-[class*="theme-white"] #mod-tab-tally-divisions .mod-tally-bottom-bar,
-body[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
-body.theme-white #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
-[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
-[class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
-body[class*="theme-light-"] .wc-lookup-bottom-bar,
-body.theme-white .wc-lookup-bottom-bar,
-[class*="theme-light-"] .wc-lookup-bottom-bar,
-[class*="theme-white"] .wc-lookup-bottom-bar {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 35%, rgba(255, 255, 255, 0.88) 100%) !important;
-}
-
 body[class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-refresh-btn,
 body.theme-white #mod-tab-tally-divisions .mod-tally-refresh-btn,
 [class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-refresh-btn,
