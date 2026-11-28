@@ -33,8 +33,8 @@ DEFAULT_CONFIG = {
         "6": 2,  # 2nd and 3rd divisions (Divs 2, 3 of 3)
         "7": 3,  # Rarest 3 divisions (Divs 3, 4, 5 of 5)
         "8": 3,  # Rarest 3 divisions (Divs 3, 4, 5 of 5)
-        "9": 1,  # All 9L+ are considered hard
-        "10": 1,
+        "9": 3,  # Rarest 3 divisions (Divs 3, 4, 5 of 5)
+        "10": 1,  # All 10L+ are considered hard
         "11": 1,
         "12": 1,
         "13": 1,
@@ -405,16 +405,16 @@ def is_word_hard_by_tally(word: str) -> bool:
     Determine whether a word is considered 'hard' based on its division in the tally file.
     Rule:
     - 3L and 4L: False (never counted as hard).
-    - 9L+: All 9-letter words and greater are considered hard.
-    - 5L to 8L: division >= hard_threshold (e.g. >= 2 for 5L, >= 2 for 6L, >= 3 for 7L/8L).
+    - 10L+: All 10-letter words and greater are considered hard.
+    - 5L to 9L: division >= hard_threshold (e.g. >= 2 for 5L, >= 2 for 6L, >= 3 for 7L/8L/9L).
     """
     raw_word = str(word or '').strip().upper()
     length = len(raw_word)
     if length <= 4:
         return False
 
-    if length >= 9:
-        # User requirement: "Also, at the 9 letter words and greater, include all as part of the HIGHEST NUMBER OF HARD WORDS FOUND"
+    if length >= 10:
+        # User requirement: All 10-letter words and greater are considered hard
         return True
 
     div_info = get_word_division_info(raw_word)
@@ -445,7 +445,7 @@ def _load_nwl_words_by_len():
 
 def get_division_examples() -> dict:
     """
-    Fetch five examples of words from every division within 5, 6, 7, and 8 letter words.
+    Fetch five examples of words from every division within 5, 6, 7, 8, and 9 letter words.
     Returns:
     {
         "5": {
@@ -458,14 +458,15 @@ def get_division_examples() -> dict:
         },
         "6": ...,
         "7": ...,
-        "8": ...
+        "8": ...,
+        "9": ...
     }
     """
     stats = get_word_stats()
     words_by_len = _load_nwl_words_by_len()
     result = {}
 
-    for length in [5, 6, 7, 8]:
+    for length in [5, 6, 7, 8, 9]:
         k_divs = get_num_divisions(length)
         base_pts = get_base_points(length)
         max_c = get_max_count_by_length(length)

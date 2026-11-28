@@ -14105,7 +14105,7 @@ window.renderWordChartExamples = function(examples) {
     if (!container || !examples) return;
 
     let html = '';
-    const lengths = [5, 6, 7, 8];
+    const lengths = [5, 6, 7, 8, 9];
     lengths.forEach(len => {
         const item = examples[String(len)];
         if (!item) return;

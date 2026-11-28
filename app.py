@@ -15576,7 +15576,7 @@ def tools_word_chart():
             else:
                 div_range_str = f"{base_pts} – {max_pts} pts"
                 thresh = td.get_hard_threshold(length)
-                if length >= 9:
+                if length >= 10:
                     hard_designation = "All Words (100% Hard)"
                 elif thresh == num_divs:
                     hard_designation = f"Division {thresh} (Rarest)"

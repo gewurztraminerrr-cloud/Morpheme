@@ -2534,7 +2534,7 @@ async function loadTallyDivisionsStatus() {
 
         // Populate threshold selectors
         if (data.hard_thresholds) {
-            ['5', '6', '7', '8'].forEach(len => {
+            ['5', '6', '7', '8', '9'].forEach(len => {
                 const sel = document.getElementById(`tally-thresh-${len}`);
                 if (sel && data.hard_thresholds[len] !== undefined) {
                     sel.value = String(data.hard_thresholds[len]);
@@ -2597,7 +2597,7 @@ async function saveTallyThresholds() {
     if (saveBtn) saveBtn.disabled = true;
 
     const thresholds = {};
-    ['5', '6', '7', '8'].forEach(len => {
+    ['5', '6', '7', '8', '9'].forEach(len => {
         const sel = document.getElementById(`tally-thresh-${len}`);
         if (sel) thresholds[len] = parseInt(sel.value, 10);
     });
@@ -2650,7 +2650,7 @@ async function loadTallyDivisionsExamples(isRepopulate = false) {
         const examples = data.examples;
         let html = '';
 
-        ['5', '6', '7', '8'].forEach(lenStr => {
+        ['5', '6', '7', '8', '9'].forEach(lenStr => {
             const lData = examples[lenStr];
             if (!lData) return;
 

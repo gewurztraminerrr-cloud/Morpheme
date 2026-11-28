@@ -260,10 +260,10 @@
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1795770003" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794380007" as="style">
-    <link rel="preload" href="/css/play.css?v=1795770016" as="style">
+    <link rel="preload" href="/css/play.css?v=1795770017" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1795770003" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/lobby.css?v=1794380007" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/play.css?v=1795770016" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1795770017" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1795700000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/forum.css?v=1795770020" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
@@ -4998,7 +4998,7 @@
                                         <!-- Injected dynamically via JavaScript -->
                                     </div>
 
-                                    <!-- Live Division Examples (5L, 6L, 7L, 8L) -->
+                                    <!-- Live Division Examples (5L, 6L, 7L, 8L, 9L) -->
                                     <div>
                                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                                             <h4 style="margin: 0; font-size: 0.92rem; font-weight: 700; color: var(--text-primary);">Live Rarity Divisions from Tally File</h4>
@@ -6883,9 +6883,21 @@
                                         <option value="5">≥ Div 5 (Rarest Div: 13 pts)</option>
                                     </select>
                                 </div>
+                                <!-- 9L -->
+                                <div style="background: var(--bg-surface); padding: 10px 12px; border-radius: 6px; border: 1px solid var(--input-border);">
+                                    <div style="font-size: 0.82rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary);">9-Letter Words (5 Divs)</div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px;">Base: 13 pts | Max: 17 pts</div>
+                                    <select id="tally-thresh-9" class="tally-threshold-select" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary);">
+                                        <option value="1">≥ Div 1 (All 9L words)</option>
+                                        <option value="2">≥ Div 2 (Divs 2, 3, 4, 5)</option>
+                                        <option value="3" selected>≥ Div 3 (Rarest 3 Divs: 15-17 pts)</option>
+                                        <option value="4">≥ Div 4 (Rarest 2 Divs: 16-17 pts)</option>
+                                        <option value="5">≥ Div 5 (Rarest Div: 17 pts)</option>
+                                    </select>
+                                </div>
                             </div>
                             <div style="font-size: 0.8rem; color: #a855f7; background: rgba(168, 85, 247, 0.1); padding: 8px 12px; border-radius: 6px; margin-bottom: 12px;">
-                                ℹ️ <strong>9+ Letter Rule:</strong> All 9-letter words and greater are automatically considered hard words (and counted in Highest Number of Hard Words Found). Words receive point values based on their tally division.
+                                ℹ️ <strong>10+ Letter Rule:</strong> All 10-letter words and greater are automatically considered hard words (and counted in Highest Number of Hard Words Found). Words receive point values based on their tally division.
                             </div>
                             <button type="button" id="tally-save-thresholds-btn" class="mod-full-btn" style="background: #9333ea; border-color: #7e22ce; color: #fff; font-weight: 700; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
                                 💾 Save Thresholds
@@ -6897,7 +6909,7 @@
                             <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
                                 <div>
                                     <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary);">
-                                        📚 Division Examples (5, 6, 7, and 8 Letter Words)
+                                        📚 Division Examples (5, 6, 7, 8, and 9 Letter Words)
                                     </div>
                                     <div style="font-size: 0.82rem; color: var(--text-secondary);">
                                         Five example words from each division showing find count ranges and points.
@@ -11115,10 +11127,10 @@
     <script src="/js/tournaments.js?v=1795770011"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1795770013"></script>
+    <script src="/js/tools.js?v=1795770014"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
-    <script src="/js/mods.js?v=1795700004"></script>
+    <script src="/js/mods.js?v=1795700005"></script>
     <script src="/js/private_matches.js?v=1795390031"></script>
     <script src="/js/donate.js?v=33806"></script>
     
