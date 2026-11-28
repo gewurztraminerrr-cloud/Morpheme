@@ -13926,16 +13926,12 @@ window.updateWordChartScrollbars = function() {
     if (typeof initCustomScrollbarForElement !== 'function') return;
     initCustomScrollbarForElement('wc-points-table-scroll', 'wc-points-scrollbar-track', 'wc-points-scrollbar-thumb');
     initCustomScrollbarForElement('wc-dicts-table-scroll', 'wc-dicts-scrollbar-track', 'wc-dicts-scrollbar-thumb');
-    initCustomScrollbarForElement('wc-lookup-scroll-area', 'wc-lookup-scrollbar-track', 'wc-lookup-scrollbar-thumb');
 
     const s1 = document.getElementById('wc-points-table-scroll');
     if (s1 && typeof s1._updateCustomScrollbar === 'function') s1._updateCustomScrollbar();
 
     const s2 = document.getElementById('wc-dicts-table-scroll');
     if (s2 && typeof s2._updateCustomScrollbar === 'function') s2._updateCustomScrollbar();
-
-    const s3 = document.getElementById('wc-lookup-scroll-area');
-    if (s3 && typeof s3._updateCustomScrollbar === 'function') s3._updateCustomScrollbar();
 };
 
 window.loadWordChartTool = async function(forceRefresh = false) {

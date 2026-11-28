@@ -28261,9 +28261,10 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
         flex-direction: column !important;
         overflow: hidden !important;
         border: none !important;
-        border-radius: 8px !important;
+        border-radius: 0 !important;
         background: transparent !important;
         padding: 0 !important;
+        box-shadow: none !important;
         box-sizing: border-box !important;
     }
 
@@ -28278,17 +28279,17 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
         -webkit-overflow-scrolling: touch !important;
         box-sizing: border-box !important;
         position: relative !important;
-        padding-right: 18px !important;
+        padding-right: 4px !important;
         scrollbar-width: thin !important;
-        scrollbar-color: rgba(var(--text-primary-rgb), 0.3) rgba(var(--text-primary-rgb), 0.05) !important;
+        scrollbar-color: rgba(var(--text-primary-rgb), 0.25) transparent !important;
     }
 
     #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar {
         position: sticky !important;
         bottom: 0 !important;
         width: 100% !important;
-        margin-top: 3px !important;
-        padding: 3px 0 2px 0 !important;
+        margin: 0 !important;
+        padding: 6px 0 6px 0 !important;
         box-sizing: border-box !important;
     }
 
@@ -28669,9 +28670,10 @@ body[class*="theme-white"] #tool-word-chart .wc-lookup-scroll-wrapper,
 [class*="theme-white"] #tool-word-chart .wc-lookup-scroll-wrapper,
 body[class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-wrapper,
 [class*="theme-light-"] #tool-word-chart .wc-lookup-scroll-wrapper {
-    background: #ffffff !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 8px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
 body.theme-white #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-scroll-area,
@@ -29845,8 +29847,8 @@ body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-s
     position: sticky !important;
     bottom: 0 !important;
     width: 100% !important;
-    margin-top: 3px !important;
-    padding: 3px 0 2px 0 !important;
+    margin: 0 !important;
+    padding: 6px 0 6px 0 !important;
     box-sizing: border-box !important;
 }
 
@@ -30037,9 +30039,8 @@ body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-sear
         position: sticky !important;
         bottom: 0 !important;
         width: 100% !important;
-        margin-top: 3px !important;
-        margin-bottom: 0 !important;
-        padding: 3px 0 2px 0 !important;
+        margin: 0 !important;
+        padding: 4px 0 4px 0 !important;
         z-index: 20 !important;
         box-sizing: border-box !important;
     }
@@ -30049,6 +30050,11 @@ body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-sear
 #mod-tab-tally-divisions {
     position: relative !important;
     box-sizing: border-box !important;
+}
+
+#tool-word-chart #wc-lookup-scrollbar-track,
+#wc-lookup-scrollbar-track {
+    display: none !important;
 }
 
 #mod-tab-tally-divisions .mod-tally-bottom-bar,
@@ -30061,44 +30067,48 @@ body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-sear
     right: 0 !important;
     width: 100% !important;
     z-index: 20 !important;
-    padding: 3px 0 2px 0 !important;
-    margin-top: 3px !important;
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.6) 20%, rgba(15, 23, 42, 0.92) 50%, #0f172a 100%) !important;
+    padding: 6px 0 6px 0 !important;
+    margin: 0 !important;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.45) 35%, rgba(15, 23, 42, 0.88) 100%) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
     box-sizing: border-box !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 body.theme-black #mod-tab-tally-divisions .mod-tally-bottom-bar,
 body.theme-black #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
 body.theme-black .wc-lookup-bottom-bar {
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.6) 20%, rgba(0, 0, 0, 0.92) 50%, #000000 100%) !important;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.45) 35%, rgba(0, 0, 0, 0.88) 100%) !important;
 }
 
 body.theme-dark-gray #mod-tab-tally-divisions .mod-tally-bottom-bar,
 body.theme-dark-gray #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
 body.theme-dark-gray .wc-lookup-bottom-bar {
-    background: linear-gradient(180deg, rgba(30, 30, 35, 0) 0%, rgba(30, 30, 35, 0.6) 20%, rgba(30, 30, 35, 0.92) 50%, #1e1e23 100%) !important;
+    background: linear-gradient(180deg, rgba(30, 30, 35, 0) 0%, rgba(30, 30, 35, 0.45) 35%, rgba(30, 30, 35, 0.88) 100%) !important;
 }
 
 body.theme-light-gray #mod-tab-tally-divisions .mod-tally-bottom-bar,
 body.theme-light-gray #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
 body.theme-light-gray .wc-lookup-bottom-bar {
-    background: linear-gradient(180deg, rgba(241, 245, 249, 0) 0%, rgba(241, 245, 249, 0.6) 20%, rgba(241, 245, 249, 0.92) 50%, #f1f5f9 100%) !important;
+    background: linear-gradient(180deg, rgba(241, 245, 249, 0) 0%, rgba(241, 245, 249, 0.45) 35%, rgba(241, 245, 249, 0.88) 100%) !important;
 }
 
 #mod-tab-tally-divisions .mod-tally-refresh-btn,
 #tally-repopulate-examples-btn {
     width: 100% !important;
-    height: 36px !important;
+    height: 38px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
     padding: 0 16px !important;
-    font-size: 0.86rem !important;
+    font-size: 0.88rem !important;
     font-weight: 700 !important;
     border-radius: 8px !important;
-    background: rgba(59, 130, 246, 0.15) !important;
-    border: 1px solid rgba(59, 130, 246, 0.4) !important;
+    background: rgba(59, 130, 246, 0.14) !important;
+    border: 1px solid rgba(59, 130, 246, 0.38) !important;
     color: #3b82f6 !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
@@ -30107,7 +30117,7 @@ body.theme-light-gray .wc-lookup-bottom-bar {
 
 #mod-tab-tally-divisions .mod-tally-refresh-btn:hover,
 #tally-repopulate-examples-btn:hover {
-    background: rgba(59, 130, 246, 0.25) !important;
+    background: rgba(59, 130, 246, 0.24) !important;
     border-color: rgba(59, 130, 246, 0.6) !important;
 }
 
@@ -30116,17 +30126,17 @@ body.theme-light-gray .wc-lookup-bottom-bar {
 .wc-refresh-tally-btn,
 #wc-refresh-tally-btn {
     width: 100% !important;
-    height: 36px !important;
+    height: 38px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 8px !important;
     padding: 0 16px !important;
-    font-size: 0.85rem !important;
+    font-size: 0.88rem !important;
     font-weight: 700 !important;
     border-radius: 8px !important;
-    background: rgba(56, 189, 248, 0.12) !important;
-    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    background: rgba(56, 189, 248, 0.14) !important;
+    border: 1px solid rgba(56, 189, 248, 0.38) !important;
     color: #38bdf8 !important;
     cursor: pointer !important;
     transition: all 0.2s ease !important;
@@ -30137,7 +30147,7 @@ body.theme-light-gray .wc-lookup-bottom-bar {
 #subtab-pane-wc-lookup .wc-refresh-tally-btn:hover,
 .wc-refresh-tally-btn:hover,
 #wc-refresh-tally-btn:hover {
-    background: rgba(56, 189, 248, 0.22) !important;
+    background: rgba(56, 189, 248, 0.24) !important;
     border-color: rgba(56, 189, 248, 0.6) !important;
 }
 
@@ -30154,7 +30164,7 @@ body[class*="theme-light-"] .wc-lookup-bottom-bar,
 body.theme-white .wc-lookup-bottom-bar,
 [class*="theme-light-"] .wc-lookup-bottom-bar,
 [class*="theme-white"] .wc-lookup-bottom-bar {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.6) 20%, rgba(255, 255, 255, 0.92) 50%, #ffffff 100%) !important;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.45) 35%, rgba(255, 255, 255, 0.88) 100%) !important;
 }
 
 body[class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-refresh-btn,
@@ -30165,7 +30175,7 @@ body[class*="theme-light-"] #tally-repopulate-examples-btn,
 body.theme-white #tally-repopulate-examples-btn,
 [class*="theme-light-"] #tally-repopulate-examples-btn,
 [class*="theme-white"] #tally-repopulate-examples-btn {
-    background: rgba(37, 99, 235, 0.1) !important;
+    background: rgba(37, 99, 235, 0.08) !important;
     border-color: rgba(37, 99, 235, 0.35) !important;
     color: #2563eb !important;
 }
@@ -30183,7 +30193,7 @@ body.theme-white #wc-refresh-tally-btn,
 [class*="theme-light-"] #wc-refresh-tally-btn,
 [class*="theme-white"] #wc-refresh-tally-btn {
     background: rgba(2, 132, 199, 0.08) !important;
-    border-color: rgba(2, 132, 199, 0.3) !important;
+    border-color: rgba(2, 132, 199, 0.35) !important;
     color: #0284c7 !important;
 }
 
