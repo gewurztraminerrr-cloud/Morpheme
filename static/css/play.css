@@ -27311,9 +27311,9 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     }
 
     #tool-word-chart #subtab-pane-wc-dicts .word-chart-table-container {
-        flex: 1 1 0px !important;
+        flex: 0 1 auto !important;
         min-height: 0 !important;
-        height: 100% !important;
+        height: auto !important;
         max-height: 100% !important;
         position: relative !important;
         display: flex !important;
@@ -27325,12 +27325,14 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
     }
 
     #tool-word-chart #subtab-pane-wc-dicts #wc-dicts-table {
-        height: 100% !important;
-        min-height: 100% !important;
+        height: auto !important;
+        min-height: 0 !important;
     }
 
     #tool-word-chart #subtab-pane-wc-dicts #wc-dicts-table-scroll {
-        height: 100% !important;
+        flex: 0 1 auto !important;
+        height: auto !important;
+        max-height: 100% !important;
     }
 
     #tool-word-chart #wc-dicts-table tbody tr:last-child td {
