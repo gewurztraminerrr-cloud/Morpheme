@@ -1623,6 +1623,7 @@ window.showModTab = function(tabId) {
             pane.classList.remove('active');
         }
     });
+    content.classList.toggle('has-notice-active', tabId === 'notice');
 
     if (tabId === 'ban') {
         if (!window._bannedIpsLoaded) loadIpBans();
