@@ -13949,7 +13949,7 @@ window.loadWordChartTool = async function(forceRefresh = false) {
     const refreshBtn = document.getElementById('wc-refresh-tally-btn');
     if (refreshBtn && forceRefresh) {
         refreshBtn.disabled = true;
-        refreshBtn.innerHTML = '⏳ Refreshing Tally Data...';
+        refreshBtn.innerHTML = '⏳ Repopulating Examples...';
     }
 
     try {
@@ -13965,7 +13965,7 @@ window.loadWordChartTool = async function(forceRefresh = false) {
         window._wordChartLoading = false;
         if (refreshBtn) {
             refreshBtn.disabled = false;
-            refreshBtn.innerHTML = '🔄 Refresh Tally Data';
+            refreshBtn.innerHTML = '🔄 Repopulate Examples';
         }
     }
 };
