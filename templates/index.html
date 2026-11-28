@@ -260,10 +260,10 @@
     <link rel="preload" href="/music/lobby.mp3" as="fetch" crossorigin>
     <link rel="preload" href="/css/style.css?v=1795770003" as="style">
     <link rel="preload" href="/css/lobby.css?v=1794380007" as="style">
-    <link rel="preload" href="/css/play.css?v=1795770013" as="style">
+    <link rel="preload" href="/css/play.css?v=1795770016" as="style">
     <link rel="stylesheet" href="/css/style.css?v=1795770003" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/lobby.css?v=1794380007" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/play.css?v=1795770013" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/play.css?v=1795770016" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1795700000" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/forum.css?v=1795770020" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
@@ -4986,9 +4986,9 @@
 
                         <!-- Subtab Pane 3: Dynamic Word Lookup & Tally Divisions -->
                         <div id="subtab-pane-wc-lookup" class="word-chart-subtab-pane" style="display: none;">
-                            <div class="word-chart-search-bar" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
-                                <input type="search" id="wc-word-input" name="wc-word-query" placeholder="Enter any word (e.g. OPALITE, PLANT, QUIZZES)..." autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search" style="flex: 1 1 200px; height: 38px; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: rgba(var(--text-primary-rgb), 0.04); color: var(--text-primary); font-size: 0.9rem; text-transform: uppercase;">
-                                <button type="button" id="wc-word-search-btn" onclick="window.lookupWordChartWord()" style="height: 38px; padding: 0 18px; border-radius: 8px; background: var(--accent-color, #38bdf8); color: #fff; font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer;">Check Point Value</button>
+                            <div class="word-chart-search-bar" style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: nowrap; align-items: center; width: 100%; box-sizing: border-box;">
+                                <input type="search" id="wc-word-input" name="wc-word-query" placeholder="Enter any word (e.g. OPALITE, PLANT, QUIZZES)..." autocomplete="one-time-code" autocorrect="off" autocapitalize="characters" spellcheck="false" data-form-type="other" data-lpignore="true" data-1p-ignore="true" data-bwignore="true" enterkeyhint="search" style="flex: 1 1 auto; min-width: 0; width: 0; height: 38px; padding: 0 14px; border-radius: 8px; border: 1px solid rgba(var(--text-primary-rgb), 0.2); background: rgba(var(--text-primary-rgb), 0.04); color: var(--text-primary); font-size: 0.9rem; text-transform: uppercase; box-sizing: border-box;">
+                                <button type="button" id="wc-word-search-btn" onclick="window.lookupWordChartWord()" style="flex: 0 0 auto; white-space: nowrap; height: 38px; padding: 0 18px; border-radius: 8px; background: var(--accent-color, #38bdf8); color: #fff; font-weight: 600; font-size: 0.85rem; border: none; cursor: pointer; box-sizing: border-box;">Check Point Value</button>
                             </div>
 
                             <div class="wc-lookup-scroll-wrapper list-scroll-area-wrapper" id="wc-lookup-scroll-wrapper">
@@ -5002,7 +5002,6 @@
                                     <div>
                                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
                                             <h4 style="margin: 0; font-size: 0.92rem; font-weight: 700; color: var(--text-primary);">Live Rarity Divisions from Tally File</h4>
-                                            <button type="button" onclick="window.loadWordChartTool(true)" style="background: transparent; border: 1px solid rgba(var(--text-primary-rgb), 0.2); color: var(--muted-text); border-radius: 6px; padding: 3px 8px; font-size: 0.75rem; cursor: pointer;">🔄 Refresh Tally Data</button>
                                         </div>
                                         <div id="wc-examples-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-bottom: 10px;">
                                             <!-- Injected dynamically via JavaScript -->
@@ -5012,6 +5011,13 @@
                                 <div class="custom-scrollbar-track" id="wc-lookup-scrollbar-track">
                                     <div class="custom-scrollbar-thumb" id="wc-lookup-scrollbar-thumb"></div>
                                 </div>
+                            </div>
+
+                            <!-- Pinned Bottom Bar: Refresh Tally Data across screen horizontally -->
+                            <div class="wc-lookup-bottom-bar" id="wc-lookup-bottom-bar">
+                                <button type="button" id="wc-refresh-tally-btn" onclick="window.loadWordChartTool(true)" class="wc-refresh-tally-btn" title="Refresh Live Tally Data">
+                                    🔄 Refresh Tally Data
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -6897,13 +6903,17 @@
                                         Five example words from each division showing find count ranges and points.
                                     </div>
                                 </div>
-                                <button type="button" id="tally-repopulate-examples-btn" style="padding: 8px 14px; font-size: 0.85rem; font-weight: 700; border-radius: 6px; background: rgba(59, 130, 246, 0.15); border: 1px solid rgba(59, 130, 246, 0.4); color: #3b82f6; cursor: pointer; transition: all 0.2s ease;">
-                                    🔄 Repopulate Examples
-                                </button>
                             </div>
                             <div id="tally-examples-container" style="display: flex; flex-direction: column; gap: 14px;">
                                 <div style="text-align: center; padding: 20px; color: var(--text-secondary);">Loading division examples...</div>
                             </div>
+                        </div>
+
+                        <!-- Sticky Bottom Bar for Tally Repopulate / Refresh Button -->
+                        <div class="mod-tally-bottom-bar" id="mod-tally-bottom-bar">
+                            <button type="button" id="tally-repopulate-examples-btn" class="mod-tally-refresh-btn" title="Repopulate / Refresh Division Examples">
+                                🔄 Repopulate Examples
+                            </button>
                         </div>
                     </div>
 
@@ -11105,7 +11115,7 @@
     <script src="/js/tournaments.js?v=1795770011"></script>
     <script src="/js/leaderboard.js?v=1793464000"></script>
     <script src="/js/mobile_scroller.js?v=1794073000"></script>
-    <script src="/js/tools.js?v=1795770012"></script>
+    <script src="/js/tools.js?v=1795770013"></script>
     <script src="/js/store.js?v=1794019000"></script>
     <script src="/js/mouse_selection.js?v=33806"></script>
     <script src="/js/mods.js?v=1795700004"></script>

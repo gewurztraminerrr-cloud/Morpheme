@@ -13946,6 +13946,12 @@ window.loadWordChartTool = async function(forceRefresh = false) {
     if (window._wordChartLoading) return;
     window._wordChartLoading = true;
 
+    const refreshBtn = document.getElementById('wc-refresh-tally-btn');
+    if (refreshBtn && forceRefresh) {
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '⏳ Refreshing Tally Data...';
+    }
+
     try {
         const res = await fetch('/api/tools/word-chart');
         const data = await res.json();
@@ -13957,6 +13963,10 @@ window.loadWordChartTool = async function(forceRefresh = false) {
         console.error('[WordChart] Error loading data:', e);
     } finally {
         window._wordChartLoading = false;
+        if (refreshBtn) {
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '🔄 Refresh Tally Data';
+        }
     }
 };
 

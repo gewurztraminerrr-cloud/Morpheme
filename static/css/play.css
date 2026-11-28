@@ -18721,7 +18721,7 @@ body.theme-white .find-count-division-badge,
         padding-bottom: 6px !important;
     }
 
-    #mod-tab-notice {
+    #mod-tab-notice.active {
         display: flex !important;
         flex-direction: column !important;
         flex: 1 1 0px !important;
@@ -19332,7 +19332,7 @@ body.is-mobile #page-mods .tools-content.has-notice-active {
     padding-bottom: 6px !important;
 }
 
-body.is-mobile #mod-tab-notice {
+body.is-mobile #mod-tab-notice.active {
     display: flex !important;
     flex-direction: column !important;
     flex: 1 1 0px !important;
@@ -28283,6 +28283,37 @@ body.theme-white #tool-reverse-dictionary .reverse-dict-highlight,
         scrollbar-color: rgba(var(--text-primary-rgb), 0.3) rgba(var(--text-primary-rgb), 0.05) !important;
     }
 
+    #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        margin-top: 8px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-lookup .wc-refresh-tally-btn {
+        width: 100% !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 8px !important;
+        padding: 0 16px !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        background: rgba(56, 189, 248, 0.12) !important;
+        border: 1px solid rgba(56, 189, 248, 0.35) !important;
+        color: #38bdf8 !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-lookup .wc-refresh-tally-btn:hover {
+        background: rgba(56, 189, 248, 0.22) !important;
+        border-color: rgba(56, 189, 248, 0.6) !important;
+    }
+
     /* Word Chart Custom Scrollbar Track & Thumb for Desktops and Laptops */
     #tool-word-chart .custom-scrollbar-track {
         position: absolute !important;
@@ -29802,5 +29833,339 @@ body[class*="theme-light-"] #page-tools #tool-reverse-dictionary .reverse-dict-s
         margin: 0 !important;
         border-radius: 8px !important;
     }
+}
+
+/* ==========================================================================
+   Tools: Dynamic Word Lookup Bottom Refresh & Mobile Search Bar Side-by-Side
+   Mods: Tally Divisions Difficulty Sticky Bottom Refresh Button
+   ========================================================================== */
+#subtab-pane-wc-lookup .wc-lookup-bottom-bar {
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    margin-top: 8px !important;
+    box-sizing: border-box !important;
+}
+
+#subtab-pane-wc-lookup .wc-refresh-tally-btn,
+#wc-refresh-tally-btn {
+    width: 100% !important;
+    height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 16px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    color: #38bdf8 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-sizing: border-box !important;
+}
+
+#subtab-pane-wc-lookup .wc-refresh-tally-btn:hover,
+#wc-refresh-tally-btn:hover {
+    background: rgba(56, 189, 248, 0.22) !important;
+    border-color: rgba(56, 189, 248, 0.6) !important;
+}
+
+/* Dynamic Word Lookup: On mobile devices, textbox and Check Point Value button side-by-side */
+body.is-mobile #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar,
+body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
+    margin-bottom: 8px !important;
+    box-sizing: border-box !important;
+}
+
+body.is-mobile #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar input#wc-word-input,
+body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar input#wc-word-input {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: 0 !important;
+    height: 38px !important;
+    font-size: 16px !important; /* Preserves iOS Safari auto-zoom prevention */
+    padding: 0 10px !important;
+    box-sizing: border-box !important;
+    text-transform: uppercase !important;
+}
+
+body.is-mobile #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar input#wc-word-input::placeholder,
+body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar input#wc-word-input::placeholder {
+    font-size: 0.78rem !important;
+}
+
+body.is-mobile #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-search-btn,
+body.is-mobile #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-search-btn {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    height: 38px !important;
+    padding: 0 12px !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    box-sizing: border-box !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+@media (max-width: 768px), (max-width: 900px) {
+    #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar,
+    #subtab-pane-wc-lookup .word-chart-search-bar {
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        gap: 6px !important;
+        width: 100% !important;
+        margin-bottom: 8px !important;
+        box-sizing: border-box !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar input#wc-word-input,
+    #subtab-pane-wc-lookup .word-chart-search-bar input#wc-word-input {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        width: 0 !important;
+        height: 38px !important;
+        font-size: 16px !important;
+        padding: 0 10px !important;
+        box-sizing: border-box !important;
+        text-transform: uppercase !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar input#wc-word-input::placeholder,
+    #subtab-pane-wc-lookup .word-chart-search-bar input#wc-word-input::placeholder {
+        font-size: 0.78rem !important;
+    }
+
+    #tool-word-chart #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-search-btn,
+    #subtab-pane-wc-lookup .word-chart-search-bar button#wc-word-search-btn {
+        flex: 0 0 auto !important;
+        white-space: nowrap !important;
+        height: 38px !important;
+        padding: 0 12px !important;
+        font-size: 0.82rem !important;
+        font-weight: 700 !important;
+        box-sizing: border-box !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+}
+
+/* Mobile Screen-Fit for Word Charts Dynamic Word Lookup */
+@media (max-width: 900px), (pointer: coarse) {
+    #page-tools .tools-content:has(#tool-word-chart.active),
+    #page-tools .tools-content.has-word-chart-active,
+    body.is-mobile #page-tools .tools-content:has(#tool-word-chart.active),
+    body.is-mobile #page-tools .tools-content.has-word-chart-active {
+        display: flex !important;
+        flex-direction: column !important;
+        overflow-y: hidden !important;
+        overflow-x: hidden !important;
+        padding: 4px 8px 4px 8px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-word-chart.tool-pane.active,
+    body.is-mobile #page-tools #tool-word-chart.tool-pane.active {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #tool-word-chart .word-chart-subtab-pane.active,
+    body.is-mobile #page-tools #tool-word-chart .word-chart-subtab-pane.active,
+    #page-tools #subtab-pane-wc-lookup[style*="display: block"],
+    #page-tools #subtab-pane-wc-lookup[style*="display: flex"],
+    body.is-mobile #subtab-pane-wc-lookup[style*="display: block"],
+    body.is-mobile #subtab-pane-wc-lookup[style*="display: flex"] {
+        display: flex !important;
+        flex-direction: column !important;
+        flex: 1 1 0px !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        min-height: 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    #page-tools #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper,
+    body.is-mobile #subtab-pane-wc-lookup .wc-lookup-scroll-wrapper {
+        flex: 1 1 0px !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        overflow: hidden !important;
+        position: relative !important;
+    }
+
+    #page-tools #subtab-pane-wc-lookup .wc-lookup-scroll-area,
+    body.is-mobile #subtab-pane-wc-lookup .wc-lookup-scroll-area {
+        height: 100% !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-right: 4px !important;
+    }
+
+    #page-tools #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+    body.is-mobile #subtab-pane-wc-lookup .wc-lookup-bottom-bar {
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        margin-top: 6px !important;
+        box-sizing: border-box !important;
+    }
+}
+
+/* Mods: Tally Divisions Difficulty Sticky Bottom Refresh Button */
+#mod-tab-tally-divisions {
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+
+#mod-tab-tally-divisions .mod-tally-bottom-bar,
+#tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+#subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+.wc-lookup-bottom-bar {
+    position: sticky !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 20 !important;
+    padding: 10px 0 4px 0 !important;
+    margin-top: 14px !important;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0) 0%, rgba(15, 23, 42, 0.95) 25%, #0f172a 100%) !important;
+    box-sizing: border-box !important;
+}
+
+body.theme-black #mod-tab-tally-divisions .mod-tally-bottom-bar,
+body.theme-black #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+body.theme-black .wc-lookup-bottom-bar {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.95) 25%, #000000 100%) !important;
+}
+
+body.theme-dark-gray #mod-tab-tally-divisions .mod-tally-bottom-bar,
+body.theme-dark-gray #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+body.theme-dark-gray .wc-lookup-bottom-bar {
+    background: linear-gradient(180deg, rgba(30, 30, 35, 0) 0%, rgba(30, 30, 35, 0.95) 25%, #1e1e23 100%) !important;
+}
+
+#mod-tab-tally-divisions .mod-tally-refresh-btn,
+#tally-repopulate-examples-btn {
+    width: 100% !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 16px !important;
+    font-size: 0.86rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    background: rgba(59, 130, 246, 0.15) !important;
+    border: 1px solid rgba(59, 130, 246, 0.4) !important;
+    color: #3b82f6 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-sizing: border-box !important;
+}
+
+#mod-tab-tally-divisions .mod-tally-refresh-btn:hover,
+#tally-repopulate-examples-btn:hover {
+    background: rgba(59, 130, 246, 0.25) !important;
+    border-color: rgba(59, 130, 246, 0.6) !important;
+}
+
+#tool-word-chart #subtab-pane-wc-lookup .wc-refresh-tally-btn,
+#subtab-pane-wc-lookup .wc-refresh-tally-btn,
+.wc-refresh-tally-btn,
+#wc-refresh-tally-btn {
+    width: 100% !important;
+    height: 38px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 0 16px !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    color: #38bdf8 !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    box-sizing: border-box !important;
+}
+
+#tool-word-chart #subtab-pane-wc-lookup .wc-refresh-tally-btn:hover,
+#subtab-pane-wc-lookup .wc-refresh-tally-btn:hover,
+.wc-refresh-tally-btn:hover,
+#wc-refresh-tally-btn:hover {
+    background: rgba(56, 189, 248, 0.22) !important;
+    border-color: rgba(56, 189, 248, 0.6) !important;
+}
+
+/* Light / White Theme Overrides for Bottom Refresh Buttons */
+body[class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-bottom-bar,
+body.theme-white #mod-tab-tally-divisions .mod-tally-bottom-bar,
+[class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-bottom-bar,
+[class*="theme-white"] #mod-tab-tally-divisions .mod-tally-bottom-bar,
+body[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+body.theme-white #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+[class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup .wc-lookup-bottom-bar,
+body[class*="theme-light-"] .wc-lookup-bottom-bar,
+body.theme-white .wc-lookup-bottom-bar,
+[class*="theme-light-"] .wc-lookup-bottom-bar,
+[class*="theme-white"] .wc-lookup-bottom-bar {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.95) 25%, #ffffff 100%) !important;
+}
+
+body[class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-refresh-btn,
+body.theme-white #mod-tab-tally-divisions .mod-tally-refresh-btn,
+[class*="theme-light-"] #mod-tab-tally-divisions .mod-tally-refresh-btn,
+[class*="theme-white"] #mod-tab-tally-divisions .mod-tally-refresh-btn,
+body[class*="theme-light-"] #tally-repopulate-examples-btn,
+body.theme-white #tally-repopulate-examples-btn,
+[class*="theme-light-"] #tally-repopulate-examples-btn,
+[class*="theme-white"] #tally-repopulate-examples-btn {
+    background: rgba(37, 99, 235, 0.1) !important;
+    border-color: rgba(37, 99, 235, 0.35) !important;
+    color: #2563eb !important;
+}
+
+body[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-refresh-tally-btn,
+body.theme-white #tool-word-chart #subtab-pane-wc-lookup .wc-refresh-tally-btn,
+[class*="theme-light-"] #tool-word-chart #subtab-pane-wc-lookup .wc-refresh-tally-btn,
+[class*="theme-white"] #tool-word-chart #subtab-pane-wc-lookup .wc-refresh-tally-btn,
+body[class*="theme-light-"] #subtab-pane-wc-lookup .wc-refresh-tally-btn,
+body.theme-white #subtab-pane-wc-lookup .wc-refresh-tally-btn,
+[class*="theme-light-"] #subtab-pane-wc-lookup .wc-refresh-tally-btn,
+[class*="theme-white"] #subtab-pane-wc-lookup .wc-refresh-tally-btn,
+body[class*="theme-light-"] #wc-refresh-tally-btn,
+body.theme-white #wc-refresh-tally-btn,
+[class*="theme-light-"] #wc-refresh-tally-btn,
+[class*="theme-white"] #wc-refresh-tally-btn {
+    background: rgba(2, 132, 199, 0.08) !important;
+    border-color: rgba(2, 132, 199, 0.3) !important;
+    color: #0284c7 !important;
 }
 
