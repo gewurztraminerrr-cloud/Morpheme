@@ -2915,8 +2915,7 @@ function attachForumCategoryItemHandlers() {
             }
             const row = listContainer.querySelector(`.forum-cat-row[data-cat-id="${catId}"]`);
             if (row) {
-                row.style.border = e.target.checked ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid var(--card-border, rgba(0,0,0,0.1))';
-                row.style.background = e.target.checked ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-surface)';
+                row.classList.toggle('is-selected', e.target.checked);
             }
             updateForumMaintenanceSummary();
         };
@@ -2946,8 +2945,8 @@ function attachForumCategoryItemHandlers() {
                     const badgeContainer = listContainer.querySelector(`.forum-cat-badge-container[data-cat-id="${catId}"]`);
                     if (badgeContainer) {
                         badgeContainer.innerHTML = isOverLimit
-                            ? `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); white-space: nowrap;">✂️ ${prunable} to prune</span>`
-                            : `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); white-space: nowrap;">✓ ≤ ${val} (${count})</span>`;
+                            ? `<span class="forum-cat-badge is-over-limit">✂️ ${prunable} to prune</span>`
+                            : `<span class="forum-cat-badge is-within-limit">✓ ≤ ${val} (${count})</span>`;
                     }
                 }
             }
@@ -2971,7 +2970,7 @@ function renderForumCategoriesList() {
 
     const categories = _forumMaintenanceData.categories;
     if (!categories || categories.length === 0) {
-        listContainer.innerHTML = `<div style="text-align: center; color: var(--text-secondary); padding: 16px;">No categories found.</div>`;
+        listContainer.innerHTML = `<div class="forum-maint-empty">No categories found.</div>`;
         updateForumMaintenanceSummary();
         return;
     }
@@ -2986,35 +2985,32 @@ function renderForumCategoriesList() {
         const keep = Math.min(count, limit);
         const isOverLimit = prunable > 0;
 
-        const borderStyle = isSelected ? '1px solid rgba(239, 68, 68, 0.5)' : '1px solid var(--card-border, rgba(0,0,0,0.1))';
-        const bgStyle = isSelected ? 'rgba(239, 68, 68, 0.05)' : 'var(--bg-surface)';
-
         const badgeHtml = isOverLimit
-            ? `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); white-space: nowrap;">✂️ ${prunable} to prune</span>`
-            : `<span style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); white-space: nowrap;">✓ ≤ ${limit} (${count})</span>`;
+            ? `<span class="forum-cat-badge is-over-limit">✂️ ${prunable} to prune</span>`
+            : `<span class="forum-cat-badge is-within-limit">✓ ≤ ${limit} (${count})</span>`;
 
         html += `
-            <div class="forum-cat-row" data-cat-id="${catId}" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 6px; background: ${bgStyle}; border: ${borderStyle}; gap: 12px; flex-wrap: wrap; transition: background 0.15s, border-color 0.15s;">
-                <div style="display: flex; align-items: center; gap: 12px; min-width: 180px; flex: 1;">
-                    <input type="checkbox" class="forum-cat-checkbox" data-cat-id="${catId}" ${isSelected ? 'checked' : ''} style="width: 18px; height: 18px; cursor: pointer; accent-color: #ef4444; flex-shrink: 0;" title="Select this category">
-                    <div style="min-width: 0;">
-                        <div style="font-weight: 600; font-size: 0.92rem; color: var(--text-primary); margin-bottom: 2px;">
-                            ${escapeHtml(cat.category_name)}
+            <div class="forum-cat-row ${isSelected ? 'is-selected' : ''}" data-cat-id="${catId}">
+                <div class="forum-cat-main-col">
+                    <div class="forum-cat-header-row">
+                        <label class="forum-cat-name-label" for="forum-cat-cb-${catId}">
+                            <input type="checkbox" id="forum-cat-cb-${catId}" class="forum-cat-checkbox" data-cat-id="${catId}" ${isSelected ? 'checked' : ''} title="Select this category">
+                            <span class="forum-cat-name-text">${escapeHtml(cat.category_name)}</span>
+                        </label>
+                        <div class="forum-cat-badge-container" data-cat-id="${catId}">
+                            ${badgeHtml}
                         </div>
-                        <div class="forum-cat-stats-label" data-cat-id="${catId}" style="font-size: 0.78rem; color: var(--text-secondary);">
-                            Total: <strong>${count}</strong> threads &bull; Keep: <strong>${keep}</strong> &bull; Excess: <strong>${prunable}</strong>
-                        </div>
+                    </div>
+                    <div class="forum-cat-stats-label" data-cat-id="${catId}">
+                        Total: <strong>${count}</strong> threads &bull; Keep: <strong>${keep}</strong> &bull; Excess: <strong>${prunable}</strong>
                     </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0; flex-wrap: wrap;">
-                    <div style="display: inline-flex; align-items: center; gap: 6px;">
-                        <label style="font-size: 0.8rem; color: var(--text-secondary); margin: 0; white-space: nowrap; font-weight: 600;">Limit:</label>
-                        <input type="number" class="forum-cat-limit-input" data-cat-id="${catId}" value="${limit}" min="1" max="10000" step="10" style="width: 75px; padding: 4px 6px; text-align: center; font-weight: 700; border-radius: 4px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-primary); font-size: 0.88rem;" title="Thread limit for this category">
+                <div class="forum-cat-actions-row">
+                    <div class="forum-cat-limit-group">
+                        <label for="forum-cat-limit-${catId}">Limit:</label>
+                        <input type="number" id="forum-cat-limit-${catId}" class="forum-cat-limit-input" data-cat-id="${catId}" value="${limit}" min="1" max="10000" step="10" title="Thread limit for this category">
                     </div>
-                    <div class="forum-cat-badge-container" data-cat-id="${catId}">
-                        ${badgeHtml}
-                    </div>
-                    <button type="button" class="forum-cat-single-prune-btn" data-cat-id="${catId}" data-cat-name="${escapeHtml(cat.category_name)}" style="padding: 4px 10px; font-size: 0.78rem; font-weight: 600; border-radius: 4px; background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); cursor: pointer; white-space: nowrap;" title="Prune this category only">
+                    <button type="button" class="forum-cat-single-prune-btn" data-cat-id="${catId}" data-cat-name="${escapeHtml(cat.category_name)}" title="Prune this category only">
                         ✂️ Prune
                     </button>
                 </div>
