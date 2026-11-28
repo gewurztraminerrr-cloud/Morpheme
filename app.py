@@ -15276,6 +15276,104 @@ def get_round_replay():
                         }
                     })
 
+        # Check tournament rounds if room_id is tournament_...
+        if not row and room_id and str(room_id).startswith('tournament_'):
+            import re
+            t_match = re.search(r'tournament_(?:hist_)?(\d+)', str(room_id))
+            if t_match:
+                t_id = int(t_match.group(1))
+                r_num = int(round_number) if round_number and str(round_number).isdigit() else 1
+                
+                # Check active round censoring security
+                cur.execute("SELECT status, current_round, parameters FROM tournaments WHERE id = ?", (t_id,))
+                t_info = cur.fetchone()
+                if t_info and t_info['status'] == 'active' and t_info['current_round'] == r_num:
+                    req_user_id = session.get('user_id')
+                    user_has_completed = False
+                    if req_user_id and not session.get('is_guest'):
+                        comp_row = cur.execute(
+                            "SELECT 1 FROM tournament_scores WHERE tournament_id = ? AND round_number = ? AND user_id = ? AND submitted_at IS NOT NULL",
+                            (t_id, r_num, req_user_id)
+                        ).fetchone()
+                        if comp_row:
+                            user_has_completed = True
+                    if not user_has_completed:
+                        target_u_row = None
+                        if username:
+                            cur.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (username,))
+                            target_u_row = cur.fetchone()
+                        if not target_u_row or target_u_row['id'] != req_user_id:
+                            return jsonify({'success': False, 'error': 'Replay not available until you complete your turn.'}), 403
+
+                cur.execute("SELECT * FROM tournament_rounds WHERE tournament_id = ? AND round_number = ?", (t_id, r_num))
+                t_round = cur.fetchone()
+                if t_round:
+                    b_raw = json.loads(t_round['board_data']) if t_round['board_data'] else []
+                    t_board = []
+                    t_all_words = []
+                    t_bonus_word = ''
+                    t_bonus_cell = None
+                    t_board_format = 'Normal'
+                    if isinstance(b_raw, dict):
+                        t_board = b_raw.get('board', [])
+                        t_all_words = b_raw.get('all_words', [])
+                        t_bonus_word = b_raw.get('bonus_word', '')
+                        t_bonus_cell = b_raw.get('bonus_cell', None)
+                        t_board_format = b_raw.get('board_format', 'Normal')
+                    else:
+                        t_board = b_raw
+
+                    if not t_all_words and t_board:
+                        try:
+                            from board_generator import solve_board
+                            t_all_words = solve_board(t_board, min_word_length=3)
+                        except Exception as e:
+                            print("[round-replay] tournament solve_board fallback failed:", e)
+
+                    t_words = []
+                    t_score = 0
+                    t_start_time = t_round['start_time'] or 0
+                    if username:
+                        cur.execute("""
+                            SELECT ts.* FROM tournament_scores ts
+                            JOIN users u ON ts.user_id = u.id
+                            WHERE ts.tournament_id = ? AND ts.round_number = ? AND u.username = ? COLLATE NOCASE
+                        """, (t_id, r_num, username))
+                        s_row = cur.fetchone()
+                        if s_row:
+                            t_words = json.loads(s_row['submitted_words']) if s_row['submitted_words'] else []
+                            t_score = s_row['score'] or 0
+                            t_start_time = s_row['round_start_time'] or t_start_time
+
+                    t_params = {}
+                    if t_info and t_info['parameters']:
+                        try:
+                            t_params = json.loads(t_info['parameters'])
+                        except:
+                            t_params = {}
+                    t_duration = t_params.get('time_limit', 60)
+
+                    return jsonify({
+                        'success': True,
+                        'round': {
+                            'game_id': None,
+                            'room_id': room_id,
+                            'game_type': 'tournament',
+                            'round_number': r_num,
+                            'board': t_board,
+                            'dimensions': f"{len(t_board)}x{len(t_board[0])}" if t_board and isinstance(t_board, list) and isinstance(t_board[0], list) else "4x4",
+                            'words': t_words,
+                            'all_words': sorted(list(set(t_all_words))),
+                            'total_score': t_score,
+                            'round_start_time': t_start_time,
+                            'round_duration': t_duration,
+                            'timestamp': (t_round['end_time'] or time.time()) * 1000,
+                            'board_format': t_board_format,
+                            'bonus_word': t_bonus_word,
+                            'bonus_cell': t_bonus_cell
+                        }
+                    })
+
         if not row:
             return jsonify({'success': False, 'error': 'Round replay details not available for this find.'}), 404
 

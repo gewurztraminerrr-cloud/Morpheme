@@ -4882,6 +4882,7 @@ window.watchRoundHistory = async function (roomId, roundNum, isSnapshot = false,
                 if (round.room_id) params.append('room_id', round.room_id);
                 if (round.round_number) params.append('round_number', round.round_number);
                 if (round.timestamp) params.append('timestamp', round.timestamp);
+                if (round.username) params.append('username', round.username);
                 const resp = await fetch(`/api/round-replay?${params.toString()}`);
                 if (resp.ok) {
                     const data = await resp.json();

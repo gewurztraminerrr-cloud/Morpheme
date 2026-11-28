@@ -935,27 +935,53 @@ function updateCountdown(data) {
     countdownInterval = setInterval(tick, 1000);
 }
 window.watchTournamentReplay = function (tid, roundNum, targetUsername, isSnapshot) {
-    if (!currentTournamentState || !currentTournamentState.round_scores) return;
+    const tState = window.currentTournamentState || currentTournamentState;
+    if (!tState || !tState.round_scores) return;
 
-    const scoreData = currentTournamentState.round_scores.find(s => s.username === targetUsername);
+    const scoreData = tState.round_scores.find(s => s.username === targetUsername);
     if (!scoreData) {
         alert("Replay data not found.");
         return;
+    }
+
+    let parsedBoard = null;
+    let allWords = [];
+    let bonusWord = '';
+    let bonusCell = null;
+    let boardFormat = 'Normal';
+
+    if (scoreData.board_data) {
+        try {
+            const parsed = typeof scoreData.board_data === 'string' ? JSON.parse(scoreData.board_data) : scoreData.board_data;
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                parsedBoard = parsed.board;
+                allWords = Array.isArray(parsed.all_words) ? parsed.all_words : [];
+                bonusWord = parsed.bonus_word || '';
+                bonusCell = parsed.bonus_cell || null;
+                boardFormat = parsed.board_format || 'Normal';
+            } else if (Array.isArray(parsed)) {
+                parsedBoard = parsed;
+            }
+        } catch (e) {
+            console.error("[watchTournamentReplay] Error parsing board_data:", e);
+        }
     }
 
     // Prepare a mock "round" object that watchRoundHistory can use
     const mockRound = {
         room_id: `tournament_${tid}`,
         round_number: roundNum,
-        board: (() => {
-            const parsed = JSON.parse(scoreData.board_data);
-            return (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) ? parsed.board : parsed;
-        })(),
+        board: parsedBoard,
         words: scoreData.submitted_words, // Already an array of objects
+        all_words: allWords,
+        bonus_word: bonusWord,
+        bonus_cell: bonusCell,
+        board_format: boardFormat,
         total_score: scoreData.score,
-        round_duration: currentTournamentState.parameters.time_limit || 60,
+        round_duration: tState.parameters?.time_limit || 60,
         round_start_time: scoreData.round_start_time || (Date.now() / 1000 - 60),
-        timestamp: scoreData.submitted_at * 1000,
+        timestamp: (scoreData.submitted_at ? scoreData.submitted_at * 1000 : Date.now()),
+        username: targetUsername,
         game_type: 'tournament'
     };
 
@@ -967,11 +993,10 @@ window.watchTournamentReplay = function (tid, roundNum, targetUsername, isSnapsh
         !(r.room_id === mockRound.room_id && r.round_number === mockRound.round_number && r.username === targetUsername)
     );
 
-    mockRound.username = targetUsername; // tag it
     window.lastTournamentReplay = mockRound;
 
     if (window.watchRoundHistory) {
-        window.watchRoundHistory(`tournament_${tid}`, roundNum, isSnapshot);
+        window.watchRoundHistory(`tournament_${tid}`, roundNum, isSnapshot, null, null, null, targetUsername);
     }
 };
 window.watchTournamentWinnerReplay = async function (tid, username) {
@@ -984,22 +1009,49 @@ window.watchTournamentWinnerReplay = async function (tid, username) {
             return;
         }
 
+        let parsedBoard = null;
+        let allWords = [];
+        let bonusWord = '';
+        let bonusCell = null;
+        let boardFormat = 'Normal';
+
+        if (data.board_data) {
+            try {
+                const parsed = typeof data.board_data === 'string' ? JSON.parse(data.board_data) : data.board_data;
+                if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    parsedBoard = parsed.board;
+                    allWords = Array.isArray(parsed.all_words) ? parsed.all_words : [];
+                    bonusWord = parsed.bonus_word || '';
+                    bonusCell = parsed.bonus_cell || null;
+                    boardFormat = parsed.board_format || 'Normal';
+                } else if (Array.isArray(parsed)) {
+                    parsedBoard = parsed;
+                }
+            } catch (e) {
+                console.error("[watchTournamentWinnerReplay] Error parsing board_data:", e);
+            }
+        }
+
         const mockRound = {
             room_id: `tournament_hist_${tid}`,
             round_number: data.current_round || 0,
-            board: (data.board_data && typeof data.board_data === 'object' && !Array.isArray(data.board_data)) ? data.board_data.board : data.board_data,
+            board: parsedBoard,
             words: data.submitted_words,
+            all_words: allWords,
+            bonus_word: bonusWord,
+            bonus_cell: bonusCell,
+            board_format: boardFormat,
             total_score: data.score,
             round_duration: data.parameters?.time_limit || 60,
             round_start_time: data.round_start_time || (data.submitted_at - 60),
-            timestamp: data.submitted_at * 1000,
+            timestamp: (data.submitted_at ? data.submitted_at * 1000 : Date.now()),
             username: data.username,
             game_type: 'tournament'
         };
 
         window.lastTournamentReplay = mockRound;
         if (window.watchRoundHistory) {
-            window.watchRoundHistory(`tournament_hist_${tid}`, mockRound.round_number);
+            window.watchRoundHistory(`tournament_hist_${tid}`, mockRound.round_number, false, null, null, null, data.username);
         }
     } catch (e) {
         console.error(e);
