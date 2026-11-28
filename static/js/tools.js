@@ -3344,6 +3344,7 @@ async function uploadAvatar(file) {
             avatarEl.style.backgroundColor = 'rgba(0,0,0,0.05)';
             avatarEl.innerText = '';
             avatarEl.style.backgroundBlendMode = 'normal';
+            avatarEl.style.boxShadow = 'none';
         }
 
     } catch (err) {
@@ -3534,7 +3535,7 @@ async function renderProfile(user) {
             avatar.style.background = `linear-gradient(135deg, ${color}, #444)`;
             avatar.innerText = user.username ? user.username.charAt(0).toUpperCase() : '?';
         }
-        avatar.style.boxShadow = `0 10px 30px ${color}33`;
+        avatar.style.boxShadow = 'none';
 
         // Provide owner with an enlarge zoom button if an avatar is set
         const avatarContainer = avatar.closest('.profile-avatar-container');

@@ -1917,6 +1917,11 @@ body[class*="theme-light-"] .profile-tab-toggle.active {
     background-size: contain !important;
     background-repeat: no-repeat !important;
     background-position: center !important;
+    box-shadow: none !important;
+}
+
+.profile-avatar.large.has-image:hover {
+    box-shadow: none !important;
 }
 
 [class*="theme-white"] .profile-avatar.large.has-image,
