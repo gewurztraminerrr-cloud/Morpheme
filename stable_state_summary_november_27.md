@@ -1,7 +1,7 @@
-# Morpheme Stable State Summary — November 27, 2026 (Final Sync)
+# Morpheme Stable State Summary — November 27, 2026 (Evening Sync)
 
 **Stable Sync Point Branch**: `main`  
-**Timestamp**: November 27, 2026 ~ 16:35 EST  
+**Timestamp**: November 27, 2026 ~ 19:20 EST  
 **Environments Synchronized**: Localhost (`http://127.0.0.1:5001`), GitHub (`gewurztraminerrr-cloud/Morpheme:main`), Production VPS (`https://morpheme.games`), and App Client.
 
 ---
@@ -11,9 +11,9 @@
 | Environment | Status | Verification Notes |
 | :--- | :--- | :--- |
 | **Local Workspace** | Clean | Working tree clean, all changes committed and synchronized |
-| **Local Server** | Running | Waitress server online on port 5001 (`HTTP/1.1 200 OK`, 897,426 bytes) |
+| **Local Server** | Running | Waitress server online on port 5001 (`HTTP/1.1 200 OK`) |
 | **GitHub Remote** | Clean | Pushed to `origin/main` |
-| **Production VPS** | Online | PM2 process 0 online, Nginx `https://morpheme.games` (`HTTP/2 200 OK`, 897,426 bytes) |
+| **Production VPS** | Online | PM2 process 0 online, Nginx `https://morpheme.games` (`HTTP/2 200 OK`) |
 | **Android / App** | Synchronized | WebView & web assets synchronized with production |
 
 ---
@@ -24,8 +24,8 @@
 - **Persistent Textbox Focus**:
   - Ensured that on mobile devices, typing focus remains inside the submission textbox immediately after submitting a word or sequence in Subanagrams and Unscramble.
 - **Dynamic Border Flash Feedback**:
-  - Border highlights green briefly (`.valid-flash`) when entering a valid word.
-  - Border highlights red briefly (`.invalid-flash`) when entering an invalid word or sequence.
+  - Border highlights green briefly (`.valid-flash`) with a subtle glow when entering a valid word.
+  - Border highlights red briefly (`.invalid-flash`) with a subtle glow when entering an invalid word or sequence.
   - Smooth CSS animation and transition across all devices.
 
 ### B. Help / Guide Modal Dialog Polish
@@ -76,6 +76,24 @@
 ### H. Universal Panel Edge Rounding & Contrast Elevation
 - Unified `border-radius: 12px` to `14px` across all panel surfaces in Tools, Mods, and Settings.
 - Brightened content panels in Settings (Synesthesia, Audio, Chat, etc.) for crisp contrast across all light and dark themes.
+
+### I. Word Charts — Point Values & Divisions (Subtab 1)
+- **Tight Table Wrap Without Empty Space**:
+  - Set `#tool-word-chart #subtab-pane-wc-points .word-chart-table-container` and its scroll area to `flex: 0 1 auto !important; height: auto !important; max-height: 100% !important;` so the container wraps tightly around only the rows with data, eliminating empty space below the `16+ Letters` row.
+  - Removed the bottom border on the last row (`16+ Letters`) and added `7px` bottom corner radii for seamless integration with the container border.
+
+### J. Word Charts — Dictionary Word Counts (Subtab 2)
+- **Tight Table Wrap & Seamless Total Row**:
+  - Set `#tool-word-chart #subtab-pane-wc-dicts .word-chart-table-container` and its scroll area to `flex: 0 1 auto !important; height: auto !important; max-height: 100% !important;`, wrapping tightly around table rows with zero empty space inside the container, matching Subtab 1.
+  - Lowered and integrated the `Total` row to sit flush at the bottom edge with `7px` bottom corner radii, zero bottom border, and no whitespace.
+- **Cache Invalidation**:
+  - Bumped `play.css` and `tools.js` to `?v=1795770010` in `templates/index.html` to eliminate stale cached CSS in Chrome, Safari, Firefox, and mobile.
+
+### K. Words User is Good at — Light Theme Pagination Buttons
+- **High-Contrast "Previous" & "Next" Buttons**:
+  - Replaced transparent/low-contrast buttons in light themes (`theme-white`, `theme-light-gray`, `theme-light-light-gray`, etc.) with pure white background (`#ffffff`), 1px slate border (`#cbd5e1`), dark slate text (`#1e293b`), and subtle drop shadow (`box-shadow: 0 1px 3px rgba(0,0,0,0.08)`).
+  - Hover state darkens border to `#94a3b8` with subtle background tint `#f8fafc`.
+  - Disabled state gracefully dims to `rgba(255, 255, 255, 0.6)` with `#94a3b8` text and `0.5` opacity.
 
 ---
 
