@@ -265,7 +265,7 @@
     <link rel="stylesheet" href="/css/lobby.css?v=1794380007" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/play.css?v=1795770010" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/howtoplay.css?v=1795700000" onerror="_handleStyleRetry(this)">
-    <link rel="stylesheet" href="/css/forum.css?v=1794030000" onerror="_handleStyleRetry(this)">
+    <link rel="stylesheet" href="/css/forum.css?v=1795770020" onerror="_handleStyleRetry(this)">
     <link rel="stylesheet" href="/css/donate.css?v=1791060000" onerror="_handleStyleRetry(this)">
     <style id="mobile-back-nav-theme-override">
         /* Mobile Back Button Panel: Clean white for white layouts */
@@ -1450,7 +1450,11 @@
             'Mods - Moderator Access': "Manage user permissions and moderator access.",
             'Mods - Constant Parameter Rating Adjustment': "Adjust user ratings across specific constant parameter configurations.",
             'Mods - Tally Divisions Board Hardness': "Toggle board difficulty evaluation between static unique files and dynamic find-count divisions.",
-            'Mods - Forum Thread Maintenance': "Manage forum discussion capacity across all categories."
+            'Mods - Forum Thread Maintenance': "Manage forum discussion capacity across all categories.",
+            'Forums': "Connect with other players, discuss gameplay, and share feedback.",
+            'Community Board': "Connect with other players.",
+            'Suggestions/Ideas': "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future.",
+            'Suggestions': "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future."
         };
 
         window._updatingTitleHeader = false;
@@ -4343,8 +4347,8 @@
                     <div id="forum-view-list" class="forum-view active">
                         <div class="forum-header">
                             <div class="header-titles">
-                                <h2 id="forum-category-title">Community Board <button class="title-help-btn" type="button" id="forum-category-help-btn" data-title="Forum Category" data-desc-target="#forum-category-desc" title="About Category" aria-label="About Category">?</button></h2>
-                                <p id="forum-category-desc">Connect with other players.</p>
+                                <h2 id="forum-category-title" class="page-title-header"><span class="page-title-text">Community Board</span> <button class="title-help-btn" type="button" id="forum-category-help-btn" data-title="Community Board" data-desc="Connect with other players." title="About Community Board" aria-label="About Community Board">?</button></h2>
+                                <p id="forum-category-desc" style="display: none !important;">Connect with other players.</p>
                             </div>
                             <div class="forum-header-actions" style="display: flex; align-items: center; gap: 8px;">
                                 <button id="forum-refresh-posts-btn" class="forum-action-btn secondary" style="padding: 10px 15px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;"><span class="refresh-icon" style="display: inline-block; transition: transform 0.5s ease;">🔄</span> Refresh</button>
@@ -11092,7 +11096,7 @@
     </div>
     <!-- Core Scripts -->
     <script src="/js/settings.js?v=1795700000"></script>
-    <script src="/js/forum.js?v=1795390001"></script>
+    <script src="/js/forum.js?v=1795770020"></script>
     <script src="/js/app.js?v=1795770001"></script>
     <script src="/js/lobby.js?v=1795390032"></script>
     <script src="/js/play.js?v=1795686000"></script>

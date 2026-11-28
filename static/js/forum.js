@@ -1564,14 +1564,22 @@ const Forum = {
             console.error('[Forum] View responders error:', e);
         }
 
-        const titleEl = document.getElementById('forum-category-title');
-        if (titleEl) titleEl.textContent = 'View Responses';
+        const setForumHeader = (titleText, descText) => {
+            const tEl = document.getElementById('forum-category-title');
+            const safeTitle = (titleText || '').replace(/\s*\?\s*$/, '').trim();
+            const safeDesc = (descText || '').trim();
+            if (tEl) {
+                tEl.classList.add('page-title-header');
+                tEl.innerHTML = `<span class="page-title-text">${safeTitle}</span> <button class="title-help-btn" type="button" data-title="${safeTitle}" data-desc="${safeDesc.replace(/"/g, '&quot;')}" title="About ${safeTitle}" aria-label="About ${safeTitle}">?</button>`;
+            }
+            const dEl = document.getElementById('forum-category-desc');
+            if (dEl) {
+                dEl.textContent = safeDesc;
+                dEl.classList.remove('forum-desc-scrolling-box');
+            }
+        };
 
-        const descEl = document.getElementById('forum-category-desc');
-        if (descEl) {
-            descEl.textContent = 'Recent replies to your posts across the Forum';
-            descEl.classList.remove('forum-desc-scrolling-box');
-        }
+        setForumHeader('View Responses', 'Recent replies to your posts across the Forum.');
 
         const newPostBtn = document.getElementById('forum-new-post-btn');
         if (newPostBtn) newPostBtn.classList.add('hidden');
@@ -1786,19 +1794,25 @@ const Forum = {
             window.checkForumActivity();
         }
 
-        document.getElementById('forum-category-title').textContent = category.name;
-        const isSuggestions = Boolean(category.name && (
+        const isSuggestions = Boolean(category && category.name && (
             category.name.toLowerCase().includes('suggestion') ||
-            category.id === 6
+            category.id === 6 ||
+            category.id === 31680
         ));
-        const descEl = document.getElementById('forum-category-desc');
         const longSuggestionsDesc = "Share your ideas for improving Morpheme! You can like 👍 or dislike 👎 suggestions and replies to show how favorable an idea is. A decision of the mods will be made based on the level of its popularity, and favorable features may be added in the future.";
+        const catDesc = isSuggestions ? longSuggestionsDesc : ((category && (category.header_description || category.description)) || '');
+        const catTitle = (category && category.name) || 'Community Board';
+
+        const titleEl = document.getElementById('forum-category-title');
+        if (titleEl) {
+            const safeTitle = catTitle.replace(/\s*\?\s*$/, '').trim();
+            titleEl.classList.add('page-title-header');
+            titleEl.innerHTML = `<span class="page-title-text">${safeTitle}</span> <button class="title-help-btn" type="button" data-title="${safeTitle}" data-desc="${catDesc.replace(/"/g, '&quot;')}" title="About ${safeTitle}" aria-label="About ${safeTitle}">?</button>`;
+        }
+        const descEl = document.getElementById('forum-category-desc');
         if (descEl) {
-            descEl.textContent = isSuggestions ? longSuggestionsDesc : (category.header_description || category.description);
-            descEl.classList.toggle('forum-desc-scrolling-box', isSuggestions);
-            if (isSuggestions) {
-                descEl.scrollTop = 0;
-            }
+            descEl.textContent = catDesc;
+            descEl.classList.remove('forum-desc-scrolling-box');
         }
 
         // Show/hide New Post button based on guest status
@@ -1855,10 +1869,18 @@ const Forum = {
         this._lastCategoryScrollTop = 0;
 
         // Update UI Header
-        document.getElementById('forum-category-title').textContent = `Posts by ${username}`;
+        const userTitle = `Posts by ${username}`;
+        const userDesc = `Viewing all forum contributions from ${username}.`;
+        const titleEl = document.getElementById('forum-category-title');
+        if (titleEl) {
+            titleEl.classList.add('page-title-header');
+            titleEl.innerHTML = `<span class="page-title-text">${userTitle}</span> <button class="title-help-btn" type="button" data-title="${userTitle}" data-desc="${userDesc.replace(/"/g, '&quot;')}" title="About ${userTitle}" aria-label="About ${userTitle}">?</button>`;
+        }
         const descEl = document.getElementById('forum-category-desc');
-        descEl.textContent = `Viewing all forum contributions from ${username}.`;
-        descEl.classList.remove('forum-desc-scrolling-box');
+        if (descEl) {
+            descEl.textContent = userDesc;
+            descEl.classList.remove('forum-desc-scrolling-box');
+        }
         document.getElementById('forum-new-post-btn').classList.add('hidden');
 
         const postsList = document.getElementById('forum-posts-list');
@@ -3796,12 +3818,17 @@ const Forum = {
         if (newPostBtn) newPostBtn.classList.add('hidden');
 
         // Reset category header titles
+        const defaultTitle = 'Community Board';
+        const defaultDesc = 'Connect with other players.';
         const titleEl = document.getElementById('forum-category-title');
-        if (titleEl) titleEl.textContent = 'Community Board';
+        if (titleEl) {
+            titleEl.classList.add('page-title-header');
+            titleEl.innerHTML = `<span class="page-title-text">${defaultTitle}</span> <button class="title-help-btn" type="button" data-title="${defaultTitle}" data-desc="${defaultDesc.replace(/"/g, '&quot;')}" title="About ${defaultTitle}" aria-label="About ${defaultTitle}">?</button>`;
+        }
 
         const descEl = document.getElementById('forum-category-desc');
         if (descEl) {
-            descEl.textContent = 'Connect with other players.';
+            descEl.textContent = defaultDesc;
             descEl.classList.remove('forum-desc-scrolling-box');
         }
 
